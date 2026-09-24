@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Models\Jalon;
+use App\Models\Mission;
+use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -10,7 +13,9 @@ use Illuminate\Support\Facades\Storage;
 class GeminiService
 {
     private string $apiKey;
+
     private string $model;
+
     private string $baseUrl;
 
     public function __construct()
@@ -23,9 +28,10 @@ class GeminiService
     private function getEndpointUrl(): string
     {
         $base = rtrim($this->baseUrl, '/');
-        if (!str_contains($base, 'models')) {
+        if (! str_contains($base, 'models')) {
             $base .= "/v1beta/models/{$this->model}:generateContent";
         }
+
         return "{$base}?key={$this->apiKey}";
     }
 
@@ -44,24 +50,25 @@ class GeminiService
             $response = Http::timeout(8)
                 ->connectTimeout(4)
                 ->withHeaders([
-                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                    'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
                 ])->withOptions([
-                    'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
+                    'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4],
                 ])->post($this->getEndpointUrl(), [
-                'contents' => [
-                    [
-                        'parts' => [
-                            ['text' => $prompt]
-                        ]
-                    ]
-                ],
-                'generationConfig' => [
-                    'response_mime_type' => 'application/json',
-                ]
-            ]);
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt],
+                            ],
+                        ],
+                    ],
+                    'generationConfig' => [
+                        'response_mime_type' => 'application/json',
+                    ],
+                ]);
 
             if ($response->successful()) {
                 $result = json_decode($response->json()['candidates'][0]['content']['parts'][0]['text'], true);
+
                 return [
                     'category' => $result['category'] ?? 'Travaux généraux',
                     'urgency' => $result['urgency'] ?? 'moyen',
@@ -91,7 +98,7 @@ class GeminiService
 
         $contextBlock = empty($contextLines)
             ? ''
-            : "\nContexte complémentaire:\n- " . implode("\n- ", $contextLines) . "\n";
+            : "\nContexte complémentaire:\n- ".implode("\n- ", $contextLines)."\n";
 
         return "Tu es un expert en bâtiment en Côte d'Ivoire. Analyse ce besoin client et retourne un JSON.
         Description: {$description}{$contextBlock}
@@ -110,9 +117,13 @@ class GeminiService
     {
         $desc = strtolower($description);
         $category = 'Général';
-        if (str_contains($desc, 'plomb') || str_contains($desc, 'eau')) $category = 'Plomberie';
-        elseif (str_contains($desc, 'electr') || str_contains($desc, 'courant')) $category = 'Électricité';
-        elseif (str_contains($desc, 'peint') || str_contains($desc, 'mur')) $category = 'Peinture';
+        if (str_contains($desc, 'plomb') || str_contains($desc, 'eau')) {
+            $category = 'Plomberie';
+        } elseif (str_contains($desc, 'electr') || str_contains($desc, 'courant')) {
+            $category = 'Électricité';
+        } elseif (str_contains($desc, 'peint') || str_contains($desc, 'mur')) {
+            $category = 'Peinture';
+        }
 
         return [
             'category' => $category,
@@ -126,7 +137,7 @@ class GeminiService
     /**
      * Suggère une structure de devis (lignes et jalons) pour aider l'artisan.
      */
-    public function suggestDevis(\App\Models\Mission $mission): array
+    public function suggestDevis(Mission $mission): array
     {
         if (empty($this->apiKey) || config('app.env') === 'testing') {
             return $this->getFallbackDevisSuggestion($mission);
@@ -172,20 +183,20 @@ class GeminiService
             }";
 
             $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                'User-Agent' => 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
             ])->withOptions([
-                'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
+                'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4],
             ])->post($this->getEndpointUrl(), [
                 'contents' => [
                     [
                         'parts' => [
-                            ['text' => $prompt]
-                        ]
-                    ]
+                            ['text' => $prompt],
+                        ],
+                    ],
                 ],
                 'generationConfig' => [
                     'response_mime_type' => 'application/json',
-                ]
+                ],
             ]);
 
             if ($response->successful()) {
@@ -228,7 +239,9 @@ class GeminiService
             $montant = (int) ($jalon['montant'] ?? 0);
             $totalJalons += $montant;
             $days = (int) ($jalon['date_cible_days'] ?? 3);
-            if ($days < 1) $days = 3;
+            if ($days < 1) {
+                $days = 3;
+            }
 
             $jalons[] = [
                 'ordre' => (int) ($jalon['ordre'] ?? 1),
@@ -257,29 +270,29 @@ class GeminiService
     /**
      * Fallbacks thématiques pour les devis.
      */
-    private function getFallbackDevisSuggestion(\App\Models\Mission $mission): array
+    private function getFallbackDevisSuggestion(Mission $mission): array
     {
         $desc = strtolower($mission->description);
-        
+
         if (str_contains($desc, 'plomb') || str_contains($desc, 'eau') || str_contains($desc, 'tuyau')) {
             $lignes = [
                 ['type' => 'mat', 'description' => 'Achat de fournitures plomberie (tuyaux PVC, colle, raccords, joint)', 'montant' => 25000, 'source' => 'custom'],
-                ['type' => 'mo', 'description' => 'Main d\'œuvre plomberie : installation et raccordements de base', 'montant' => 15000, 'source' => 'custom']
+                ['type' => 'mo', 'description' => 'Main d\'œuvre plomberie : installation et raccordements de base', 'montant' => 15000, 'source' => 'custom'],
             ];
         } elseif (str_contains($desc, 'electr') || str_contains($desc, 'courant') || str_contains($desc, 'ampoule')) {
             $lignes = [
                 ['type' => 'mat', 'description' => 'Câbles électriques, disjoncteurs et prises de rechange', 'montant' => 30000, 'source' => 'custom'],
-                ['type' => 'mo', 'description' => 'Recherche de panne et réfection du câblage défaillant', 'montant' => 20000, 'source' => 'custom']
+                ['type' => 'mo', 'description' => 'Recherche de panne et réfection du câblage défaillant', 'montant' => 20000, 'source' => 'custom'],
             ];
         } elseif (str_contains($desc, 'peint') || str_contains($desc, 'mur') || str_contains($desc, 'enduit')) {
             $lignes = [
                 ['type' => 'mat', 'description' => 'Pots de peinture blanc mat (30L) et pinceaux/rouleaux', 'montant' => 45000, 'source' => 'custom'],
-                ['type' => 'mo', 'description' => 'Préparation des supports et application de deux couches de peinture', 'montant' => 25000, 'source' => 'custom']
+                ['type' => 'mo', 'description' => 'Préparation des supports et application de deux couches de peinture', 'montant' => 25000, 'source' => 'custom'],
             ];
         } else {
             $lignes = [
                 ['type' => 'mat', 'description' => 'Matériaux et outillages consommables nécessaires aux travaux', 'montant' => 35000, 'source' => 'custom'],
-                ['type' => 'mo', 'description' => 'Prestation de main d\'œuvre pour l\'exécution des travaux demandés', 'montant' => 25000, 'source' => 'custom']
+                ['type' => 'mo', 'description' => 'Prestation de main d\'œuvre pour l\'exécution des travaux demandés', 'montant' => 25000, 'source' => 'custom'],
             ];
         }
 
@@ -297,7 +310,7 @@ class GeminiService
                 'description' => 'Livraison finale et nettoyage après travaux',
                 'montant' => (int) ($total - round($total * 0.5)),
                 'date_cible' => now()->addDays(5)->toDateString(),
-            ]
+            ],
         ];
 
         return [
@@ -309,7 +322,7 @@ class GeminiService
     /**
      * Analyse un fichier média (photo/vidéo) pour repérer les contacts, adresses, localisations.
      */
-    public function analyzeMediaForSensitiveData(\Illuminate\Http\UploadedFile $file): array
+    public function analyzeMediaForSensitiveData(UploadedFile $file): array
     {
         if (empty($this->apiKey) || config('app.env') === 'testing') {
             // Dans l'environnement de test ou sans clé, on fait une simulation souple.
@@ -321,6 +334,7 @@ class GeminiService
                     'details' => 'Le fichier contient des indications interdites (détecté par simulation).',
                 ];
             }
+
             return [
                 'contains_sensitive_data' => false,
                 'details' => '',
@@ -332,7 +346,7 @@ class GeminiService
             $isImage = str_starts_with($mimeType, 'image/');
             $isVideo = str_starts_with($mimeType, 'video/');
 
-            if (!$isImage && !$isVideo) {
+            if (! $isImage && ! $isVideo) {
                 return [
                     'contains_sensitive_data' => false,
                     'details' => '',
@@ -355,9 +369,9 @@ class GeminiService
             }";
 
             $response = Http::withHeaders([
-                'User-Agent' => 'Mozilla/5.0'
+                'User-Agent' => 'Mozilla/5.0',
             ])->withOptions([
-                'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
+                'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4],
             ])->post($this->getEndpointUrl(), [
                 'contents' => [
                     [
@@ -366,21 +380,22 @@ class GeminiService
                                 'inlineData' => [
                                     'mimeType' => $mimeType,
                                     'data' => $base64Data,
-                                ]
+                                ],
                             ],
                             [
-                                'text' => $prompt
-                            ]
-                        ]
-                    ]
+                                'text' => $prompt,
+                            ],
+                        ],
+                    ],
                 ],
                 'generationConfig' => [
                     'response_mime_type' => 'application/json',
-                ]
+                ],
             ]);
 
             if ($response->successful()) {
                 $result = json_decode($response->json()['candidates'][0]['content']['parts'][0]['text'], true);
+
                 return [
                     'contains_sensitive_data' => (bool) ($result['contains_sensitive_data'] ?? false),
                     'details' => $result['details'] ?? '',
@@ -404,7 +419,7 @@ class GeminiService
      * Supporte les accents ivoiriens, le nouchi et le vocabulaire BTP local.
      */
     public function parseVoiceQuote(
-        \App\Models\Mission $mission,
+        Mission $mission,
         string $audioBase64,
         string $mimeType,
         ?int $userId = null
@@ -412,6 +427,7 @@ class GeminiService
         if (empty($this->apiKey) || config('app.env') === 'testing') {
             $fallback = $this->getFallbackDevisSuggestion($mission);
             $fallback['transcription'] = "Transcription audio simulée (mode test/hors-ligne) : fournitures et main d'œuvre pour les travaux de la mission.";
+
             return $fallback;
         }
 
@@ -464,9 +480,9 @@ Retourne obligatoirement ce format JSON uniquement:
 
             $response = Http::timeout(25)
                 ->withHeaders([
-                    'User-Agent' => 'Mozilla/5.0'
+                    'User-Agent' => 'Mozilla/5.0',
                 ])->withOptions([
-                    'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]
+                    'curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4],
                 ])->post($this->getEndpointUrl(), [
                     'contents' => [
                         [
@@ -475,17 +491,17 @@ Retourne obligatoirement ce format JSON uniquement:
                                     'inlineData' => [
                                         'mimeType' => $mimeType,
                                         'data' => $audioBase64,
-                                    ]
+                                    ],
                                 ],
                                 [
-                                    'text' => $prompt
-                                ]
-                            ]
-                        ]
+                                    'text' => $prompt,
+                                ],
+                            ],
+                        ],
                     ],
                     'generationConfig' => [
                         'response_mime_type' => 'application/json',
-                    ]
+                    ],
                 ]);
 
             $responseTimeMs = (microtime(true) - $startTime) * 1000;
@@ -513,6 +529,7 @@ Retourne obligatoirement ce format JSON uniquement:
                 if (isset($result['lignes']) && isset($result['jalons'])) {
                     $balanced = $this->formatAndBalanceSuggestion($result);
                     $balanced['transcription'] = (string) ($result['transcription'] ?? 'Transcription effectuée.');
+
                     return $balanced;
                 }
             }
@@ -545,30 +562,27 @@ Retourne obligatoirement ce format JSON uniquement:
         }
 
         $fallback = $this->getFallbackDevisSuggestion($mission);
-        $fallback['transcription'] = "Transcription approximative : besoin évalué à partir de la description initiale du chantier.";
+        $fallback['transcription'] = 'Transcription approximative : besoin évalué à partir de la description initiale du chantier.';
+
         return $fallback;
     }
 
     /**
      * Analyse la conformité visuelle des photos de preuves d'un jalon (Gemini Multimodal).
-     *
-     * @param Jalon $jalon
-     * @param array $photos
-     * @return array
      */
     public function analyzeMilestoneVision(Jalon $jalon, array $photos = []): array
     {
-        $photosList = !empty($photos) ? $photos : ($jalon->photos_json ?? []);
+        $photosList = ! empty($photos) ? $photos : ($jalon->photos_json ?? []);
 
         if (empty($photosList)) {
             return [
-                'approved'          => true,
-                'conformity_score'  => 100,
+                'approved' => true,
+                'conformity_score' => 100,
                 'detected_elements' => ['non_applicable'],
-                'anomalies'         => [],
-                'summary'           => 'Aucune photo soumise pour analyse visuelle.',
-                'confidence'        => 'medium',
-                'analyzed_at'       => now()->toIso8601String(),
+                'anomalies' => [],
+                'summary' => 'Aucune photo soumise pour analyse visuelle.',
+                'confidence' => 'medium',
+                'analyzed_at' => now()->toIso8601String(),
             ];
         }
 
@@ -585,24 +599,24 @@ Retourne obligatoirement ce format JSON uniquement:
 
             if ($isSuspect) {
                 return [
-                    'approved'          => false,
-                    'conformity_score'  => 25,
+                    'approved' => false,
+                    'conformity_score' => 25,
                     'detected_elements' => ['surface_vide', 'element_inconnu'],
-                    'anomalies'         => ['incohérence_visuelle_majeure', 'absence_d_ouvrage_conforme'],
-                    'summary'           => "Incohérence visuelle détectée : la photo fournie ne correspond pas aux travaux spécifiés pour '{$jalon->description}'.",
-                    'confidence'        => 'high',
-                    'analyzed_at'       => now()->toIso8601String(),
+                    'anomalies' => ['incohérence_visuelle_majeure', 'absence_d_ouvrage_conforme'],
+                    'summary' => "Incohérence visuelle détectée : la photo fournie ne correspond pas aux travaux spécifiés pour '{$jalon->description}'.",
+                    'confidence' => 'high',
+                    'analyzed_at' => now()->toIso8601String(),
                 ];
             }
 
             return [
-                'approved'          => true,
-                'conformity_score'  => 92,
+                'approved' => true,
+                'conformity_score' => 92,
                 'detected_elements' => ['materiaux_conformes', 'travaux_executes', 'outillage_chantier'],
-                'anomalies'         => [],
-                'summary'           => "Preuve visuelle conforme : réalisation cohérente avec l'intitulé '{$jalon->description}'.",
-                'confidence'        => 'high',
-                'analyzed_at'       => now()->toIso8601String(),
+                'anomalies' => [],
+                'summary' => "Preuve visuelle conforme : réalisation cohérente avec l'intitulé '{$jalon->description}'.",
+                'confidence' => 'high',
+                'analyzed_at' => now()->toIso8601String(),
             ];
         }
 
@@ -624,7 +638,7 @@ Retourne obligatoirement ce format JSON uniquement:
         $prompt .= "  \"anomalies\": [\"anomalie1\"],\n";
         $prompt .= "  \"summary\": \"Explication claire et synthétique en français\",\n";
         $prompt .= "  \"confidence\": \"high\" ou \"medium\" ou \"low\"\n";
-        $prompt .= "}";
+        $prompt .= '}';
 
         $parts[] = ['text' => $prompt];
 
@@ -632,20 +646,20 @@ Retourne obligatoirement ce format JSON uniquement:
         $imageCount = 0;
         foreach (array_slice($photosList, 0, 3) as $photo) {
             $path = is_array($photo) ? ($photo['path'] ?? null) : null;
-            if (!$path && is_array($photo) && isset($photo['url'])) {
+            if (! $path && is_array($photo) && isset($photo['url'])) {
                 $path = str_replace('/storage/', '', parse_url($photo['url'], PHP_URL_PATH) ?? '');
             }
 
             if ($path && Storage::disk('public')->exists($path)) {
                 $raw = Storage::disk('public')->get($path);
-                /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+                /** @var FilesystemAdapter $disk */
                 $disk = Storage::disk('public');
                 $mime = $disk->mimeType($path) ?? 'image/jpeg';
                 $parts[] = [
                     'inline_data' => [
                         'mime_type' => $mime,
-                        'data'      => base64_encode($raw),
-                    ]
+                        'data' => base64_encode($raw),
+                    ],
                 ];
                 $imageCount++;
             }
@@ -653,13 +667,13 @@ Retourne obligatoirement ce format JSON uniquement:
 
         if ($imageCount === 0) {
             return [
-                'approved'          => true,
-                'conformity_score'  => 85,
+                'approved' => true,
+                'conformity_score' => 85,
                 'detected_elements' => ['non_verifiable_localement'],
-                'anomalies'         => [],
-                'summary'           => 'Photos stockées sur un support distant non directement accessible en local pour vision API.',
-                'confidence'        => 'low',
-                'analyzed_at'       => now()->toIso8601String(),
+                'anomalies' => [],
+                'summary' => 'Photos stockées sur un support distant non directement accessible en local pour vision API.',
+                'confidence' => 'low',
+                'analyzed_at' => now()->toIso8601String(),
             ];
         }
 
@@ -671,11 +685,11 @@ Retourne obligatoirement ce format JSON uniquement:
                 ->connectTimeout(5)
                 ->post($this->getEndpointUrl(), [
                     'contents' => [
-                        ['parts' => $parts]
+                        ['parts' => $parts],
                     ],
                     'generationConfig' => [
                         'response_mime_type' => 'application/json',
-                    ]
+                    ],
                 ]);
 
             $responseTimeMs = (microtime(true) - $startTime) * 1000;
@@ -700,14 +714,15 @@ Retourne obligatoirement ce format JSON uniquement:
 
                 if (is_array($result) && isset($result['conformity_score'])) {
                     $score = max(0, min(100, (int) $result['conformity_score']));
+
                     return [
-                        'approved'          => (bool) ($result['approved'] ?? ($score >= 50)),
-                        'conformity_score'  => $score,
+                        'approved' => (bool) ($result['approved'] ?? ($score >= 50)),
+                        'conformity_score' => $score,
                         'detected_elements' => (array) ($result['detected_elements'] ?? []),
-                        'anomalies'         => (array) ($result['anomalies'] ?? []),
-                        'summary'           => (string) ($result['summary'] ?? 'Analyse visuelle complétée.'),
-                        'confidence'        => (string) ($result['confidence'] ?? 'high'),
-                        'analyzed_at'       => now()->toIso8601String(),
+                        'anomalies' => (array) ($result['anomalies'] ?? []),
+                        'summary' => (string) ($result['summary'] ?? 'Analyse visuelle complétée.'),
+                        'confidence' => (string) ($result['confidence'] ?? 'high'),
+                        'analyzed_at' => now()->toIso8601String(),
                     ];
                 }
             }
@@ -740,13 +755,13 @@ Retourne obligatoirement ce format JSON uniquement:
         }
 
         return [
-            'approved'          => true,
-            'conformity_score'  => 75,
+            'approved' => true,
+            'conformity_score' => 75,
             'detected_elements' => ['inspection_secours'],
-            'anomalies'         => [],
-            'summary'           => 'Approbation par défaut suite à une indisponibilité temporaire du service de vision.',
-            'confidence'        => 'low',
-            'analyzed_at'       => now()->toIso8601String(),
+            'anomalies' => [],
+            'summary' => 'Approbation par défaut suite à une indisponibilité temporaire du service de vision.',
+            'confidence' => 'low',
+            'analyzed_at' => now()->toIso8601String(),
         ];
     }
 }

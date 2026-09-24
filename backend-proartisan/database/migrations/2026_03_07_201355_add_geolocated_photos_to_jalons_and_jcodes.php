@@ -13,23 +13,23 @@ return new class extends Migration
     {
         // Jalons : photos preuves géolocalisées pour validation client
         Schema::table('jalons', function (Blueprint $table) {
-            if (!Schema::hasColumn('jalons', 'photos_json')) {
+            if (! Schema::hasColumn('jalons', 'photos_json')) {
                 $table->json('photos_json')->nullable()->after('description')
-                      ->comment('Photos géolocalisées de preuve de travail');
+                    ->comment('Photos géolocalisées de preuve de travail');
             }
         });
 
         // JCodes : photo géolocalisée des matériaux reçus sur chantier
         Schema::table('jcodes', function (Blueprint $table) {
-            if (!Schema::hasColumn('jcodes', 'photo_materiaux_url')) {
+            if (! Schema::hasColumn('jcodes', 'photo_materiaux_url')) {
                 $table->string('photo_materiaux_url', 500)->nullable()->after('ussd_code')
-                      ->comment('URL photo matériaux livrés sur chantier');
+                    ->comment('URL photo matériaux livrés sur chantier');
                 $table->decimal('photo_latitude', 10, 8)->nullable()->after('photo_materiaux_url')
-                      ->comment('Latitude GPS de la photo matériaux');
+                    ->comment('Latitude GPS de la photo matériaux');
                 $table->decimal('photo_longitude', 11, 8)->nullable()->after('photo_latitude')
-                      ->comment('Longitude GPS de la photo matériaux');
+                    ->comment('Longitude GPS de la photo matériaux');
                 $table->timestamp('photo_taken_at')->nullable()->after('photo_longitude')
-                      ->comment('Date/heure de prise de la photo matériaux');
+                    ->comment('Date/heure de prise de la photo matériaux');
             }
         });
     }

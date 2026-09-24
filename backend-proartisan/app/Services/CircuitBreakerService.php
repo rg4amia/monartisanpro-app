@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\CircuitOpenException;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 
@@ -18,8 +19,10 @@ use Illuminate\Support\Facades\Log;
  */
 class CircuitBreakerService
 {
-    public const STATE_CLOSED    = 'closed';
-    public const STATE_OPEN      = 'open';
+    public const STATE_CLOSED = 'closed';
+
+    public const STATE_OPEN = 'open';
+
     public const STATE_HALF_OPEN = 'half_open';
 
     /** Nombre d'échecs consécutifs ou dans la fenêtre pour ouvrir le circuit. */
@@ -35,7 +38,7 @@ class CircuitBreakerService
      * Vérifie si le circuit est disponible pour un opérateur donné.
      * Lève une exception CircuitOpenException si le circuit est OPEN.
      *
-     * @throws \App\Exceptions\CircuitOpenException
+     * @throws CircuitOpenException
      */
     public function ensureAvailable(string $provider): void
     {
@@ -44,17 +47,18 @@ class CircuitBreakerService
         if ($state === self::STATE_OPEN) {
             // Vérifier si le cooldown est expiré → passer en HALF_OPEN
             $openedAt = (int) Cache::get($this->cacheKey($provider, 'opened_at'), 0);
-            $elapsed  = time() - $openedAt;
+            $elapsed = time() - $openedAt;
 
             if ($elapsed >= self::COOLDOWN_SECONDS) {
                 $this->setState($provider, self::STATE_HALF_OPEN);
                 Log::info("CircuitBreaker [{$provider}]: OPEN → HALF_OPEN (cooldown expiré après {$elapsed}s)");
+
                 return; // autorise un appel de test
             }
 
             $label = $this->providerLabel($provider);
             Log::warning("CircuitBreaker [{$provider}]: circuit OUVERT — appel refusé");
-            throw new \App\Exceptions\CircuitOpenException(
+            throw new CircuitOpenException(
                 "Transactions momentanément suspendues par l'opérateur {$label}."
             );
         }
@@ -88,6 +92,7 @@ class CircuitBreakerService
         if ($state === self::STATE_HALF_OPEN) {
             $this->openCircuit($provider);
             Log::warning("CircuitBreaker [{$provider}]: HALF_OPEN → OPEN (échec du test)");
+
             return;
         }
 
@@ -147,7 +152,7 @@ class CircuitBreakerService
     {
         $key = $this->cacheKey($provider, 'failures');
 
-        if (!Cache::has($key)) {
+        if (! Cache::has($key)) {
             Cache::put($key, 0, self::FAILURE_WINDOW);
         }
 
@@ -167,9 +172,9 @@ class CircuitBreakerService
     private function providerLabel(string $provider): string
     {
         return match ($provider) {
-            'wave'         => 'Wave',
+            'wave' => 'Wave',
             'orange_money' => 'Orange Money',
-            default        => $provider,
+            default => $provider,
         };
     }
 }

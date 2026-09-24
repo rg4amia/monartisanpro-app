@@ -6,8 +6,8 @@ vi.mock('@inertiajs/react', () => ({
     router: { post: (...args: unknown[]) => routerPost(...args) },
 }));
 
-import { DocumentsReportsSection } from './DocumentsReportsSection';
 import type { GeneratedDocumentItem, Paginated } from '../shared';
+import { DocumentsReportsSection } from './DocumentsReportsSection';
 
 function makeDoc(overrides: Partial<GeneratedDocumentItem> = {}): GeneratedDocumentItem {
     return {

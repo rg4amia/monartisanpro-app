@@ -12,10 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('orders', function (Blueprint $table) {
-            if (!Schema::hasColumn('orders', 'order_group_id')) {
+            if (! Schema::hasColumn('orders', 'order_group_id')) {
                 $table->string('order_group_id', 64)->nullable()->after('id')->index();
             }
-            if (!Schema::hasColumn('orders', 'is_parent_group')) {
+            if (! Schema::hasColumn('orders', 'is_parent_group')) {
                 $table->boolean('is_parent_group')->default(false)->after('order_group_id');
             }
         });

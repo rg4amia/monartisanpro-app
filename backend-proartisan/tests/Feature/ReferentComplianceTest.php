@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Models\Jalon;
 use App\Models\Mission;
 use App\Models\User;
+use App\Services\JalonService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Tests\TestCase;
@@ -51,7 +52,7 @@ class ReferentComplianceTest extends TestCase
         ]);
 
         $this->actingAs($referent)
-            ->post('/api/v1/missions/' . $mission->id . '/referent-validate', [
+            ->post('/api/v1/missions/'.$mission->id.'/referent-validate', [
                 'latitude' => 5.31,
                 'longitude' => -4.0,
                 'notes' => 'Trop loin du chantier',
@@ -105,7 +106,7 @@ class ReferentComplianceTest extends TestCase
         ]);
 
         $this->actingAs($referent)
-            ->post('/api/v1/missions/' . $mission->id . '/referent-validate', [
+            ->post('/api/v1/missions/'.$mission->id.'/referent-validate', [
                 'latitude' => 5.3,
                 'longitude' => -4.0,
                 'notes' => 'Présence confirmée sur site',
@@ -148,7 +149,7 @@ class ReferentComplianceTest extends TestCase
             'statut' => 'soumis',
         ]);
 
-        app(\App\Services\JalonService::class)->forceRelease($jalon);
+        app(JalonService::class)->forceRelease($jalon);
 
         // La libération automatique à 72h ne doit jamais court-circuiter le
         // seuil référent : comme validateOtp()/acceptProofs(), le jalon passe
@@ -183,7 +184,7 @@ class ReferentComplianceTest extends TestCase
             'statut' => 'soumis',
         ]);
 
-        app(\App\Services\JalonService::class)->forceRelease($jalon);
+        app(JalonService::class)->forceRelease($jalon);
 
         // La libération débite le wallet_mo réservé (10 000) vers le paiement réel.
         $this->assertSame('paye', $jalon->fresh()->statut);

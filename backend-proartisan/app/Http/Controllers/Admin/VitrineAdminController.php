@@ -3,16 +3,19 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
-use App\Models\Vitrine\VitrineSlide;
-use App\Models\Vitrine\VitrineArtisanDuMois;
+use App\Models\ContactMessage;
 use App\Models\Vitrine\VitrineArticle;
-use App\Models\Vitrine\VitrineVideo;
+use App\Models\Vitrine\VitrineArtisanDuMois;
 use App\Models\Vitrine\VitrineFormation;
-use App\Models\Vitrine\VitrineRecrutement;
 use App\Models\Vitrine\VitrinePopup;
+use App\Models\Vitrine\VitrineRecrutement;
 use App\Models\Vitrine\VitrineSetting;
+use App\Models\Vitrine\VitrineSlide;
+use App\Models\Vitrine\VitrineVideo;
+use Carbon\Carbon;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class VitrineAdminController extends Controller
@@ -37,7 +40,7 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $path = $request->file('image')->store('vitrine/slides', 'public');
-                $validated['image_url'] = '/storage/' . $path;
+                $validated['image_url'] = '/storage/'.$path;
             }
 
             unset($validated['image']);
@@ -48,8 +51,9 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Slide créé avec succès.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur storeSlide: ' . $e->getMessage());
-            return back()->withErrors(['slide' => 'Impossible de créer le slide : ' . $e->getMessage()]);
+            Log::error('Erreur storeSlide: '.$e->getMessage());
+
+            return back()->withErrors(['slide' => 'Impossible de créer le slide : '.$e->getMessage()]);
         }
     }
 
@@ -69,7 +73,7 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $path = $request->file('image')->store('vitrine/slides', 'public');
-                $validated['image_url'] = '/storage/' . $path;
+                $validated['image_url'] = '/storage/'.$path;
             }
 
             unset($validated['image']);
@@ -84,14 +88,16 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Slide mis à jour.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur updateSlide: ' . $e->getMessage());
-            return back()->withErrors(['slide' => 'Impossible de mettre à jour le slide : ' . $e->getMessage()]);
+            Log::error('Erreur updateSlide: '.$e->getMessage());
+
+            return back()->withErrors(['slide' => 'Impossible de mettre à jour le slide : '.$e->getMessage()]);
         }
     }
 
     public function destroySlide(VitrineSlide $slide): RedirectResponse
     {
         $slide->delete();
+
         return back()->with('success', 'Slide supprimé.');
     }
 
@@ -113,7 +119,7 @@ class VitrineAdminController extends Controller
 
             $moisInput = $request->input('mois');
             try {
-                $parsedMois = \Carbon\Carbon::parse($moisInput)->startOfMonth()->toDateString();
+                $parsedMois = Carbon::parse($moisInput)->startOfMonth()->toDateString();
             } catch (\Throwable $e) {
                 $parsedMois = now()->startOfMonth()->toDateString();
             }
@@ -122,7 +128,7 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('photo') && $request->file('photo')->isValid()) {
                 $path = $request->file('photo')->store('vitrine/artisans', 'public');
-                $photoOverrideUrl = '/storage/' . $path;
+                $photoOverrideUrl = '/storage/'.$path;
             }
 
             $actif = $request->has('actif') ? $request->boolean('actif') : true;
@@ -139,14 +145,16 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Artisan du mois configuré avec succès.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur storeArtisanDuMois: ' . $e->getMessage());
-            return back()->withErrors(['artisan_du_mois' => 'Impossible de configurer l\'artisan du mois : ' . $e->getMessage()]);
+            Log::error('Erreur storeArtisanDuMois: '.$e->getMessage());
+
+            return back()->withErrors(['artisan_du_mois' => 'Impossible de configurer l\'artisan du mois : '.$e->getMessage()]);
         }
     }
 
     public function destroyArtisanDuMois(VitrineArtisanDuMois $adm): RedirectResponse
     {
         $adm->delete();
+
         return back()->with('success', 'Artisan du mois supprimé.');
     }
 
@@ -168,13 +176,13 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $path = $request->file('image')->store('vitrine/articles', 'public');
-                $validated['image_url'] = '/storage/' . $path;
+                $validated['image_url'] = '/storage/'.$path;
             }
 
             unset($validated['image']);
 
             $validated['auteur_id'] = $request->user()->id;
-            $validated['slug'] = Str::slug($validated['titre']) . '-' . Str::random(5);
+            $validated['slug'] = Str::slug($validated['titre']).'-'.Str::random(5);
             $validated['publie'] = $request->has('publie') ? $request->boolean('publie') : true;
 
             if ($validated['publie']) {
@@ -185,8 +193,9 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Article créé avec succès.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur storeArticle: ' . $e->getMessage());
-            return back()->withErrors(['article' => 'Impossible de créer l\'article : ' . $e->getMessage()]);
+            Log::error('Erreur storeArticle: '.$e->getMessage());
+
+            return back()->withErrors(['article' => 'Impossible de créer l\'article : '.$e->getMessage()]);
         }
     }
 
@@ -204,16 +213,16 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $path = $request->file('image')->store('vitrine/articles', 'public');
-                $validated['image_url'] = '/storage/' . $path;
+                $validated['image_url'] = '/storage/'.$path;
             }
 
             unset($validated['image']);
 
             if ($request->has('publie')) {
                 $validated['publie'] = $request->boolean('publie');
-                if ($validated['publie'] && !$article->publie) {
+                if ($validated['publie'] && ! $article->publie) {
                     $validated['publie_at'] = now();
-                } elseif (!$validated['publie']) {
+                } elseif (! $validated['publie']) {
                     $validated['publie_at'] = null;
                 }
             }
@@ -222,14 +231,16 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Article mis à jour.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur updateArticle: ' . $e->getMessage());
-            return back()->withErrors(['article' => 'Impossible de mettre à jour l\'article : ' . $e->getMessage()]);
+            Log::error('Erreur updateArticle: '.$e->getMessage());
+
+            return back()->withErrors(['article' => 'Impossible de mettre à jour l\'article : '.$e->getMessage()]);
         }
     }
 
     public function destroyArticle(VitrineArticle $article): RedirectResponse
     {
         $article->delete();
+
         return back()->with('success', 'Article supprimé.');
     }
 
@@ -253,7 +264,7 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('thumbnail') && $request->file('thumbnail')->isValid()) {
                 $path = $request->file('thumbnail')->store('vitrine/videos', 'public');
-                $validated['thumbnail_url'] = '/storage/' . $path;
+                $validated['thumbnail_url'] = '/storage/'.$path;
             } elseif (empty($validated['thumbnail_url'])) {
                 $validated['thumbnail_url'] = $this->extractYoutubeThumbnail($validated['video_url'] ?? '');
             }
@@ -266,8 +277,9 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Vidéo ajoutée.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur storeVideo: ' . $e->getMessage());
-            return back()->withErrors(['video' => 'Impossible d\'ajouter la vidéo : ' . $e->getMessage()]);
+            Log::error('Erreur storeVideo: '.$e->getMessage());
+
+            return back()->withErrors(['video' => 'Impossible d\'ajouter la vidéo : '.$e->getMessage()]);
         }
     }
 
@@ -287,7 +299,7 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('thumbnail') && $request->file('thumbnail')->isValid()) {
                 $path = $request->file('thumbnail')->store('vitrine/videos', 'public');
-                $validated['thumbnail_url'] = '/storage/' . $path;
+                $validated['thumbnail_url'] = '/storage/'.$path;
             } elseif (empty($validated['thumbnail_url']) && empty($video->thumbnail_url)) {
                 $validated['thumbnail_url'] = $this->extractYoutubeThumbnail($validated['video_url'] ?? '');
             }
@@ -304,23 +316,28 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Vidéo mise à jour.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur updateVideo: ' . $e->getMessage());
-            return back()->withErrors(['video' => 'Impossible de mettre à jour la vidéo : ' . $e->getMessage()]);
+            Log::error('Erreur updateVideo: '.$e->getMessage());
+
+            return back()->withErrors(['video' => 'Impossible de mettre à jour la vidéo : '.$e->getMessage()]);
         }
     }
 
     private function extractYoutubeThumbnail(?string $url): ?string
     {
-        if (!$url) return null;
-        if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{11})/', $url, $matches)) {
-            return 'https://img.youtube.com/vi/' . $matches[1] . '/hqdefault.jpg';
+        if (! $url) {
+            return null;
         }
+        if (preg_match('/(?:youtu\.be\/|youtube\.com\/(?:watch\?v=|embed\/|v\/|shorts\/))([\w-]{11})/', $url, $matches)) {
+            return 'https://img.youtube.com/vi/'.$matches[1].'/hqdefault.jpg';
+        }
+
         return null;
     }
 
     public function destroyVideo(VitrineVideo $video): RedirectResponse
     {
         $video->delete();
+
         return back()->with('success', 'Vidéo supprimée.');
     }
 
@@ -348,7 +365,7 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $path = $request->file('image')->store('vitrine/formations', 'public');
-                $validated['image_url'] = '/storage/' . $path;
+                $validated['image_url'] = '/storage/'.$path;
             }
 
             unset($validated['image']);
@@ -362,8 +379,9 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Formation créée.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur storeFormation: ' . $e->getMessage());
-            return back()->withErrors(['formation' => 'Impossible de créer la formation : ' . $e->getMessage()]);
+            Log::error('Erreur storeFormation: '.$e->getMessage());
+
+            return back()->withErrors(['formation' => 'Impossible de créer la formation : '.$e->getMessage()]);
         }
     }
 
@@ -387,7 +405,7 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $path = $request->file('image')->store('vitrine/formations', 'public');
-                $validated['image_url'] = '/storage/' . $path;
+                $validated['image_url'] = '/storage/'.$path;
             }
 
             unset($validated['image']);
@@ -409,14 +427,16 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Formation mise à jour.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur updateFormation: ' . $e->getMessage());
-            return back()->withErrors(['formation' => 'Impossible de mettre à jour la formation : ' . $e->getMessage()]);
+            Log::error('Erreur updateFormation: '.$e->getMessage());
+
+            return back()->withErrors(['formation' => 'Impossible de mettre à jour la formation : '.$e->getMessage()]);
         }
     }
 
     public function destroyFormation(VitrineFormation $formation): RedirectResponse
     {
         $formation->delete();
+
         return back()->with('success', 'Formation supprimée.');
     }
 
@@ -444,8 +464,9 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Offre de recrutement publiée.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur storeRecrutement: ' . $e->getMessage());
-            return back()->withErrors(['recrutement' => 'Impossible de publier l\'offre : ' . $e->getMessage()]);
+            Log::error('Erreur storeRecrutement: '.$e->getMessage());
+
+            return back()->withErrors(['recrutement' => 'Impossible de publier l\'offre : '.$e->getMessage()]);
         }
     }
 
@@ -471,14 +492,16 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Offre de recrutement mise à jour.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur updateRecrutement: ' . $e->getMessage());
-            return back()->withErrors(['recrutement' => 'Impossible de mettre à jour l\'offre : ' . $e->getMessage()]);
+            Log::error('Erreur updateRecrutement: '.$e->getMessage());
+
+            return back()->withErrors(['recrutement' => 'Impossible de mettre à jour l\'offre : '.$e->getMessage()]);
         }
     }
 
     public function destroyRecrutement(VitrineRecrutement $recrutement): RedirectResponse
     {
         $recrutement->delete();
+
         return back()->with('success', 'Offre supprimée.');
     }
 
@@ -503,7 +526,7 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $path = $request->file('image')->store('vitrine/popups', 'public');
-                $validated['image_url'] = '/storage/' . $path;
+                $validated['image_url'] = '/storage/'.$path;
             }
 
             unset($validated['image']);
@@ -513,8 +536,9 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Popup promotionnel créé.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur storePopup: ' . $e->getMessage());
-            return back()->withErrors(['popup' => 'Impossible de créer le popup : ' . $e->getMessage()]);
+            Log::error('Erreur storePopup: '.$e->getMessage());
+
+            return back()->withErrors(['popup' => 'Impossible de créer le popup : '.$e->getMessage()]);
         }
     }
 
@@ -535,7 +559,7 @@ class VitrineAdminController extends Controller
 
             if ($request->hasFile('image') && $request->file('image')->isValid()) {
                 $path = $request->file('image')->store('vitrine/popups', 'public');
-                $validated['image_url'] = '/storage/' . $path;
+                $validated['image_url'] = '/storage/'.$path;
             }
 
             unset($validated['image']);
@@ -547,14 +571,16 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Popup mis à jour.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur updatePopup: ' . $e->getMessage());
-            return back()->withErrors(['popup' => 'Impossible de mettre à jour le popup : ' . $e->getMessage()]);
+            Log::error('Erreur updatePopup: '.$e->getMessage());
+
+            return back()->withErrors(['popup' => 'Impossible de mettre à jour le popup : '.$e->getMessage()]);
         }
     }
 
     public function destroyPopup(VitrinePopup $popup): RedirectResponse
     {
         $popup->delete();
+
         return back()->with('success', 'Popup supprimé.');
     }
 
@@ -630,8 +656,9 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Paramètres de la vitrine enregistrés.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur updateSettings: ' . $e->getMessage());
-            return back()->withErrors(['settings' => 'Impossible d\'enregistrer les paramètres : ' . $e->getMessage()]);
+            Log::error('Erreur updateSettings: '.$e->getMessage());
+
+            return back()->withErrors(['settings' => 'Impossible d\'enregistrer les paramètres : '.$e->getMessage()]);
         }
     }
 
@@ -639,7 +666,7 @@ class VitrineAdminController extends Controller
     // 9. GESTION DES CONTACTS & REQUÊTES
     // =========================================================================
 
-    public function updateContact(Request $request, \App\Models\ContactMessage $contact): RedirectResponse
+    public function updateContact(Request $request, ContactMessage $contact): RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -660,12 +687,13 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Statut de la demande mis à jour.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur updateContact: ' . $e->getMessage());
-            return back()->withErrors(['contact' => 'Impossible de mettre à jour la requête : ' . $e->getMessage()]);
+            Log::error('Erreur updateContact: '.$e->getMessage());
+
+            return back()->withErrors(['contact' => 'Impossible de mettre à jour la requête : '.$e->getMessage()]);
         }
     }
 
-    public function replyContact(Request $request, \App\Models\ContactMessage $contact): RedirectResponse
+    public function replyContact(Request $request, ContactMessage $contact): RedirectResponse
     {
         try {
             $validated = $request->validate([
@@ -681,14 +709,16 @@ class VitrineAdminController extends Controller
 
             return back()->with('success', 'Réponse enregistrée et requête marquée comme traitée.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur replyContact: ' . $e->getMessage());
-            return back()->withErrors(['contact' => 'Impossible d\'enregistrer la réponse : ' . $e->getMessage()]);
+            Log::error('Erreur replyContact: '.$e->getMessage());
+
+            return back()->withErrors(['contact' => 'Impossible d\'enregistrer la réponse : '.$e->getMessage()]);
         }
     }
 
-    public function destroyContact(\App\Models\ContactMessage $contact): RedirectResponse
+    public function destroyContact(ContactMessage $contact): RedirectResponse
     {
         $contact->delete();
+
         return back()->with('success', 'Demande de contact supprimée.');
     }
 }

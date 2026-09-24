@@ -98,7 +98,7 @@ class PermissionSeeder extends Seeder
                 'jcode.view', 'orders.create', 'orders.view',
                 'litige.create', 'litige.view', 'kyc.upload',
                 'evaluation.create', 'parrainage.create', 'parrainage.view',
-                'transactions.view'
+                'transactions.view',
             ],
             'artisan' => [
                 'mission.view', 'mission.update-status',
@@ -107,32 +107,32 @@ class PermissionSeeder extends Seeder
                 'jcode.create', 'jcode.view', 'jcode.upload-photo-materials',
                 'orders.create', 'orders.view', 'litige.create', 'litige.view',
                 'kyc.upload', 'parrainage.create', 'parrainage.view',
-                'micro-credit.apply', 'micro-credit.view', 'transactions.view'
+                'micro-credit.apply', 'micro-credit.view', 'transactions.view',
             ],
             'fournisseur' => [
                 'jcode.scan', 'jcode.view', 'orders.view', 'orders.manage',
                 'deliveries.manage', 'litige.view', 'kyc.upload',
-                'transactions.view', 'supplier.dashboard', 'supplier-products.manage'
+                'transactions.view', 'supplier.dashboard', 'supplier-products.manage',
             ],
             'referent' => [
                 'mission.view', 'mission.referent-validate',
                 'litige.view', 'litige.arbitrate', 'litige.vote',
-                'kyc.upload', 'transactions.view'
+                'kyc.upload', 'transactions.view',
             ],
             'livreur' => [
                 'orders.view', 'deliveries.manage', 'jcode.view',
-                'kyc.upload', 'transactions.view', 'parrainage.create', 'parrainage.view'
+                'kyc.upload', 'transactions.view', 'parrainage.create', 'parrainage.view',
             ],
             'driver' => [
                 'orders.view', 'deliveries.manage', 'jcode.view',
-                'kyc.upload', 'transactions.view', 'parrainage.create', 'parrainage.view'
+                'kyc.upload', 'transactions.view', 'parrainage.create', 'parrainage.view',
             ],
         ];
 
         // Insertion des associations role <-> permission
         foreach ($mappings as $role => $permNames) {
             $rolePermIds = Permission::whereIn('name', $permNames)->pluck('id');
-            
+
             // Nettoyer les anciennes associations
             DB::table('permission_role')->where('role', $role)->delete();
 

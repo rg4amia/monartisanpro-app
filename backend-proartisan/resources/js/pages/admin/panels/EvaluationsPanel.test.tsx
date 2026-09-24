@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { EvaluationsPanel } from './EvaluationsPanel';
 import type { AdminEvaluation, ArtisanScoreItem, EvaluationStats, Paginated } from '../shared';
+import { EvaluationsPanel } from './EvaluationsPanel';
 
 const stats: EvaluationStats = {
     evaluations_total: 20,

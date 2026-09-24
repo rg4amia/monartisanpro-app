@@ -33,8 +33,8 @@ class AutoReleaseJalonsCommand extends Command
     public function handle(): int
     {
         $delaiHeures = (int) config('prosartisan.jalon.force_release_delay_hours', 72);
-        $cutoff      = now()->subHours($delaiHeures);
-        $isDryRun    = $this->option('dry-run');
+        $cutoff = now()->subHours($delaiHeures);
+        $isDryRun = $this->option('dry-run');
 
         $this->info("=== Force-Pass Jalons (délai : {$delaiHeures}h) ===");
 
@@ -61,13 +61,14 @@ class AutoReleaseJalonsCommand extends Command
         $this->info("Jalons éligibles : {$jalons->count()}");
 
         $released = 0;
-        $skipped  = 0;
+        $skipped = 0;
 
         foreach ($jalons as $jalon) {
             $label = "Jalon #{$jalon->id} (Mission #{$jalon->mission_id}, Montant: {$jalon->montant} FCFA)";
 
             if ($isDryRun) {
                 $this->line("  [DRY-RUN] Serait libéré : {$label}");
+
                 continue;
             }
 
@@ -78,9 +79,9 @@ class AutoReleaseJalonsCommand extends Command
             } catch (\Throwable $e) {
                 $this->error("  ❌ Erreur sur {$label} : {$e->getMessage()}");
                 Log::error('[AutoReleaseJalons] Erreur de libération', [
-                    'jalon_id'   => $jalon->id,
+                    'jalon_id' => $jalon->id,
                     'mission_id' => $jalon->mission_id,
-                    'error'      => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
                 $skipped++;
             }
@@ -90,8 +91,8 @@ class AutoReleaseJalonsCommand extends Command
             $this->info("=== Résumé : {$released} libérés, {$skipped} erreurs ===");
             Log::info('[AutoReleaseJalons] Traitement terminé', [
                 'released' => $released,
-                'skipped'  => $skipped,
-                'delai_h'  => $delaiHeures,
+                'skipped' => $skipped,
+                'delai_h' => $delaiHeures,
             ]);
         }
 

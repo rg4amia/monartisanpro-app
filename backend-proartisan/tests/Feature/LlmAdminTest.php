@@ -2,11 +2,9 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
-use App\Models\StagingItem;
 use App\Models\ProductionItem;
-use App\Models\ImportHistory;
-use App\Models\LlmAttachment;
+use App\Models\StagingItem;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\Storage;
 use Tests\TestCase;
@@ -62,7 +60,7 @@ class LlmAdminTest extends TestCase
             'original_extracted_text' => 'Text content',
             'generated_json' => [
                 'title' => 'Approved Item',
-                'metadata' => ['tags_pathologies' => ['tag1', 'tag2']]
+                'metadata' => ['tags_pathologies' => ['tag1', 'tag2']],
             ],
             'status' => 'PENDING',
         ]);
@@ -74,7 +72,7 @@ class LlmAdminTest extends TestCase
         $this->assertSame('APPROVED', $staging->fresh()->status);
         $this->assertDatabaseHas('production_items', [
             'id' => 'stage-3',
-            'tags' => 'tag1,tag2'
+            'tags' => 'tag1,tag2',
         ]);
     }
 

@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests\SupplierProduct;
 
-use Illuminate\Foundation\Http\FormRequest;
-
 use App\Rules\NoContactInformation;
+use Illuminate\Foundation\Http\FormRequest;
 
 class StoreSupplierProductRequest extends FormRequest
 {
@@ -16,19 +15,19 @@ class StoreSupplierProductRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $merge = [];
-        if ($this->has('unitPrice') && !$this->has('unit_price')) {
+        if ($this->has('unitPrice') && ! $this->has('unit_price')) {
             $merge['unit_price'] = $this->unitPrice;
         }
-        if ($this->has('stockQuantity') && !$this->has('stock_quantity')) {
+        if ($this->has('stockQuantity') && ! $this->has('stock_quantity')) {
             $merge['stock_quantity'] = $this->stockQuantity;
         }
-        if ($this->has('imageUrl') && !$this->has('image_url')) {
+        if ($this->has('imageUrl') && ! $this->has('image_url')) {
             $merge['image_url'] = $this->imageUrl;
         }
-        if ($this->has('isActive') && !$this->has('is_active')) {
+        if ($this->has('isActive') && ! $this->has('is_active')) {
             $merge['is_active'] = $this->isActive;
         }
-        if (!empty($merge)) {
+        if (! empty($merge)) {
             $this->merge($merge);
         }
     }
@@ -36,9 +35,9 @@ class StoreSupplierProductRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'name' => ['required', 'string', 'min:2', 'max:150', new NoContactInformation()],
+            'name' => ['required', 'string', 'min:2', 'max:150', new NoContactInformation],
             'sku' => ['nullable', 'string', 'max:60'],
-            'description' => ['nullable', 'string', 'max:1000', new NoContactInformation()],
+            'description' => ['nullable', 'string', 'max:1000', new NoContactInformation],
             'unit_price' => ['required', 'integer', 'min:0'],
             'stock_quantity' => ['required', 'integer', 'min:0'],
             'image_url' => ['nullable', 'string', 'max:500'],

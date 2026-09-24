@@ -2,11 +2,20 @@
 
 namespace Tests\Feature;
 
+use App\Models\ArtisanStock;
 use App\Models\Devis;
+use App\Models\InterventionType;
 use App\Models\Mission;
-use App\Models\User;
+use App\Models\Sector;
+use App\Models\Setting;
+use App\Models\SupplierProduct;
+use App\Models\Trade;
 use App\Models\Transaction;
+use App\Models\User;
+use App\Services\DevisService;
+use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\TestCase;
 
 class DevisGestionRulesTest extends TestCase
@@ -14,7 +23,7 @@ class DevisGestionRulesTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function user(array $attributes = []): User
     {
@@ -62,7 +71,7 @@ class DevisGestionRulesTest extends TestCase
         $response2->assertStatus(422);
         $response2->assertJsonPath('success', false);
         $response2->assertJsonFragment([
-            'message' => 'Vous avez déjà soumis un devis pour cette mission. Vous devez attendre que le client le refuse ou l\'accepte.'
+            'message' => 'Vous avez déjà soumis un devis pour cette mission. Vous devez attendre que le client le refuse ou l\'accepte.',
         ]);
 
         // Refuse the first devis
@@ -147,7 +156,7 @@ class DevisGestionRulesTest extends TestCase
         $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
         $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
-        $diagnosticType = \App\Models\InterventionType::firstOrCreate(
+        $diagnosticType = InterventionType::firstOrCreate(
             ['name' => 'Déplacement / Diagnostic'],
             ['requires_labor' => true]
         );
@@ -236,7 +245,7 @@ class DevisGestionRulesTest extends TestCase
         $response2->assertStatus(422);
         $response2->assertJsonPath('success', false);
         $response2->assertJsonFragment([
-            'message' => "Cette mission a déjà un devis en cours d'examen par le client."
+            'message' => "Cette mission a déjà un devis en cours d'examen par le client.",
         ]);
 
         // 2. Try to update status of the mission - should fail (422)
@@ -341,12 +350,12 @@ class DevisGestionRulesTest extends TestCase
             ]);
         $response->assertStatus(422);
         $response->assertJsonFragment([
-            'message' => "Le devis doit contenir au moins un article d'un fournisseur agréé car l'acquisition de matériel est requise."
+            'message' => "Le devis doit contenir au moins un article d'un fournisseur agréé car l'acquisition de matériel est requise.",
         ]);
 
         // Create supplier and product
         $supplier = $this->user(['role' => 'fournisseur', 'kyc_status' => 'actif']);
-        $product = \App\Models\SupplierProduct::create([
+        $product = SupplierProduct::create([
             'supplier_id' => $supplier->id,
             'sku' => 'PROD-XYZ',
             'name' => 'Câble électrique',
@@ -393,11 +402,11 @@ class DevisGestionRulesTest extends TestCase
             ]);
         $response->assertStatus(422);
         $response->assertJsonFragment([
-            'message' => "Veuillez indiquer le type d'intervention pour ce devis sans matériel."
+            'message' => "Veuillez indiquer le type d'intervention pour ce devis sans matériel.",
         ]);
 
         // Create an intervention type that does not require labor (e.g. Consulting/Inspection)
-        $consultingType = \App\Models\InterventionType::create([
+        $consultingType = InterventionType::create([
             'name' => 'Diagnostic Gratuit',
             'requires_labor' => false,
         ]);
@@ -426,7 +435,7 @@ class DevisGestionRulesTest extends TestCase
         ]);
 
         // Declare artisan stock
-        $stockItem = \App\Models\ArtisanStock::create([
+        $stockItem = ArtisanStock::create([
             'artisan_id' => $artisan->id,
             'description' => 'Baguettes de soudure',
             'quantity' => 10,
@@ -435,7 +444,7 @@ class DevisGestionRulesTest extends TestCase
         ]);
 
         // 1. Try to use stock during the day -> should fail
-        \Illuminate\Support\Carbon::setTestNow('2026-08-07 10:00:00'); // 10h AM (Daytime)
+        Carbon::setTestNow('2026-08-07 10:00:00'); // 10h AM (Daytime)
         $responseDay = $this->actingAs($artisan)
             ->postJson("/api/v1/missions/{$mission->id}/devis", [
                 'materials_required' => false,
@@ -450,11 +459,11 @@ class DevisGestionRulesTest extends TestCase
             ]);
         $responseDay->assertStatus(422);
         $responseDay->assertJsonFragment([
-            'message' => "L'utilisation du stock de matériel de l'artisan est strictement réservée au mode nuit (18h-06h)."
+            'message' => "L'utilisation du stock de matériel de l'artisan est strictement réservée au mode nuit (18h-06h).",
         ]);
 
         // 2. Use stock during the night -> should succeed, inject condition, and apply specific commission
-        \Illuminate\Support\Carbon::setTestNow('2026-08-07 22:00:00'); // 10h PM (Night time)
+        Carbon::setTestNow('2026-08-07 22:00:00'); // 10h PM (Night time)
         $responseNight = $this->actingAs($artisan)
             ->postJson("/api/v1/missions/{$mission->id}/devis", [
                 'materials_required' => false,
@@ -478,7 +487,7 @@ class DevisGestionRulesTest extends TestCase
         // Let's assert the serialized montantMateriaux is 2100.
         $responseNight->assertJsonPath('data.montantMateriaux', 2100);
 
-        \Illuminate\Support\Carbon::setTestNow(); // Reset time
+        Carbon::setTestNow(); // Reset time
     }
 
     public function test_dynamic_labor_commission_based_on_artisan_trade(): void
@@ -488,8 +497,8 @@ class DevisGestionRulesTest extends TestCase
         $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         // 2. Set up Sector and Trade (e.g. Maçon)
-        $sector = \App\Models\Sector::create(['name' => 'Maçonnerie']);
-        $trade = \App\Models\Trade::create(['sector_id' => $sector->id, 'name' => 'Maçon gros œuvre']);
+        $sector = Sector::create(['name' => 'Maçonnerie']);
+        $trade = Trade::create(['sector_id' => $sector->id, 'name' => 'Maçon gros œuvre']);
 
         $artisan->artisanProfile()->create([
             'sector_id' => $sector->id,
@@ -500,11 +509,11 @@ class DevisGestionRulesTest extends TestCase
         // 3. Configure settings
         // Global: 10% (0.10)
         // Custom categories: {"macon": 0.05} (5%)
-        \App\Models\Setting::where('key', 'commission_service')->update(['value' => '0.10']);
-        \App\Models\Setting::where('key', 'commission_categories')->update(['value' => '{"macon": 0.05}']);
+        Setting::where('key', 'commission_service')->update(['value' => '0.10']);
+        Setting::where('key', 'commission_categories')->update(['value' => '{"macon": 0.05}']);
 
         // Test helper directly first
-        $this->assertEquals(0.05, \App\Models\Setting::getLaborCommissionForArtisan($artisan));
+        $this->assertEquals(0.05, Setting::getLaborCommissionForArtisan($artisan));
 
         // 4. Create a mission and submit a devis
         $mission = Mission::create([
@@ -550,7 +559,7 @@ class DevisGestionRulesTest extends TestCase
         $tx->save();
 
         // Call the service to accept
-        app(\App\Services\DevisService::class)->accept($devis, $tx);
+        app(DevisService::class)->accept($devis, $tx);
 
         // 8. Verify the created Jalon has 105000 as amount
         $jalon = $mission->jalons()->first();
@@ -561,7 +570,7 @@ class DevisGestionRulesTest extends TestCase
         $artisan->wallet_mo = 105000;
         $artisan->save();
 
-        app(\App\Services\WalletService::class)->releaseJalon($jalon);
+        app(WalletService::class)->releaseJalon($jalon);
 
         // Check platform net gain transaction: Net gain should be 105000 - 5000 = 100000.
         $this->assertDatabaseHas('transactions', [

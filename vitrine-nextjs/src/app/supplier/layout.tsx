@@ -7,13 +7,17 @@ import Link from 'next/link';
 export default function SupplierLayout({ children }: { children: React.ReactNode }) {
     const router = useRouter();
     const pathname = usePathname();
-    const [user, setUser] = useState<any>(null);
+    const [user, setUser] = useState<{ name?: string; phone?: string } | null>(null);
     const [loading, setLoading] = useState(true);
 
     const isLoginPage = pathname ? pathname.startsWith('/supplier/login') : false;
 
     useEffect(() => {
+        // Synchronisation post-montage avec localStorage (système externe) : la
+        // session n'existe pas au pré-rendu statique, la lire dès le premier
+        // rendu provoquerait un écart d'hydratation.
         if (isLoginPage) {
+            // eslint-disable-next-line react-hooks/set-state-in-effect
             setLoading(false);
             return;
         }

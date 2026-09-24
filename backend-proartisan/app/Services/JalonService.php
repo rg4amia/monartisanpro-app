@@ -4,10 +4,10 @@ namespace App\Services;
 
 use App\Models\Jalon;
 use App\States\Mission\DisputedState;
+use App\States\Mission\FundedLockedState;
+use App\States\Mission\InProgressState;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
-use Illuminate\Support\Facades\Http;
-use Illuminate\Support\Facades\Storage;
 
 class JalonService
 {
@@ -24,7 +24,7 @@ class JalonService
 
     public function submit(Jalon $jalon, array $photos = []): void
     {
-        if (!empty($photos)) {
+        if (! empty($photos)) {
             $jalon->update(['photos_json' => $photos]);
         }
 
@@ -32,11 +32,11 @@ class JalonService
 
         // Sauvegarde de l'analyse visuelle multimodale et du score sur le jalon
         $jalon->update([
-            'conformity_score'     => $analysis['conformity_score'] ?? null,
+            'conformity_score' => $analysis['conformity_score'] ?? null,
             'vision_analysis_json' => $analysis,
         ]);
 
-        if (!$analysis['approved'] || ($analysis['conformity_score'] !== null && $analysis['conformity_score'] < 40)) {
+        if (! $analysis['approved'] || ($analysis['conformity_score'] !== null && $analysis['conformity_score'] < 40)) {
             // Signalement automatique au centre anti-fraude
             $this->fraudService->recordVisionAnomaly($jalon, $analysis);
 
@@ -49,11 +49,11 @@ class JalonService
         $this->fraudService->analyzeMilestoneSubmission($jalon, $photos);
 
         $jalon->update([
-            'statut'      => 'soumis',
+            'statut' => 'soumis',
         ]);
 
-        if ($jalon->mission->status instanceof \App\States\Mission\FundedLockedState) {
-            $jalon->mission->status->transitionTo(\App\States\Mission\InProgressState::class);
+        if ($jalon->mission->status instanceof FundedLockedState) {
+            $jalon->mission->status->transitionTo(InProgressState::class);
         }
 
         // Notifier le client
@@ -82,12 +82,12 @@ class JalonService
             ]);
         }
 
-        $client  = $jalon->mission->client;
-        $otp     = $this->otpService->sendOtp($client->phone, null, $channel);
+        $client = $jalon->mission->client;
+        $otp = $this->otpService->sendOtp($client->phone, null, $channel);
         $expires = now()->addMinutes(config('prosartisan.otp.ttl', 5));
 
         $jalon->update([
-            'otp_code'       => $otp,
+            'otp_code' => $otp,
             'otp_expires_at' => $expires,
         ]);
     }
@@ -181,13 +181,13 @@ class JalonService
 
         Log::info("[ForceRelease] Libération automatique du jalon #{$jalon->id} (72h dépassées).", [
             'mission_id' => $jalon->mission_id,
-            'montant'    => $jalon->montant,
+            'montant' => $jalon->montant,
         ]);
 
         $jalon->update([
-            'statut'    => 'valide',
+            'statut' => 'valide',
             'valide_at' => now(),
-            'otp_code'  => null,
+            'otp_code' => null,
         ]);
 
         // RÈGLE CRITIQUE : le Force-Pass protège l'artisan d'un client inactif,
@@ -225,15 +225,16 @@ class JalonService
         }
 
         $jalon->update([
-            'statut'    => 'valide',
+            'statut' => 'valide',
             'valide_at' => now(),
-            'otp_code'  => null,
+            'otp_code' => null,
         ]);
 
         $seuil = config('prosartisan.mission.referent_threshold', 2000000);
         if ($jalon->mission->montant_total > $seuil) {
             $jalon->mission->update(['referent_required' => true]);
             Log::info("[Référent requis - Acceptation Directe] Mission #{$jalon->mission_id} > {$seuil} FCFA");
+
             return;
         }
 

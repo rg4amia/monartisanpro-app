@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
-import { PersonalDataModal } from './PersonalDataModal';
 import type { AdminUser, PersonalDataReport } from '../shared';
+import { PersonalDataModal } from './PersonalDataModal';
 
 const baseUser: AdminUser = {
     id: 12,

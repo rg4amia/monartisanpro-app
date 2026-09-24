@@ -33,7 +33,8 @@ class VitrinePopup extends Model
     public function scopeEnCours($query)
     {
         $now = now();
+
         return $query->where('date_debut', '<=', $now)
-                     ->where('date_fin', '>=', $now);
+            ->where('date_fin', '>=', $now);
     }
 }

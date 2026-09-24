@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AiQuotasPanel } from './AiQuotasPanel';
 import type { AiUserQuotaRow, Paginated } from '../shared';
+import { AiQuotasPanel } from './AiQuotasPanel';
 
 function makeRow(overrides: Partial<AiUserQuotaRow> = {}): AiUserQuotaRow {
     return {

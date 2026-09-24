@@ -24,7 +24,7 @@ class JCodeItemResource extends JsonResource
             'servedBySupplier' => $this->when(
                 $this->served_by_supplier_id !== null,
                 fn () => [
-                    'id'   => $this->served_by_supplier_id,
+                    'id' => $this->served_by_supplier_id,
                     'name' => $this->servedBySupplier?->name,
                 ]
             ),

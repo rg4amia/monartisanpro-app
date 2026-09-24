@@ -3,9 +3,9 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Services\GeminiService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class UploadController extends Controller
 {
@@ -18,13 +18,13 @@ class UploadController extends Controller
         $file = $request->file('file');
 
         // Analyse par l'IA Gemini pour interdire les coordonnées / adresses / localisation
-        $gemini = app(\App\Services\GeminiService::class);
+        $gemini = app(GeminiService::class);
         $analysis = $gemini->analyzeMediaForSensitiveData($file);
 
         if ($analysis['contains_sensitive_data']) {
             return response()->json([
                 'success' => false,
-                'message' => 'Fichier rejeté : ' . $analysis['details'],
+                'message' => 'Fichier rejeté : '.$analysis['details'],
             ], 422);
         }
 
@@ -37,12 +37,12 @@ class UploadController extends Controller
             $baseUrl = 'https://prosartisan.net';
         }
         $baseUrl = rtrim(str_replace('http://', 'https://', $baseUrl), '/');
-        $url = $baseUrl . '/storage/' . $path;
+        $url = $baseUrl.'/storage/'.$path;
 
         return response()->json([
             'success' => true,
             'message' => 'Fichier uploadé avec succès dans le dossier fileshare.',
-            'url'     => $url,
+            'url' => $url,
         ]);
     }
 }

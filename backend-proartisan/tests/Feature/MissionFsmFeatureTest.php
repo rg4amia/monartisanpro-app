@@ -13,7 +13,6 @@ use App\States\Mission\DisputedState;
 use App\States\Mission\DraftState;
 use App\States\Mission\FundedLockedState;
 use App\States\Mission\InProgressState;
-use App\States\Mission\PendingApprovalState;
 use App\States\Mission\PendingFundingState;
 use Spatie\ModelStates\Exceptions\TransitionNotFound;
 
@@ -52,7 +51,7 @@ describe('Persistance des transitions FSM', function () {
             'status' => DraftState::class,
         ]);
 
-        expect(fn() => $mission->status->transitionTo(InProgressState::class))
+        expect(fn () => $mission->status->transitionTo(InProgressState::class))
             ->toThrow(TransitionNotFound::class);
     });
 
@@ -121,4 +120,3 @@ describe('Guards de l\'état Mission', function () {
     });
 
 });
-

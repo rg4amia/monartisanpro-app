@@ -33,7 +33,7 @@ class VitrineRecrutement extends Model
     {
         return $query->where(function ($q) {
             $q->whereNull('date_limite')
-              ->orWhere('date_limite', '>=', now()->toDateString());
+                ->orWhere('date_limite', '>=', now()->toDateString());
         });
     }
 }

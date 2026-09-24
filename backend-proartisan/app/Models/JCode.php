@@ -13,16 +13,16 @@ class JCode extends Model
         'mission_id', 'artisan_id', 'fournisseur_id', 'code',
         'qr_url', 'ussd_code', 'montant', 'montant_consomme', 'statut', 'scanned_at', 'expires_at',
         'photo_materiaux_url', 'photo_latitude', 'photo_longitude', 'photo_taken_at',
-        'paiement_status', 'paye_at'
+        'paiement_status', 'paye_at',
     ];
 
     protected $hidden = ['position_scan'];
 
     protected $casts = [
-        'montant'           => 'integer',
-        'montant_consomme'  => 'integer',
-        'expires_at'        => 'datetime',
-        'scanned_at'        => 'datetime',
+        'montant' => 'integer',
+        'montant_consomme' => 'integer',
+        'expires_at' => 'datetime',
+        'scanned_at' => 'datetime',
         'photo_latitude' => 'float',
         'photo_longitude' => 'float',
         'photo_taken_at' => 'datetime',
@@ -100,11 +100,12 @@ class JCode extends Model
     {
         if (config('database.default') === 'sqlite') {
             $this->update(['position_scan' => "$lat,$lng"]);
+
             return;
         }
 
         DB::statement(
-            "UPDATE jcodes SET position_scan = POINT(?, ?) WHERE id = ?",
+            'UPDATE jcodes SET position_scan = POINT(?, ?) WHERE id = ?',
             [$lng, $lat, $this->id]
         );
     }

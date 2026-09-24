@@ -3,13 +3,16 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Http\Resources\MissionResource;
 use App\Models\Mission;
 use App\Services\GeoService;
-use App\Services\WalletService;
 use App\Services\NotificationService;
+use App\Services\WalletService;
+use App\States\Mission\FundedLockedState;
+use App\States\Mission\InProgressState;
+use App\States\Mission\PendingApprovalState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Log;
 
 class ReferentController extends Controller
 {
@@ -43,17 +46,17 @@ class ReferentController extends Controller
                 'funded_locked',
                 'in_progress',
                 'pending_approval',
-                \App\States\Mission\FundedLockedState::class,
-                \App\States\Mission\InProgressState::class,
-                \App\States\Mission\PendingApprovalState::class,
+                FundedLockedState::class,
+                InProgressState::class,
+                PendingApprovalState::class,
             ]);
 
         $lat = $request->filled('latitude') ? (float) $request->latitude : null;
         $lng = $request->filled('longitude') ? (float) $request->longitude : null;
 
         if ($lat !== null && $lng !== null && config('database.default') !== 'sqlite') {
-            $query->selectRaw("missions.*, CASE WHEN client_latitude IS NOT NULL AND client_longitude IS NOT NULL THEN ST_Distance_Sphere(POINT(client_longitude, client_latitude), POINT(?, ?)) ELSE NULL END as distance_metres", [$lng, $lat])
-                ->orderByRaw("distance_metres IS NULL, distance_metres ASC");
+            $query->selectRaw('missions.*, CASE WHEN client_latitude IS NOT NULL AND client_longitude IS NOT NULL THEN ST_Distance_Sphere(POINT(client_longitude, client_latitude), POINT(?, ?)) ELSE NULL END as distance_metres', [$lng, $lat])
+                ->orderByRaw('distance_metres IS NULL, distance_metres ASC');
         } else {
             $query->orderBy('created_at', 'desc');
         }
@@ -63,7 +66,7 @@ class ReferentController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => \App\Http\Resources\MissionResource::collection($missions->items()),
+            'data' => MissionResource::collection($missions->items()),
             'meta' => [
                 'total' => $missions->total(),
                 'current_page' => $missions->currentPage(),
@@ -95,11 +98,11 @@ class ReferentController extends Controller
         }
 
         $data = $request->validate([
-            'latitude'  => ['required', 'numeric', 'between:-90,90'],
+            'latitude' => ['required', 'numeric', 'between:-90,90'],
             'longitude' => ['required', 'numeric', 'between:-180,180'],
-            'photos'    => ['required', 'array', 'min:2'],
-            'photos.*'  => ['file', 'image', 'max:5120'],
-            'notes'     => ['nullable', 'string', 'max:1000'],
+            'photos' => ['required', 'array', 'min:2'],
+            'photos.*' => ['file', 'image', 'max:5120'],
+            'notes' => ['nullable', 'string', 'max:1000'],
         ]);
 
         $gpsCheck = $this->geoService->validateReferentMissionGps(

@@ -19,12 +19,12 @@ class ScanJCodeRequest extends FormRequest
             'lng' => ['required', 'numeric', 'between:-180,180'],
 
             // Items servis par le fournisseur lors de ce scan
-            'served_items'                   => ['nullable', 'array'],
-            'served_items.*.jcode_item_id'   => ['required', 'integer', 'exists:jcode_items,id'],
+            'served_items' => ['nullable', 'array'],
+            'served_items.*.jcode_item_id' => ['required', 'integer', 'exists:jcode_items,id'],
             'served_items.*.quantity_served' => ['required', 'integer', 'min:1'],
         ];
 
-        if ($user && !$user->payment_phone) {
+        if ($user && ! $user->payment_phone) {
             $rules['payment_phone'] = ['required', 'string', 'max:20'];
             $rules['preferred_payment_provider'] = ['required', 'in:wave,orange_money'];
         } else {
@@ -40,10 +40,10 @@ class ScanJCodeRequest extends FormRequest
         return [
             'lat.required' => 'La latitude GPS est obligatoire.',
             'lng.required' => 'La longitude GPS est obligatoire.',
-            'lat.numeric'  => 'La latitude doit être un nombre.',
-            'lng.numeric'  => 'La longitude doit être un nombre.',
-            'lat.between'  => 'La latitude est invalide.',
-            'lng.between'  => 'La longitude est invalide.',
+            'lat.numeric' => 'La latitude doit être un nombre.',
+            'lng.numeric' => 'La longitude doit être un nombre.',
+            'lat.between' => 'La latitude est invalide.',
+            'lng.between' => 'La longitude est invalide.',
         ];
     }
 }

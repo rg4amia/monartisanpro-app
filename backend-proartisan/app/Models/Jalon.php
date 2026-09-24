@@ -15,13 +15,13 @@ class Jalon extends Model
     protected function casts(): array
     {
         return [
-            'montant'              => 'integer',
-            'photos_json'          => 'array',
-            'conformity_score'     => 'integer',
+            'montant' => 'integer',
+            'photos_json' => 'array',
+            'conformity_score' => 'integer',
             'vision_analysis_json' => 'array',
-            'otp_expires_at'       => 'datetime',
-            'valide_at'            => 'datetime',
-            'paye_at'              => 'datetime',
+            'otp_expires_at' => 'datetime',
+            'valide_at' => 'datetime',
+            'paye_at' => 'datetime',
         ];
     }
 

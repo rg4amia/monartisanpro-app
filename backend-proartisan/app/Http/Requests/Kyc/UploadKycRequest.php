@@ -22,9 +22,9 @@ class UploadKycRequest extends FormRequest
     {
         return [
             'file.required' => 'Le fichier est obligatoire.',
-            'file.image'    => 'Le fichier doit être une image.',
-            'file.mimes'    => 'Formats acceptés : JPEG, JPG, PNG.',
-            'file.max'      => 'La taille du fichier ne doit pas dépasser 5 Mo.',
+            'file.image' => 'Le fichier doit être une image.',
+            'file.mimes' => 'Formats acceptés : JPEG, JPG, PNG.',
+            'file.max' => 'La taille du fichier ne doit pas dépasser 5 Mo.',
         ];
     }
 }

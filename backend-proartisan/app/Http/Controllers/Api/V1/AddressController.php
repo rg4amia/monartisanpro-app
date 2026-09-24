@@ -13,9 +13,7 @@ use Illuminate\Http\Request;
 
 class AddressController extends Controller
 {
-    public function __construct(private AddressService $addressService)
-    {
-    }
+    public function __construct(private AddressService $addressService) {}
 
     /**
      * Carnet d'adresses du client connecté.

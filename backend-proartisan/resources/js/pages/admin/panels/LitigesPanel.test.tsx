@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { LitigesPanel } from './LitigesPanel';
 import type { LitigeItem, LitigeStats, Paginated } from '../shared';
+import { LitigesPanel } from './LitigesPanel';
 
 const stats: LitigeStats = { open: 3, resolved: 12, high_risk: 1, missions_disputed: 3 };
 

@@ -24,8 +24,8 @@ class Otp extends Model
     {
         return [
             'expires_at' => 'datetime',
-            'used_at'    => 'datetime',
-            'attempts'   => 'integer',
+            'used_at' => 'datetime',
+            'attempts' => 'integer',
         ];
     }
 

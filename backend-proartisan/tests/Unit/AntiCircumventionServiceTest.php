@@ -15,15 +15,15 @@ class AntiCircumventionServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new AntiCircumventionService();
+        $this->service = new AntiCircumventionService;
     }
 
     public function test_it_redacts_phone_numbers_before_funding(): void
     {
-        $mission = new Mission();
+        $mission = new Mission;
         $mission->status = new DraftState($mission);
 
-        $content = "Bonjour, appelle-moi au 07 01 02 03 04 pour caler le passage.";
+        $content = 'Bonjour, appelle-moi au 07 01 02 03 04 pour caler le passage.';
         $result = $this->service->inspectAndFilter($content, $mission);
 
         $this->assertTrue($result['is_redacted']);
@@ -34,10 +34,10 @@ class AntiCircumventionServiceTest extends TestCase
 
     public function test_it_redacts_circumvention_keywords_before_funding(): void
     {
-        $mission = new Mission();
+        $mission = new Mission;
         $mission->status = new DraftState($mission);
 
-        $content = "On peut faire ça en direct sans problème.";
+        $content = 'On peut faire ça en direct sans problème.';
         $result = $this->service->inspectAndFilter($content, $mission);
 
         $this->assertTrue($result['is_redacted']);
@@ -47,10 +47,10 @@ class AntiCircumventionServiceTest extends TestCase
 
     public function test_it_allows_numbers_and_text_freely_after_funding(): void
     {
-        $mission = new Mission();
+        $mission = new Mission;
         $mission->status = new InProgressState($mission);
 
-        $content = "Je suis au portail, contactez-moi au 0701020304 si besoin.";
+        $content = 'Je suis au portail, contactez-moi au 0701020304 si besoin.';
         $result = $this->service->inspectAndFilter($content, $mission);
 
         $this->assertFalse($result['is_redacted']);
@@ -59,10 +59,10 @@ class AntiCircumventionServiceTest extends TestCase
 
     public function test_it_does_not_flag_standard_construction_terms(): void
     {
-        $mission = new Mission();
+        $mission = new Mission;
         $mission->status = new DraftState($mission);
 
-        $content = "Pouvez-vous me confirmer le diamètre des tuyaux en PVC et la couleur de la peinture ?";
+        $content = 'Pouvez-vous me confirmer le diamètre des tuyaux en PVC et la couleur de la peinture ?';
         $result = $this->service->inspectAndFilter($content, $mission);
 
         $this->assertFalse($result['is_redacted']);

@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class ImportHistory extends Model
 {
     protected $table = 'import_history';
-    
+
     public $incrementing = false;
+
     protected $keyType = 'string';
-    
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -20,7 +21,7 @@ class ImportHistory extends Model
         'imported_at',
         'status',
         'vlm_extracted',
-        'llm_downscaled'
+        'llm_downscaled',
     ];
 
     protected $casts = [

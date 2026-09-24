@@ -3,16 +3,15 @@
 namespace Database\Seeders;
 
 use App\Models\User;
-use App\Models\Vitrine\VitrineSlide;
-use App\Models\Vitrine\VitrineArtisanDuMois;
 use App\Models\Vitrine\VitrineArticle;
-use App\Models\Vitrine\VitrineVideo;
+use App\Models\Vitrine\VitrineArtisanDuMois;
 use App\Models\Vitrine\VitrineFormation;
-use App\Models\Vitrine\VitrineRecrutement;
 use App\Models\Vitrine\VitrinePopup;
+use App\Models\Vitrine\VitrineRecrutement;
 use App\Models\Vitrine\VitrineSetting;
+use App\Models\Vitrine\VitrineSlide;
+use App\Models\Vitrine\VitrineVideo;
 use Illuminate\Database\Seeder;
-use Illuminate\Support\Str;
 
 class VitrineSeeder extends Seeder
 {

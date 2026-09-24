@@ -9,6 +9,7 @@ use Illuminate\Support\Facades\Log;
 class OsrmRoutingService
 {
     private const AVERAGE_CITY_SPEED_KMH = 25.0; // Vitesse moyenne en agglomération ivoirienne
+
     private const URBAN_WINDING_FACTOR = 1.3;   // Facteur de sinuosité urbaine
 
     private string $baseUrl;
@@ -39,7 +40,7 @@ class OsrmRoutingService
 
             if ($response->successful()) {
                 $data = $response->json();
-                if (!empty($data['routes'][0])) {
+                if (! empty($data['routes'][0])) {
                     $route = $data['routes'][0];
                     $distanceMeters = $route['distance'] ?? 0;
                     $durationSeconds = $route['duration'] ?? 0;
@@ -49,20 +50,20 @@ class OsrmRoutingService
                     $durationMin = round($durationSeconds / 60, 1);
 
                     return [
-                        'distance_km'      => $distanceKm,
-                        'duration_min'     => $durationMin,
+                        'distance_km' => $distanceKm,
+                        'duration_min' => $durationMin,
                         'duration_minutes' => $durationMin,
-                        'eta'              => Carbon::now()->addSeconds((int) $durationSeconds)->toIso8601String(),
-                        'geometry'         => $geometry,
-                        'coordinates'      => $geometry,
-                        'is_fallback'      => false,
-                        'provider'         => 'osrm',
-                        'source'           => 'osrm',
+                        'eta' => Carbon::now()->addSeconds((int) $durationSeconds)->toIso8601String(),
+                        'geometry' => $geometry,
+                        'coordinates' => $geometry,
+                        'is_fallback' => false,
+                        'provider' => 'osrm',
+                        'source' => 'osrm',
                     ];
                 }
             }
         } catch (\Throwable $e) {
-            Log::warning("[OsrmRoutingService] Échec appel OSRM : " . $e->getMessage() . " — Bascule sur le repli résilient.");
+            Log::warning('[OsrmRoutingService] Échec appel OSRM : '.$e->getMessage().' — Bascule sur le repli résilient.');
         }
 
         // Repli résilient : Calcul Haversine avec facteur de sinuosité
@@ -82,21 +83,21 @@ class OsrmRoutingService
         $durationMin = max(5.0, $durationMin); // Minimum 5 minutes forfaitaires
 
         return [
-            'distance_km'      => $roadDistanceKm,
-            'duration_min'     => $durationMin,
+            'distance_km' => $roadDistanceKm,
+            'duration_min' => $durationMin,
             'duration_minutes' => $durationMin,
-            'eta'              => Carbon::now()->addMinutes((int) round($durationMin))->toIso8601String(),
-            'geometry'         => [
+            'eta' => Carbon::now()->addMinutes((int) round($durationMin))->toIso8601String(),
+            'geometry' => [
                 [$fromLng, $fromLat],
                 [$toLng, $toLat],
             ],
-            'coordinates'      => [
+            'coordinates' => [
                 [$fromLng, $fromLat],
                 [$toLng, $toLat],
             ],
-            'is_fallback'      => true,
-            'provider'         => 'haversine_fallback',
-            'source'           => 'haversine_estimate',
+            'is_fallback' => true,
+            'provider' => 'haversine_fallback',
+            'source' => 'haversine_estimate',
         ];
     }
 

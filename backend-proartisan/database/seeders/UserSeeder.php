@@ -6,6 +6,7 @@ use App\Models\ArtisanProfile;
 use App\Models\Commune;
 use App\Models\FournisseurAgree;
 use App\Models\Sector;
+use App\Models\SupplierProduct;
 use App\Models\Trade;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -21,10 +22,10 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['phone' => '+2250000000000'],
             [
-                'email'      => 'admin@prosartisan.ci',
-                'name'       => 'Administrateur ProsArtisan',
-                'password'   => Hash::make('admin123'),
-                'role'       => 'admin',
+                'email' => 'admin@prosartisan.ci',
+                'name' => 'Administrateur ProsArtisan',
+                'password' => Hash::make('admin123'),
+                'role' => 'admin',
                 'kyc_status' => 'actif',
             ]
         );
@@ -36,10 +37,10 @@ class UserSeeder extends Seeder
         $client = User::updateOrCreate(
             ['phone' => '+2250100000001'],
             [
-                'email'      => 'adjoua.kouassi@prosartisan.ci',
-                'name'       => 'Adjoua Kouassi',
-                'password'   => Hash::make('client123'),
-                'role'       => 'client',
+                'email' => 'adjoua.kouassi@prosartisan.ci',
+                'name' => 'Adjoua Kouassi',
+                'password' => Hash::make('client123'),
+                'role' => 'client',
                 'kyc_status' => 'actif',
                 'commune_id' => $plateau?->id,
             ]
@@ -49,18 +50,18 @@ class UserSeeder extends Seeder
 
         // ── Artisans test ─────────────────────────────────────────────────────
         $electriciteSector = Sector::where('name', 'Électricité')->first();
-        $electricienTrade  = Trade::where('name', 'Électricien bâtiment')->first();
+        $electricienTrade = Trade::where('name', 'Électricien bâtiment')->first();
 
         $artisan1 = User::updateOrCreate(
             ['phone' => '+2250200000001'],
             [
-                'email'          => 'kouame.bah@prosartisan.ci',
-                'name'           => 'Kouamé Bah',
-                'password'       => Hash::make('artisan123'),
-                'role'           => 'artisan',
-                'kyc_status'     => 'actif',
-                'score_prosartisan'   => 78,
-                'commune_id'     => $plateau?->id,
+                'email' => 'kouame.bah@prosartisan.ci',
+                'name' => 'Kouamé Bah',
+                'password' => Hash::make('artisan123'),
+                'role' => 'artisan',
+                'kyc_status' => 'actif',
+                'score_prosartisan' => 78,
+                'commune_id' => $plateau?->id,
             ]
         );
         $artisan1->setPosition(5.3560, -4.0076);
@@ -68,26 +69,26 @@ class UserSeeder extends Seeder
         ArtisanProfile::updateOrCreate(
             ['user_id' => $artisan1->id],
             [
-                'sector_id'        => $electriciteSector?->id,
-                'trade_id'         => $electricienTrade?->id,
-                'bio'              => 'Électricien certifié avec 8 ans d\'expérience en bâtiment résidentiel et commercial.',
+                'sector_id' => $electriciteSector?->id,
+                'trade_id' => $electricienTrade?->id,
+                'bio' => 'Électricien certifié avec 8 ans d\'expérience en bâtiment résidentiel et commercial.',
                 'experience_years' => 8,
             ]
         );
 
         $plomberieSector = Sector::where('name', 'Plomberie')->first();
-        $plombierTrade   = Trade::where('name', 'Plombier sanitaire')->first();
+        $plombierTrade = Trade::where('name', 'Plombier sanitaire')->first();
 
         $artisan2 = User::updateOrCreate(
             ['phone' => '+2250200000002'],
             [
-                'email'          => 'issa.traore@prosartisan.ci',
-                'name'           => 'Issa Traoré',
-                'password'       => Hash::make('artisan123'),
-                'role'           => 'artisan',
-                'kyc_status'     => 'actif',
-                'score_prosartisan'   => 65,
-                'commune_id'     => $plateau?->id,
+                'email' => 'issa.traore@prosartisan.ci',
+                'name' => 'Issa Traoré',
+                'password' => Hash::make('artisan123'),
+                'role' => 'artisan',
+                'kyc_status' => 'actif',
+                'score_prosartisan' => 65,
+                'commune_id' => $plateau?->id,
             ]
         );
         $artisan2->setPosition(5.3590, -4.0100);
@@ -95,9 +96,9 @@ class UserSeeder extends Seeder
         ArtisanProfile::updateOrCreate(
             ['user_id' => $artisan2->id],
             [
-                'sector_id'        => $plomberieSector?->id,
-                'trade_id'         => $plombierTrade?->id,
-                'bio'              => 'Plombier sanitaire spécialisé dans les installations neuves et la rénovation.',
+                'sector_id' => $plomberieSector?->id,
+                'trade_id' => $plombierTrade?->id,
+                'bio' => 'Plombier sanitaire spécialisé dans les installations neuves et la rénovation.',
                 'experience_years' => 5,
             ]
         );
@@ -106,10 +107,10 @@ class UserSeeder extends Seeder
         $fournisseur = User::updateOrCreate(
             ['phone' => '+2250300000001'],
             [
-                'email'      => 'yao.koffi@prosartisan.ci',
-                'name'       => 'Yao Koffi',
-                'password'   => Hash::make('fourn123'),
-                'role'       => 'fournisseur',
+                'email' => 'yao.koffi@prosartisan.ci',
+                'name' => 'Yao Koffi',
+                'password' => Hash::make('fourn123'),
+                'role' => 'fournisseur',
                 'kyc_status' => 'actif',
                 'commune_id' => $yopougon?->id,
             ]
@@ -120,17 +121,17 @@ class UserSeeder extends Seeder
         if ($fournisseurAgree) {
             $fournisseurAgree->update([
                 'nom_boutique' => "Quincaillerie de l'Espoir",
-                'statut'       => 'agree',
-                'approuve_at'  => now(),
+                'statut' => 'agree',
+                'approuve_at' => now(),
             ]);
         } else {
             if (config('database.default') === 'sqlite') {
                 $fournisseurAgree = FournisseurAgree::create([
-                    'user_id'      => $fournisseur->id,
+                    'user_id' => $fournisseur->id,
                     'nom_boutique' => "Quincaillerie de l'Espoir",
-                    'statut'       => 'agree',
-                    'approuve_at'  => now(),
-                    'position'     => '5.3300,-4.0620',
+                    'statut' => 'agree',
+                    'approuve_at' => now(),
+                    'position' => '5.3300,-4.0620',
                 ]);
             } else {
                 DB::statement(
@@ -149,16 +150,16 @@ class UserSeeder extends Seeder
         User::updateOrCreate(
             ['phone' => '+2250400000001'],
             [
-                'email'      => 'seraphin.dioulo@prosartisan.ci',
-                'name'       => 'Séraphin Dioulo',
-                'password'   => Hash::make('referent123'),
-                'role'       => 'referent',
+                'email' => 'seraphin.dioulo@prosartisan.ci',
+                'name' => 'Séraphin Dioulo',
+                'password' => Hash::make('referent123'),
+                'role' => 'referent',
                 'kyc_status' => 'actif',
             ]
         );
 
         // ── Articles du fournisseur de test ────────────────────────────────────
-        \App\Models\SupplierProduct::updateOrCreate(
+        SupplierProduct::updateOrCreate(
             ['supplier_id' => $fournisseur->id, 'sku' => 'MAT-CIMENT'],
             [
                 'name' => 'Ciment Dangote 50kg CPJ42.5',
@@ -169,7 +170,7 @@ class UserSeeder extends Seeder
             ]
         );
 
-        \App\Models\SupplierProduct::updateOrCreate(
+        SupplierProduct::updateOrCreate(
             ['supplier_id' => $fournisseur->id, 'sku' => 'MAT-TUBE'],
             [
                 'name' => 'Tube PVC Pression Ø110 L4m',
@@ -180,7 +181,7 @@ class UserSeeder extends Seeder
             ]
         );
 
-        \App\Models\SupplierProduct::updateOrCreate(
+        SupplierProduct::updateOrCreate(
             ['supplier_id' => $fournisseur->id, 'sku' => 'MAT-CABLE'],
             [
                 'name' => 'Câble Électrique TH 2.5mm² (100m)',

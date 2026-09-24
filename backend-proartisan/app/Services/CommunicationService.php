@@ -50,12 +50,12 @@ class CommunicationService
     public function store(array $data, User $auteur, ?UploadedFile $mediaFile = null): Communication
     {
         $communication = Communication::create([
-            'type'        => $data['type'],
-            'titre'       => $data['titre'],
-            'contenu'     => $data['contenu'],
+            'type' => $data['type'],
+            'titre' => $data['titre'],
+            'contenu' => $data['contenu'],
             'cibles_json' => $data['cibles'],
-            'statut'      => 'brouillon',
-            'auteur_id'   => $auteur->id,
+            'statut' => 'brouillon',
+            'auteur_id' => $auteur->id,
         ]);
 
         return $this->applyMedia($communication, $data, $mediaFile);
@@ -77,9 +77,9 @@ class CommunicationService
         }
 
         $communication->update([
-            'type'        => $data['type'] ?? $communication->type,
-            'titre'       => $data['titre'] ?? $communication->titre,
-            'contenu'     => $data['contenu'] ?? $communication->contenu,
+            'type' => $data['type'] ?? $communication->type,
+            'titre' => $data['titre'] ?? $communication->titre,
+            'contenu' => $data['contenu'] ?? $communication->contenu,
             'cibles_json' => $data['cibles'] ?? $communication->cibles_json,
         ]);
 
@@ -119,11 +119,11 @@ class CommunicationService
             $this->deleteStoredAudio($communication);
 
             $attributes = [
-                'media_path'         => null,
+                'media_path' => null,
                 'media_external_url' => null,
-                'media_mime'         => null,
-                'media_size'         => null,
-                'media_duration'     => null,
+                'media_mime' => null,
+                'media_size' => null,
+                'media_duration' => null,
             ];
         }
 
@@ -165,7 +165,7 @@ class CommunicationService
         }
 
         $communication->update([
-            'statut'    => 'publie',
+            'statut' => 'publie',
             'publie_at' => now(),
             // Rediffusion : sans cette remise à zéro, la ligne resterait
             // marquée comme clôturée tout en étant publiée.
@@ -185,7 +185,7 @@ class CommunicationService
         }
 
         $communication->update([
-            'statut'     => 'cloture',
+            'statut' => 'cloture',
             'cloture_at' => now(),
         ]);
 
@@ -227,10 +227,10 @@ class CommunicationService
         $playable = fn (Communication $c) => $c->hasPlayableMedia();
 
         return [
-            'annonces'       => $communications->where('type', 'annonce')->values(),
+            'annonces' => $communications->where('type', 'annonce')->values(),
             'le_saviez_vous' => $communications->where('type', 'le_saviez_vous')->values(),
-            'audio'          => $communications->where('type', Communication::TYPE_AUDIO)->filter($playable)->values(),
-            'video'          => $communications->where('type', Communication::TYPE_VIDEO)->filter($playable)->values(),
+            'audio' => $communications->where('type', Communication::TYPE_AUDIO)->filter($playable)->values(),
+            'video' => $communications->where('type', Communication::TYPE_VIDEO)->filter($playable)->values(),
         ];
     }
 }

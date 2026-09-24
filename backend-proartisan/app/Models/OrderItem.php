@@ -16,10 +16,10 @@ class OrderItem extends Model
     protected function casts(): array
     {
         return [
-            'order_id'            => 'integer',
+            'order_id' => 'integer',
             'supplier_product_id' => 'integer',
-            'quantity'            => 'integer',
-            'unit_price'          => 'integer',
+            'quantity' => 'integer',
+            'unit_price' => 'integer',
         ];
     }
 

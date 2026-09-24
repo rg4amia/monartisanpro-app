@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { KycPanel } from './KycPanel';
 import type { KycStats, KycUser, Paginated } from '../shared';
+import { KycPanel } from './KycPanel';
 
 const kycStats: KycStats = {
     pending: 5,

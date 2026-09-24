@@ -8,7 +8,7 @@ return new class extends Migration
 {
     public function up(): void
     {
-        if (!Schema::hasTable('kyc_documents')) {
+        if (! Schema::hasTable('kyc_documents')) {
             Schema::create('kyc_documents', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->constrained()->cascadeOnDelete();

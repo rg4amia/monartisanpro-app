@@ -3,6 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\Order;
+use App\Models\User;
+use App\Services\OrderService;
+use App\Services\SmsService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
 
@@ -13,11 +17,11 @@ class UssdController extends Controller
      */
     private function findUserByPhone(string $rawPhone)
     {
-        $smsService = app(\App\Services\SmsService::class);
+        $smsService = app(SmsService::class);
         $normalized = $smsService->normalizePhone($rawPhone); // ex: 2250506070809
-        $withPlus = '+' . $normalized; // ex: +2250506070809
-        
-        return \App\Models\User::where('phone', $withPlus)
+        $withPlus = '+'.$normalized; // ex: +2250506070809
+
+        return User::where('phone', $withPlus)
             ->orWhere('phone', $normalized)
             ->orWhere('phone', $rawPhone)
             ->first();
@@ -28,26 +32,26 @@ class UssdController extends Controller
      */
     public function handle(Request $request)
     {
-        $rawPhone = $request->input('phoneNumber') 
-            ?? $request->input('phone') 
+        $rawPhone = $request->input('phoneNumber')
+            ?? $request->input('phone')
             ?? $request->input('MSISDN');
         $text = $request->input('text') ?? '';
         $sessionId = $request->input('sessionId');
 
-        if (!$rawPhone) {
-            return response("END Erreur: Numero de telephone manquant.", 200)
+        if (! $rawPhone) {
+            return response('END Erreur: Numero de telephone manquant.', 200)
                 ->header('Content-Type', 'text/plain');
         }
 
         // Trouver l'utilisateur et valider le rôle
         $user = $this->findUserByPhone($rawPhone);
-        if (!$user) {
-            return response("END Numero non enregistre sur ProsArtisan.", 200)
+        if (! $user) {
+            return response('END Numero non enregistre sur ProsArtisan.', 200)
                 ->header('Content-Type', 'text/plain');
         }
 
         if ($user->role !== 'livreur' && $user->role !== 'driver' && $user->role !== 'admin') {
-            return response("END Acces refuse. Role livreur requis.", 200)
+            return response('END Acces refuse. Role livreur requis.', 200)
                 ->header('Content-Type', 'text/plain');
         }
 
@@ -78,8 +82,9 @@ class UssdController extends Controller
         // Menu interactif USSD
         if ($step === 0) {
             $menu = "CON ProsArtisan Logistique\n"
-                  . "1. Valider Retrait (Pickup)\n"
-                  . "2. Valider Livraison (Delivery)";
+                  ."1. Valider Retrait (Pickup)\n"
+                  .'2. Valider Livraison (Delivery)';
+
             return response($menu, 200)->header('Content-Type', 'text/plain');
         }
 
@@ -93,12 +98,14 @@ class UssdController extends Controller
             }
             if ($step === 2) {
                 $orderVal = $parts[1];
-                return response("CON Saisir le code de retrait pour la commande #" . $orderVal . " :", 200)
+
+                return response('CON Saisir le code de retrait pour la commande #'.$orderVal.' :', 200)
                     ->header('Content-Type', 'text/plain');
             }
             if ($step === 3) {
                 $orderId = $parts[1];
                 $code = $parts[2];
+
                 return $this->executePickup($orderId, $code);
             }
         } elseif ($choice === '2') {
@@ -109,17 +116,19 @@ class UssdController extends Controller
             }
             if ($step === 2) {
                 $orderVal = $parts[1];
-                return response("CON Saisir le code de reception pour la commande #" . $orderVal . " :", 200)
+
+                return response('CON Saisir le code de reception pour la commande #'.$orderVal.' :', 200)
                     ->header('Content-Type', 'text/plain');
             }
             if ($step === 3) {
                 $orderId = $parts[1];
                 $code = $parts[2];
+
                 return $this->executeDelivery($orderId, $code);
             }
         }
 
-        return response("END Option invalide. Veuillez reessayer.", 200)
+        return response('END Option invalide. Veuillez reessayer.', 200)
             ->header('Content-Type', 'text/plain');
     }
 
@@ -179,18 +188,18 @@ class UssdController extends Controller
     private function executePickup(string $orderId, string $code)
     {
         try {
-            $order = \App\Models\Order::find($orderId);
-            if (!$order) {
+            $order = Order::find($orderId);
+            if (! $order) {
                 return response("END Erreur: Commande #{$orderId} introuvable.", 200)
                     ->header('Content-Type', 'text/plain');
             }
 
-            app(\App\Services\OrderService::class)->verifyPickup($order, $code);
+            app(OrderService::class)->verifyPickup($order, $code);
 
             return response("END Retrait de la commande #{$orderId} valide avec succes.", 200)
                 ->header('Content-Type', 'text/plain');
         } catch (\Exception $e) {
-            return response("END Erreur: " . $e->getMessage(), 200)
+            return response('END Erreur: '.$e->getMessage(), 200)
                 ->header('Content-Type', 'text/plain');
         }
     }
@@ -201,18 +210,18 @@ class UssdController extends Controller
     private function executeDelivery(string $orderId, string $code)
     {
         try {
-            $order = \App\Models\Order::find($orderId);
-            if (!$order) {
+            $order = Order::find($orderId);
+            if (! $order) {
                 return response("END Erreur: Commande #{$orderId} introuvable.", 200)
                     ->header('Content-Type', 'text/plain');
             }
 
-            app(\App\Services\OrderService::class)->verifyDelivery($order, $code);
+            app(OrderService::class)->verifyDelivery($order, $code);
 
             return response("END Livraison de la commande #{$orderId} validee avec succes.", 200)
                 ->header('Content-Type', 'text/plain');
         } catch (\Exception $e) {
-            return response("END Erreur: " . $e->getMessage(), 200)
+            return response('END Erreur: '.$e->getMessage(), 200)
                 ->header('Content-Type', 'text/plain');
         }
     }
@@ -225,12 +234,12 @@ class UssdController extends Controller
         $from = $request->input('from') ?? $request->input('sender');
         $message = trim($request->input('message') ?? $request->input('text') ?? '');
 
-        if (!$from || empty($message)) {
+        if (! $from || empty($message)) {
             return response()->json(['success' => false, 'error' => 'Champs requis manquants.'], 400);
         }
 
         $user = $this->findUserByPhone($from);
-        if (!$user) {
+        if (! $user) {
             return response()->json(['success' => false, 'error' => 'Numero de telephone non enregistre.'], 404);
         }
 
@@ -247,14 +256,14 @@ class UssdController extends Controller
             $orderId = $parsed['order_id'];
 
             try {
-                $order = \App\Models\Order::find($orderId);
+                $order = Order::find($orderId);
                 if (! $order) {
                     $reply = "Erreur ProsArtisan: La commande #{$orderId} n'existe pas.";
                 } elseif ($parsed['type'] === 'pickup') {
-                    app(\App\Services\OrderService::class)->verifyPickup($order, $parsed['code']);
+                    app(OrderService::class)->verifyPickup($order, $parsed['code']);
                     $reply = "ProsArtisan: Retrait de la commande #{$orderId} valide avec succes.";
                 } else {
-                    app(\App\Services\OrderService::class)->verifyDelivery($order, $parsed['code']);
+                    app(OrderService::class)->verifyDelivery($order, $parsed['code']);
                     $reply = "ProsArtisan: Livraison de la commande #{$orderId} validee avec succes.";
                 }
             } catch (\Exception $e) {
@@ -269,14 +278,14 @@ class UssdController extends Controller
 
         // Retourner la réponse par SMS au livreur
         try {
-            app(\App\Services\SmsService::class)->send($from, $reply);
+            app(SmsService::class)->send($from, $reply);
         } catch (\Exception $e) {
-            Log::error("USSD/SMS Callback: Failed to send SMS reply to {$from}: " . $e->getMessage());
+            Log::error("USSD/SMS Callback: Failed to send SMS reply to {$from}: ".$e->getMessage());
         }
 
         return response()->json([
             'success' => true,
-            'reply' => $reply
+            'reply' => $reply,
         ]);
     }
 }

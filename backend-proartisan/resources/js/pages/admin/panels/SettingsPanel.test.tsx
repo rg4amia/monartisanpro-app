@@ -10,8 +10,8 @@ vi.mock('@inertiajs/react', () => ({
     },
 }));
 
-import { SettingsPanel } from './SettingsPanel';
 import type { SectorItem, SettingItem } from '../shared';
+import { SettingsPanel } from './SettingsPanel';
 
 function makeSetting(overrides: Partial<SettingItem> = {}): SettingItem {
     return {

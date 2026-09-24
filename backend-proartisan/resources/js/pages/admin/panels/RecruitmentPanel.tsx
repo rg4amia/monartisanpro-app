@@ -4,7 +4,7 @@
 
 import { router, useForm } from '@inertiajs/react';
 import type { FormEvent, ReactNode } from 'react';
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 
 import { DataTable, EmptyState, MetricCard, numberFormat, Surface, useConfirm } from '../shared';
 import type { Paginated, RecruitmentOfferItem, RecruitmentSettings, RecruitmentStats } from '../shared';
@@ -38,25 +38,23 @@ function ApplicantsModal({ offer, onClose }: { offer: RecruitmentOfferItem; onCl
     const [loading, setLoading] = useState(true);
     const [updatingId, setUpdatingId] = useState<number | null>(null);
 
-    const load = () => {
-        setLoading(true);
+    const load = useCallback(() => {
         fetch(`/admin/recruitment/${offer.id}/applications`, { headers: { Accept: 'application/json' } })
             .then((res) => res.json())
             .then((json) => setApplications(json.data ?? []))
             .finally(() => setLoading(false));
-    };
+    }, [offer.id]);
 
     useEffect(() => {
         load();
-        // eslint-disable-next-line react-hooks/exhaustive-deps
-    }, [offer.id]);
+    }, [load]);
 
     const updateStatus = (application: RecruitmentApplicantRow, status: string) => {
         setUpdatingId(application.id);
         router.post(
             `/admin/recruitment/${offer.id}/applications/${application.id}/status`,
             { status },
-            { preserveScroll: true, onFinish: () => { setUpdatingId(null); load(); } },
+            { preserveScroll: true, onFinish: () => { setUpdatingId(null); setLoading(true); load(); } },
         );
     };
 

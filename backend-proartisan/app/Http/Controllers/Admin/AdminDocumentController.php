@@ -24,10 +24,10 @@ class AdminDocumentController extends Controller
     public function index(Request $request): JsonResponse
     {
         $filters = [
-            'search'    => $request->query('search_doc') ?: $request->query('search'),
-            'type'      => $request->query('type_doc') ?: $request->query('type'),
+            'search' => $request->query('search_doc') ?: $request->query('search'),
+            'type' => $request->query('type_doc') ?: $request->query('type'),
             'date_from' => $request->query('date_from'),
-            'date_to'   => $request->query('date_to'),
+            'date_to' => $request->query('date_to'),
         ];
 
         $documents = $this->documentService->listDocuments($filters, (int) $request->query('per_page', 25));
@@ -35,7 +35,7 @@ class AdminDocumentController extends Controller
 
         return response()->json([
             'documents' => $documents,
-            'stats'     => $stats,
+            'stats' => $stats,
         ]);
     }
 

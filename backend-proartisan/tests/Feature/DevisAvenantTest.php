@@ -5,9 +5,11 @@ namespace Tests\Feature;
 use App\Models\Devis;
 use App\Models\Jalon;
 use App\Models\Mission;
+use App\Models\SupplierProduct;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Models\SupplierProduct;
+use App\Services\DevisService;
+use App\States\Mission\InProgressState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -16,12 +18,19 @@ class DevisAvenantTest extends TestCase
     use RefreshDatabase;
 
     private User $client;
+
     private User $artisan;
+
     private User $unassignedArtisan;
+
     private User $supplier;
+
     private SupplierProduct $product;
+
     private Mission $mission;
+
     private Devis $initialDevis;
+
     private Transaction $initialPayment;
 
     protected function setUp(): void
@@ -96,7 +105,7 @@ class DevisAvenantTest extends TestCase
             'type' => 'acompte',
             'montant' => $this->initialDevis->montant_total,
             'wallet_source' => 'client_mobile_money',
-            'wallet_dest' => 'escrow_mission_' . $this->mission->id,
+            'wallet_dest' => 'escrow_mission_'.$this->mission->id,
             'provider' => 'wave',
             'statut' => 'confirme',
             'reference_externe' => 'TXN-INITIAL-123',
@@ -104,11 +113,11 @@ class DevisAvenantTest extends TestCase
         ]);
 
         // 4. Accept initial devis -> Mission funded
-        app(\App\Services\DevisService::class)->accept($this->initialDevis, $this->initialPayment);
-        
+        app(DevisService::class)->accept($this->initialDevis, $this->initialPayment);
+
         $this->mission->refresh();
         // Transition to in_progress to simulate ongoing work
-        $this->mission->status->transitionTo(\App\States\Mission\InProgressState::class);
+        $this->mission->status->transitionTo(InProgressState::class);
         $this->mission->refresh();
     }
 
@@ -157,7 +166,7 @@ class DevisAvenantTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonFragment([
-            'message' => 'Impossible de créer un avenant sans devis initial accepté.'
+            'message' => 'Impossible de créer un avenant sans devis initial accepté.',
         ]);
     }
 
@@ -178,7 +187,7 @@ class DevisAvenantTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonFragment([
-            'message' => "Seul l'artisan assigné à cette mission peut créer un avenant."
+            'message' => "Seul l'artisan assigné à cette mission peut créer un avenant.",
         ]);
     }
 
@@ -214,7 +223,7 @@ class DevisAvenantTest extends TestCase
 
         $response->assertStatus(422);
         $response->assertJsonFragment([
-            'message' => "Un avenant est déjà en cours d'examen pour cette mission."
+            'message' => "Un avenant est déjà en cours d'examen pour cette mission.",
         ]);
     }
 
@@ -234,7 +243,7 @@ class DevisAvenantTest extends TestCase
                         'source' => 'catalog',
                         'quantity' => 5,
                         'unit_price' => 6000,
-                        'supplier_product_id' => $this->product->id
+                        'supplier_product_id' => $this->product->id,
                     ],
                 ],
                 'jalons' => [
@@ -261,7 +270,7 @@ class DevisAvenantTest extends TestCase
             'type' => 'acompte',
             'montant' => $avenant->montant_total,
             'wallet_source' => 'client_mobile_money',
-            'wallet_dest' => 'escrow_mission_' . $this->mission->id,
+            'wallet_dest' => 'escrow_mission_'.$this->mission->id,
             'provider' => 'wave',
             'statut' => 'confirme',
             'reference_externe' => 'TXN-AVENANT-123',
@@ -295,7 +304,7 @@ class DevisAvenantTest extends TestCase
         // 7. Verify new jalon created with correct ordre (max existing ordre was 2, so new jalon should be ordre 3)
         $jalons = Jalon::where('mission_id', $this->mission->id)->orderBy('ordre')->get();
         $this->assertCount(3, $jalons);
-        
+
         $lastJalon = $jalons->last();
         $this->assertEquals(3, $lastJalon->ordre);
         $this->assertEquals('Jalon Avenant 1', $lastJalon->description);

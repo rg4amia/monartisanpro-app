@@ -11,6 +11,7 @@ use Illuminate\Http\Request;
 class KycController extends Controller
 {
     public function __construct(private KycService $kycService) {}
+
     public function uploadCni(UploadKycRequest $request): JsonResponse
     {
         $doc = $this->kycService->uploadDocument(
@@ -22,10 +23,10 @@ class KycController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'CNI uploadée avec succès. En attente de validation.',
-            'data'    => [
-                'type'   => $doc->type,
+            'data' => [
+                'type' => $doc->type,
                 'statut' => $doc->statut,
-                'url'    => $doc->file_url,
+                'url' => $doc->file_url,
             ],
         ]);
     }
@@ -41,10 +42,10 @@ class KycController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Selfie uploadé avec succès. En attente de validation.',
-            'data'    => [
-                'type'   => $doc->type,
+            'data' => [
+                'type' => $doc->type,
                 'statut' => $doc->statut,
-                'url'    => $doc->file_url,
+                'url' => $doc->file_url,
             ],
         ]);
     }
@@ -55,7 +56,7 @@ class KycController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $status,
+            'data' => $status,
         ]);
     }
 }

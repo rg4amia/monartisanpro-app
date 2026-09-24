@@ -5,8 +5,8 @@ vi.mock('./IvoryCoastMapSvg', () => ({
     IvoryCoastMapSvg: () => <div data-testid="ivory-coast-map" />,
 }));
 
-import { CartographyPanel } from './CartographyPanel';
 import type { TerritoryBreakdowns, TerritoryEntityItem, TerritorySummary } from '../shared/types';
+import { CartographyPanel } from './CartographyPanel';
 
 function makeBreakdowns(overrides: Partial<TerritoryBreakdowns> = {}): TerritoryBreakdowns {
     return {

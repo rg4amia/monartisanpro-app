@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { CampagnesParrainagePanel } from './CampagnesParrainagePanel';
 import type { CampagneParrainageItem } from '../shared';
+import { CampagnesParrainagePanel } from './CampagnesParrainagePanel';
 
 function makeCampagne(overrides: Partial<CampagneParrainageItem> = {}): CampagneParrainageItem {
     return {

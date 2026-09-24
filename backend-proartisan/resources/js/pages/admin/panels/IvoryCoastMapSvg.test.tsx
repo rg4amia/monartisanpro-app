@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { IvoryCoastMapSvg } from './IvoryCoastMapSvg';
 import { ABIDJAN_COMMUNES_GEODATA, IVORY_COAST_DISTRICTS } from './ivoryCoastGeoData';
+import { IvoryCoastMapSvg } from './IvoryCoastMapSvg';
 
 function renderMap(overrides: Partial<React.ComponentProps<typeof IvoryCoastMapSvg>> = {}) {
     const props: React.ComponentProps<typeof IvoryCoastMapSvg> = {

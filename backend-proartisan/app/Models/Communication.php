@@ -42,10 +42,10 @@ class Communication extends Model
     protected function casts(): array
     {
         return [
-            'cibles_json'    => 'array',
-            'publie_at'      => 'datetime',
-            'cloture_at'     => 'datetime',
-            'media_size'     => 'integer',
+            'cibles_json' => 'array',
+            'publie_at' => 'datetime',
+            'cloture_at' => 'datetime',
+            'media_size' => 'integer',
             'media_duration' => 'integer',
         ];
     }
@@ -164,14 +164,14 @@ class Communication extends Model
     public function ciblesLabel(): string
     {
         $labels = [
-            'client'      => 'Client',
-            'artisan'     => 'Artisan',
+            'client' => 'Client',
+            'artisan' => 'Artisan',
             'fournisseur' => 'Fournisseur',
-            'livreur'     => 'Livreur',
+            'livreur' => 'Livreur',
         ];
 
         return collect($this->cibles_json)
-            ->map(fn(string $cible) => $labels[$cible] ?? $cible)
+            ->map(fn (string $cible) => $labels[$cible] ?? $cible)
             ->implode(', ');
     }
 }

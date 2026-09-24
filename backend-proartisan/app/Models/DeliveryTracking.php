@@ -26,12 +26,12 @@ class DeliveryTracking extends Model
     protected function casts(): array
     {
         return [
-            'latitude'      => 'float',
-            'longitude'     => 'float',
-            'speed_kmh'     => 'float',
-            'heading'       => 'float',
+            'latitude' => 'float',
+            'longitude' => 'float',
+            'speed_kmh' => 'float',
+            'heading' => 'float',
             'battery_level' => 'integer',
-            'created_at'    => 'datetime',
+            'created_at' => 'datetime',
         ];
     }
 

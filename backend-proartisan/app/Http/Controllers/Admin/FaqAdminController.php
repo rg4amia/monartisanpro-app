@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Faq;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class FaqAdminController extends Controller
 {
@@ -20,9 +21,9 @@ class FaqAdminController extends Controller
 
             return back()->with('success', 'Question ajoutée à la FAQ.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur storeFaq: '.$e->getMessage());
+            Log::error('Erreur storeFaq: '.$e->getMessage());
 
-            return back()->withErrors(['faq' => "Impossible de créer la question : ".$e->getMessage()]);
+            return back()->withErrors(['faq' => 'Impossible de créer la question : '.$e->getMessage()]);
         }
     }
 
@@ -33,9 +34,9 @@ class FaqAdminController extends Controller
 
             return back()->with('success', 'Question mise à jour.');
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::error('Erreur updateFaq: '.$e->getMessage());
+            Log::error('Erreur updateFaq: '.$e->getMessage());
 
-            return back()->withErrors(['faq' => "Impossible de mettre à jour la question : ".$e->getMessage()]);
+            return back()->withErrors(['faq' => 'Impossible de mettre à jour la question : '.$e->getMessage()]);
         }
     }
 

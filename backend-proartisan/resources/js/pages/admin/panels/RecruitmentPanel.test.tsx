@@ -24,8 +24,8 @@ vi.mock('@inertiajs/react', () => ({
     },
 }));
 
-import { RecruitmentPanel } from './RecruitmentPanel';
 import type { Paginated, RecruitmentOfferItem, RecruitmentSettings, RecruitmentStats } from '../shared';
+import { RecruitmentPanel } from './RecruitmentPanel';
 
 const stats: RecruitmentStats = { total: 10, pending_review: 2, active: 6, filled: 2 };
 const settings: RecruitmentSettings = { client_posting_enabled: '1', fournisseur_posting_enabled: '1' };

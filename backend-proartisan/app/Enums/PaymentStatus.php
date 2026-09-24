@@ -13,7 +13,7 @@ enum PaymentStatus: string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::EN_ATTENTE => 'En attente',
             self::CONFIRME => 'Confirmé',
             self::ECHOUE => 'Échoué',

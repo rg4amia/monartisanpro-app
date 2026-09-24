@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { NotificationsPanel } from './NotificationsPanel';
 import type { AdminNotificationItem } from '../shared';
+import { NotificationsPanel } from './NotificationsPanel';
 
 function makeNotif(overrides: Partial<AdminNotificationItem> = {}): AdminNotificationItem {
     return {

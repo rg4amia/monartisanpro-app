@@ -53,9 +53,9 @@ export default function SupplierLitiges() {
             try {
                 const res = await api.getSupplierLitiges<LitigeData>();
                 setData(res);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error(err);
-                setError(err.message || 'Impossible de charger les litiges');
+                setError((err instanceof Error && err.message) || 'Impossible de charger les litiges');
             } finally {
                 setLoading(false);
             }
@@ -139,7 +139,7 @@ export default function SupplierLitiges() {
                                         <span className="font-semibold text-slate-200">{order.client?.name} ({order.client?.phone})</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-slate-500">Date d'ouverture</span>
+                                        <span className="text-slate-500">Date d&apos;ouverture</span>
                                         <span className="text-slate-300">{shortDate(order.created_at)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
@@ -149,7 +149,7 @@ export default function SupplierLitiges() {
                                 </div>
 
                                 <div className="bg-slate-950/40 border border-slate-850 p-3 rounded-lg text-xs text-slate-400">
-                                    ℹ️ Cette commande de livraison a fait l'objet d'un signalement. Les fonds logistiques et matériels sont gelés en séquestre en attente d'arbitrage administratif.
+                                    ℹ️ Cette commande de livraison a fait l&apos;objet d&apos;un signalement. Les fonds logistiques et matériels sont gelés en séquestre en attente d&apos;arbitrage administratif.
                                 </div>
                             </div>
                         ))}
@@ -203,7 +203,7 @@ export default function SupplierLitiges() {
                                     {litige?.description && (
                                         <div className="bg-slate-950/40 border border-slate-850 p-3 rounded-lg text-xs text-slate-400">
                                             <div className="font-bold text-slate-300 mb-1">Description du litige :</div>
-                                            "{litige.description}"
+                                            &quot;{litige.description}&quot;
                                         </div>
                                     )}
                                 </div>
@@ -214,7 +214,7 @@ export default function SupplierLitiges() {
                     <div className="text-center py-16 border border-dashed border-slate-850 rounded-xl">
                         <span className="text-5xl">🛡️</span>
                         <h3 className="text-slate-300 font-bold mt-4">Aucun litige de chantier</h3>
-                        <p className="text-slate-500 text-xs mt-1">Excellent ! Les chantiers fournis via vos J-Codes n'ont pas de litige.</p>
+                        <p className="text-slate-500 text-xs mt-1">Excellent ! Les chantiers fournis via vos J-Codes n&apos;ont pas de litige.</p>
                     </div>
                 )
             )}

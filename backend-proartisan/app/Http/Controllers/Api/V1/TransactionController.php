@@ -12,15 +12,15 @@ class TransactionController extends Controller
 {
     public function index(Request $request): JsonResponse
     {
-        $user   = $request->user();
+        $user = $request->user();
         $status = $request->query('status');
 
         $query = Transaction::with(['mission.client'])
             ->where(function ($q) use ($user) {
                 $q->where('user_id', $user->id)
-                  ->orWhereHas('mission', function ($mq) use ($user) {
-                      $mq->where('client_id', $user->id)->orWhere('artisan_id', $user->id);
-                  });
+                    ->orWhereHas('mission', function ($mq) use ($user) {
+                        $mq->where('client_id', $user->id)->orWhere('artisan_id', $user->id);
+                    });
             });
 
         if ($status) {
@@ -31,9 +31,9 @@ class TransactionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => TransactionResource::collection($transactions->items()),
-            'meta'    => [
-                'total'        => $transactions->total(),
+            'data' => TransactionResource::collection($transactions->items()),
+            'meta' => [
+                'total' => $transactions->total(),
                 'current_page' => $transactions->currentPage(),
             ],
         ]);
@@ -45,10 +45,10 @@ class TransactionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => [
+            'data' => [
                 'walletMateriaux' => $user->wallet_materiaux,
-                'walletMo'        => $user->wallet_mo,
-                'total'           => $user->wallet_materiaux + $user->wallet_mo,
+                'walletMo' => $user->wallet_mo,
+                'total' => $user->wallet_materiaux + $user->wallet_mo,
             ],
         ]);
     }

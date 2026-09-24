@@ -12,7 +12,7 @@ class RealtimeEventServiceTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
-        $this->service = new RealtimeEventService();
+        $this->service = new RealtimeEventService;
     }
 
     public function test_it_creates_and_formats_realtime_event(): void

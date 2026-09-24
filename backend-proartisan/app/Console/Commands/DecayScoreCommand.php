@@ -46,7 +46,7 @@ class DecayScoreCommand extends Command
             ->get();
 
         $penalized = 0;
-        $skipped   = 0;
+        $skipped = 0;
 
         foreach ($artisans as $artisan) {
             $inactivityDays = $this->scoreService->getInactivityDays($artisan);
@@ -60,6 +60,7 @@ class DecayScoreCommand extends Command
             if ($isDryRun) {
                 $this->line("  [DRY-RUN] Serait pénalisé : {$label}");
                 $penalized++;
+
                 continue;
             }
 
@@ -77,7 +78,7 @@ class DecayScoreCommand extends Command
                 $this->error("  ❌ Erreur sur {$label} : {$e->getMessage()}");
                 Log::error('[DecayScore] Erreur', [
                     'user_id' => $artisan->id,
-                    'error'   => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
                 $skipped++;
             }
@@ -86,7 +87,7 @@ class DecayScoreCommand extends Command
         $this->info("=== Résumé : {$penalized} pénalisés, {$skipped} ignorés ===");
         Log::info('[DecayScore] Traitement terminé', [
             'penalized' => $penalized,
-            'skipped'   => $skipped,
+            'skipped' => $skipped,
         ]);
 
         return self::SUCCESS;

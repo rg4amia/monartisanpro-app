@@ -5,7 +5,6 @@ namespace Tests\Unit;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
 use App\Models\GeneratedDocument;
-use App\Models\Litige;
 use App\Models\Mission;
 use App\Models\SupplierCashout;
 use App\Models\Transaction;
@@ -21,6 +20,7 @@ class GeneratedDocumentServiceTest extends TestCase
     use RefreshDatabase;
 
     private GeneratedDocumentService $documentService;
+
     private $pdfServiceMock;
 
     protected function setUp(): void
@@ -37,27 +37,27 @@ class GeneratedDocumentServiceTest extends TestCase
         $artisan = User::factory()->create(['role' => 'artisan']);
 
         $mission = Mission::create([
-            'client_id'         => $client->id,
-            'artisan_id'        => $artisan->id,
-            'description'       => 'Mission de plomberie sanitaire',
-            'status'            => 'in_progress',
-            'montant_total'     => 150000,
+            'client_id' => $client->id,
+            'artisan_id' => $artisan->id,
+            'description' => 'Mission de plomberie sanitaire',
+            'status' => 'in_progress',
+            'montant_total' => 150000,
             'montant_materiaux' => 90000,
-            'montant_mo'        => 60000,
-            'ratio_materiaux'   => 0.60,
+            'montant_mo' => 60000,
+            'ratio_materiaux' => 0.60,
         ]);
 
         $tx = Transaction::create([
-            'mission_id'        => $mission->id,
-            'user_id'           => $artisan->id,
-            'type'              => 'liberation_jalon',
-            'montant'           => 30000,
-            'wallet_source'     => 'wallet_mo_sequestre',
-            'wallet_dest'       => 'mobile_money_artisan',
-            'provider'          => PaymentProvider::WAVE,
-            'statut'            => PaymentStatus::CONFIRME,
+            'mission_id' => $mission->id,
+            'user_id' => $artisan->id,
+            'type' => 'liberation_jalon',
+            'montant' => 30000,
+            'wallet_source' => 'wallet_mo_sequestre',
+            'wallet_dest' => 'mobile_money_artisan',
+            'provider' => PaymentProvider::WAVE,
+            'statut' => PaymentStatus::CONFIRME,
             'reference_externe' => 'WAVE-TX-123456',
-            'paid_at'           => now(),
+            'paid_at' => now(),
         ]);
 
         $doc = $this->documentService->createOrGetForTransaction($tx);
@@ -76,17 +76,17 @@ class GeneratedDocumentServiceTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin']);
 
         $cashout = SupplierCashout::create([
-            'reference'          => 'CSH-TEST-001',
-            'supplier_id'        => $supplier->id,
-            'montant_brut'       => 100000,
+            'reference' => 'CSH-TEST-001',
+            'supplier_id' => $supplier->id,
+            'montant_brut' => 100000,
             'montant_commission' => 2500,
-            'montant_net'        => 97500,
-            'provider'           => 'wave',
-            'statut'             => 'complete',
-            'beneficiary_phone'  => '0707070707',
-            'beneficiary_name'   => 'Quincaillerie Centrale',
-            'processed_by'       => $admin->id,
-            'processed_at'       => now(),
+            'montant_net' => 97500,
+            'provider' => 'wave',
+            'statut' => 'complete',
+            'beneficiary_phone' => '0707070707',
+            'beneficiary_name' => 'Quincaillerie Centrale',
+            'processed_by' => $admin->id,
+            'processed_at' => now(),
         ]);
 
         $doc = $this->documentService->createOrGetForCashout($cashout);
@@ -103,35 +103,35 @@ class GeneratedDocumentServiceTest extends TestCase
         $user = User::factory()->create();
 
         GeneratedDocument::create([
-            'reference'     => 'REC-MO-01',
+            'reference' => 'REC-MO-01',
             'document_type' => 'recu_liberation_jalon',
-            'title'         => 'Libération Jalon 1',
-            'user_id'       => $user->id,
-            'montant'       => 50000,
+            'title' => 'Libération Jalon 1',
+            'user_id' => $user->id,
+            'montant' => 50000,
         ]);
 
         GeneratedDocument::create([
-            'reference'     => 'REC-MAT-01',
+            'reference' => 'REC-MAT-01',
             'document_type' => 'recu_paiement_fournisseur',
-            'title'         => 'Règlement Matériaux',
-            'user_id'       => $user->id,
-            'montant'       => 120000,
+            'title' => 'Règlement Matériaux',
+            'user_id' => $user->id,
+            'montant' => 120000,
         ]);
 
         GeneratedDocument::create([
-            'reference'     => 'CSH-01',
+            'reference' => 'CSH-01',
             'document_type' => 'recu_cashout',
-            'title'         => 'Cash-out Quincaillerie',
-            'user_id'       => $user->id,
-            'montant'       => 80000,
+            'title' => 'Cash-out Quincaillerie',
+            'user_id' => $user->id,
+            'montant' => 80000,
         ]);
 
         GeneratedDocument::create([
-            'reference'     => 'SOLV-01',
+            'reference' => 'SOLV-01',
             'document_type' => 'rapport_solvabilite',
-            'title'         => 'Rapport Solvabilité',
-            'user_id'       => $user->id,
-            'montant'       => 0,
+            'title' => 'Rapport Solvabilité',
+            'user_id' => $user->id,
+            'montant' => 0,
         ]);
 
         $stats = $this->documentService->getStats();
@@ -149,26 +149,26 @@ class GeneratedDocumentServiceTest extends TestCase
 
         // 1 confirmed liberation transaction
         Transaction::create([
-            'user_id'       => $user->id,
-            'type'          => 'liberation_jalon',
-            'montant'       => 45000,
+            'user_id' => $user->id,
+            'type' => 'liberation_jalon',
+            'montant' => 45000,
             'wallet_source' => 'sequestre',
-            'wallet_dest'   => 'artisan',
-            'provider'      => PaymentProvider::ORANGE_MONEY,
-            'statut'        => PaymentStatus::CONFIRME,
+            'wallet_dest' => 'artisan',
+            'provider' => PaymentProvider::ORANGE_MONEY,
+            'statut' => PaymentStatus::CONFIRME,
         ]);
 
         // 1 cashout
         SupplierCashout::create([
-            'reference'          => 'CSH-TEST-002',
-            'supplier_id'        => $user->id,
-            'montant_brut'       => 50000,
+            'reference' => 'CSH-TEST-002',
+            'supplier_id' => $user->id,
+            'montant_brut' => 50000,
             'montant_commission' => 1250,
-            'montant_net'        => 48750,
-            'provider'           => 'orange_money',
-            'statut'             => 'complete',
-            'beneficiary_phone'  => '0505050505',
-            'beneficiary_name'   => 'Quincaillerie Test',
+            'montant_net' => 48750,
+            'provider' => 'orange_money',
+            'statut' => 'complete',
+            'beneficiary_phone' => '0505050505',
+            'beneficiary_name' => 'Quincaillerie Test',
         ]);
 
         $synced = $this->documentService->syncAll();
@@ -176,11 +176,11 @@ class GeneratedDocumentServiceTest extends TestCase
         $this->assertGreaterThanOrEqual(2, $synced);
         $this->assertDatabaseHas('generated_documents', [
             'document_type' => 'recu_liberation_jalon',
-            'montant'       => 45000,
+            'montant' => 45000,
         ]);
         $this->assertDatabaseHas('generated_documents', [
             'document_type' => 'recu_cashout',
-            'montant'       => 48750,
+            'montant' => 48750,
         ]);
     }
 }

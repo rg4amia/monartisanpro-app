@@ -13,7 +13,7 @@ return new class extends Migration
     {
         if (Schema::hasTable('settings')) {
             $exists = DB::table('settings')->where('key', 'commission_cashout_quincaillerie')->exists();
-            if (!$exists) {
+            if (! $exists) {
                 DB::table('settings')->insert([
                     'key' => 'commission_cashout_quincaillerie',
                     'value' => '0.025',

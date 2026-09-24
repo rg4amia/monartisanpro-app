@@ -15,8 +15,8 @@ class Devis extends Model
     protected function casts(): array
     {
         return [
-            'lignes_json'  => 'array',
-            'jalons_json'  => 'array',
+            'lignes_json' => 'array',
+            'jalons_json' => 'array',
             'materials_required' => 'boolean',
             'intervention_type_id' => 'integer',
             'commission_service_ratio' => 'float',
@@ -57,17 +57,18 @@ class Devis extends Model
 
     public function getMontantMateriauxAttribute(): int
     {
-        $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
-        $artisanStockFeeRatio = \App\Models\Setting::getValueByKey('commission_artisan_stock', 0.05);
+        $platformFeeRatio = Setting::getValueByKey('platform_fee_ratio', 0.03);
+        $artisanStockFeeRatio = Setting::getValueByKey('commission_artisan_stock', 0.05);
 
         $total = 0;
         foreach ($this->lignes_json ?? [] as $ligne) {
             if (($ligne['type'] ?? '') === 'mat') {
-                $isArtisanStock = ($ligne['source'] ?? '') === 'artisan_stock' || !empty($ligne['artisan_stock_id']);
+                $isArtisanStock = ($ligne['source'] ?? '') === 'artisan_stock' || ! empty($ligne['artisan_stock_id']);
                 $ratio = $isArtisanStock ? $artisanStockFeeRatio : $platformFeeRatio;
                 $total += (int) round(($ligne['montant'] ?? 0) * (1 + $ratio));
             }
         }
+
         return $total;
     }
 
@@ -76,14 +77,15 @@ class Devis extends Model
         if ($this->commission_service_ratio !== null) {
             $commissionService = (float) $this->commission_service_ratio;
         } else {
-            $commissionService = $this->artisan 
-                ? \App\Models\Setting::getLaborCommissionForArtisan($this->artisan)
-                : \App\Models\Setting::getValueByKey('commission_service', 0.10);
+            $commissionService = $this->artisan
+                ? Setting::getLaborCommissionForArtisan($this->artisan)
+                : Setting::getValueByKey('commission_service', 0.10);
         }
 
         $rawMo = collect($this->lignes_json ?? [])
             ->where('type', 'mo')
             ->sum('montant');
+
         return (int) round($rawMo * (1 + $commissionService));
     }
 }

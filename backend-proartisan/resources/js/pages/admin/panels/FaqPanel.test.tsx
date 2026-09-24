@@ -26,8 +26,8 @@ vi.mock('@inertiajs/react', () => ({
     },
 }));
 
-import { FaqPanel } from './FaqPanel';
 import type { FaqItem } from '../shared';
+import { FaqPanel } from './FaqPanel';
 
 function makeFaq(overrides: Partial<FaqItem> = {}): FaqItem {
     return {

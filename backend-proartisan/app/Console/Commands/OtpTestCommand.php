@@ -2,13 +2,14 @@
 
 namespace App\Console\Commands;
 
-use App\Services\OtpService;
 use App\Models\Otp;
+use App\Services\OtpService;
 use Illuminate\Console\Command;
 
 class OtpTestCommand extends Command
 {
     protected $signature = 'otp:test {phone : Numéro de téléphone destinataire}';
+
     protected $description = 'Tester le flux complet OTP : génération, envoi SMS, vérification, anti-réutilisation';
 
     public function handle(OtpService $otpService): int
@@ -17,7 +18,7 @@ class OtpTestCommand extends Command
         $action = 'test_verification';
 
         $this->info("📱 Test envoi OTP à {$phone}...");
-        $this->line("   Canal: SMS (via SmsPro Africa)");
+        $this->line('   Canal: SMS (via SmsPro Africa)');
         $this->line("   Action: {$action}");
         $this->newLine();
 
@@ -48,6 +49,7 @@ class OtpTestCommand extends Command
             );
         } else {
             $this->error('❌ OTP non trouvé en base!');
+
             return self::FAILURE;
         }
 
@@ -58,16 +60,18 @@ class OtpTestCommand extends Command
             $this->info('   ✅ Code valide — vérification réussie!');
         } else {
             $this->error('   ❌ Code invalide!');
+
             return self::FAILURE;
         }
 
         // 4. Tester l'anti-réutilisation
         $this->info("🔐 Test réutilisation du même OTP ({$code})...");
         $reuse = $otpService->verifyOtp($phone, $code, $action);
-        if (!$reuse) {
+        if (! $reuse) {
             $this->info('   ✅ Bien invalidé — OTP non réutilisable');
         } else {
             $this->error('   ⚠️ OTP réutilisable — problème de sécurité!');
+
             return self::FAILURE;
         }
 

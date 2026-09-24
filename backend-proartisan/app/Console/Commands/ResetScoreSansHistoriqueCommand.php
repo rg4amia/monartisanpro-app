@@ -22,7 +22,7 @@ class ResetScoreSansHistoriqueCommand extends Command
     protected $signature = 'prosartisan:reset-score-sans-historique
                             {--dry-run : Affiche les comptes concernés sans appliquer la correction}';
 
-    protected $description = "Remet à 0 le Score ProsArtisan des comptes sans aucune évaluation ni écriture au ledger.";
+    protected $description = 'Remet à 0 le Score ProsArtisan des comptes sans aucune évaluation ni écriture au ledger.';
 
     public function handle(): int
     {

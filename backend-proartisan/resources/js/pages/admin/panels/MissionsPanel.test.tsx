@@ -5,8 +5,8 @@ vi.mock('@inertiajs/react', () => ({
     router: { post: vi.fn() },
 }));
 
-import { MissionsPanel } from './MissionsPanel';
 import type { AdminMission, AdminOrder, DeliveryStats, MissionStats, Paginated } from '../shared';
+import { MissionsPanel } from './MissionsPanel';
 
 const missionStats: MissionStats = { en_cours: 4, en_litige: 1, referent_required: 2, enrichies: 3 };
 const deliveryStats: DeliveryStats = { total: 5, in_transit: 2, awaiting_driver: 1, delivered: 2, by_status: {} };

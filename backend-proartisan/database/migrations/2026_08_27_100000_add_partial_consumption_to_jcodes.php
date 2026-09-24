@@ -77,7 +77,7 @@ return new class extends Migration
             // 3. Ajouter served_by_supplier_id et quantity_served sur jcode_items
             Schema::table('jcode_items', function (Blueprint $table) {
                 $table->foreignId('served_by_supplier_id')->nullable()->after('status')
-                      ->constrained('users')->nullOnDelete();
+                    ->constrained('users')->nullOnDelete();
                 $table->unsignedInteger('quantity_served')->default(0)->after('quantity');
             });
 

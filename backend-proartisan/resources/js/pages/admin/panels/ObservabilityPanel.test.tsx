@@ -5,8 +5,8 @@ vi.mock('@inertiajs/react', () => ({
     router: { post: vi.fn() },
 }));
 
-import { ObservabilityPanel } from './ObservabilityPanel';
 import type { ObservabilitySnapshot } from '../shared';
+import { ObservabilityPanel } from './ObservabilityPanel';
 
 function makeSnapshot(overrides: Partial<ObservabilitySnapshot> = {}): ObservabilitySnapshot {
     return {

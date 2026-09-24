@@ -1,4 +1,5 @@
 <?php
+
 namespace App\States\Mission;
 
 class CancelledState extends MissionState

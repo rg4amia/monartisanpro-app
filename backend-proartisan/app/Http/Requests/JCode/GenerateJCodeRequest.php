@@ -17,7 +17,7 @@ class GenerateJCodeRequest extends FormRequest
         return [
             'mission_id' => ['required', 'integer', 'exists:missions,id'],
             'fournisseur_id' => ['required', 'integer', 'exists:users,id'],
-            'montant'    => ['nullable', 'integer', 'min:1000'],
+            'montant' => ['nullable', 'integer', 'min:1000'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.supplier_product_id' => ['nullable', 'integer', 'exists:supplier_products,id'],
             'items.*.name' => ['nullable', 'string', 'max:150'],
@@ -31,8 +31,8 @@ class GenerateJCodeRequest extends FormRequest
     {
         return [
             'mission_id.required' => 'La mission est obligatoire.',
-            'mission_id.exists'   => 'Mission introuvable.',
-            'montant.min'         => 'Le montant minimum est de 1 000 FCFA.',
+            'mission_id.exists' => 'Mission introuvable.',
+            'montant.min' => 'Le montant minimum est de 1 000 FCFA.',
             'fournisseur_id.required' => 'Le fournisseur est obligatoire.',
             'fournisseur_id.exists' => 'Fournisseur introuvable.',
             'items.required' => 'Ajoutez au moins un article à la demande.',

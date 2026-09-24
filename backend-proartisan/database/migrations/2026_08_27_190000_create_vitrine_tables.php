@@ -9,7 +9,7 @@ return new class extends Migration
     public function up(): void
     {
         // 1. Slides Hero
-        if (!Schema::hasTable('vitrine_slides')) {
+        if (! Schema::hasTable('vitrine_slides')) {
             Schema::create('vitrine_slides', function (Blueprint $table) {
                 $table->id();
                 $table->string('titre', 255);
@@ -24,7 +24,7 @@ return new class extends Migration
         }
 
         // 2. Artisan du Mois
-        if (!Schema::hasTable('vitrine_artisan_du_mois')) {
+        if (! Schema::hasTable('vitrine_artisan_du_mois')) {
             Schema::create('vitrine_artisan_du_mois', function (Blueprint $table) {
                 $table->id();
                 $table->foreignId('user_id')->constrained('users');
@@ -37,7 +37,7 @@ return new class extends Migration
         }
 
         // 3. Articles / Actualités
-        if (!Schema::hasTable('vitrine_articles')) {
+        if (! Schema::hasTable('vitrine_articles')) {
             Schema::create('vitrine_articles', function (Blueprint $table) {
                 $table->id();
                 $table->string('titre', 255);
@@ -53,7 +53,7 @@ return new class extends Migration
         }
 
         // 4. Capsules Vidéo
-        if (!Schema::hasTable('vitrine_videos')) {
+        if (! Schema::hasTable('vitrine_videos')) {
             Schema::create('vitrine_videos', function (Blueprint $table) {
                 $table->id();
                 $table->string('titre', 255);
@@ -68,7 +68,7 @@ return new class extends Migration
         }
 
         // 5. Sessions de Formation
-        if (!Schema::hasTable('vitrine_formations')) {
+        if (! Schema::hasTable('vitrine_formations')) {
             Schema::create('vitrine_formations', function (Blueprint $table) {
                 $table->id();
                 $table->string('titre', 255);
@@ -88,7 +88,7 @@ return new class extends Migration
         }
 
         // 6. Offres de Recrutement
-        if (!Schema::hasTable('vitrine_recrutements')) {
+        if (! Schema::hasTable('vitrine_recrutements')) {
             Schema::create('vitrine_recrutements', function (Blueprint $table) {
                 $table->id();
                 $table->string('titre', 255);
@@ -104,7 +104,7 @@ return new class extends Migration
         }
 
         // 7. Pop-ups Promotionnels
-        if (!Schema::hasTable('vitrine_popups')) {
+        if (! Schema::hasTable('vitrine_popups')) {
             Schema::create('vitrine_popups', function (Blueprint $table) {
                 $table->id();
                 $table->string('titre', 255);
@@ -120,7 +120,7 @@ return new class extends Migration
         }
 
         // 8. Paramètres Vitrine (clé-valeur)
-        if (!Schema::hasTable('vitrine_settings')) {
+        if (! Schema::hasTable('vitrine_settings')) {
             Schema::create('vitrine_settings', function (Blueprint $table) {
                 $table->id();
                 $table->string('cle', 100)->unique();

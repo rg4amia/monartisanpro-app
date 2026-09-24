@@ -13,27 +13,27 @@ class UserResource extends JsonResource
         $artisanProfile = $this->artisanProfile;
 
         return [
-            'id'               => $this->id,
-            'phone'            => $this->phone,
-            'name'             => $this->name,
-            'role'             => $this->role,
-            'kycStatus'        => $this->kyc_status,
-            'accountStatus'    => $this->account_status ?? 'actif',
+            'id' => $this->id,
+            'phone' => $this->phone,
+            'name' => $this->name,
+            'role' => $this->role,
+            'kycStatus' => $this->kyc_status,
+            'accountStatus' => $this->account_status ?? 'actif',
             'accountStatusReason' => $this->account_status_reason,
             'scoreProsArtisan' => $this->score_prosartisan,
-            'walletMateriaux'  => $this->wallet_materiaux,
-            'walletMo'         => $this->wallet_mo,
-            'cguAcceptedAt'    => $this->cgu_accepted_at?->toIso8601String(),
-            'position'         => $coords,
-            'paymentPhone'     => $this->payment_phone,
-            'payment_phone'    => $this->payment_phone,
-            'preferredPaymentProvider'  => $this->preferred_payment_provider,
+            'walletMateriaux' => $this->wallet_materiaux,
+            'walletMo' => $this->wallet_mo,
+            'cguAcceptedAt' => $this->cgu_accepted_at?->toIso8601String(),
+            'position' => $coords,
+            'paymentPhone' => $this->payment_phone,
+            'payment_phone' => $this->payment_phone,
+            'preferredPaymentProvider' => $this->preferred_payment_provider,
             'preferred_payment_provider' => $this->preferred_payment_provider,
-            'cnmciNumber'      => $this->cnmci_number,
-            'cnmciCardUrl'     => $this->cnmci_card_url,
-            'cnmciStatus'      => $this->cnmci_status,
+            'cnmciNumber' => $this->cnmci_number,
+            'cnmciCardUrl' => $this->cnmci_card_url,
+            'cnmciStatus' => $this->cnmci_status,
             'nightInterventionAvailable' => (bool) ($artisanProfile?->intervient_la_nuit ?? false),
-            'artisanProfile'   => $this->when(
+            'artisanProfile' => $this->when(
                 $this->role === 'artisan' && $this->relationLoaded('artisanProfile'),
                 fn () => $artisanProfile ? [
                     'sector' => $artisanProfile->sector?->name,
@@ -46,7 +46,7 @@ class UserResource extends JsonResource
                     'nightInterventionAvailable' => (bool) $artisanProfile->intervient_la_nuit,
                 ] : null
             ),
-            'createdAt'        => $this->created_at?->toIso8601String(),
+            'createdAt' => $this->created_at?->toIso8601String(),
         ];
     }
 }

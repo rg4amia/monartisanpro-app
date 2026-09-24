@@ -30,7 +30,7 @@ class LogisticScoreTest extends TestCase
 
         $fournisseur->refresh();
         $this->assertEquals(0, $fournisseur->score_prosartisan); // 10 - 50 = -40, bounded to MIN_SCORE = 0
-        
+
         $entry = ScoreLedgerEntry::where('user_id', $fournisseur->id)->first();
         $this->assertNotNull($entry);
         $this->assertEquals('fraude_gps_tentative', $entry->event_type);
@@ -42,7 +42,7 @@ class LogisticScoreTest extends TestCase
         $fournisseur = User::factory()->create(['role' => 'fournisseur', 'score_prosartisan' => 10]);
         $client = User::factory()->create(['role' => 'client']);
         $artisan = User::factory()->create(['role' => 'artisan']);
-        
+
         $mission = Mission::create([
             'client_id' => $client->id,
             'artisan_id' => $artisan->id,
@@ -57,7 +57,7 @@ class LogisticScoreTest extends TestCase
 
         $fournisseur->refresh();
         $this->assertEquals(5, $fournisseur->score_prosartisan); // 0 + 5
-        
+
         $entry = ScoreLedgerEntry::where('user_id', $fournisseur->id)->first();
         $this->assertEquals('jcode_scan_success', $entry->event_type);
         $this->assertEquals(5, $entry->points);
@@ -68,7 +68,7 @@ class LogisticScoreTest extends TestCase
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $artisan = User::factory()->create(['role' => 'artisan']);
         $livreur = User::factory()->create(['role' => 'livreur', 'score_prosartisan' => 10]);
-        
+
         $mission = Mission::create([
             'client_id' => $client->id,
             'artisan_id' => $artisan->id,
@@ -85,7 +85,7 @@ class LogisticScoreTest extends TestCase
             'evalue_id' => $livreur->id,
             'note' => 5,
             'fiabilite' => 5, // 50%
-            'integrite' => 5, 
+            'integrite' => 5,
             'qualite' => 5,   // 30%
             'reactivite' => 5, // 20%
             'commentaire' => 'Top livreur',
@@ -94,7 +94,7 @@ class LogisticScoreTest extends TestCase
         $this->scoreService->recalculateLogistic($livreur);
 
         $livreur->refresh();
-        
+
         $entry = ScoreLedgerEntry::where('user_id', $livreur->id)->first();
         $this->assertNotNull($entry);
         $this->assertEquals('success_mission', $entry->event_type);

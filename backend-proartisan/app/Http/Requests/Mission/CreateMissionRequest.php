@@ -2,9 +2,8 @@
 
 namespace App\Http\Requests\Mission;
 
-use Illuminate\Foundation\Http\FormRequest;
-
 use App\Rules\NoContactInformation;
+use Illuminate\Foundation\Http\FormRequest;
 
 class CreateMissionRequest extends FormRequest
 {
@@ -17,21 +16,21 @@ class CreateMissionRequest extends FormRequest
     {
         $user = $this->user();
         $rules = [
-            'artisan_id'   => ['nullable', 'integer', 'exists:users,id'],
-            'sector_id'    => ['nullable', 'integer', 'exists:sectors,id'],
-            'trade_id'     => ['nullable', 'integer', 'exists:trades,id'],
+            'artisan_id' => ['nullable', 'integer', 'exists:users,id'],
+            'sector_id' => ['nullable', 'integer', 'exists:sectors,id'],
+            'trade_id' => ['nullable', 'integer', 'exists:trades,id'],
             // Nullable pour compatibilité avec les anciennes versions mobiles déjà
             // installées : la nouvelle UI rend ce champ obligatoire, mais le
             // backend retombe sur un type d'intervention par défaut si absent
             // (cf. MissionService::create).
             'intervention_type_id' => ['nullable', 'integer', 'exists:intervention_types,id'],
-            'category'     => ['nullable', 'string', 'max:100'],
-            'description' => ['required', 'string', 'min:20', 'max:2000', new NoContactInformation()],
-            'lat'         => ['nullable', 'numeric', 'between:-90,90'],
-            'lng'         => ['nullable', 'numeric', 'between:-180,180'],
-            'location_address' => ['nullable', 'string', 'max:255', new NoContactInformation()],
-            'photos'      => ['nullable', 'array', 'max:5'],
-            'photos.*'    => ['string'],
+            'category' => ['nullable', 'string', 'max:100'],
+            'description' => ['required', 'string', 'min:20', 'max:2000', new NoContactInformation],
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'location_address' => ['nullable', 'string', 'max:255', new NoContactInformation],
+            'photos' => ['nullable', 'array', 'max:5'],
+            'photos.*' => ['string'],
         ];
 
         // Les coordonnées de paiement Mobile Money sont facultatives lors de la demande de devis
@@ -45,14 +44,14 @@ class CreateMissionRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'artisan_id.exists'    => 'L\'artisan sélectionné est introuvable.',
-            'sector_id.exists'     => 'Le secteur sélectionné est invalide.',
-            'trade_id.exists'      => 'Le métier sélectionné est invalide.',
-            'category.max'         => 'La catégorie est trop longue.',
+            'artisan_id.exists' => 'L\'artisan sélectionné est introuvable.',
+            'sector_id.exists' => 'Le secteur sélectionné est invalide.',
+            'trade_id.exists' => 'Le métier sélectionné est invalide.',
+            'category.max' => 'La catégorie est trop longue.',
             'description.required' => 'La description de votre besoin est obligatoire.',
-            'description.min'      => 'La description doit comporter au moins 20 caractères.',
-            'lat.numeric'          => 'La latitude doit être un nombre.',
-            'lng.numeric'          => 'La longitude doit être un nombre.',
+            'description.min' => 'La description doit comporter au moins 20 caractères.',
+            'lat.numeric' => 'La latitude doit être un nombre.',
+            'lng.numeric' => 'La longitude doit être un nombre.',
             'location_address.max' => 'L\'adresse est trop longue.',
         ];
     }

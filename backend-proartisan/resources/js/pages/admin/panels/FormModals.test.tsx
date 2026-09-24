@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react';
 import { useState } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
+import type { AdminUser, PromoCodeItem, SectorItem } from '../shared';
 import {
     AiQuotaFormModal,
     CommunicationFormModal,
@@ -9,7 +10,6 @@ import {
     StatusFormModal,
     UserFormModal,
 } from './FormModals';
-import type { AdminUser, PromoCodeItem, SectorItem } from '../shared';
 
 /**
  * Ces modales reçoivent l'instance `useForm` d'Inertia du parent plutôt que
@@ -196,8 +196,8 @@ function UserHarness({
         fournisseur_sector_id: '' as number | '',
         fournisseur_trade_id: '' as number | '',
     });
-    (form as { errors: Record<string, string> }).errors = errors;
-    return <UserFormModal form={form} editing={editing} sectors={sectors} onSubmit={onSubmit} onClose={onClose} />;
+    const formWithErrors = { ...form, errors } as typeof form;
+    return <UserFormModal form={formWithErrors} editing={editing} sectors={sectors} onSubmit={onSubmit} onClose={onClose} />;
 }
 
 describe('UserFormModal', () => {

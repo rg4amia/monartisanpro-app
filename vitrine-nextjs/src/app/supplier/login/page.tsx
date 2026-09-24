@@ -51,8 +51,8 @@ export default function SupplierLogin() {
             } else {
                 setError("Échec de l'envoi du code. Vérifiez le numéro.");
             }
-        } catch (err: any) {
-            setError(err.message || "Erreur lors de l'envoi du code OTP.");
+        } catch (err: unknown) {
+            setError((err instanceof Error && err.message) || "Erreur lors de l'envoi du code OTP.");
         } finally {
             setLoading(false);
         }
@@ -98,8 +98,8 @@ export default function SupplierLogin() {
             setTimeout(() => {
                 router.push('/supplier');
             }, 1000);
-        } catch (err: any) {
-            setError(err.message || 'Code OTP invalide ou expiré.');
+        } catch (err: unknown) {
+            setError((err instanceof Error && err.message) || 'Code OTP invalide ou expiré.');
         } finally {
             setLoading(false);
         }

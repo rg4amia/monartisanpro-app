@@ -34,7 +34,7 @@ class PromoCodeController extends Controller
 
         $promo = PromoCode::where('code', $codeStr)->first();
 
-        if (!$promo) {
+        if (! $promo) {
             return response()->json([
                 'success' => false,
                 'message' => "Le code promo \"{$codeStr}\" est invalide ou inexistant.",
@@ -129,7 +129,7 @@ class PromoCodeController extends Controller
     public function update(Request $request, PromoCode $promoCode): JsonResponse
     {
         $validator = Validator::make($request->all(), [
-            'code' => 'required|string|max:50|unique:promo_codes,code,' . $promoCode->id,
+            'code' => 'required|string|max:50|unique:promo_codes,code,'.$promoCode->id,
             'description' => 'nullable|string|max:255',
             'discount_type' => 'required|in:percent,fixed',
             'discount_value' => 'required|integer|min:1',
@@ -181,7 +181,7 @@ class PromoCodeController extends Controller
      */
     public function toggle(PromoCode $promoCode): JsonResponse
     {
-        $promoCode->update(['is_active' => !$promoCode->is_active]);
+        $promoCode->update(['is_active' => ! $promoCode->is_active]);
 
         $status = $promoCode->is_active ? 'activé' : 'désactivé';
 

@@ -2,11 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\Permission;
 use App\Models\User;
 use Database\Seeders\PermissionSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
 
 class RolePermissionTest extends TestCase
@@ -26,7 +25,7 @@ class RolePermissionTest extends TestCase
         $this->assertDatabaseHas('permissions', ['name' => 'mission.create']);
         $this->assertDatabaseHas('permissions', ['name' => 'jcode.scan']);
 
-        $clientPermissionCount = \Illuminate\Support\Facades\DB::table('permission_role')
+        $clientPermissionCount = DB::table('permission_role')
             ->where('role', 'client')
             ->count();
         $this->assertGreaterThan(0, $clientPermissionCount);

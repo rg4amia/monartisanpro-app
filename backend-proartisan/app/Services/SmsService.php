@@ -2,13 +2,16 @@
 
 namespace App\Services;
 
+use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
 class SmsService
 {
     private string $apiToken;
+
     private string $baseUrl;
+
     private string $provider;
 
     public function __construct()
@@ -21,12 +24,12 @@ class SmsService
     /**
      * Build HTTP client with auth headers (+ SSL bypass in local env)
      */
-    private function httpClient(): \Illuminate\Http\Client\PendingRequest
+    private function httpClient(): PendingRequest
     {
         $client = Http::timeout(4)
             ->connectTimeout(3)
             ->withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiToken,
+                'Authorization' => 'Bearer '.$this->apiToken,
                 'Accept' => 'application/json',
             ]);
 
@@ -48,8 +51,8 @@ class SmsService
      *   - 002250141498409  → 2250141498409
      *   - 2250141498409    → 2250141498409 (déjà correct)
      *
-     * @param string $phone Numéro brut
-     * @param string $countryCode Indicatif pays (défaut : 225 pour la Côte d'Ivoire)
+     * @param  string  $phone  Numéro brut
+     * @param  string  $countryCode  Indicatif pays (défaut : 225 pour la Côte d'Ivoire)
      * @return string Numéro normalisé
      */
     public function normalizePhone(string $phone, string $countryCode = '225'): string
@@ -61,7 +64,7 @@ class SmsService
         $phone = ltrim($phone, '+');
 
         // Supprimer le préfixe "00" international
-        if (str_starts_with($phone, '00' . $countryCode)) {
+        if (str_starts_with($phone, '00'.$countryCode)) {
             $phone = substr($phone, 2);
         }
 
@@ -73,29 +76,30 @@ class SmsService
         // Numéro local (commence par 0 ou directement par les chiffres)
         // Formats CI : 01, 05, 07, 27, 21, 25, etc.
         if (str_starts_with($phone, '0')) {
-            return $countryCode . $phone;
+            return $countryCode.$phone;
         }
 
         // Numéro court sans 0 initial (ex: 700000001) → ajouter indicatif
-        return $countryCode . $phone;
+        return $countryCode.$phone;
     }
 
     /**
      * Normalise un ou plusieurs numéros de téléphone
      *
-     * @param string|array $recipients Numéro(s) brut(s)
+     * @param  string|array  $recipients  Numéro(s) brut(s)
      * @return string|array Numéro(s) normalisé(s)
      */
     private function normalizeRecipients(string|array $recipients): string|array
     {
         if (is_array($recipients)) {
-            return array_map(fn(string $phone) => $this->normalizePhone($phone), $recipients);
+            return array_map(fn (string $phone) => $this->normalizePhone($phone), $recipients);
         }
 
         // Gère le cas d'une chaîne avec plusieurs numéros séparés par des virgules
         if (str_contains($recipients, ',')) {
             $phones = array_map('trim', explode(',', $recipients));
-            return implode(',', array_map(fn(string $phone) => $this->normalizePhone($phone), $phones));
+
+            return implode(',', array_map(fn (string $phone) => $this->normalizePhone($phone), $phones));
         }
 
         return $this->normalizePhone($recipients);
@@ -104,14 +108,13 @@ class SmsService
     /**
      * Send SMS to single or multiple recipients
      *
-     * @param string|array $recipient Phone number(s)
-     * @param string $message Message content
-     * @param string $senderId Sender ID (max 11 chars)
-     * @param string|null $scheduleTime Optional schedule time (Y-m-d H:i)
-     * @param string $type Type SMSpro : 'plain' par défaut, 'otp' pour les
-     *                     codes de vérification (route transactionnelle
-     *                     prioritaire côté opérateur)
-     * @return array
+     * @param  string|array  $recipient  Phone number(s)
+     * @param  string  $message  Message content
+     * @param  string  $senderId  Sender ID (max 11 chars)
+     * @param  string|null  $scheduleTime  Optional schedule time (Y-m-d H:i)
+     * @param  string  $type  Type SMSpro : 'plain' par défaut, 'otp' pour les
+     *                        codes de vérification (route transactionnelle
+     *                        prioritaire côté opérateur)
      */
     public function send(
         string|array $recipient,
@@ -159,7 +162,7 @@ class SmsService
         }
 
         try {
-            $response = $this->httpClient()->post($this->baseUrl . '/sms/send', $payload);
+            $response = $this->httpClient()->post($this->baseUrl.'/sms/send', $payload);
 
             if ($response->successful()) {
                 return $response->json();
@@ -192,10 +195,9 @@ class SmsService
     /**
      * Send campaign to contact list
      *
-     * @param string|array $contactListId Contact list UID(s)
-     * @param string $message Message content
-     * @param string $senderId Sender ID
-     * @return array
+     * @param  string|array  $contactListId  Contact list UID(s)
+     * @param  string  $message  Message content
+     * @param  string  $senderId  Sender ID
      */
     public function sendCampaign(
         string|array $contactListId,
@@ -218,7 +220,7 @@ class SmsService
         $contactListString = is_array($contactListId) ? implode(',', $contactListId) : $contactListId;
 
         try {
-            $response = $this->httpClient()->post($this->baseUrl . '/sms/campaign', [
+            $response = $this->httpClient()->post($this->baseUrl.'/sms/campaign', [
                 'contact_list_id' => $contactListString,
                 'sender_id' => $senderId,
                 'type' => 'plain',
@@ -231,6 +233,7 @@ class SmsService
             ];
         } catch (\Exception $e) {
             Log::error('SMS Campaign Exception', ['message' => $e->getMessage()]);
+
             return ['status' => 'error', 'message' => $e->getMessage()];
         }
     }
@@ -238,8 +241,7 @@ class SmsService
     /**
      * View SMS details by UID
      *
-     * @param string $uid SMS UID
-     * @return array
+     * @param  string  $uid  SMS UID
      */
     public function view(string $uid): array
     {
@@ -248,7 +250,7 @@ class SmsService
         }
 
         try {
-            $response = $this->httpClient()->get($this->baseUrl . '/sms/' . $uid);
+            $response = $this->httpClient()->get($this->baseUrl.'/sms/'.$uid);
 
             return $response->successful() ? $response->json() : [
                 'status' => 'error',
@@ -261,8 +263,6 @@ class SmsService
 
     /**
      * View all messages with pagination
-     *
-     * @return array
      */
     public function viewAll(): array
     {
@@ -271,7 +271,7 @@ class SmsService
         }
 
         try {
-            $response = $this->httpClient()->get($this->baseUrl . '/sms');
+            $response = $this->httpClient()->get($this->baseUrl.'/sms');
 
             return $response->successful() ? $response->json() : [
                 'status' => 'error',
@@ -285,8 +285,7 @@ class SmsService
     /**
      * View campaign details by UID
      *
-     * @param string $uid Campaign UID
-     * @return array
+     * @param  string  $uid  Campaign UID
      */
     public function viewCampaign(string $uid): array
     {
@@ -295,7 +294,7 @@ class SmsService
         }
 
         try {
-            $response = $this->httpClient()->get($this->baseUrl . '/campaign/' . $uid);
+            $response = $this->httpClient()->get($this->baseUrl.'/campaign/'.$uid);
 
             return $response->successful() ? $response->json() : [
                 'status' => 'error',
@@ -309,9 +308,8 @@ class SmsService
     /**
      * Send OTP code
      *
-     * @param string $phone Phone number
-     * @param string $code OTP code
-     * @return array
+     * @param  string  $phone  Phone number
+     * @param  string  $code  OTP code
      */
     public function sendOtp(string $phone, string $code): array
     {
@@ -336,6 +334,7 @@ class SmsService
 
         if (($result['status'] ?? null) === 'error' && ($result['http_status'] ?? 0) === 403) {
             Log::info("Route SMS 'otp' non incluse dans le forfait SMSpro. Repli automatique sur la route standard 'plain'.");
+
             return $this->send(
                 $phone,
                 $message,

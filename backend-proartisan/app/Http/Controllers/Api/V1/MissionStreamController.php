@@ -45,7 +45,9 @@ class MissionStreamController extends Controller
 
             // Message initial d'établissement de connexion
             echo ": connection_established\n\n";
-            if (ob_get_level() > 0) ob_flush();
+            if (ob_get_level() > 0) {
+                ob_flush();
+            }
             flush();
 
             while (time() - $startTime < $maxDuration) {
@@ -65,13 +67,17 @@ class MissionStreamController extends Controller
                         echo "data: {$payload}\n\n";
                     }
 
-                    if (ob_get_level() > 0) ob_flush();
+                    if (ob_get_level() > 0) {
+                        ob_flush();
+                    }
                     flush();
                 } else {
                     // Battement de cœur toutes les 10 secondes pour éviter le timeout réseau
                     if (time() - $lastHeartbeat >= 10) {
                         echo ": heartbeat\n\n";
-                        if (ob_get_level() > 0) ob_flush();
+                        if (ob_get_level() > 0) {
+                            ob_flush();
+                        }
                         flush();
                         $lastHeartbeat = time();
                     }

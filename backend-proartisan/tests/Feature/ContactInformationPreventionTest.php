@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Mission;
 use App\Models\Sector;
 use App\Models\Trade;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -14,7 +14,9 @@ class ContactInformationPreventionTest extends TestCase
     use RefreshDatabase;
 
     private User $client;
+
     private User $artisan;
+
     private User $supplier;
 
     protected function setUp(): void
@@ -120,7 +122,7 @@ class ContactInformationPreventionTest extends TestCase
                         'type' => 'mo',
                         'description' => 'Pose de carrelage (contact : 0102030405)',
                         'montant' => 20000,
-                    ]
+                    ],
                 ],
                 'jalons' => [
                     [
@@ -128,8 +130,8 @@ class ContactInformationPreventionTest extends TestCase
                         'description' => 'Fin des travaux',
                         'montant' => 20000,
                         'date_cible' => now()->addDays(5)->toDateString(),
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response->assertStatus(422);

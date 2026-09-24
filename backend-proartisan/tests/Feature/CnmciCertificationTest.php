@@ -19,12 +19,12 @@ class CnmciCertificationTest extends TestCase
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'kyc_status' => 'actif',
-            'cnmci_status' => 'non_renseigne'
+            'cnmci_status' => 'non_renseigne',
         ]);
 
         $response = $this->actingAs($artisan, 'sanctum')->postJson("/api/v1/users/{$artisan->id}/cnmci", [
             'cnmci_number' => 'CNM-2026-999',
-            'cnmci_card' => UploadedFile::fake()->image('card.jpg')
+            'cnmci_card' => UploadedFile::fake()->image('card.jpg'),
         ]);
 
         $response->assertStatus(200);
@@ -43,11 +43,11 @@ class CnmciCertificationTest extends TestCase
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'cnmci_number' => 'CNM-2026-999',
-            'cnmci_status' => 'en_attente'
+            'cnmci_status' => 'en_attente',
         ]);
 
         $response = $this->actingAs($admin)->post("/admin/kyc/{$artisan->id}/cnmci-review", [
-            'decision' => 'valide'
+            'decision' => 'valide',
         ]);
 
         $response->assertRedirect();
@@ -61,11 +61,11 @@ class CnmciCertificationTest extends TestCase
         $artisan = User::factory()->create([
             'role' => 'artisan',
             'cnmci_number' => 'CNM-2026-999',
-            'cnmci_status' => 'en_attente'
+            'cnmci_status' => 'en_attente',
         ]);
 
         $response = $this->actingAs($admin)->post("/admin/kyc/{$artisan->id}/cnmci-review", [
-            'decision' => 'rejete'
+            'decision' => 'rejete',
         ]);
 
         $response->assertRedirect();

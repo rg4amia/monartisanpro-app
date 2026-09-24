@@ -15,7 +15,7 @@ return new class extends Migration
             // Ratio de fragmentation du séquestre (ex: 0.65 = 65% matériaux, 35% MO)
             // Ce ratio est IMMUABLE une fois le devis accepté
             $table->decimal('ratio_materiaux', 5, 4)->default(0.6500)->after('jalons_json')
-                  ->comment('Ratio matériaux (0.0000 à 1.0000) - IMMUABLE après acceptation');
+                ->comment('Ratio matériaux (0.0000 à 1.0000) - IMMUABLE après acceptation');
         });
     }
 

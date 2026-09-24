@@ -29,14 +29,14 @@ use App\States\Mission\PendingFundingState;
 function fsmAllows(string $from, string $to): bool
 {
     $config = MissionState::config();
-    $ref    = new ReflectionObject($config);
+    $ref = new ReflectionObject($config);
 
     $prop = $ref->getProperty('allowedTransitions');
     $prop->setAccessible(true);
     $transitions = $prop->getValue($config);
 
     $fromName = $from::$name;
-    $toName   = $to::$name;
+    $toName = $to::$name;
 
     return array_key_exists("{$fromName}-{$toName}", $transitions);
 }
@@ -177,8 +177,8 @@ describe('état initial', function () {
 
     it('définit draft comme état par défaut', function () {
         $config = MissionState::config();
-        $ref    = new ReflectionObject($config);
-        $prop   = $ref->getProperty('defaultStateClass');
+        $ref = new ReflectionObject($config);
+        $prop = $ref->getProperty('defaultStateClass');
         $prop->setAccessible(true);
 
         expect($prop->getValue($config))->toBe(DraftState::class);

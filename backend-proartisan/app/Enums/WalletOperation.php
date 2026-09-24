@@ -16,13 +16,13 @@ enum WalletOperation: string
      */
     public function label(): string
     {
-        return match($this) {
-            self::CREDIT        => 'Crédit',
-            self::DEBIT         => 'Débit',
-            self::BLOCAGE       => 'Blocage',
-            self::DEBLOCAGE     => 'Déblocage',
+        return match ($this) {
+            self::CREDIT => 'Crédit',
+            self::DEBIT => 'Débit',
+            self::BLOCAGE => 'Blocage',
+            self::DEBLOCAGE => 'Déblocage',
             self::REVERSE_ENTRY => 'Écriture d\'annulation',
-            self::FEE_CUT       => 'Commission plateforme',
+            self::FEE_CUT => 'Commission plateforme',
         };
     }
 

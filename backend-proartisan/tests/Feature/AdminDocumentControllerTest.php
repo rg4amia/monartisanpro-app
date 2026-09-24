@@ -2,16 +2,10 @@
 
 namespace Tests\Feature;
 
-use App\Enums\PaymentProvider;
-use App\Enums\PaymentStatus;
 use App\Models\GeneratedDocument;
-use App\Models\Mission;
-use App\Models\SupplierCashout;
-use App\Models\Transaction;
 use App\Models\User;
 use App\Services\PdfService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Mockery;
 use Tests\TestCase;
 
 class AdminDocumentControllerTest extends TestCase
@@ -25,7 +19,7 @@ class AdminDocumentControllerTest extends TestCase
         parent::setUp();
 
         $this->admin = User::factory()->create([
-            'role'       => 'admin',
+            'role' => 'admin',
             'kyc_status' => 'actif',
         ]);
     }
@@ -33,10 +27,10 @@ class AdminDocumentControllerTest extends TestCase
     public function test_admin_can_list_documents_via_json_endpoint(): void
     {
         GeneratedDocument::create([
-            'reference'     => 'REC-TEST-001',
+            'reference' => 'REC-TEST-001',
             'document_type' => 'recu_liberation_jalon',
-            'title'         => 'Reçu de test',
-            'montant'       => 25000,
+            'title' => 'Reçu de test',
+            'montant' => 25000,
         ]);
 
         $response = $this->actingAs($this->admin)
@@ -45,7 +39,7 @@ class AdminDocumentControllerTest extends TestCase
         $response->assertOk()
             ->assertJsonStructure([
                 'documents' => ['data'],
-                'stats'     => [
+                'stats' => [
                     'total_documents',
                     'total_montant_certifie',
                     'recus_jalons_mo',
@@ -69,15 +63,15 @@ class AdminDocumentControllerTest extends TestCase
     public function test_admin_can_download_document_pdf(): void
     {
         // Mock PdfService so we don't need real disk PDF writing in test
-        $tempPdf = tempnam(sys_get_temp_dir(), 'test_pdf_') . '.pdf';
+        $tempPdf = tempnam(sys_get_temp_dir(), 'test_pdf_').'.pdf';
         file_put_contents($tempPdf, '%PDF-1.4 test content');
 
         $doc = GeneratedDocument::create([
-            'reference'     => 'REC-DOWNLOAD-01',
+            'reference' => 'REC-DOWNLOAD-01',
             'document_type' => 'recu_liberation_jalon',
-            'title'         => 'Reçu Téléchargeable',
-            'montant'       => 50000,
-            'file_path'     => $tempPdf,
+            'title' => 'Reçu Téléchargeable',
+            'montant' => 50000,
+            'file_path' => $tempPdf,
         ]);
 
         $response = $this->actingAs($this->admin)

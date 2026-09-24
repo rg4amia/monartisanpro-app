@@ -2,8 +2,11 @@
 
 namespace App\Services;
 
+use App\Models\InterventionType;
 use App\Models\Mission;
 use App\Models\User;
+use App\States\Mission\DraftState;
+use App\States\Mission\PendingArtisanAcceptanceState;
 use Illuminate\Support\Facades\Log;
 
 class MissionService
@@ -29,10 +32,10 @@ class MissionService
             return $duplicate;
         }
 
-        $hasArtisan = !empty($data['artisan_id']);
-        $initialState = $hasArtisan 
-            ? \App\States\Mission\PendingArtisanAcceptanceState::class 
-            : \App\States\Mission\DraftState::class;
+        $hasArtisan = ! empty($data['artisan_id']);
+        $initialState = $hasArtisan
+            ? PendingArtisanAcceptanceState::class
+            : DraftState::class;
 
         $locationAddress = $data['location_address'] ?? $data['location'] ?? null;
 
@@ -40,24 +43,24 @@ class MissionService
         // demande de devis. Les anciennes versions mobiles ne l'envoient pas
         // encore : on retombe alors sur le premier type disponible.
         $interventionTypeId = $data['intervention_type_id']
-            ?? \App\Models\InterventionType::orderBy('id')->value('id');
+            ?? InterventionType::orderBy('id')->value('id');
 
         $mission = Mission::create([
-            'client_id'           => $client->id,
-            'artisan_id'          => $data['artisan_id'] ?? null,
+            'client_id' => $client->id,
+            'artisan_id' => $data['artisan_id'] ?? null,
             'requested_sector_id' => $data['sector_id'] ?? null,
-            'requested_trade_id'  => $data['trade_id'] ?? null,
+            'requested_trade_id' => $data['trade_id'] ?? null,
             'intervention_type_id' => $interventionTypeId,
-            'description'         => $data['description'],
-            'photos_json'         => $data['photos'] ?? null,
-            'status'              => $initialState,
-            'client_latitude'     => $data['lat'] ?? null,
-            'client_longitude'    => $data['lng'] ?? null,
-            'client_address'      => $locationAddress,
-            'montant_total'       => 0,
-            'montant_materiaux'   => 0,
-            'montant_mo'          => 0,
-            'ratio_materiaux'     => 0.0000,
+            'description' => $data['description'],
+            'photos_json' => $data['photos'] ?? null,
+            'status' => $initialState,
+            'client_latitude' => $data['lat'] ?? null,
+            'client_longitude' => $data['lng'] ?? null,
+            'client_address' => $locationAddress,
+            'montant_total' => 0,
+            'montant_materiaux' => 0,
+            'montant_mo' => 0,
+            'ratio_materiaux' => 0.0000,
         ]);
 
         // Enrichissement Gemini
@@ -74,13 +77,13 @@ class MissionService
             };
 
             $mission->update([
-                'gemini_category'       => $estimate['category'] ?? 'Travaux généraux',
-                'gemini_urgency'        => $urgency,
+                'gemini_category' => $estimate['category'] ?? 'Travaux généraux',
+                'gemini_urgency' => $urgency,
                 'gemini_estimation_min' => $estimate['price_min'] ?? 25000,
                 'gemini_estimation_max' => $estimate['price_max'] ?? 100000,
             ]);
         } catch (\Throwable $e) {
-            Log::warning('Échec enrichissement Gemini: ' . $e->getMessage());
+            Log::warning('Échec enrichissement Gemini: '.$e->getMessage());
         }
 
         if ($hasArtisan) {
@@ -97,7 +100,7 @@ class MissionService
                     );
                 }
             } catch (\Throwable $e) {
-                Log::warning('Échec envoi notification artisan: ' . $e->getMessage());
+                Log::warning('Échec envoi notification artisan: '.$e->getMessage());
             }
         }
 

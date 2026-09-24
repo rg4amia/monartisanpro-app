@@ -2,8 +2,8 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
-use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
 {
@@ -17,24 +17,24 @@ return new class extends Migration
         // Settings configurables pour le watchdog livreur
         DB::table('settings')->insertOrIgnore([
             [
-                'key'         => 'driver_watchdog_timeout_minutes',
-                'value'       => '15',
-                'type'        => 'integer',
-                'group'       => 'logistique',
-                'label'       => 'Délai watchdog livreur (minutes)',
+                'key' => 'driver_watchdog_timeout_minutes',
+                'value' => '15',
+                'type' => 'integer',
+                'group' => 'logistique',
+                'label' => 'Délai watchdog livreur (minutes)',
                 'description' => 'Durée d\'inactivité du livreur après acceptation de la course avant réaffectation automatique.',
-                'created_at'  => now(),
-                'updated_at'  => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
             [
-                'key'         => 'driver_max_reassignments',
-                'value'       => '3',
-                'type'        => 'integer',
-                'group'       => 'logistique',
-                'label'       => 'Réaffectations max par commande',
+                'key' => 'driver_max_reassignments',
+                'value' => '3',
+                'type' => 'integer',
+                'group' => 'logistique',
+                'label' => 'Réaffectations max par commande',
                 'description' => 'Nombre maximum de réaffectations automatiques de livreur par commande avant escalade admin.',
-                'created_at'  => now(),
-                'updated_at'  => now(),
+                'created_at' => now(),
+                'updated_at' => now(),
             ],
         ]);
     }

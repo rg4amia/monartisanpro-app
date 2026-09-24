@@ -2,8 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Models\Mission;
+use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -12,6 +12,7 @@ class DevisSuggestionTest extends TestCase
     use RefreshDatabase;
 
     private User $client;
+
     private User $artisan;
 
     protected function setUp(): void
@@ -69,12 +70,12 @@ class DevisSuggestionTest extends TestCase
             'success',
             'data' => [
                 'lignes' => [
-                    '*' => ['type', 'description', 'montant', 'source']
+                    '*' => ['type', 'description', 'montant', 'source'],
                 ],
                 'jalons' => [
-                    '*' => ['ordre', 'description', 'montant', 'date_cible']
-                ]
-            ]
+                    '*' => ['ordre', 'description', 'montant', 'date_cible'],
+                ],
+            ],
         ]);
 
         // Vérifier l'équilibrage des montants

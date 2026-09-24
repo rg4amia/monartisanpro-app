@@ -36,11 +36,11 @@ class UserController extends Controller
                             ->whereKey($value)
                             ->where('sector_id', $sectorId)
                             ->exists();
-                        if (!$exists) {
+                        if (! $exists) {
                             $fail('Le métier sélectionné doit appartenir au secteur d\'activité choisi.');
                         }
                     }
-                }
+                },
             ],
             'bio' => ['sometimes', 'nullable', 'string'],
             'experience_years' => ['sometimes', 'integer', 'min:0', 'max:60'],
@@ -48,12 +48,12 @@ class UserController extends Controller
             'preferred_payment_provider' => ['sometimes', 'nullable', 'string', 'in:wave,orange_money,mtn_money,moov_money'],
         ]);
 
-        if (array_key_exists('intervention_nuit', $data) || 
-            array_key_exists('sector_id', $data) || 
-            array_key_exists('trade_id', $data) || 
-            array_key_exists('bio', $data) || 
+        if (array_key_exists('intervention_nuit', $data) ||
+            array_key_exists('sector_id', $data) ||
+            array_key_exists('trade_id', $data) ||
+            array_key_exists('bio', $data) ||
             array_key_exists('experience_years', $data)) {
-            
+
             if ($user->role !== 'artisan') {
                 throw ValidationException::withMessages([
                     'role' => ['Seuls les artisans possèdent un profil métier modifiable.'],
@@ -96,7 +96,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new UserResource($user),
+            'data' => new UserResource($user),
         ]);
     }
 
@@ -124,8 +124,8 @@ class UserController extends Controller
         }
 
         return response()->json([
-            'success'  => true,
-            'message'  => 'Position mise à jour.',
+            'success' => true,
+            'message' => 'Position mise à jour.',
             'position' => $data,
         ]);
     }
@@ -140,7 +140,7 @@ class UserController extends Controller
             'role' => ['required', 'in:client,artisan,fournisseur'],
         ], [
             'role.required' => 'Le rôle est obligatoire.',
-            'role.in'       => 'Rôle invalide.',
+            'role.in' => 'Rôle invalide.',
         ]);
 
         $user->update(['role' => $data['role']]);
@@ -154,7 +154,7 @@ class UserController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => new UserResource($user->fresh()->load('artisanProfile.sector', 'artisanProfile.trade')),
+            'data' => new UserResource($user->fresh()->load('artisanProfile.sector', 'artisanProfile.trade')),
         ]);
     }
 
@@ -185,7 +185,7 @@ class UserController extends Controller
         if ($request->hasFile('cnmci_card')) {
             $file = $request->file('cnmci_card');
             $path = $file->store('cnmci', 'public');
-            $updateData['cnmci_card_url'] = '/storage/' . $path;
+            $updateData['cnmci_card_url'] = '/storage/'.$path;
         }
 
         $numberVal = array_key_exists('cnmci_number', $updateData) ? $updateData['cnmci_number'] : $user->cnmci_number;
@@ -204,7 +204,7 @@ class UserController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Informations CNMCI mises à jour, en attente de validation.',
-            'data'    => new UserResource($user->fresh()->load('artisanProfile.sector', 'artisanProfile.trade')),
+            'data' => new UserResource($user->fresh()->load('artisanProfile.sector', 'artisanProfile.trade')),
         ]);
     }
 

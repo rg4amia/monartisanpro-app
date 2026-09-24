@@ -3,8 +3,10 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
+use App\Models\ContactMessage;
+use App\Models\Evaluation;
+use App\Models\Mission;
 use App\Models\User;
-use App\Models\WhatsappClickLog;
 use App\Models\Vitrine\VitrineArticle;
 use App\Models\Vitrine\VitrineArtisanDuMois;
 use App\Models\Vitrine\VitrineFormation;
@@ -13,8 +15,10 @@ use App\Models\Vitrine\VitrineRecrutement;
 use App\Models\Vitrine\VitrineSetting;
 use App\Models\Vitrine\VitrineSlide;
 use App\Models\Vitrine\VitrineVideo;
+use App\Models\WhatsappClickLog;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 
 class VitrineController extends Controller
 {
@@ -38,21 +42,21 @@ class VitrineController extends Controller
             ->latest('mois')
             ->first();
 
-        if (!$adm || !$adm->user) {
+        if (! $adm || ! $adm->user) {
             return response()->json(['success' => true, 'data' => null]);
         }
 
         $artisan = $adm->user;
 
         // Calcul dynamique du taux de succès
-        $totalMissions = \App\Models\Mission::where('artisan_id', $artisan->id)->count();
-        $completedMissions = \App\Models\Mission::where('artisan_id', $artisan->id)->where('status', 'terminee')->count();
+        $totalMissions = Mission::where('artisan_id', $artisan->id)->count();
+        $completedMissions = Mission::where('artisan_id', $artisan->id)->where('status', 'terminee')->count();
         $tauxSucces = $totalMissions > 0 ? (int) round(($completedMissions / $totalMissions) * 100) : 100;
 
         // Calcul note moyenne & total avis
-        $totalAvis = \App\Models\Evaluation::where('evalue_id', $artisan->id)->count();
+        $totalAvis = Evaluation::where('evalue_id', $artisan->id)->count();
         $noteMoyenne = $totalAvis > 0
-            ? (float) \App\Models\Evaluation::where('evalue_id', $artisan->id)->avg('note')
+            ? (float) Evaluation::where('evalue_id', $artisan->id)->avg('note')
             : round(max(1.0, min(5.0, $artisan->score_prosartisan / 200)), 1);
 
         // Zone principale
@@ -120,7 +124,7 @@ class VitrineController extends Controller
         }
 
         $artisans = $query->orderByDesc('score_prosartisan')
-                          ->paginate($request->input('per_page', 12));
+            ->paginate($request->input('per_page', 12));
 
         return response()->json(['success' => true, 'data' => $artisans]);
     }
@@ -283,9 +287,9 @@ class VitrineController extends Controller
         $validated['ip_address'] = $request->ip();
         $validated['statut'] = 'nouveau';
 
-        $contact = \App\Models\ContactMessage::create($validated);
+        $contact = ContactMessage::create($validated);
 
-        \Illuminate\Support\Facades\Log::channel('single')->info('Nouveau contact vitrine créé ID: ' . $contact->id, [
+        Log::channel('single')->info('Nouveau contact vitrine créé ID: '.$contact->id, [
             'nom' => $contact->nom,
             'email' => $contact->email,
             'sujet' => $contact->sujet,

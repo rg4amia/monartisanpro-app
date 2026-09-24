@@ -3,6 +3,9 @@
 namespace App\Services;
 
 use App\Models\Mission;
+use App\States\Mission\CompletedState;
+use App\States\Mission\FundedLockedState;
+use App\States\Mission\InProgressState;
 use Illuminate\Support\Facades\Log;
 
 class AntiCircumventionService
@@ -130,8 +133,8 @@ class AntiCircumventionService
      */
     public function isChatAllowedWithoutFilter(Mission $mission): bool
     {
-        return $mission->status instanceof \App\States\Mission\FundedLockedState
-            || $mission->status instanceof \App\States\Mission\InProgressState
-            || $mission->status instanceof \App\States\Mission\CompletedState;
+        return $mission->status instanceof FundedLockedState
+            || $mission->status instanceof InProgressState
+            || $mission->status instanceof CompletedState;
     }
 }

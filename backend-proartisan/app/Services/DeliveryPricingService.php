@@ -4,9 +4,7 @@ namespace App\Services;
 
 use App\Models\Order;
 use App\Models\Setting;
-use App\Models\User;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\Log;
 
 /**
  * Service de Tarification Dynamique Logistique & Surge Pricing (Epic 2, Évolution 12)
@@ -17,14 +15,17 @@ use Illuminate\Support\Facades\Log;
 class DeliveryPricingService
 {
     public const RATE_PER_KM = 150;      // 150 FCFA / km
+
     public const RATE_PER_MIN = 50;      // 50 FCFA / minute
+
     public const MINIMUM_FARE = 1000;    // Forfait plancher 1000 FCFA
+
     public const FALLBACK_FARE = 2500;   // Forfait de repli sans coordonnées GPS
 
     public const VEHICLE_MULTIPLIERS = [
-        'moto'    => 1.0,  // Petit colis, outillage léger (< 20 kg)
+        'moto' => 1.0,  // Petit colis, outillage léger (< 20 kg)
         'voiture' => 1.5,  // Matériel intermédiaire (20-100 kg, sanitaires, petits rouleaux)
-        'cargo'   => 2.5,  // Matériaux lourds (> 100 kg, ciment, fer, sable, gravier)
+        'cargo' => 2.5,  // Matériaux lourds (> 100 kg, ciment, fer, sable, gravier)
     ];
 
     public function __construct(
@@ -37,8 +38,7 @@ class DeliveryPricingService
     /**
      * Calcule l'estimation détaillée de livraison.
      *
-     * @param array $params ['from' => ['lat', 'lng'], 'to' => ['lat', 'lng'], 'vehicle_class' => ?, 'surge_multiplier' => ?, 'items' => ?]
-     * @return array
+     * @param  array  $params  ['from' => ['lat', 'lng'], 'to' => ['lat', 'lng'], 'vehicle_class' => ?, 'surge_multiplier' => ?, 'items' => ?]
      */
     public function estimateFare(array $params): array
     {
@@ -49,7 +49,7 @@ class DeliveryPricingService
         // 1. Détection ou validation de la classe de véhicule
         $recommendedVehicle = $this->recommendVehicleClass($items);
         $vehicleClass = $params['vehicle_class'] ?? $recommendedVehicle;
-        if (!array_key_exists($vehicleClass, self::VEHICLE_MULTIPLIERS)) {
+        if (! array_key_exists($vehicleClass, self::VEHICLE_MULTIPLIERS)) {
             $vehicleClass = 'moto';
         }
         $vehicleMultiplier = self::VEHICLE_MULTIPLIERS[$vehicleClass];
@@ -78,21 +78,21 @@ class DeliveryPricingService
             $deliveryCost = (int) max(self::MINIMUM_FARE, round($rawCost));
 
             return [
-                'delivery_cost'             => $deliveryCost,
-                'distance_km'               => 10.0,
-                'duration_min'              => 20.0,
-                'vehicle_class'             => $vehicleClass,
-                'vehicle_multiplier'        => $vehicleMultiplier,
-                'surge_multiplier'          => $surgeMultiplier,
-                'is_peak_hours'             => $isPeakHours,
+                'delivery_cost' => $deliveryCost,
+                'distance_km' => 10.0,
+                'duration_min' => 20.0,
+                'vehicle_class' => $vehicleClass,
+                'vehicle_multiplier' => $vehicleMultiplier,
+                'surge_multiplier' => $surgeMultiplier,
+                'is_peak_hours' => $isPeakHours,
                 'recommended_vehicle_class' => $recommendedVehicle,
-                'is_fallback'               => true,
-                'fare_breakdown'            => [
-                    'minimum_fare'  => self::MINIMUM_FARE,
+                'is_fallback' => true,
+                'fare_breakdown' => [
+                    'minimum_fare' => self::MINIMUM_FARE,
                     'distance_fare' => (int) round(10.0 * self::RATE_PER_KM),
                     'duration_fare' => (int) round(20.0 * self::RATE_PER_MIN),
-                    'subtotal'      => self::FALLBACK_FARE,
-                    'total'         => $deliveryCost,
+                    'subtotal' => self::FALLBACK_FARE,
+                    'total' => $deliveryCost,
                 ],
             ];
         }
@@ -117,7 +117,7 @@ class DeliveryPricingService
                 $directions = [
                     'distance' => (float) $osrmRoute['distance_km'] * 1000,
                     'duration' => (float) $osrmRoute['duration_min'] * 60,
-                    'source'   => 'osrm',
+                    'source' => 'osrm',
                 ];
             }
         }
@@ -136,23 +136,23 @@ class DeliveryPricingService
         $deliveryCost = (int) max(self::MINIMUM_FARE, round($rawCost));
 
         return [
-            'delivery_cost'             => $deliveryCost,
-            'distance_km'               => $distanceKm,
-            'duration_min'              => $durationMin,
-            'vehicle_class'             => $vehicleClass,
-            'vehicle_multiplier'        => $vehicleMultiplier,
-            'surge_multiplier'          => $surgeMultiplier,
-            'is_peak_hours'             => $isPeakHours,
+            'delivery_cost' => $deliveryCost,
+            'distance_km' => $distanceKm,
+            'duration_min' => $durationMin,
+            'vehicle_class' => $vehicleClass,
+            'vehicle_multiplier' => $vehicleMultiplier,
+            'surge_multiplier' => $surgeMultiplier,
+            'is_peak_hours' => $isPeakHours,
             'recommended_vehicle_class' => $recommendedVehicle,
-            'is_fallback'               => false,
-            'fare_breakdown'            => [
-                'minimum_fare'   => self::MINIMUM_FARE,
-                'distance_fare'  => (int) round($distanceFare),
-                'duration_fare'  => (int) round($durationFare),
-                'base_subtotal'  => (int) round($baseSubtotal),
+            'is_fallback' => false,
+            'fare_breakdown' => [
+                'minimum_fare' => self::MINIMUM_FARE,
+                'distance_fare' => (int) round($distanceFare),
+                'duration_fare' => (int) round($durationFare),
+                'base_subtotal' => (int) round($baseSubtotal),
                 'vehicle_surcharge' => (int) round($baseSubtotal * ($vehicleMultiplier - 1.0)),
-                'surge_applied'  => (int) round($rawCost - ($baseSubtotal * $vehicleMultiplier)),
-                'total'          => $deliveryCost,
+                'surge_applied' => (int) round($rawCost - ($baseSubtotal * $vehicleMultiplier)),
+                'total' => $deliveryCost,
             ],
         ];
     }
@@ -218,13 +218,13 @@ class DeliveryPricingService
         $heavyKeywords = [
             'ciment', 'sable', 'gravier', 'brique', 'parpaing', 'fer', 'tôle',
             'carreau', 'carrelage', 'plaque', 'tuyau', 'cuvette', 'chauffe-eau',
-            'mortier', 'béton', 'agglo', 'poutrelle'
+            'mortier', 'béton', 'agglo', 'poutrelle',
         ];
 
         $mediumKeywords = [
             'peinture', 'rouleau', 'lavabo', 'évier', 'mitigeur', 'robinet',
             'câble', 'gaine', 'disjoncteur', 'serrure', 'porte', 'fenêtre',
-            'enduit', 'vernis'
+            'enduit', 'vernis',
         ];
 
         $totalQuantity = 0;
@@ -281,7 +281,7 @@ class DeliveryPricingService
         $items = [];
         foreach ($order->items as $orderItem) {
             $items[] = [
-                'name'     => $orderItem->product?->name ?? '',
+                'name' => $orderItem->product?->name ?? '',
                 'quantity' => $orderItem->quantity,
             ];
         }
@@ -295,11 +295,11 @@ class DeliveryPricingService
         }
 
         $estimate = $this->estimateFare([
-            'from'             => $from,
-            'to'               => $to,
-            'vehicle_class'    => $effectiveVehicle,
+            'from' => $from,
+            'to' => $to,
+            'vehicle_class' => $effectiveVehicle,
             'surge_multiplier' => $order->surge_multiplier ?? 1.0,
-            'items'            => $items,
+            'items' => $items,
         ]);
 
         return $estimate['delivery_cost'];

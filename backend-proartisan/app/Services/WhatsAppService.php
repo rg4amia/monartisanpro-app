@@ -8,7 +8,9 @@ use Illuminate\Support\Facades\Log;
 class WhatsAppService
 {
     private string $apiToken;
+
     private string $baseUrl;
+
     private string $provider;
 
     public function __construct()
@@ -21,9 +23,8 @@ class WhatsAppService
     /**
      * Send WhatsApp message to recipient
      *
-     * @param string $recipient Phone number
-     * @param string $message Message content
-     * @return array
+     * @param  string  $recipient  Phone number
+     * @param  string  $message  Message content
      */
     public function send(string $recipient, string $message): array
     {
@@ -45,7 +46,7 @@ class WhatsAppService
 
         try {
             $client = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiToken,
+                'Authorization' => 'Bearer '.$this->apiToken,
                 'Accept' => 'application/json',
             ]);
 
@@ -55,7 +56,7 @@ class WhatsAppService
                 $client = $client->withoutVerifying();
             }
 
-            $response = $client->post($this->baseUrl . '/whatsapp/send', [
+            $response = $client->post($this->baseUrl.'/whatsapp/send', [
                 'recipient' => $recipient,
                 'message' => $message,
             ]);
@@ -89,9 +90,8 @@ class WhatsAppService
     /**
      * Send OTP code via WhatsApp
      *
-     * @param string $phone Phone number
-     * @param string $code OTP code
-     * @return array
+     * @param  string  $phone  Phone number
+     * @param  string  $code  OTP code
      */
     public function sendOtp(string $phone, string $code): array
     {

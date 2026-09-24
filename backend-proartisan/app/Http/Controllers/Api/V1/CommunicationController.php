@@ -28,11 +28,11 @@ class CommunicationController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $communications->items(),
-            'meta'    => [
-                'total'        => $communications->total(),
+            'data' => $communications->items(),
+            'meta' => [
+                'total' => $communications->total(),
                 'current_page' => $communications->currentPage(),
-                'last_page'    => $communications->lastPage(),
+                'last_page' => $communications->lastPage(),
             ],
         ]);
     }
@@ -51,7 +51,7 @@ class CommunicationController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Communication créée en brouillon.',
-            'data'    => $communication->load('auteur:id,name,phone'),
+            'data' => $communication->load('auteur:id,name,phone'),
         ], 201);
     }
 
@@ -62,7 +62,7 @@ class CommunicationController extends Controller
     {
         return response()->json([
             'success' => true,
-            'data'    => $communication->load('auteur:id,name,phone'),
+            'data' => $communication->load('auteur:id,name,phone'),
         ]);
     }
 
@@ -81,7 +81,7 @@ class CommunicationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Communication modifiée.',
-                'data'    => $updated->load('auteur:id,name,phone'),
+                'data' => $updated->load('auteur:id,name,phone'),
             ]);
         } catch (\LogicException $e) {
             return response()->json([
@@ -102,7 +102,7 @@ class CommunicationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Communication publiée avec succès.',
-                'data'    => $published->load('auteur:id,name,phone'),
+                'data' => $published->load('auteur:id,name,phone'),
             ]);
         } catch (\LogicException $e) {
             return response()->json([
@@ -123,7 +123,7 @@ class CommunicationController extends Controller
             return response()->json([
                 'success' => true,
                 'message' => 'Communication clôturée.',
-                'data'    => $cloturee->load('auteur:id,name,phone'),
+                'data' => $cloturee->load('auteur:id,name,phone'),
             ]);
         } catch (\LogicException $e) {
             return response()->json([
@@ -170,7 +170,7 @@ class CommunicationController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $data,
+            'data' => $data,
         ]);
     }
 }

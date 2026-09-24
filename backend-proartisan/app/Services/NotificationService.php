@@ -5,7 +5,6 @@ namespace App\Services;
 use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Http;
 
 class NotificationService
 {
@@ -28,20 +27,20 @@ class NotificationService
     {
         // 1. Enregistrement en base (toujours)
         Notification::create([
-            'user_id'   => $user->id,
-            'type'      => $type,
-            'title'     => $title,
-            'body'      => $body,
+            'user_id' => $user->id,
+            'type' => $type,
+            'title' => $title,
+            'body' => $body,
             'data_json' => $data,
         ]);
 
         // 2. Push Notification via OneSignal (basé sur l'ID utilisateur)
         try {
-            $oneSignal = app(\App\Services\OneSignalService::class);
+            $oneSignal = app(OneSignalService::class);
             $androidSound = in_array($user->role, self::ROLES_WITH_DISTINCT_SOUND, true) ? self::DISTINCT_SOUND : null;
             $oneSignal->sendToUser((string) $user->id, $title, $body, $data, $androidSound);
         } catch (\Exception $e) {
-            Log::error("Erreur lors de l'appel OneSignal dans NotificationService : " . $e->getMessage());
+            Log::error("Erreur lors de l'appel OneSignal dans NotificationService : ".$e->getMessage());
         }
 
         // 3. SMS pour les types critiques (OTP, Paiement, Alerte fraude)
@@ -50,7 +49,7 @@ class NotificationService
             try {
                 $this->sendSms($user->phone, "{$title}: {$body}");
             } catch (\Throwable $e) {
-                Log::error("Erreur lors de l'envoi SMS dans NotificationService : " . $e->getMessage());
+                Log::error("Erreur lors de l'envoi SMS dans NotificationService : ".$e->getMessage());
             }
         }
     }

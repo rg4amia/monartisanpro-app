@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class LlmContext extends Model
 {
     protected $table = 'contexts';
-    
+
     public $incrementing = false;
+
     protected $keyType = 'string';
-    
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -25,11 +26,11 @@ class LlmContext extends Model
         'materials',
         'price',
         'justification',
-        'type_ouvrage'
+        'type_ouvrage',
     ];
 
     protected $casts = [
         'dosages' => 'array',
-        'materials' => 'array'
+        'materials' => 'array',
     ];
 }

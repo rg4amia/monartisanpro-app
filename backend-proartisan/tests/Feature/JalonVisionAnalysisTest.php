@@ -21,22 +21,22 @@ class JalonVisionAnalysisTest extends TestCase
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
-            'client_id'         => $client->id,
-            'artisan_id'        => $artisan->id,
-            'description'       => 'Plomberie sanitaire',
-            'status'            => 'funded_locked',
-            'montant_total'     => 150000,
+            'client_id' => $client->id,
+            'artisan_id' => $artisan->id,
+            'description' => 'Plomberie sanitaire',
+            'status' => 'funded_locked',
+            'montant_total' => 150000,
             'montant_materiaux' => 90000,
-            'montant_mo'        => 60000,
-            'ratio_materiaux'   => 0.60,
+            'montant_mo' => 60000,
+            'ratio_materiaux' => 0.60,
         ]);
 
         $jalon = Jalon::create([
-            'mission_id'  => $mission->id,
-            'ordre'       => 1,
+            'mission_id' => $mission->id,
+            'ordre' => 1,
             'description' => 'Pose tuyauterie cuivre et raccords douche',
-            'montant'     => 30000,
-            'statut'      => 'en_attente',
+            'montant' => 30000,
+            'statut' => 'en_attente',
         ]);
 
         $response = $this->actingAs($artisan)
@@ -46,8 +46,8 @@ class JalonVisionAnalysisTest extends TestCase
                         'url' => 'https://example.com/photos/plumbing_copper.jpg',
                         'lat' => 5.3484,
                         'lng' => -4.0169,
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response->assertOk()
@@ -67,7 +67,7 @@ class JalonVisionAnalysisTest extends TestCase
                         'confidence',
                         'analyzed_at',
                     ],
-                ]
+                ],
             ]);
 
         $jalon->refresh();
@@ -85,22 +85,22 @@ class JalonVisionAnalysisTest extends TestCase
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif']);
 
         $mission = Mission::create([
-            'client_id'         => $client->id,
-            'artisan_id'        => $artisan->id,
-            'description'       => 'Électricité générale',
-            'status'            => 'funded_locked',
-            'montant_total'     => 80000,
+            'client_id' => $client->id,
+            'artisan_id' => $artisan->id,
+            'description' => 'Électricité générale',
+            'status' => 'funded_locked',
+            'montant_total' => 80000,
             'montant_materiaux' => 50000,
-            'montant_mo'        => 30000,
-            'ratio_materiaux'   => 0.625,
+            'montant_mo' => 30000,
+            'ratio_materiaux' => 0.625,
         ]);
 
         $jalon = Jalon::create([
-            'mission_id'  => $mission->id,
-            'ordre'       => 1,
+            'mission_id' => $mission->id,
+            'ordre' => 1,
             'description' => 'Jalon frauduleux et incohérent avec tableau vide',
-            'montant'     => 15000,
-            'statut'      => 'en_attente',
+            'montant' => 15000,
+            'statut' => 'en_attente',
         ]);
 
         $response = $this->actingAs($artisan)
@@ -110,8 +110,8 @@ class JalonVisionAnalysisTest extends TestCase
                         'url' => 'https://example.com/photos/fake_screen.jpg',
                         'lat' => 5.3484,
                         'lng' => -4.0169,
-                    ]
-                ]
+                    ],
+                ],
             ]);
 
         $response->assertStatus(422)
@@ -124,8 +124,8 @@ class JalonVisionAnalysisTest extends TestCase
         // Vérification de la création de l'alerte de fraude vision_mismatch
         $this->assertDatabaseHas('fraud_alerts', [
             'mission_id' => $mission->id,
-            'user_id'    => $artisan->id,
-            'type'       => 'vision_mismatch',
+            'user_id' => $artisan->id,
+            'type' => 'vision_mismatch',
         ]);
 
         $alert = FraudAlert::where('mission_id', $mission->id)

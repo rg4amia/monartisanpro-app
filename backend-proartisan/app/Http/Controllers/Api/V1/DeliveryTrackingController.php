@@ -31,22 +31,22 @@ class DeliveryTrackingController extends Controller
         }
 
         $validated = $request->validate([
-            'latitude'        => 'required_without:points|numeric|between:-90,90',
-            'longitude'       => 'required_without:points|numeric|between:-180,180',
-            'speed_kmh'       => 'nullable|numeric|min:0',
-            'heading'         => 'nullable|numeric|between:0,360',
-            'battery_level'   => 'nullable|integer|between:0,100',
-            'points'          => 'nullable|array|min:1',
-            'points.*.latitude'      => 'required_with:points|numeric|between:-90,90',
-            'points.*.longitude'     => 'required_with:points|numeric|between:-180,180',
-            'points.*.speed_kmh'     => 'nullable|numeric|min:0',
-            'points.*.heading'       => 'nullable|numeric|between:0,360',
+            'latitude' => 'required_without:points|numeric|between:-90,90',
+            'longitude' => 'required_without:points|numeric|between:-180,180',
+            'speed_kmh' => 'nullable|numeric|min:0',
+            'heading' => 'nullable|numeric|between:0,360',
+            'battery_level' => 'nullable|integer|between:0,100',
+            'points' => 'nullable|array|min:1',
+            'points.*.latitude' => 'required_with:points|numeric|between:-90,90',
+            'points.*.longitude' => 'required_with:points|numeric|between:-180,180',
+            'points.*.speed_kmh' => 'nullable|numeric|min:0',
+            'points.*.heading' => 'nullable|numeric|between:0,360',
             'points.*.battery_level' => 'nullable|integer|between:0,100',
-            'points.*.recorded_at'   => 'nullable|string',
+            'points.*.recorded_at' => 'nullable|string',
         ]);
 
         try {
-            if (!empty($validated['points'])) {
+            if (! empty($validated['points'])) {
                 $tracking = $this->orderService->recordDriverBatchLocations(
                     $order,
                     $user,
@@ -65,15 +65,15 @@ class DeliveryTrackingController extends Controller
             }
 
             return response()->json([
-                'success'  => true,
-                'status'   => 'success',
+                'success' => true,
+                'status' => 'success',
                 'order_id' => $order->id,
                 'tracking' => $tracking,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 400);
         }
     }
@@ -98,11 +98,11 @@ class DeliveryTrackingController extends Controller
         $trackingData = $this->orderService->getDeliveryTrackingData($order, $user);
 
         return response()->json([
-            'success'  => true,
-            'status'   => 'success',
+            'success' => true,
+            'status' => 'success',
             'order_id' => $order->id,
             'tracking' => $trackingData,
-            'data'     => $trackingData,
+            'data' => $trackingData,
         ]);
     }
 
@@ -117,7 +117,7 @@ class DeliveryTrackingController extends Controller
         if (! $order->canValidatePickup($request->user())) {
             return response()->json([
                 'success' => false,
-                'error'   => 'Non autorisé à valider cet enlèvement.',
+                'error' => 'Non autorisé à valider cet enlèvement.',
             ], 403);
         }
 
@@ -125,7 +125,7 @@ class DeliveryTrackingController extends Controller
         if (! $code) {
             return response()->json([
                 'success' => false,
-                'error'   => 'Le code de retrait (pickup_code ou code) est obligatoire.',
+                'error' => 'Le code de retrait (pickup_code ou code) est obligatoire.',
             ], 422);
         }
 
@@ -144,14 +144,14 @@ class DeliveryTrackingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'status'  => $updatedOrder->status,
+                'status' => $updatedOrder->status,
                 'message' => 'Enlèvement validé avec succès.',
-                'order'   => $updatedOrder,
+                'order' => $updatedOrder,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 400);
         }
     }
@@ -164,7 +164,7 @@ class DeliveryTrackingController extends Controller
         if (! $order->canValidateDelivery($request->user())) {
             return response()->json([
                 'success' => false,
-                'error'   => 'Non autorisé à valider cette livraison.',
+                'error' => 'Non autorisé à valider cette livraison.',
             ], 403);
         }
 
@@ -172,7 +172,7 @@ class DeliveryTrackingController extends Controller
         if (! $code) {
             return response()->json([
                 'success' => false,
-                'error'   => 'Le code de réception (reception_code ou code) est obligatoire.',
+                'error' => 'Le code de réception (reception_code ou code) est obligatoire.',
             ], 422);
         }
 
@@ -191,14 +191,14 @@ class DeliveryTrackingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'status'  => $updatedOrder->status,
+                'status' => $updatedOrder->status,
                 'message' => 'Livraison confirmée et fonds débloqués.',
-                'order'   => $updatedOrder,
+                'order' => $updatedOrder,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 400);
         }
     }
@@ -220,14 +220,14 @@ class DeliveryTrackingController extends Controller
 
             return response()->json([
                 'success' => true,
-                'status'  => $updatedOrder->status,
+                'status' => $updatedOrder->status,
                 'message' => 'Livreur retiré et recherche relancée.',
-                'order'   => $updatedOrder,
+                'order' => $updatedOrder,
             ]);
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
-                'error'   => $e->getMessage(),
+                'error' => $e->getMessage(),
             ], 400);
         }
     }

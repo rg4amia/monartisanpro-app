@@ -2,7 +2,6 @@
 
 namespace App\Services;
 
-use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
 use App\Exceptions\CircuitOpenException;
 use App\Models\Transaction;
@@ -16,15 +15,19 @@ use Illuminate\Support\Facades\Log;
 class WaveService
 {
     protected string $apiUrl;
+
     protected string $apiKey;
+
     protected string $secretKey;
+
     protected string $webhookSecret;
+
     protected string $currency;
 
     private const CIRCUIT_PROVIDER = 'wave';
 
     public function __construct(
-        private CircuitBreakerService $circuitBreaker = new CircuitBreakerService(),
+        private CircuitBreakerService $circuitBreaker = new CircuitBreakerService,
     ) {
         $this->apiUrl = config('services.wave.api_url') ?? '';
         $this->apiKey = config('services.wave.api_key') ?? '';
@@ -36,11 +39,12 @@ class WaveService
     /**
      * Créer un paiement Wave (checkout)
      *
-     * @param int $montant Montant en FCFA (XOF)
-     * @param string $clientPhone Numéro de téléphone du client
-     * @param string $description Description du paiement
-     * @param array $metadata Métadonnées additionnelles
+     * @param  int  $montant  Montant en FCFA (XOF)
+     * @param  string  $clientPhone  Numéro de téléphone du client
+     * @param  string  $description  Description du paiement
+     * @param  array  $metadata  Métadonnées additionnelles
      * @return array ['checkout_url' => string, 'checkout_id' => string, 'wave_launch_url' => string]
+     *
      * @throws \Exception
      */
     public function createCheckout(
@@ -71,22 +75,23 @@ class WaveService
                 $this->circuitBreaker->recordSuccess(self::CIRCUIT_PROVIDER);
                 $transactionId = $metadata['transaction_id'] ?? 0;
                 $mockUrl = route('payment.mock.pay', ['transaction_id' => $transactionId]);
+
                 return ['checkout_url' => $mockUrl, 'checkout_id' => 'test_id', 'wave_launch_url' => $mockUrl];
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Authorization' => 'Bearer '.$this->apiKey,
                 'Content-Type' => 'application/json',
-            ])->post($this->apiUrl . '/checkout/sessions', $payload);
+            ])->post($this->apiUrl.'/checkout/sessions', $payload);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Wave: Erreur création checkout', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
 
                 $this->circuitBreaker->recordFailure(self::CIRCUIT_PROVIDER);
-                throw new \Exception('Erreur lors de la création du paiement Wave: ' . $response->body());
+                throw new \Exception('Erreur lors de la création du paiement Wave: '.$response->body());
             }
 
             $data = $response->json();
@@ -115,8 +120,9 @@ class WaveService
     /**
      * Vérifier le statut d'un paiement Wave
      *
-     * @param string $checkoutId ID du checkout Wave
+     * @param  string  $checkoutId  ID du checkout Wave
      * @return array ['status' => string, 'payment_id' => string|null, 'data' => array]
+     *
      * @throws \Exception
      */
     public function checkPaymentStatus(string $checkoutId): array
@@ -134,14 +140,15 @@ class WaveService
                     ->orWhere('reference_externe', $checkoutId)
                     ->first();
                 $status = ($tx && $tx->statut->isSuccessful()) ? 'completed' : 'pending';
+
                 return ['status' => $status, 'payment_id' => 'test_pay_id', 'data' => []];
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
-            ])->get($this->apiUrl . '/checkout/sessions/' . $checkoutId);
+                'Authorization' => 'Bearer '.$this->apiKey,
+            ])->get($this->apiUrl.'/checkout/sessions/'.$checkoutId);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Wave: Erreur vérification statut', [
                     'checkout_id' => $checkoutId,
                     'status' => $response->status(),
@@ -201,8 +208,7 @@ class WaveService
     /**
      * Traiter un webhook Wave
      *
-     * @param array $webhookData Données du webhook
-     * @return Transaction|null
+     * @param  array  $webhookData  Données du webhook
      */
     public function processWebhook(array $webhookData): ?Transaction
     {
@@ -213,16 +219,18 @@ class WaveService
             $status = $webhookData['status'] ?? null;
             $paymentId = $webhookData['payment_id'] ?? null;
 
-            if (!$checkoutId) {
+            if (! $checkoutId) {
                 Log::warning('Wave: Webhook sans checkout_id');
+
                 return null;
             }
 
             // Recherche de la transaction
             $transaction = Transaction::where('wave_checkout_id', $checkoutId)->first();
 
-            if (!$transaction) {
+            if (! $transaction) {
                 Log::warning('Wave: Transaction non trouvée', ['checkout_id' => $checkoutId]);
+
                 return null;
             }
 
@@ -268,10 +276,9 @@ class WaveService
      * Effectuer un virement Wave vers un numéro de téléphone
      * (Utile pour les paiements sortants vers artisans/fournisseurs)
      *
-     * @param string $phone Numéro de téléphone destinataire
-     * @param int $montant Montant en FCFA
-     * @param string $description
-     * @return array
+     * @param  string  $phone  Numéro de téléphone destinataire
+     * @param  int  $montant  Montant en FCFA
+     *
      * @throws \Exception
      */
     public function sendMoney(string $phone, int $montant, string $description): array
@@ -291,22 +298,23 @@ class WaveService
 
             if (config('app.env') === 'testing') {
                 $this->circuitBreaker->recordSuccess(self::CIRCUIT_PROVIDER);
+
                 return ['id' => 'test_transfer_id', 'status' => 'success'];
             }
 
             $response = Http::withHeaders([
-                'Authorization' => 'Bearer ' . $this->apiKey,
+                'Authorization' => 'Bearer '.$this->apiKey,
                 'Content-Type' => 'application/json',
-            ])->post($this->apiUrl . '/transfers', $payload);
+            ])->post($this->apiUrl.'/transfers', $payload);
 
-            if (!$response->successful()) {
+            if (! $response->successful()) {
                 Log::error('Wave: Erreur envoi argent', [
                     'status' => $response->status(),
                     'body' => $response->body(),
                 ]);
 
                 $this->circuitBreaker->recordFailure(self::CIRCUIT_PROVIDER);
-                throw new \Exception('Erreur lors de l\'envoi d\'argent Wave: ' . $response->body());
+                throw new \Exception('Erreur lors de l\'envoi d\'argent Wave: '.$response->body());
             }
 
             $data = $response->json();

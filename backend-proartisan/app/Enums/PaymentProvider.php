@@ -13,7 +13,7 @@ enum PaymentProvider: string
      */
     public function label(): string
     {
-        return match($this) {
+        return match ($this) {
             self::WAVE => 'Wave CI',
             self::ORANGE_MONEY => 'Orange Money CI',
             self::VIREMENT_BANCAIRE => 'Virement Bancaire',
@@ -33,7 +33,7 @@ enum PaymentProvider: string
      */
     public function apiBaseUrl(): ?string
     {
-        return match($this) {
+        return match ($this) {
             self::WAVE => config('services.wave.api_url'),
             self::ORANGE_MONEY => config('services.orange_money.api_url'),
             self::VIREMENT_BANCAIRE => null,

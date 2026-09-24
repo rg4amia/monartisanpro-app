@@ -43,4 +43,3 @@ class CommuneSeeder extends Seeder
         }
     }
 }
-

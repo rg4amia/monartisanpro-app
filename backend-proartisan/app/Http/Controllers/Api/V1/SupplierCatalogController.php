@@ -11,6 +11,7 @@ use App\Models\SupplierProduct;
 use App\Models\User;
 use App\Services\SupplierCatalogService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 
 class SupplierCatalogController extends Controller
@@ -47,7 +48,7 @@ class SupplierCatalogController extends Controller
         ]);
     }
 
-    public function store(StoreSupplierProductRequest $request): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function store(StoreSupplierProductRequest $request): JsonResponse|RedirectResponse
     {
         $product = $this->catalogService->createProduct($request->user(), $request->validated());
 
@@ -62,7 +63,7 @@ class SupplierCatalogController extends Controller
         ], 201);
     }
 
-    public function update(UpdateSupplierProductRequest $request, SupplierProduct $supplierProduct): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function update(UpdateSupplierProductRequest $request, SupplierProduct $supplierProduct): JsonResponse|RedirectResponse
     {
         $product = $this->catalogService->updateProduct(
             $request->user(),
@@ -81,7 +82,7 @@ class SupplierCatalogController extends Controller
         ]);
     }
 
-    public function destroy(Request $request, SupplierProduct $supplierProduct): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function destroy(Request $request, SupplierProduct $supplierProduct): JsonResponse|RedirectResponse
     {
         $product = $this->catalogService->archiveProduct($request->user(), $supplierProduct);
 

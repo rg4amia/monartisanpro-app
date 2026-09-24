@@ -1,8 +1,8 @@
 import { render, screen } from '@testing-library/react';
 import { describe, expect, it } from 'vitest';
 
-import { DashboardPanel } from './DashboardPanel';
 import type { AdminUser, ChartPoint, FaqStats, KycUser, WhatsappClickStats } from '../shared';
+import { DashboardPanel } from './DashboardPanel';
 
 const point = (label: string, value: number): ChartPoint => ({ label, value });
 

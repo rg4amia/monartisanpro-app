@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\Mission;
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Inertia\Testing\AssertableInertia;
@@ -104,7 +105,7 @@ class AdminMissionsKycListTest extends TestCase
         $supplier = User::factory()->create(['role' => 'fournisseur']);
         $mission = $this->mission(['client_id' => $client->id]);
 
-        $linkedOrder = \App\Models\Order::create([
+        $linkedOrder = Order::create([
             'client_id' => $client->id,
             'supplier_id' => $supplier->id,
             'mission_id' => $mission->id,
@@ -118,7 +119,7 @@ class AdminMissionsKycListTest extends TestCase
             'reception_code' => 'RECEPTION-7390',
             'vehicle_class' => 'moto',
         ]);
-        $unrelatedOrder = \App\Models\Order::create([
+        $unrelatedOrder = Order::create([
             'client_id' => $client->id,
             'supplier_id' => $supplier->id,
             'mission_id' => null,

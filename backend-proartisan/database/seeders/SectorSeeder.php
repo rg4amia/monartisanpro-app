@@ -12,8 +12,8 @@ class SectorSeeder extends Seeder
     {
         $sectors = [
             [
-                'name'  => 'Électricité',
-                'icon'  => 'zap',
+                'name' => 'Électricité',
+                'icon' => 'zap',
                 'color' => '#F39C12',
                 'trades' => [
                     'Électricien bâtiment', 'Électricien industriel', 'Installateur solaire photovoltaïque',
@@ -22,8 +22,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Plomberie',
-                'icon'  => 'droplets',
+                'name' => 'Plomberie',
+                'icon' => 'droplets',
                 'color' => '#3498DB',
                 'trades' => [
                     'Plombier sanitaire', 'Plombier industriel', 'Installateur climatisation & froid',
@@ -32,8 +32,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Maçonnerie',
-                'icon'  => 'layers',
+                'name' => 'Maçonnerie',
+                'icon' => 'layers',
                 'color' => '#95A5A6',
                 'trades' => [
                     'Maçon gros œuvre', 'Coffreur-bancheur', 'Ferrailleur-béton armé',
@@ -42,8 +42,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Menuiserie',
-                'icon'  => 'scissors',
+                'name' => 'Menuiserie',
+                'icon' => 'scissors',
                 'color' => '#E67E22',
                 'trades' => [
                     'Menuisier bois', 'Menuisier aluminium', 'Menuisier PVC',
@@ -52,8 +52,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Peinture & Revêtements',
-                'icon'  => 'paintbrush',
+                'name' => 'Peinture & Revêtements',
+                'icon' => 'paintbrush',
                 'color' => '#9B59B6',
                 'trades' => [
                     'Peintre en bâtiment', 'Peintre décorateur', 'Plâtrier',
@@ -62,8 +62,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Climatisation & Froid',
-                'icon'  => 'wind',
+                'name' => 'Climatisation & Froid',
+                'icon' => 'wind',
                 'color' => '#1ABC9C',
                 'trades' => [
                     'Technicien climatiseur split', 'Technicien chambre froide',
@@ -72,8 +72,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Couverture & Toiture',
-                'icon'  => 'home',
+                'name' => 'Couverture & Toiture',
+                'icon' => 'home',
                 'color' => '#E74C3C',
                 'trades' => [
                     'Couvreur tôle ondulée', 'Couvreur tuile', 'Couvreur ardoise',
@@ -82,8 +82,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Carrelage & Sol',
-                'icon'  => 'grid',
+                'name' => 'Carrelage & Sol',
+                'icon' => 'grid',
                 'color' => '#F39C12',
                 'trades' => [
                     'Carreleur sol & mur', 'Poseur de faïence', 'Mosaïste',
@@ -92,8 +92,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Soudure & Métallerie',
-                'icon'  => 'flame',
+                'name' => 'Soudure & Métallerie',
+                'icon' => 'flame',
                 'color' => '#7F8C8D',
                 'trades' => [
                     'Soudeur MIG-MAG', 'Soudeur TIG', 'Soudeur arc électrique',
@@ -102,8 +102,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Jardinage & Espaces verts',
-                'icon'  => 'trees',
+                'name' => 'Jardinage & Espaces verts',
+                'icon' => 'trees',
                 'color' => '#27AE60',
                 'trades' => [
                     'Jardinier paysagiste', 'Élageur', 'Poseur de gazon',
@@ -112,8 +112,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Nettoyage & Entretien',
-                'icon'  => 'sparkles',
+                'name' => 'Nettoyage & Entretien',
+                'icon' => 'sparkles',
                 'color' => '#3498DB',
                 'trades' => [
                     'Agent de nettoyage bâtiment', 'Nettoyeur façades',
@@ -122,8 +122,8 @@ class SectorSeeder extends Seeder
                 ],
             ],
             [
-                'name'  => 'Informatique & Électronique',
-                'icon'  => 'monitor',
+                'name' => 'Informatique & Électronique',
+                'icon' => 'monitor',
                 'color' => '#2C3E50',
                 'trades' => [
                     'Technicien réseau & câblage', 'Réparateur PC & Mac',
@@ -146,7 +146,7 @@ class SectorSeeder extends Seeder
             foreach ($trades as $tradeName) {
                 Trade::updateOrCreate([
                     'sector_id' => $sector->id,
-                    'name'      => $tradeName,
+                    'name' => $tradeName,
                 ]);
             }
         }

@@ -11,7 +11,16 @@ interface DashboardData {
         total_revenue: number;
         catalog_count: number;
     };
-    recent_orders: any[];
+    recent_orders: RecentOrder[];
+}
+
+interface RecentOrder {
+    id: number;
+    client?: { name?: string; phone?: string } | null;
+    created_at: string;
+    delivery_mode: string;
+    status: string;
+    subtotal: number;
 }
 
 export default function SupplierDashboard() {
@@ -24,9 +33,9 @@ export default function SupplierDashboard() {
             try {
                 const res = await api.getSupplierDashboard<DashboardData>();
                 setData(res);
-            } catch (err: any) {
+            } catch (err: unknown) {
                 console.error(err);
-                setError(err.message || 'Impossible de charger le tableau de bord');
+                setError((err instanceof Error && err.message) || 'Impossible de charger le tableau de bord');
             } finally {
                 setLoading(false);
             }
@@ -107,7 +116,7 @@ export default function SupplierDashboard() {
             <div>
                 <h1 className="text-2xl font-bold tracking-tight">Tableau de Bord</h1>
                 <p className="text-slate-400 text-sm mt-1">
-                    Vue d'ensemble de vos ventes, revenus et performances d'activité quincaillerie.
+                    Vue d&apos;ensemble de vos ventes, revenus et performances d&apos;activité quincaillerie.
                 </p>
             </div>
 
@@ -193,7 +202,7 @@ export default function SupplierDashboard() {
                     <div className="text-center py-12 border border-dashed border-slate-800 rounded-lg">
                         <span className="text-4xl">📭</span>
                         <h3 className="text-slate-300 font-bold mt-3">Aucune commande reçue</h3>
-                        <p className="text-slate-500 text-xs mt-1">Dès qu'un artisan passera commande de matériaux, elle apparaîtra ici.</p>
+                        <p className="text-slate-500 text-xs mt-1">Dès qu&apos;un artisan passera commande de matériaux, elle apparaîtra ici.</p>
                     </div>
                 )}
             </div>

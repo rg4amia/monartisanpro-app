@@ -27,6 +27,10 @@ export default function GoogleAnalytics() {
             }
         };
 
+        // Lecture post-montage volontaire : le consentement n'existe pas au
+        // pré-rendu statique (écart d'hydratation sinon), et l'événement reste
+        // la source de vérité quand localStorage est indisponible.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         setAnalyticsAllowed(readConsent());
 
         const handleConsentUpdate = (event: Event) => {

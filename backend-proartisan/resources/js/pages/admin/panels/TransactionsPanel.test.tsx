@@ -1,9 +1,9 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { TransactionsPanel } from './TransactionsPanel';
 import { money } from '../shared';
 import type { AdminTransaction, Paginated, TransactionStats } from '../shared';
+import { TransactionsPanel } from './TransactionsPanel';
 
 const stats: TransactionStats = {
     confirmed: 10,

@@ -12,7 +12,7 @@ class MissionRejectionAndReassignmentTest extends TestCase
     use RefreshDatabase;
 
     /**
-     * @param array<string, mixed> $attributes
+     * @param  array<string, mixed>  $attributes
      */
     private function user(array $attributes = []): User
     {

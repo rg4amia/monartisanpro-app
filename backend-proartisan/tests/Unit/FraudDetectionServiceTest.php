@@ -92,7 +92,7 @@ class FraudDetectionServiceTest extends TestCase
                 'url' => 'https://storage.prosartisan.net/proofs/photo1.jpg',
                 'lat' => 7.6900,
                 'lng' => -5.0300,
-            ]
+            ],
         ];
 
         $alert = $this->fraudService->analyzeMilestoneSubmission($jalon, $photos);
@@ -129,7 +129,7 @@ class FraudDetectionServiceTest extends TestCase
 
         // L'artisan tente de réutiliser la même photo
         $photos = [
-            ['url' => 'https://storage.prosartisan.net/proofs/chantier_peinture_unique.jpg']
+            ['url' => 'https://storage.prosartisan.net/proofs/chantier_peinture_unique.jpg'],
         ];
 
         $alert = $this->fraudService->analyzeMilestoneSubmission($jalon2, $photos);

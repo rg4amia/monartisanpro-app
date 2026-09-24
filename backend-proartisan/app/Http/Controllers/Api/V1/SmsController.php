@@ -39,6 +39,7 @@ class SmsController extends Controller
     public function view(string $uid): JsonResponse
     {
         $result = $this->smsService->view($uid);
+
         return response()->json($result);
     }
 
@@ -48,6 +49,7 @@ class SmsController extends Controller
     public function viewAll(): JsonResponse
     {
         $result = $this->smsService->viewAll();
+
         return response()->json($result);
     }
 }

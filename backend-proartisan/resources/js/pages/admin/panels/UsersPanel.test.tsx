@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { UsersPanel } from './UsersPanel';
 import type { AdminUser, Paginated, UserStats } from '../shared';
+import { UsersPanel } from './UsersPanel';
 
 const userStats: UserStats = { total: 100, artisans_actifs: 40, clients_actifs: 55, fournisseurs_agrees: 5 };
 

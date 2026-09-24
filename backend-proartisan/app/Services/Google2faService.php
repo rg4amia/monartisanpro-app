@@ -15,6 +15,7 @@ class Google2faService
         for ($i = 0; $i < $length; $i++) {
             $secret .= self::BASE32_ALPHABET[random_int(0, 31)];
         }
+
         return $secret;
     }
 
@@ -25,6 +26,7 @@ class Google2faService
     {
         $secretBinary = $this->base32Decode($secret);
         $timeWindow = (int) floor(time() / 30);
+
         return $this->calculateOtp($secretBinary, $timeWindow);
     }
 
@@ -34,8 +36,9 @@ class Google2faService
     public function getQrCodeUrl(string $userEmailOrPhone, string $secret): string
     {
         $issuer = 'ProsArtisan';
-        $label = rawurlencode($issuer . ':' . $userEmailOrPhone);
-        return "otpauth://totp/{$label}?secret={$secret}&issuer=" . rawurlencode($issuer);
+        $label = rawurlencode($issuer.':'.$userEmailOrPhone);
+
+        return "otpauth://totp/{$label}?secret={$secret}&issuer=".rawurlencode($issuer);
     }
 
     /**
@@ -44,7 +47,7 @@ class Google2faService
     public function verifyCode(string $secret, string $code, int $discrepancy = 1): bool
     {
         $code = str_replace(' ', '', $code);
-        if (strlen($code) !== 6 || !is_numeric($code)) {
+        if (strlen($code) !== 6 || ! is_numeric($code)) {
             return false;
         }
 
@@ -71,18 +74,18 @@ class Google2faService
     private function calculateOtp(string $secretBinary, int $timeWindow): string
     {
         // Pack time window into a 64-bit binary string (big-endian)
-        $timeBinary = pack('N*', 0) . pack('N*', $timeWindow);
+        $timeBinary = pack('N*', 0).pack('N*', $timeWindow);
 
         // Hash using HMAC-SHA1
         $hash = hash_hmac('sha1', $timeBinary, $secretBinary, true);
 
         // Dynamic truncation
-        $offset = ord($hash[19]) & 0xf;
+        $offset = ord($hash[19]) & 0xF;
         $otp = (
-            ((ord($hash[$offset]) & 0x7f) << 24) |
-            ((ord($hash[$offset + 1]) & 0xff) << 16) |
-            ((ord($hash[$offset + 2]) & 0xff) << 8) |
-            (ord($hash[$offset + 3]) & 0xff)
+            ((ord($hash[$offset]) & 0x7F) << 24) |
+            ((ord($hash[$offset + 1]) & 0xFF) << 16) |
+            ((ord($hash[$offset + 2]) & 0xFF) << 8) |
+            (ord($hash[$offset + 3]) & 0xFF)
         ) % 1000000;
 
         return str_pad((string) $otp, 6, '0', STR_PAD_LEFT);
@@ -95,7 +98,7 @@ class Google2faService
     {
         $base32 = strtoupper(trim($base32));
         $base32 = str_replace('=', '', $base32);
-        
+
         $allowedCharacters = self::BASE32_ALPHABET;
         for ($i = 0; $i < strlen($base32); $i++) {
             if (strpos($allowedCharacters, $base32[$i]) === false) {

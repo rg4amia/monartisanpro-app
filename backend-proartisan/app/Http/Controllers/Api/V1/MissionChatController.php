@@ -7,6 +7,7 @@ use App\Models\Mission;
 use App\Models\MissionMessage;
 use App\Services\AntiCircumventionService;
 use App\Services\NotificationService;
+use App\Services\RealtimeEventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
@@ -98,7 +99,7 @@ class MissionChatController extends Controller
             }
 
             $extension = $file->getClientOriginalExtension() ?: 'bin';
-            $filename = 'chat_' . Str::random(24) . '.' . $extension;
+            $filename = 'chat_'.Str::random(24).'.'.$extension;
             $path = $file->storeAs("chat/{$mission->id}", $filename, 'public');
             $mediaUrl = Storage::disk('public')->url($path);
 
@@ -134,7 +135,7 @@ class MissionChatController extends Controller
 
         // Diffusion temps réel SSE / WebSockets
         try {
-            app(\App\Services\RealtimeEventService::class)->broadcast(
+            app(RealtimeEventService::class)->broadcast(
                 $mission->id,
                 'chat_message',
                 $message->toArray()

@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Models\ContactMessage;
 use App\Models\User;
 use App\Models\Vitrine\VitrineArticle;
 use App\Models\Vitrine\VitrineArtisanDuMois;
@@ -263,7 +264,7 @@ class VitrineAdminFullCrudTest extends TestCase
 
     public function test_can_manage_and_reply_contact_requests(): void
     {
-        $contact = \App\Models\ContactMessage::create([
+        $contact = ContactMessage::create([
             'nom' => 'Adama Traoré',
             'email' => 'adama@traore.ci',
             'telephone' => '+2250102030405',

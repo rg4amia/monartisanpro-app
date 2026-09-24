@@ -18,9 +18,9 @@ class InterventionTypeController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $types->map(fn (InterventionType $type) => [
-                'id'            => $type->id,
-                'name'          => $type->name,
+            'data' => $types->map(fn (InterventionType $type) => [
+                'id' => $type->id,
+                'name' => $type->name,
                 'requiresLabor' => $type->requires_labor,
             ]),
         ]);

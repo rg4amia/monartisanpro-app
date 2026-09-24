@@ -15,10 +15,10 @@ export default function CguPage() {
                         Cadre Juridique & Réglementaire
                     </div>
                     <h1 className="text-3xl sm:text-4xl lg:text-5xl font-extrabold tracking-tight">
-                        Conditions Générales d'Utilisation
+                        Conditions Générales d&apos;Utilisation
                     </h1>
                     <p className="text-[#efe6da]/80 text-sm sm:text-base max-w-2xl mx-auto">
-                        ProsArtisan Côte d'Ivoire &bull; Plateforme technologique d’intermédiation et de sécurisation financière des prestations artisanales.
+                        ProsArtisan Côte d&apos;Ivoire &bull; Plateforme technologique d’intermédiation et de sécurisation financière des prestations artisanales.
                     </p>
                     <p className="text-xs text-[#ebb95e]/90 font-medium">
                         Dernière mise à jour : 30 Août 2026
@@ -72,10 +72,10 @@ export default function CguPage() {
                     </div>
                     <div className="space-y-3 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            <strong className="text-[#201712]">Nature du Service :</strong> ProsArtisan est exclusivement une plateforme technologique d’intermédiation et de sécurisation financière en Côte d'Ivoire.
+                            <strong className="text-[#201712]">Nature du Service :</strong> ProsArtisan est exclusivement une plateforme technologique d’intermédiation et de sécurisation financière en Côte d&apos;Ivoire.
                         </p>
                         <p>
-                            <strong className="text-[#201712]">Indépendance :</strong> Aucun lien de subordination n'existe entre ProsArtisan et les artisans inscrits. ProsArtisan n’est ni employeur, ni maître d’œuvre, ni sous-traitant.
+                            <strong className="text-[#201712]">Indépendance :</strong> Aucun lien de subordination n&apos;existe entre ProsArtisan et les artisans inscrits. ProsArtisan n’est ni employeur, ni maître d’œuvre, ni sous-traitant.
                         </p>
                         <p>
                             <strong className="text-[#201712]">Éligibilité :</strong> L’utilisation des services est strictement réservée aux personnes majeures capables de contracter selon le droit ivoirien.
@@ -93,10 +93,10 @@ export default function CguPage() {
                     </div>
                     <div className="space-y-3 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            <strong className="text-[#201712]">Vérification Stricte :</strong> Tout compte Artisan ou Prestataire nécessite obligatoirement la soumission d’une pièce d'identité valide (CNI, Passeport, Attestation d'Identité) et d’un numéro de téléphone actif (Mobile Money vérifié par code OTP).
+                            <strong className="text-[#201712]">Vérification Stricte :</strong> Tout compte Artisan ou Prestataire nécessite obligatoirement la soumission d’une pièce d&apos;identité valide (CNI, Passeport, Attestation d&apos;Identité) et d’un numéro de téléphone actif (Mobile Money vérifié par code OTP).
                         </p>
                         <p>
-                            <strong className="text-[#201712]">Exactitude des Données :</strong> L’utilisateur s’engage à fournir des informations réelles et vérifiables. L'usurpation d'identité ou la falsification de qualifications entraîne une suspension immédiate et irrévocable du compte, avec signalement potentiel auprès des autorités compétentes.
+                            <strong className="text-[#201712]">Exactitude des Données :</strong> L’utilisateur s’engage à fournir des informations réelles et vérifiables. L&apos;usurpation d&apos;identité ou la falsification de qualifications entraîne une suspension immédiate et irrévocable du compte, avec signalement potentiel auprès des autorités compétentes.
                         </p>
                     </div>
                 </section>
@@ -111,7 +111,7 @@ export default function CguPage() {
                     </div>
                     <div className="space-y-4 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            <strong className="text-[#201712]">Sécurisation des Fonds :</strong> Pour valider une prestation, le Client s'acquitte du montant total via la plateforme (Wave CI, Orange Money CI ou Carte Bancaire). Ces fonds sont placés sur un compte de cantonnement (séquestre) géré par ProsArtisan.
+                            <strong className="text-[#201712]">Sécurisation des Fonds :</strong> Pour valider une prestation, le Client s&apos;acquitte du montant total via la plateforme (Wave CI, Orange Money CI ou Carte Bancaire). Ces fonds sont placés sur un compte de cantonnement (séquestre) géré par ProsArtisan.
                         </p>
                         <div className="p-4 rounded-2xl bg-amber-50 border border-amber-200 text-amber-900 flex gap-3 items-start">
                             <AlertTriangle className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
@@ -123,7 +123,7 @@ export default function CguPage() {
                             </div>
                         </div>
                         <p>
-                            <strong className="text-[#201712]">Libération des Fonds :</strong> Les fonds sont transférés à l’Artisan (déduction faite de la commission de service) uniquement après confirmation de l’achèvement des travaux ou validation des jalons par code OTP sécurisé par le Client via l'application.
+                            <strong className="text-[#201712]">Libération des Fonds :</strong> Les fonds sont transférés à l’Artisan (déduction faite de la commission de service) uniquement après confirmation de l’achèvement des travaux ou validation des jalons par code OTP sécurisé par le Client via l&apos;application.
                         </p>
                     </div>
                 </section>
@@ -138,10 +138,10 @@ export default function CguPage() {
                     </div>
                     <div className="space-y-3 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            <strong className="text-[#201712]">Obligations de l'Artisan :</strong> Ponctualité, conformité au devis validé, respect du domicile et des biens du client, et nettoyage complet du site après intervention. Tout retard abusif non justifié ou comportement inapproprié affectera immédiatement son score de fiabilité.
+                            <strong className="text-[#201712]">Obligations de l&apos;Artisan :</strong> Ponctualité, conformité au devis validé, respect du domicile et des biens du client, et nettoyage complet du site après intervention. Tout retard abusif non justifié ou comportement inapproprié affectera immédiatement son score de fiabilité.
                         </p>
                         <p>
-                            <strong className="text-[#201712]">Obligations du Client :</strong> Fournir des spécifications claires, garantir l'accès au site d'intervention dans les créneaux convenus, et valider la fin des travaux de bonne foi dès leur achèvement effectif.
+                            <strong className="text-[#201712]">Obligations du Client :</strong> Fournir des spécifications claires, garantir l&apos;accès au site d&apos;intervention dans les créneaux convenus, et valider la fin des travaux de bonne foi dès leur achèvement effectif.
                         </p>
                     </div>
                 </section>
@@ -156,10 +156,10 @@ export default function CguPage() {
                     </div>
                     <div className="space-y-3 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            <strong className="text-[#201712]">Gel des Fonds :</strong> En cas de désaccord sur la qualité ou l'achèvement de la prestation, le Client ou l'Artisan doit déclencher une procédure de litige dans l'application sous 24 heures. Les fonds restent alors bloqués sur le compte séquestre.
+                            <strong className="text-[#201712]">Gel des Fonds :</strong> En cas de désaccord sur la qualité ou l&apos;achèvement de la prestation, le Client ou l&apos;Artisan doit déclencher une procédure de litige dans l&apos;application sous 24 heures. Les fonds restent alors bloqués sur le compte séquestre.
                         </p>
                         <p>
-                            <strong className="text-[#201712]">Preuves Numériques :</strong> Les deux parties ont l'obligation de fournir des preuves via l'application (photos avant/après géolocalisées, fiches de suivi, historique des messages internes).
+                            <strong className="text-[#201712]">Preuves Numériques :</strong> Les deux parties ont l&apos;obligation de fournir des preuves via l&apos;application (photos avant/après géolocalisées, fiches de suivi, historique des messages internes).
                         </p>
                         <p>
                             <strong className="text-[#201712]">Arbitrage ProsArtisan :</strong> Le support technique de ProsArtisan intervient comme médiateur de premier niveau pour trancher le litige sur la base objective des éléments numériques fournis.
@@ -177,10 +177,10 @@ export default function CguPage() {
                     </div>
                     <div className="space-y-3 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            <strong className="text-[#201712]">Cession de Droits :</strong> Les Artisans autorisent ProsArtisan à utiliser les photographies de leurs réalisations téléchargées sur l'application à des fins de promotion, d'audit de qualité et de communication institutionnelle.
+                            <strong className="text-[#201712]">Cession de Droits :</strong> Les Artisans autorisent ProsArtisan à utiliser les photographies de leurs réalisations téléchargées sur l&apos;application à des fins de promotion, d&apos;audit de qualité et de communication institutionnelle.
                         </p>
                         <p>
-                            <strong className="text-[#201712]">Confidentialité :</strong> Les utilisateurs s'interdisent formellement de réutiliser les données personnelles (numéro de téléphone, adresse physique) obtenues via la plateforme à d'autres fins que l'exécution de la prestation convenue.
+                            <strong className="text-[#201712]">Confidentialité :</strong> Les utilisateurs s&apos;interdisent formellement de réutiliser les données personnelles (numéro de téléphone, adresse physique) obtenues via la plateforme à d&apos;autres fins que l&apos;exécution de la prestation convenue.
                         </p>
                     </div>
                 </section>
@@ -195,10 +195,10 @@ export default function CguPage() {
                     </div>
                     <div className="space-y-3 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            ProsArtisan garantit le fonctionnement optimal de l'infrastructure technologique de mise en relation et la traçabilité intégrale des transactions financières sous séquestre.
+                            ProsArtisan garantit le fonctionnement optimal de l&apos;infrastructure technologique de mise en relation et la traçabilité intégrale des transactions financières sous séquestre.
                         </p>
                         <p>
-                            ProsArtisan ne peut être tenu responsable des malfaçons, des dommages matériels ou corporels survenant lors de l'exécution physique de la prestation sur le chantier, ni des interruptions temporaires de service dues à des pannes des réseaux d'opérateurs télécoms tiers.
+                            ProsArtisan ne peut être tenu responsable des malfaçons, des dommages matériels ou corporels survenant lors de l&apos;exécution physique de la prestation sur le chantier, ni des interruptions temporaires de service dues à des pannes des réseaux d&apos;opérateurs télécoms tiers.
                         </p>
                     </div>
                 </section>

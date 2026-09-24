@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\KycDocument;
+use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -30,20 +31,20 @@ class KycService
         $path = $file->store('kyc', 'local');
 
         $doc = KycDocument::create([
-            'user_id'  => $user->id,
-            'type'     => $type,
+            'user_id' => $user->id,
+            'type' => $type,
             'file_url' => $path,
-            'statut'   => 'en_attente',
+            'statut' => 'en_attente',
         ]);
 
         // Send a pending validation notification if it hasn't been sent yet
-        $hasPendingNotif = \App\Models\Notification::where('user_id', $user->id)
+        $hasPendingNotif = Notification::where('user_id', $user->id)
             ->where('type', 'kyc')
             ->where('title', 'Compte en attente de validation')
             ->exists();
 
-        if (!$hasPendingNotif) {
-            app(\App\Services\NotificationService::class)->send(
+        if (! $hasPendingNotif) {
+            app(NotificationService::class)->send(
                 $user,
                 'kyc',
                 'Compte en attente de validation',
@@ -87,14 +88,14 @@ class KycService
             ->keyBy('type');
 
         return [
-            'kyc_status'  => $user->kyc_status,
-            'documents'   => [
-                'cni'    => $documents->get('cni') ? [
-                    'statut'   => $documents->get('cni')->statut,
+            'kyc_status' => $user->kyc_status,
+            'documents' => [
+                'cni' => $documents->get('cni') ? [
+                    'statut' => $documents->get('cni')->statut,
                     'file_url' => $documents->get('cni')->file_url,
                 ] : null,
                 'selfie' => $documents->get('selfie') ? [
-                    'statut'   => $documents->get('selfie')->statut,
+                    'statut' => $documents->get('selfie')->statut,
                     'file_url' => $documents->get('selfie')->file_url,
                 ] : null,
             ],

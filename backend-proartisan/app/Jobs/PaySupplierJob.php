@@ -2,13 +2,12 @@
 
 namespace App\Jobs;
 
-use App\Enums\WalletType;
 use App\Models\JCode;
-use App\Services\NotificationService;
 use App\Services\JCodeService;
+use App\Services\NotificationService;
+use App\Services\OrangeMoneyService;
 use App\Services\WalletService;
 use App\Services\WaveService;
-use App\Services\OrangeMoneyService;
 use Illuminate\Bus\Queueable;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Bus\Dispatchable;
@@ -21,9 +20,9 @@ class PaySupplierJob implements ShouldQueue
     use Dispatchable, InteractsWithQueue, Queueable, SerializesModels;
 
     /**
-     * @param int      $jcodeId         ID du J-Code
-     * @param int|null $fournisseurId   Fournisseur spécifique à payer (consommation partielle)
-     * @param int|null $montantServi    Montant servi lors de ce scan (consommation partielle)
+     * @param  int  $jcodeId  ID du J-Code
+     * @param  int|null  $fournisseurId  Fournisseur spécifique à payer (consommation partielle)
+     * @param  int|null  $montantServi  Montant servi lors de ce scan (consommation partielle)
      */
     public function __construct(
         public int $jcodeId,
@@ -43,6 +42,7 @@ class PaySupplierJob implements ShouldQueue
         // Vérifier que le J-Code a bien été scanné (total ou partiel)
         if (! in_array($jcode->statut, ['utilise', 'partiellement_utilise']) || $jcode->paiement_status === 'paye') {
             Log::warning("PaySupplierJob: J-Code #{$jcode->id} n'est pas utilisé ou déjà payé, skip");
+
             return;
         }
 

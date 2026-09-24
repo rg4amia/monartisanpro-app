@@ -2,21 +2,25 @@
 
 namespace App\Services;
 
+use App\Models\Evaluation;
 use App\Models\FournisseurAgree;
+use App\Models\FraudAlert;
+use App\Models\Jalon;
 use App\Models\KycDocument;
 use App\Models\Litige;
 use App\Models\Mission;
+use App\Models\Order;
+use App\Models\ScoreLedgerEntry;
+use App\Models\SupplierCashout;
 use App\Models\Transaction;
 use App\Models\User;
-use App\Models\JCode;
-use App\Models\Evaluation;
-use App\Models\ScoreLedgerEntry;
-use App\Models\Order;
-use App\Models\Jalon;
-use App\Models\SupplierCashout;
+use App\Services\Admin\AdminActivityLogger;
+use App\Services\Admin\AdminDashboardCache;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Pagination\LengthAwarePaginator;
-use Illuminate\Validation\ValidationException;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 class AdminService
 {
@@ -24,25 +28,25 @@ class AdminService
         private NotificationService $notificationService,
         private LitigeService $litigeService,
         private OneSignalService $oneSignalService,
-        private \App\Services\Admin\AdminActivityLogger $audit,
-        private \App\Services\Admin\AdminDashboardCache $dashboardCache,
+        private AdminActivityLogger $audit,
+        private AdminDashboardCache $dashboardCache,
     ) {}
 
     public function dashboard(): array
     {
         return $this->dashboardCache->dashboard(fn () => [
-            'users_total'            => User::count(),
-            'artisans_actifs'        => User::where('role', 'artisan')->where('kyc_status', 'actif')->count(),
-            'clients_actifs'         => User::where('role', 'client')->where('kyc_status', 'actif')->count(),
-            'fournisseurs_agrees'    => FournisseurAgree::where('statut', 'agree')->count(),
-            'missions_en_cours'      => Mission::where('status', 'in_progress')->count(),
-            'missions_en_litige'     => Mission::where('status', 'disputed')->count(),
-            'litiges_ouverts'        => Litige::whereIn('statut', ['ouvert', 'en_cours'])->count(),
-            'kyc_en_attente'         => User::where('kyc_status', 'en_attente')->count(),
+            'users_total' => User::count(),
+            'artisans_actifs' => User::where('role', 'artisan')->where('kyc_status', 'actif')->count(),
+            'clients_actifs' => User::where('role', 'client')->where('kyc_status', 'actif')->count(),
+            'fournisseurs_agrees' => FournisseurAgree::where('statut', 'agree')->count(),
+            'missions_en_cours' => Mission::where('status', 'in_progress')->count(),
+            'missions_en_litige' => Mission::where('status', 'disputed')->count(),
+            'litiges_ouverts' => Litige::whereIn('statut', ['ouvert', 'en_cours'])->count(),
+            'kyc_en_attente' => User::where('kyc_status', 'en_attente')->count(),
             'referent_required_open' => Mission::where('referent_required', true)
                 ->whereIn('status', ['funded_locked', 'in_progress', 'disputed'])
                 ->count(),
-            'recent_fraud_alerts'    => \App\Models\FraudAlert::ouvertes()->count(),
+            'recent_fraud_alerts' => FraudAlert::ouvertes()->count(),
             'volume_transactions_24h' => Transaction::where('created_at', '>=', now()->subDay())->sum('montant'),
         ]);
     }
@@ -118,10 +122,10 @@ class AdminService
             foreach (['cni', 'selfie'] as $type) {
                 if ($documents->has($type)) {
                     $documents[$type]->update([
-                        'statut'           => $docStatus,
-                        'reviewed_by'      => $admin->id,
+                        'statut' => $docStatus,
+                        'reviewed_by' => $admin->id,
                         'rejection_reason' => $decision === 'rejete' ? $rejectionReason : null,
-                        'reviewed_at'      => now(),
+                        'reviewed_at' => now(),
                     ]);
                 }
             }
@@ -152,7 +156,7 @@ class AdminService
         );
 
         $this->audit->log('kyc.reviewed', $user, [
-            'decision'         => $decision,
+            'decision' => $decision,
             'rejection_reason' => $decision === 'rejete' ? $rejectionReason : null,
         ], actor: $admin);
 
@@ -164,7 +168,7 @@ class AdminService
      * (documents, notifications, journal). Un dossier en échec n'interrompt pas le lot.
      *
      * @param  array<int>  $ids
-     * @return int  Nombre de dossiers traités avec succès.
+     * @return int Nombre de dossiers traités avec succès.
      */
     public function bulkReviewKyc(User $admin, array $ids, string $decision, ?string $rejectionReason = null): int
     {
@@ -175,7 +179,7 @@ class AdminService
                 $this->reviewKyc($admin, $user, $decision, $rejectionReason);
                 $done++;
             } catch (\Throwable $e) {
-                \Illuminate\Support\Facades\Log::error("bulkReviewKyc user {$user->id}: ".$e->getMessage());
+                Log::error("bulkReviewKyc user {$user->id}: ".$e->getMessage());
             }
         }
 
@@ -300,7 +304,7 @@ class AdminService
      */
     public function deliveryStats(): array
     {
-        if (! \Illuminate\Support\Facades\Schema::hasTable('orders')) {
+        if (! Schema::hasTable('orders')) {
             return ['total' => 0, 'in_transit' => 0, 'awaiting_driver' => 0, 'delivered' => 0, 'by_status' => []];
         }
 
@@ -322,8 +326,8 @@ class AdminService
 
     public function listOrders(?string $status = null, ?string $mode = null, ?string $query = null, int $perPage = 100, string $pageName = 'page'): LengthAwarePaginator
     {
-        if (!\Illuminate\Support\Facades\Schema::hasTable('orders')) {
-            return new \Illuminate\Pagination\LengthAwarePaginator([], 0, $perPage);
+        if (! Schema::hasTable('orders')) {
+            return new LengthAwarePaginator([], 0, $perPage);
         }
 
         return Order::query()
@@ -372,7 +376,7 @@ class AdminService
         $resolved = $this->litigeService->arbitrate($admin, $litige, $payload);
 
         $this->audit->log('litige.arbitrated', $litige, [
-            'decision'   => $payload['decision'] ?? null,
+            'decision' => $payload['decision'] ?? null,
             'mission_id' => $litige->mission_id,
         ], subjectLabel: 'Litige #'.$litige->id, actor: $admin);
 
@@ -391,7 +395,7 @@ class AdminService
     public function reviewFournisseur(User $admin, FournisseurAgree $fournisseurAgree, string $decision): FournisseurAgree
     {
         $fournisseurAgree->update([
-            'statut'     => $decision,
+            'statut' => $decision,
             'approuve_at' => $decision === 'agree' ? now() : null,
         ]);
 
@@ -478,12 +482,12 @@ class AdminService
             ->pluck('c', 'statut');
 
         return [
-            'pending'    => (int) ($byStatus['en_attente'] ?? 0),
-            'failed'     => (int) ($byStatus['echoue'] ?? 0),
-            'confirmed'  => (int) ($byStatus['confirme'] ?? 0),
+            'pending' => (int) ($byStatus['en_attente'] ?? 0),
+            'failed' => (int) ($byStatus['echoue'] ?? 0),
+            'confirmed' => (int) ($byStatus['confirme'] ?? 0),
             'volume_24h' => (int) Transaction::where('created_at', '>=', now()->subDay())->sum('montant'),
-            'escrow'     => (int) Transaction::where('statut', 'confirme')->where('type', 'acompte')->sum('montant'),
-            'released'   => (int) Transaction::where('statut', 'confirme')
+            'escrow' => (int) Transaction::where('statut', 'confirme')->where('type', 'acompte')->sum('montant'),
+            'released' => (int) Transaction::where('statut', 'confirme')
                 ->whereIn('type', ['liberation_jalon', 'paiement_fournisseur'])
                 ->sum('montant'),
         ];
@@ -526,7 +530,7 @@ class AdminService
         return $this->artisanScoresQuery()->get()->toArray();
     }
 
-    private function artisanScoresQuery(): \Illuminate\Database\Eloquent\Builder
+    private function artisanScoresQuery(): Builder
     {
         return User::query()
             ->where('role', 'artisan')
@@ -578,7 +582,7 @@ class AdminService
 
             // Transactions de commission plateforme
             $totalCommissionChantiers = 0;
-            if (\Illuminate\Support\Facades\Schema::hasTable('wallet_transactions')) {
+            if (Schema::hasTable('wallet_transactions')) {
                 $totalCommissionChantiers = (int) DB::table('wallet_transactions')
                     ->where('description', 'like', '%Commission plateforme%')
                     ->orWhere('metadata->type', 'platform_commission')
@@ -586,7 +590,7 @@ class AdminService
             }
 
             $totalCommissionEcommerce = 0;
-            if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
+            if (Schema::hasTable('orders')) {
                 $totalCommissionEcommerce = (int) DB::table('orders')
                     ->whereIn('status', ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered'])
                     ->sum('platform_fee');
@@ -599,9 +603,9 @@ class AdminService
             $sequestreMateriauxEncours = (int) User::where('role', 'artisan')->sum('wallet_materiaux');
 
             // Total libéré (Paiement des jalons + commandes livrées)
-            $totalLibereArtisans = \Illuminate\Support\Facades\Schema::hasTable('jalons') ? (int) Jalon::where('statut', 'paye')->sum('montant') : 0;
-            $totalLibereFournisseurs = \Illuminate\Support\Facades\Schema::hasTable('orders') ? (int) Order::whereIn('status', ['prepared', 'delivered'])->sum('subtotal') : 0;
-            $totalLibereLivreurs = \Illuminate\Support\Facades\Schema::hasTable('orders') ? (int) Order::where('status', 'delivered')->sum('delivery_cost') : 0;
+            $totalLibereArtisans = Schema::hasTable('jalons') ? (int) Jalon::where('statut', 'paye')->sum('montant') : 0;
+            $totalLibereFournisseurs = Schema::hasTable('orders') ? (int) Order::whereIn('status', ['prepared', 'delivered'])->sum('subtotal') : 0;
+            $totalLibereLivreurs = Schema::hasTable('orders') ? (int) Order::where('status', 'delivered')->sum('delivery_cost') : 0;
             $totalLibereGeneral = $totalLibereArtisans + $totalLibereFournisseurs + $totalLibereLivreurs;
 
             // 1.b. Retraits Cash-Out Quincaillerie & Commissions Partenaires
@@ -612,7 +616,7 @@ class AdminService
             $cashoutsBySupplier = collect([]);
             $recentCashouts = collect([]);
 
-            if (\Illuminate\Support\Facades\Schema::hasTable('supplier_cashouts')) {
+            if (Schema::hasTable('supplier_cashouts')) {
                 $totalCashoutsCompleted = (int) SupplierCashout::where('statut', 'complete')->sum('montant_net');
                 $totalCashoutsBrut = (int) SupplierCashout::where('statut', 'complete')->sum('montant_brut');
                 $totalCashoutsCommission = (int) SupplierCashout::where('statut', 'complete')->sum('montant_commission');
@@ -627,7 +631,7 @@ class AdminService
                             'id' => $c->id,
                             'reference' => $c->reference,
                             'supplier_id' => $c->supplier_id,
-                            'supplier_name' => $c->supplier?->name ?? 'Quincaillerie #' . $c->supplier_id,
+                            'supplier_name' => $c->supplier?->name ?? 'Quincaillerie #'.$c->supplier_id,
                             'supplier_phone' => $c->supplier?->phone ?? '-',
                             'beneficiary_name' => $c->beneficiary_name,
                             'beneficiary_phone' => $c->beneficiary_phone,
@@ -641,7 +645,7 @@ class AdminService
                         ];
                     });
 
-                if (\Illuminate\Support\Facades\Schema::hasTable('fournisseurs_agrees')) {
+                if (Schema::hasTable('fournisseurs_agrees')) {
                     $cashoutsBySupplier = DB::table('supplier_cashouts')
                         ->join('users', 'supplier_cashouts.supplier_id', '=', 'users.id')
                         ->leftJoin('fournisseurs_agrees', 'fournisseurs_agrees.user_id', '=', 'users.id')
@@ -649,8 +653,8 @@ class AdminService
                             'users.id as supplier_id',
                             'users.name as supplier_name',
                             'users.phone as supplier_phone',
-                            DB::raw("COALESCE(fournisseurs_agrees.nom_boutique, users.name) as shop_name"),
-                            DB::raw("COUNT(supplier_cashouts.id) as total_operations"),
+                            DB::raw('COALESCE(fournisseurs_agrees.nom_boutique, users.name) as shop_name'),
+                            DB::raw('COUNT(supplier_cashouts.id) as total_operations'),
                             DB::raw("COALESCE(SUM(CASE WHEN supplier_cashouts.statut = 'complete' THEN supplier_cashouts.montant_brut ELSE 0 END), 0) as volume_brut_retraits"),
                             DB::raw("COALESCE(SUM(CASE WHEN supplier_cashouts.statut = 'complete' THEN supplier_cashouts.montant_commission ELSE 0 END), 0) as total_commissions_gagnees")
                         )
@@ -662,20 +666,20 @@ class AdminService
 
             // 1.c. Trésorerie Globale (Entrées / Sorties Réelles)
             $totalEntreesAcomptes = 0;
-            if (\Illuminate\Support\Facades\Schema::hasTable('transactions')) {
+            if (Schema::hasTable('transactions')) {
                 $totalEntreesAcomptes = (int) DB::table('transactions')
                     ->where('type', 'acompte')
                     ->where('statut', 'confirme')
                     ->sum('montant');
             }
             $totalEntreesEcommerce = 0;
-            if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
+            if (Schema::hasTable('orders')) {
                 $totalEntreesEcommerce = (int) DB::table('orders')
                     ->whereIn('status', ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered'])
                     ->sum('total_amount');
             }
             $totalEntrees = $totalEntreesAcomptes + $totalEntreesEcommerce;
-            if ($totalEntrees === 0 && \Illuminate\Support\Facades\Schema::hasTable('missions')) {
+            if ($totalEntrees === 0 && Schema::hasTable('missions')) {
                 $totalEntrees = (int) Mission::whereIn('status', ['funded_locked', 'in_progress', 'completed', 'disputed', 'litige'])->sum('montant_total');
             }
 
@@ -685,9 +689,9 @@ class AdminService
             // 1.d. Séquestre Bloqué sur Litiges (Fonds Gelés en attente d'Arbitrage)
             $montantBloqueLitiges = 0;
             $missionsBloqueesLitigesCount = 0;
-            if (\Illuminate\Support\Facades\Schema::hasTable('missions')) {
+            if (Schema::hasTable('missions')) {
                 $litigeMissionIds = [];
-                if (\Illuminate\Support\Facades\Schema::hasTable('litiges')) {
+                if (Schema::hasTable('litiges')) {
                     $litigeMissionIds = DB::table('litiges')
                         ->whereIn('statut', ['ouvert', 'en_cours'])
                         ->pluck('mission_id')
@@ -696,7 +700,7 @@ class AdminService
 
                 $missionsLitigeQuery = Mission::where(function ($q) use ($litigeMissionIds) {
                     $q->whereIn('status', ['disputed', 'litige']);
-                    if (!empty($litigeMissionIds)) {
+                    if (! empty($litigeMissionIds)) {
                         $q->orWhereIn('id', $litigeMissionIds);
                     }
                 });
@@ -707,7 +711,7 @@ class AdminService
 
             // Taux de commission Cashout actuel
             $currentCashoutRate = 0.025;
-            if (\Illuminate\Support\Facades\Schema::hasTable('settings')) {
+            if (Schema::hasTable('settings')) {
                 $rateSetting = DB::table('settings')->where('key', 'commission_cashout_quincaillerie')->first();
                 if ($rateSetting && is_numeric($rateSetting->value)) {
                     $currentCashoutRate = (float) $rateSetting->value;
@@ -716,24 +720,24 @@ class AdminService
 
             // 2. Commissions par catégorie de métier et par année
             $commissionsByCategoryYear = collect([]);
-            if (\Illuminate\Support\Facades\Schema::hasTable('jalons') && \Illuminate\Support\Facades\Schema::hasTable('missions')) {
+            if (Schema::hasTable('jalons') && Schema::hasTable('missions')) {
                 $yearExpression = config('database.default') === 'sqlite'
                     ? "strftime('%Y', COALESCE(jalons.paye_at, jalons.updated_at))"
-                    : "YEAR(COALESCE(jalons.paye_at, jalons.updated_at))";
+                    : 'YEAR(COALESCE(jalons.paye_at, jalons.updated_at))';
 
                 $commissionsByCategoryYear = DB::table('jalons')
                     ->join('missions', 'jalons.mission_id', '=', 'missions.id')
                     ->leftJoin('devis', function ($join) {
                         $join->on('devis.mission_id', '=', 'missions.id')
-                             ->where('devis.statut', '=', 'accepte');
+                            ->where('devis.statut', '=', 'accepte');
                     })
                     ->where('jalons.statut', '=', 'paye')
                     ->select(
                         DB::raw("COALESCE(NULLIF(missions.gemini_category, ''), 'Général / Divers') as category"),
                         DB::raw("{$yearExpression} as year"),
-                        DB::raw("COUNT(DISTINCT missions.id) as missions_count"),
-                        DB::raw("SUM(jalons.montant) as volume_brut"),
-                        DB::raw("ROUND(SUM(jalons.montant * COALESCE(devis.commission_service_ratio, 0.10) / (1 + COALESCE(devis.commission_service_ratio, 0.10)))) as commission_net")
+                        DB::raw('COUNT(DISTINCT missions.id) as missions_count'),
+                        DB::raw('SUM(jalons.montant) as volume_brut'),
+                        DB::raw('ROUND(SUM(jalons.montant * COALESCE(devis.commission_service_ratio, 0.10) / (1 + COALESCE(devis.commission_service_ratio, 0.10)))) as commission_net')
                     )
                     ->groupBy('category', 'year')
                     ->orderBy('year', 'desc')
@@ -743,23 +747,23 @@ class AdminService
 
             // 3. Commissions et volume par Fournisseur (Quincailleries)
             $commissionsBySupplier = collect([]);
-            if (\Illuminate\Support\Facades\Schema::hasTable('orders') && \Illuminate\Support\Facades\Schema::hasTable('fournisseurs_agrees')) {
+            if (Schema::hasTable('orders') && Schema::hasTable('fournisseurs_agrees')) {
                 $commissionsBySupplier = DB::table('users')
                     ->where('users.role', '=', 'fournisseur')
                     ->leftJoin('fournisseurs_agrees', 'fournisseurs_agrees.user_id', '=', 'users.id')
                     ->leftJoin('orders', function ($join) {
                         $join->on('orders.supplier_id', '=', 'users.id')
-                             ->whereIn('orders.status', ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered']);
+                            ->whereIn('orders.status', ['paid', 'prepared', 'searching_driver', 'driver_assigned', 'driver_picked_up', 'shipping', 'delivered']);
                     })
                     ->select(
                         'users.id as supplier_id',
                         'users.name as supplier_name',
                         'users.phone as supplier_phone',
-                        DB::raw("COALESCE(fournisseurs_agrees.nom_boutique, users.name) as shop_name"),
+                        DB::raw('COALESCE(fournisseurs_agrees.nom_boutique, users.name) as shop_name'),
                         DB::raw("COALESCE(fournisseurs_agrees.statut, 'en_attente') as agreement_status"),
-                        DB::raw("COUNT(DISTINCT orders.id) as orders_count"),
-                        DB::raw("COALESCE(SUM(orders.subtotal), 0) as volume_materiaux"),
-                        DB::raw("COALESCE(SUM(orders.platform_fee), 0) as commission_prosartisan")
+                        DB::raw('COUNT(DISTINCT orders.id) as orders_count'),
+                        DB::raw('COALESCE(SUM(orders.subtotal), 0) as volume_materiaux'),
+                        DB::raw('COALESCE(SUM(orders.platform_fee), 0) as commission_prosartisan')
                     )
                     ->groupBy('users.id', 'users.name', 'users.phone', 'fournisseurs_agrees.nom_boutique', 'fournisseurs_agrees.statut')
                     ->orderByDesc('volume_materiaux')
@@ -768,19 +772,19 @@ class AdminService
 
             // 4. Commissions et activité par Livreur (Drivers)
             $commissionsByDriver = collect([]);
-            if (\Illuminate\Support\Facades\Schema::hasTable('orders')) {
+            if (Schema::hasTable('orders')) {
                 $commissionsByDriver = DB::table('users')
                     ->where('users.role', '=', 'driver')
                     ->leftJoin('orders', function ($join) {
                         $join->on('orders.driver_id', '=', 'users.id')
-                             ->whereIn('orders.status', ['driver_assigned', 'driver_picked_up', 'shipping', 'delivered']);
+                            ->whereIn('orders.status', ['driver_assigned', 'driver_picked_up', 'shipping', 'delivered']);
                     })
                     ->select(
                         'users.id as driver_id',
                         'users.name as driver_name',
                         'users.phone as driver_phone',
-                        DB::raw("COUNT(DISTINCT orders.id) as deliveries_count"),
-                        DB::raw("COALESCE(SUM(orders.delivery_cost), 0) as total_frais_livraison"),
+                        DB::raw('COUNT(DISTINCT orders.id) as deliveries_count'),
+                        DB::raw('COALESCE(SUM(orders.delivery_cost), 0) as total_frais_livraison'),
                         DB::raw("COALESCE(SUM(CASE WHEN orders.status = 'delivered' THEN orders.delivery_cost ELSE 0 END), 0) as gains_livreur_liberes")
                     )
                     ->groupBy('users.id', 'users.name', 'users.phone')
@@ -793,12 +797,12 @@ class AdminService
             $disputedMissions = Mission::where('status', 'disputed')->count();
             $disputeRate = $totalMissions > 0 ? round(($disputedMissions / $totalMissions) * 100, 1) : 0.0;
 
-            $totalDevisCount = \Illuminate\Support\Facades\Schema::hasTable('devis') ? DB::table('devis')->count() : 0;
-            $acceptedDevisCount = \Illuminate\Support\Facades\Schema::hasTable('devis') ? DB::table('devis')->where('statut', 'accepte')->count() : 0;
+            $totalDevisCount = Schema::hasTable('devis') ? DB::table('devis')->count() : 0;
+            $acceptedDevisCount = Schema::hasTable('devis') ? DB::table('devis')->where('statut', 'accepte')->count() : 0;
             $devisConversionRate = $totalDevisCount > 0 ? round(($acceptedDevisCount / $totalDevisCount) * 100, 1) : 0.0;
 
             $avgChantierAmount = (int) round(Mission::whereNotNull('montant_total')->avg('montant_total') ?? 0);
-            $avgEcommerceAmount = \Illuminate\Support\Facades\Schema::hasTable('orders') ? (int) round(Order::avg('total_amount') ?? 0) : 0;
+            $avgEcommerceAmount = Schema::hasTable('orders') ? (int) round(Order::avg('total_amount') ?? 0) : 0;
 
             // Top 5 Artisans
             $topArtisans = User::where('role', 'artisan')
@@ -850,7 +854,8 @@ class AdminService
             if (app()->environment('testing')) {
                 throw $e;
             }
-            \Illuminate\Support\Facades\Log::error('Erreur getFinancialKpis: ' . $e->getMessage());
+            Log::error('Erreur getFinancialKpis: '.$e->getMessage());
+
             return [
                 'solde_general' => [
                     'solde_admin_wallet' => 0,

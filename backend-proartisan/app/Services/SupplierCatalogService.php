@@ -18,7 +18,7 @@ class SupplierCatalogService
             ->with(['fournisseurAgree'])
             ->withCount(['supplierProducts' => fn ($q) => $q->where('is_active', true)])
             ->when($search, function ($query) use ($search) {
-                $term = '%' . trim($search) . '%';
+                $term = '%'.trim($search).'%';
                 $query->where(function ($inner) use ($term) {
                     $inner->where('name', 'like', $term)
                         ->orWhere('phone', 'like', $term)

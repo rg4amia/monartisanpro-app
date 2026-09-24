@@ -16,12 +16,10 @@ class PhotoService
     /**
      * Upload une photo avec métadonnées GPS
      *
-     * @param UploadedFile $photo
-     * @param float $latitude
-     * @param float $longitude
-     * @param string $type Type de photo ('jalon' ou 'jcode')
-     * @param int|null $relatedId ID du jalon ou jcode
+     * @param  string  $type  Type de photo ('jalon' ou 'jcode')
+     * @param  int|null  $relatedId  ID du jalon ou jcode
      * @return array ['url' => string, 'latitude' => float, 'longitude' => float, 'taken_at' => string, 'path' => string]
+     *
      * @throws \Exception
      */
     public function uploadGeolocatedPhoto(
@@ -41,11 +39,11 @@ class PhotoService
             // Génération du nom de fichier unique
             $filename = $this->generatePhotoFilename($type, $relatedId);
             $extension = $photo->getClientOriginalExtension();
-            $fullFilename = $filename . '.' . $extension;
+            $fullFilename = $filename.'.'.$extension;
 
             // Chemin de stockage
             $directory = $this->getStorageDirectory($type);
-            $path = $directory . '/' . $fullFilename;
+            $path = $directory.'/'.$fullFilename;
 
             // Upload vers storage (local ou S3)
             $storedPath = Storage::disk('public')->putFileAs(
@@ -54,7 +52,7 @@ class PhotoService
                 $fullFilename
             );
 
-            if (!$storedPath) {
+            if (! $storedPath) {
                 throw new \Exception('Échec de l\'upload de la photo');
             }
 
@@ -91,10 +89,7 @@ class PhotoService
     /**
      * Upload plusieurs photos géolocalisées (pour jalons)
      *
-     * @param array $photos Array of ['photo' => UploadedFile, 'latitude' => float, 'longitude' => float]
-     * @param string $type
-     * @param int|null $relatedId
-     * @return array
+     * @param  array  $photos  Array of ['photo' => UploadedFile, 'latitude' => float, 'longitude' => float]
      */
     public function uploadMultipleGeolocatedPhotos(
         array $photos,
@@ -128,8 +123,6 @@ class PhotoService
     /**
      * Valider un fichier photo
      *
-     * @param UploadedFile $photo
-     * @return void
      * @throws \Exception
      */
     protected function validatePhotoFile(UploadedFile $photo): void
@@ -145,16 +138,16 @@ class PhotoService
         $allowedImageMimes = ['image/jpeg', 'image/jpg', 'image/png', 'image/webp'];
         $allowedVideoMimes = ['video/mp4', 'video/quicktime', 'video/x-msvideo', 'video/3gpp', 'video/x-m4v'];
         $allowedMimes = array_merge($allowedImageMimes, $allowedVideoMimes);
-        
+
         $mime = $photo->getMimeType();
 
-        if (!in_array($mime, $allowedMimes)) {
+        if (! in_array($mime, $allowedMimes)) {
             throw new \Exception('Format de fichier non supporté. Utilisez JPEG, PNG, WebP ou une vidéo standard (MP4, MOV, etc.)');
         }
 
         // Si c'est une image, vérifier getimagesize
         if (in_array($mime, $allowedImageMimes)) {
-            if (!@getimagesize($photo->getRealPath())) {
+            if (! @getimagesize($photo->getRealPath())) {
                 throw new \Exception('Le fichier n\'est pas une image valide');
             }
         }
@@ -163,9 +156,6 @@ class PhotoService
     /**
      * Valider des coordonnées GPS
      *
-     * @param float $latitude
-     * @param float $longitude
-     * @return void
      * @throws \Exception
      */
     protected function validateCoordinates(float $latitude, float $longitude): void
@@ -188,10 +178,6 @@ class PhotoService
 
     /**
      * Générer un nom de fichier unique pour la photo
-     *
-     * @param string $type
-     * @param int|null $relatedId
-     * @return string
      */
     protected function generatePhotoFilename(string $type, ?int $relatedId = null): string
     {
@@ -207,9 +193,6 @@ class PhotoService
 
     /**
      * Obtenir le répertoire de stockage selon le type
-     *
-     * @param string $type
-     * @return string
      */
     protected function getStorageDirectory(string $type): string
     {
@@ -223,9 +206,6 @@ class PhotoService
 
     /**
      * Supprimer une photo
-     *
-     * @param string $path
-     * @return bool
      */
     public function deletePhoto(string $path): bool
     {
@@ -249,10 +229,10 @@ class PhotoService
      * Vérifier la distance entre deux points GPS (en mètres)
      * Utile pour valider que la photo a bien été prise au bon endroit
      *
-     * @param float $lat1 Latitude point 1
-     * @param float $lon1 Longitude point 1
-     * @param float $lat2 Latitude point 2
-     * @param float $lon2 Longitude point 2
+     * @param  float  $lat1  Latitude point 1
+     * @param  float  $lon1  Longitude point 1
+     * @param  float  $lat2  Latitude point 2
+     * @param  float  $lon2  Longitude point 2
      * @return float Distance en mètres
      */
     public function calculateDistance(float $lat1, float $lon1, float $lat2, float $lon2): float
@@ -279,12 +259,11 @@ class PhotoService
     /**
      * Valider que la photo a été prise dans le périmètre autorisé
      *
-     * @param float $photoLat Latitude de la photo
-     * @param float $photoLon Longitude de la photo
-     * @param float $referenceLat Latitude de référence (ex: mission, fournisseur)
-     * @param float $referenceLon Longitude de référence
-     * @param float $maxDistanceMeters Distance maximale autorisée en mètres
-     * @return bool
+     * @param  float  $photoLat  Latitude de la photo
+     * @param  float  $photoLon  Longitude de la photo
+     * @param  float  $referenceLat  Latitude de référence (ex: mission, fournisseur)
+     * @param  float  $referenceLon  Longitude de référence
+     * @param  float  $maxDistanceMeters  Distance maximale autorisée en mètres
      */
     public function validatePhotoLocation(
         float $photoLat,

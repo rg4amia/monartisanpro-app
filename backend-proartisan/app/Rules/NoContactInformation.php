@@ -4,23 +4,25 @@ namespace App\Rules;
 
 use Closure;
 use Illuminate\Contracts\Validation\ValidationRule;
+use Illuminate\Translation\PotentiallyTranslatedString;
 
 class NoContactInformation implements ValidationRule
 {
     /**
      * Run the validation rule.
      *
-     * @param  \Closure(string): \Illuminate\Translation\PotentiallyTranslatedString  $fail
+     * @param  Closure(string): PotentiallyTranslatedString  $fail
      */
     public function validate(string $attribute, mixed $value, Closure $fail): void
     {
-        if (!is_string($value)) {
+        if (! is_string($value)) {
             return;
         }
 
         // 1. Détection des adresses email
         if (preg_match('/[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}/', $value)) {
             $fail("L'insertion d'adresses e-mail est interdite dans le champ :attribute pour éviter le contournement de la plateforme.");
+
             return;
         }
 
@@ -55,6 +57,7 @@ class NoContactInformation implements ValidationRule
         foreach ($suspiciousPatterns as $pattern) {
             if (preg_match($pattern, $value)) {
                 $fail("L'insertion de coordonnées de contact, d'indications d'adresse précises ou de réseaux sociaux est interdite.");
+
                 return;
             }
         }
@@ -63,8 +66,9 @@ class NoContactInformation implements ValidationRule
         // ou de chiffres séparés par des espaces/caractères spéciaux pour contourner le filtre
         $normalizedText = strtolower(str_replace([' ', '-', '.', ',', '_', '/'], '', $value));
         $numberWords = '(zero|zéro|un|deux|trois|quatre|cinq|six|sept|huit|neuf|dix)';
-        if (preg_match('/(?:' . $numberWords . '){3,}/i', $normalizedText)) {
+        if (preg_match('/(?:'.$numberWords.'){3,}/i', $normalizedText)) {
             $fail("L'insertion de numéros de téléphone (même épelés en lettres ou fragmentés) est interdite.");
+
             return;
         }
 
@@ -77,7 +81,8 @@ class NoContactInformation implements ValidationRule
             // S'il y a un indicatif 225 suivi de chiffres (ex: 22507080910)
             // On vérifie que la longueur totale des chiffres après l'indicatif est d'au moins 8 digits
             if (strlen($onlyDigits) >= 11) { // 225 (3) + 8 = 11
-                $fail("Les numéros de téléphone avec indicatif ne sont pas autorisés dans le champ :attribute.");
+                $fail('Les numéros de téléphone avec indicatif ne sont pas autorisés dans le champ :attribute.');
+
                 return;
             }
         }
@@ -86,13 +91,15 @@ class NoContactInformation implements ValidationRule
         // On cherche une séquence de 10 chiffres (pouvant être séparés par des espaces/tiret/points)
         // ex: 07 08 09 10 11, 05-06-07-08-09
         if (preg_match('/(?:^|[^0-9])(01|05|07|20|21|22|23|25|27)(?:\s*[-.]?\s*\d){8}(?:$|[^0-9])/', $value)) {
-            $fail("Les numéros de téléphone à 10 chiffres ne sont pas autorisés dans le champ :attribute.");
+            $fail('Les numéros de téléphone à 10 chiffres ne sont pas autorisés dans le champ :attribute.');
+
             return;
         }
 
         // Anciens formats à 8 chiffres commençant par 0, 4, 5, 6, 7, 8, 9 (pour rétrocompatibilité et par sécurité)
         if (preg_match('/(?:^|[^0-9])(0|4|5|6|7|8|9)(?:\s*[-.]?\s*\d){7}(?:$|[^0-9])/', $value)) {
-            $fail("Les numéros de téléphone à 8 chiffres ne sont pas autorisés dans le champ :attribute.");
+            $fail('Les numéros de téléphone à 8 chiffres ne sont pas autorisés dans le champ :attribute.');
+
             return;
         }
     }

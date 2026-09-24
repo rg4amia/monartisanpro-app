@@ -8,7 +8,6 @@ use App\Models\SupplierCashout;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 class GeneratedDocumentService
@@ -71,11 +70,11 @@ class GeneratedDocumentService
         $countRapportsLitiges = GeneratedDocument::whereIn('document_type', ['facture_litige', 'rapport_solvabilite'])->count();
 
         return [
-            'total_documents'          => $totalDocuments,
-            'total_montant_certifie'   => $totalMontantDecaisse,
-            'recus_jalons_mo'          => $countJalonsMo,
-            'recus_quincaillerie'      => $countFournisseurs,
-            'rapports_et_litiges'      => $countRapportsLitiges,
+            'total_documents' => $totalDocuments,
+            'total_montant_certifie' => $totalMontantDecaisse,
+            'recus_jalons_mo' => $countJalonsMo,
+            'recus_quincaillerie' => $countFournisseurs,
+            'rapports_et_litiges' => $countRapportsLitiges,
         ];
     }
 
@@ -107,23 +106,23 @@ class GeneratedDocumentService
             default => "Pièce Justificative de Transaction #{$tx->id}",
         };
 
-        $ref = 'REC-' . strtoupper(substr($tx->provider instanceof \BackedEnum ? $tx->provider->value : (string)$tx->provider, 0, 2)) . '-' . str_pad($tx->id, 6, '0', STR_PAD_LEFT);
+        $ref = 'REC-'.strtoupper(substr($tx->provider instanceof \BackedEnum ? $tx->provider->value : (string) $tx->provider, 0, 2)).'-'.str_pad($tx->id, 6, '0', STR_PAD_LEFT);
 
         return GeneratedDocument::create([
-            'reference'      => $ref,
-            'document_type'  => $type,
-            'title'          => $title,
-            'user_id'        => $tx->user_id ?? $tx->mission?->artisan_id ?? $tx->mission?->client_id,
-            'mission_id'     => $tx->mission_id,
+            'reference' => $ref,
+            'document_type' => $type,
+            'title' => $title,
+            'user_id' => $tx->user_id ?? $tx->mission?->artisan_id ?? $tx->mission?->client_id,
+            'mission_id' => $tx->mission_id,
             'transaction_id' => $tx->id,
-            'montant'        => (int) $tx->montant,
-            'mime_type'      => 'application/pdf',
-            'metadata'       => [
-                'provider'           => $tx->provider instanceof \BackedEnum ? $tx->provider->value : (string)$tx->provider,
-                'reference_externe'  => $tx->reference_externe,
-                'statut'             => $tx->statut instanceof \BackedEnum ? $tx->statut->value : (string)$tx->statut,
+            'montant' => (int) $tx->montant,
+            'mime_type' => 'application/pdf',
+            'metadata' => [
+                'provider' => $tx->provider instanceof \BackedEnum ? $tx->provider->value : (string) $tx->provider,
+                'reference_externe' => $tx->reference_externe,
+                'statut' => $tx->statut instanceof \BackedEnum ? $tx->statut->value : (string) $tx->statut,
             ],
-            'created_at'     => $tx->paid_at ?? $tx->created_at,
+            'created_at' => $tx->paid_at ?? $tx->created_at,
         ]);
     }
 
@@ -137,25 +136,25 @@ class GeneratedDocumentService
             return $existing;
         }
 
-        $ref = 'CSH-' . str_pad($cashout->id, 6, '0', STR_PAD_LEFT);
+        $ref = 'CSH-'.str_pad($cashout->id, 6, '0', STR_PAD_LEFT);
 
         return GeneratedDocument::create([
-            'reference'            => $ref,
-            'document_type'        => 'recu_cashout',
-            'title'                => "Bordereau de Cash-Out Quincaillerie ({$cashout->reference})",
-            'user_id'              => $cashout->supplier_id,
-            'supplier_cashout_id'  => $cashout->id,
-            'montant'              => (int) $cashout->montant_net,
-            'mime_type'            => 'application/pdf',
-            'metadata'             => [
-                'montant_brut'        => (int) $cashout->montant_brut,
-                'montant_commission'  => (int) $cashout->montant_commission,
-                'beneficiary_phone'   => $cashout->beneficiary_phone,
-                'beneficiary_name'    => $cashout->beneficiary_name,
-                'provider'            => $cashout->provider,
-                'statut'              => $cashout->statut,
+            'reference' => $ref,
+            'document_type' => 'recu_cashout',
+            'title' => "Bordereau de Cash-Out Quincaillerie ({$cashout->reference})",
+            'user_id' => $cashout->supplier_id,
+            'supplier_cashout_id' => $cashout->id,
+            'montant' => (int) $cashout->montant_net,
+            'mime_type' => 'application/pdf',
+            'metadata' => [
+                'montant_brut' => (int) $cashout->montant_brut,
+                'montant_commission' => (int) $cashout->montant_commission,
+                'beneficiary_phone' => $cashout->beneficiary_phone,
+                'beneficiary_name' => $cashout->beneficiary_name,
+                'provider' => $cashout->provider,
+                'statut' => $cashout->statut,
             ],
-            'created_at'           => $cashout->processed_at ?? $cashout->created_at,
+            'created_at' => $cashout->processed_at ?? $cashout->created_at,
         ]);
     }
 
@@ -169,24 +168,24 @@ class GeneratedDocumentService
             return $existing;
         }
 
-        $ref = 'FAC-LIT-' . str_pad($litige->id, 6, '0', STR_PAD_LEFT);
+        $ref = 'FAC-LIT-'.str_pad($litige->id, 6, '0', STR_PAD_LEFT);
         $mission = $litige->mission;
 
         return GeneratedDocument::create([
-            'reference'      => $ref,
-            'document_type'  => 'facture_litige',
-            'title'          => "Facture de Décaissement Litige #{$litige->id} (Mission #{$litige->mission_id})",
-            'user_id'        => $litige->declencheur_id,
-            'mission_id'     => $litige->mission_id,
-            'litige_id'      => $litige->id,
-            'montant'        => (int) ($mission?->montant_total ?? 0),
-            'file_path'      => $path,
-            'mime_type'      => 'application/pdf',
-            'metadata'       => [
-                'decision'     => $litige->decision,
-                'statut'       => $litige->statut,
+            'reference' => $ref,
+            'document_type' => 'facture_litige',
+            'title' => "Facture de Décaissement Litige #{$litige->id} (Mission #{$litige->mission_id})",
+            'user_id' => $litige->declencheur_id,
+            'mission_id' => $litige->mission_id,
+            'litige_id' => $litige->id,
+            'montant' => (int) ($mission?->montant_total ?? 0),
+            'file_path' => $path,
+            'mime_type' => 'application/pdf',
+            'metadata' => [
+                'decision' => $litige->decision,
+                'statut' => $litige->statut,
             ],
-            'created_at'     => $litige->resolu_at ?? $litige->updated_at ?? now(),
+            'created_at' => $litige->resolu_at ?? $litige->updated_at ?? now(),
         ]);
     }
 
@@ -195,21 +194,21 @@ class GeneratedDocumentService
      */
     public function recordSolvabilityReport(User $artisan, string $path): GeneratedDocument
     {
-        $ref = 'SOLV-' . str_pad($artisan->id, 5, '0', STR_PAD_LEFT) . '-' . now()->format('ymdHi');
+        $ref = 'SOLV-'.str_pad($artisan->id, 5, '0', STR_PAD_LEFT).'-'.now()->format('ymdHi');
 
         return GeneratedDocument::create([
-            'reference'      => $ref,
-            'document_type'  => 'rapport_solvabilite',
-            'title'          => "Rapport d'Éligibilité & Solvabilité Bancaire - {$artisan->name}",
-            'user_id'        => $artisan->id,
-            'montant'        => 0,
-            'file_path'      => $path,
-            'mime_type'      => 'application/pdf',
-            'metadata'       => [
+            'reference' => $ref,
+            'document_type' => 'rapport_solvabilite',
+            'title' => "Rapport d'Éligibilité & Solvabilité Bancaire - {$artisan->name}",
+            'user_id' => $artisan->id,
+            'montant' => 0,
+            'file_path' => $path,
+            'mime_type' => 'application/pdf',
+            'metadata' => [
                 'score_prosartisan' => $artisan->score_prosartisan,
-                'phone'             => $artisan->phone,
+                'phone' => $artisan->phone,
             ],
-            'created_at'     => now(),
+            'created_at' => now(),
         ]);
     }
 
@@ -241,6 +240,7 @@ class GeneratedDocumentService
                 'file_path' => $generatedPath,
                 'file_size' => file_exists($generatedPath) ? filesize($generatedPath) : null,
             ]);
+
             return $generatedPath;
         }
 
@@ -267,11 +267,11 @@ class GeneratedDocumentService
                 'remboursement',
                 'credit',
             ])->where('statut', 'confirme')
-              ->whereNotIn('id', function ($query) {
-                  $query->select('transaction_id')
-                      ->from('generated_documents')
-                      ->whereNotNull('transaction_id');
-              })->get();
+                ->whereNotIn('id', function ($query) {
+                    $query->select('transaction_id')
+                        ->from('generated_documents')
+                        ->whereNotNull('transaction_id');
+                })->get();
 
             foreach ($transactions as $tx) {
                 $this->createOrGetForTransaction($tx);

@@ -10,19 +10,19 @@ class JalonResource extends JsonResource
     public function toArray(Request $request): array
     {
         return [
-            'id'              => $this->id,
-            'mission_id'      => $this->mission_id,
-            'ordre'           => $this->ordre,
-            'description'     => $this->description,
-            'montant'         => $this->montant,
-            'statut'          => $this->statut,
-            'otp_code'        => null, // Jamais exposer le code OTP
-            'otp_expires_at'  => $this->otp_expires_at?->toIso8601String(),
-            'photos_json'     => $this->photos_json ?? [],
-            'conformity_score'=> $this->conformity_score,
+            'id' => $this->id,
+            'mission_id' => $this->mission_id,
+            'ordre' => $this->ordre,
+            'description' => $this->description,
+            'montant' => $this->montant,
+            'statut' => $this->statut,
+            'otp_code' => null, // Jamais exposer le code OTP
+            'otp_expires_at' => $this->otp_expires_at?->toIso8601String(),
+            'photos_json' => $this->photos_json ?? [],
+            'conformity_score' => $this->conformity_score,
             'vision_analysis' => $this->vision_analysis_json,
-            'valide_at'       => $this->valide_at?->toIso8601String(),
-            'paye_at'         => $this->paye_at?->toIso8601String(),
+            'valide_at' => $this->valide_at?->toIso8601String(),
+            'paye_at' => $this->paye_at?->toIso8601String(),
         ];
     }
 }

@@ -2,12 +2,11 @@
 
 namespace Tests\Unit;
 
-use App\Models\FournisseurAgree;
 use App\Models\Litige;
 use App\Models\Mission;
-use App\Models\Setting;
 use App\Models\SupplierCashout;
 use App\Models\User;
+use App\Services\Admin\AdminDashboardCache;
 use App\Services\AdminService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -22,7 +21,7 @@ class AdminCashoutServiceTest extends TestCase
     {
         parent::setUp();
         $this->adminService = app(AdminService::class);
-        app(\App\Services\Admin\AdminDashboardCache::class)->flush();
+        app(AdminDashboardCache::class)->flush();
     }
 
     public function test_it_generates_valid_cashout_reference(): void
@@ -100,7 +99,7 @@ class AdminCashoutServiceTest extends TestCase
             'ratio_materiaux' => 0.5714,
         ]);
 
-        app(\App\Services\Admin\AdminDashboardCache::class)->flush();
+        app(AdminDashboardCache::class)->flush();
         $kpis = $this->adminService->getFinancialKpis();
 
         $this->assertArrayHasKey('cashout_kpis', $kpis);

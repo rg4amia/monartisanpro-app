@@ -18,11 +18,11 @@ class SupplierProductResource extends JsonResource
             if (str_starts_with($imageUrl, 'http://prosartisan.net')) {
                 $imageUrl = str_replace('http://', 'https://', $imageUrl);
             }
-            if (!str_starts_with($imageUrl, 'http://') && !str_starts_with($imageUrl, 'https://')) {
+            if (! str_starts_with($imageUrl, 'http://') && ! str_starts_with($imageUrl, 'https://')) {
                 $trimmed = ltrim($imageUrl, '/');
                 $imageUrl = str_starts_with($trimmed, 'storage/')
-                    ? 'https://prosartisan.net/' . $trimmed
-                    : 'https://prosartisan.net/storage/' . $trimmed;
+                    ? 'https://prosartisan.net/'.$trimmed
+                    : 'https://prosartisan.net/storage/'.$trimmed;
             }
         }
 

@@ -19,6 +19,7 @@ class VitrineSetting extends Model
     public static function get(string $cle, mixed $default = null): mixed
     {
         $setting = static::where('cle', $cle)->first();
+
         return $setting?->valeur ?? $default;
     }
 

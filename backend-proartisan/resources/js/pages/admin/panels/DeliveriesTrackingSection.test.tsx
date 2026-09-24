@@ -6,8 +6,8 @@ vi.mock('@inertiajs/react', () => ({
     router: { post: (...args: unknown[]) => routerPost(...args) },
 }));
 
-import { DeliveriesTrackingSection } from './DeliveriesTrackingSection';
 import type { AdminOrder } from '../shared';
+import { DeliveriesTrackingSection } from './DeliveriesTrackingSection';
 
 function makeOrder(overrides: Partial<AdminOrder> = {}): AdminOrder {
     return {

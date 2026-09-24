@@ -15,27 +15,28 @@ class RealtimeEventService
     {
         try {
             $event = MissionRealtimeEvent::create([
-                'mission_id'   => $missionId,
-                'event_type'   => $eventType,
+                'mission_id' => $missionId,
+                'event_type' => $eventType,
                 'payload_json' => $payload,
-                'created_at'   => now(),
+                'created_at' => now(),
             ]);
 
             return $event;
         } catch (\Throwable $e) {
-            Log::error('Erreur enregistrement événement temps réel: ' . $e->getMessage(), [
+            Log::error('Erreur enregistrement événement temps réel: '.$e->getMessage(), [
                 'mission_id' => $missionId,
                 'event_type' => $eventType,
             ]);
 
             // Retourne un objet simulé sans bloquer la transaction principale
             $dummy = new MissionRealtimeEvent([
-                'mission_id'   => $missionId,
-                'event_type'   => $eventType,
+                'mission_id' => $missionId,
+                'event_type' => $eventType,
                 'payload_json' => $payload,
-                'created_at'   => now(),
+                'created_at' => now(),
             ]);
             $dummy->id = 0;
+
             return $dummy;
         }
     }

@@ -1,8 +1,8 @@
 import { fireEvent, render, screen, within } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { AuditLogsPanel } from './AuditLogsPanel';
 import type { AdminActivityLogItem, PaginatedAuditLogs } from '../shared';
+import { AuditLogsPanel } from './AuditLogsPanel';
 
 function makeLog(overrides: Partial<AdminActivityLogItem> = {}): AdminActivityLogItem {
     return {

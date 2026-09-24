@@ -35,6 +35,7 @@ class Setting extends Model
     public static function getValueByKey(string $key, $default = null)
     {
         $setting = self::where('key', $key)->first();
+
         return $setting ? $setting->getTypedValue() : $default;
     }
 
@@ -46,22 +47,23 @@ class Setting extends Model
         $globalCommission = (float) self::getValueByKey('commission_service', 0.10);
         $tradeName = $artisan->artisanProfile?->trade?->name;
         $sectorName = $artisan->artisanProfile?->sector?->name;
-        
-        if (!$tradeName && !$sectorName) {
+
+        if (! $tradeName && ! $sectorName) {
             return $globalCommission;
         }
 
         $customCommissions = self::getValueByKey('commission_categories', []);
-        if (!is_array($customCommissions)) {
+        if (! is_array($customCommissions)) {
             return $globalCommission;
         }
 
-        $normalize = function($str) {
+        $normalize = function ($str) {
             $str = mb_strtolower($str, 'UTF-8');
             $str = str_replace(['é', 'è', 'ê', 'ë'], 'e', $str);
             $str = str_replace(['à', 'â', 'ä'], 'a', $str);
             $str = str_replace(['ç'], 'c', $str);
             $str = preg_replace('/[^a-z0-9_]/', '_', $str);
+
             return trim($str, '_');
         };
 

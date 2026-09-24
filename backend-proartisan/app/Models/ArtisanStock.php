@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class ArtisanStock extends Model
 {
     protected $fillable = [
-        'artisan_id', 'description', 'quantity', 'unit_cost', 'condition'
+        'artisan_id', 'description', 'quantity', 'unit_cost', 'condition',
     ];
 
     protected function casts(): array

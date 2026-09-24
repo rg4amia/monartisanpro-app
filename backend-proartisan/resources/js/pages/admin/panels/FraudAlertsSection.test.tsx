@@ -8,7 +8,8 @@ vi.mock('@inertiajs/react', () => ({
     },
 }));
 
-import { FraudAlertsSection, type FraudAlertItem } from './FraudAlertsSection';
+import { FraudAlertsSection  } from './FraudAlertsSection';
+import type {FraudAlertItem} from './FraudAlertsSection';
 
 function makeAlert(overrides: Partial<FraudAlertItem> = {}): FraudAlertItem {
     return {

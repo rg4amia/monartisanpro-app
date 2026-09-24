@@ -2,8 +2,10 @@
 
 namespace App\Services;
 
+use App\Models\Mission;
+use App\Models\SupplierCashout;
+use App\Models\Transaction;
 use App\Models\User;
-use Illuminate\Support\Facades\View;
 use Barryvdh\DomPDF\Facade\Pdf;
 
 class PdfService
@@ -30,10 +32,10 @@ class PdfService
         $pdf = Pdf::loadView('pdf.solvability_report', $data);
 
         // Stocker sur disque temporairement
-        $filename = "solvability_report_{$artisan->id}_" . now()->format('YmdHis') . ".pdf";
+        $filename = "solvability_report_{$artisan->id}_".now()->format('YmdHis').'.pdf';
         $path = storage_path("app/public/reports/{$filename}");
-        
-        if (!file_exists(dirname($path))) {
+
+        if (! file_exists(dirname($path))) {
             mkdir(dirname($path), 0755, true);
         }
 
@@ -45,25 +47,25 @@ class PdfService
     /**
      * Génère la facture de décaissement pour une mission suite à un arbitrage.
      */
-    public function generateDisbursementInvoice(\App\Models\Mission $mission, int $amountReleased): string
+    public function generateDisbursementInvoice(Mission $mission, int $amountReleased): string
     {
         $data = [
-            'mission'         => $mission,
-            'client'          => $mission->client,
-            'artisan'         => $mission->artisan,
+            'mission' => $mission,
+            'client' => $mission->client,
+            'artisan' => $mission->artisan,
             'amount_released' => $amountReleased,
-            'generated_at'    => now()->format('d/m/Y H:i'),
-            'invoice_number'  => 'FAC-' . str_pad($mission->id, 6, '0', STR_PAD_LEFT) . '-' . now()->format('Ymd'),
+            'generated_at' => now()->format('d/m/Y H:i'),
+            'invoice_number' => 'FAC-'.str_pad($mission->id, 6, '0', STR_PAD_LEFT).'-'.now()->format('Ymd'),
         ];
 
         // Générer PDF
         $pdf = Pdf::loadView('pdf.disbursement_invoice', $data);
 
         // Stocker sur disque
-        $filename = "disbursement_invoice_{$mission->id}_" . now()->format('YmdHis') . ".pdf";
+        $filename = "disbursement_invoice_{$mission->id}_".now()->format('YmdHis').'.pdf';
         $path = storage_path("app/public/invoices/{$filename}");
-        
-        if (!file_exists(dirname($path))) {
+
+        if (! file_exists(dirname($path))) {
             mkdir(dirname($path), 0755, true);
         }
 
@@ -75,7 +77,7 @@ class PdfService
     /**
      * Génère le reçu officiel de paiement / libération de fonds pour une transaction.
      */
-    public function generatePaymentReceipt(\App\Models\Transaction $transaction): string
+    public function generatePaymentReceipt(Transaction $transaction): string
     {
         $transaction->loadMissing(['mission.artisan', 'mission.client', 'user']);
 
@@ -100,7 +102,7 @@ class PdfService
             default => 'Transaction Confirmée',
         };
 
-        $receiptNumber = 'REC-TX-' . str_pad($transaction->id, 6, '0', STR_PAD_LEFT);
+        $receiptNumber = 'REC-TX-'.str_pad($transaction->id, 6, '0', STR_PAD_LEFT);
 
         $description = match ($transaction->type) {
             'liberation_jalon' => "Versement des honoraires de main-d'œuvre pour le jalon validé sur la mission #{$transaction->mission_id}.",
@@ -111,31 +113,31 @@ class PdfService
         };
 
         $data = [
-            'transaction'        => $transaction,
-            'receipt_number'     => $receiptNumber,
-            'badge_label'        => $badgeLabel,
-            'disbursement_type'  => $disbursementType,
-            'description'        => $description,
-            'sub_details'        => $mission ? "Catégorie : " . ($mission->category ?? 'Artisanat') . " • Statut : {$mission->status}" : null,
-            'beneficiary_name'   => $user?->name ?? 'Bénéficiaire ProsArtisan',
-            'beneficiary_phone'  => $user?->phone ?? $transaction->client_phone ?? 'N/A',
-            'beneficiary_role'   => $user?->role ?? 'artisan',
-            'beneficiary_id'     => $user?->id,
-            'payment_date'       => ($transaction->paid_at ?? $transaction->created_at)->format('d/m/Y H:i'),
-            'mission_id'         => $transaction->mission_id,
-            'provider'           => $transaction->provider instanceof \BackedEnum ? $transaction->provider->value : (string)$transaction->provider,
+            'transaction' => $transaction,
+            'receipt_number' => $receiptNumber,
+            'badge_label' => $badgeLabel,
+            'disbursement_type' => $disbursementType,
+            'description' => $description,
+            'sub_details' => $mission ? 'Catégorie : '.($mission->category ?? 'Artisanat')." • Statut : {$mission->status}" : null,
+            'beneficiary_name' => $user?->name ?? 'Bénéficiaire ProsArtisan',
+            'beneficiary_phone' => $user?->phone ?? $transaction->client_phone ?? 'N/A',
+            'beneficiary_role' => $user?->role ?? 'artisan',
+            'beneficiary_id' => $user?->id,
+            'payment_date' => ($transaction->paid_at ?? $transaction->created_at)->format('d/m/Y H:i'),
+            'mission_id' => $transaction->mission_id,
+            'provider' => $transaction->provider instanceof \BackedEnum ? $transaction->provider->value : (string) $transaction->provider,
             'external_reference' => $transaction->reference_externe ?? $transaction->wave_payment_id ?? $transaction->orange_tx_reference,
-            'transaction_id'     => $transaction->id,
-            'amount'             => (int) $transaction->montant,
-            'deductions'         => 0,
+            'transaction_id' => $transaction->id,
+            'amount' => (int) $transaction->montant,
+            'deductions' => 0,
         ];
 
         $pdf = Pdf::loadView('pdf.payment_receipt', $data);
 
-        $filename = "recu_paiement_{$transaction->id}_" . now()->format('YmdHis') . ".pdf";
+        $filename = "recu_paiement_{$transaction->id}_".now()->format('YmdHis').'.pdf';
         $path = storage_path("app/public/receipts/{$filename}");
 
-        if (!file_exists(dirname($path))) {
+        if (! file_exists(dirname($path))) {
             mkdir(dirname($path), 0755, true);
         }
 
@@ -147,7 +149,7 @@ class PdfService
     /**
      * Génère le bordereau officiel de cash-out pour une quincaillerie.
      */
-    public function generateCashoutReceipt(\App\Models\SupplierCashout $cashout): string
+    public function generateCashoutReceipt(SupplierCashout $cashout): string
     {
         $cashout->loadMissing(['supplier', 'processor']);
 
@@ -155,10 +157,10 @@ class PdfService
             'cashout' => $cashout,
         ]);
 
-        $filename = "cashout_receipt_{$cashout->id}_" . now()->format('YmdHis') . ".pdf";
+        $filename = "cashout_receipt_{$cashout->id}_".now()->format('YmdHis').'.pdf';
         $path = storage_path("app/public/cashouts/{$filename}");
 
-        if (!file_exists(dirname($path))) {
+        if (! file_exists(dirname($path))) {
             mkdir(dirname($path), 0755, true);
         }
 

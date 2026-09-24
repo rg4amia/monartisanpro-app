@@ -7,7 +7,6 @@ use App\Models\Litige;
 use App\Services\LitigeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Validation\ValidationException;
 
 class LitigeJuryController extends Controller
 {
@@ -23,14 +22,14 @@ class LitigeJuryController extends Controller
         if ($request->user()->role !== 'admin') {
             return response()->json([
                 'success' => false,
-                'message' => 'Action non autorisée. Seul un administrateur peut assigner un jury.'
+                'message' => 'Action non autorisée. Seul un administrateur peut assigner un jury.',
             ], 403);
         }
 
         if ($litige->isResolved()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ce litige est déjà clôturé.'
+                'message' => 'Ce litige est déjà clôturé.',
             ], 422);
         }
 
@@ -38,7 +37,7 @@ class LitigeJuryController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Le jury a été assigné avec succès.'
+            'message' => 'Le jury a été assigné avec succès.',
         ]);
     }
 
@@ -54,7 +53,7 @@ class LitigeJuryController extends Controller
         if ($litige->isResolved()) {
             return response()->json([
                 'success' => false,
-                'message' => 'Ce litige est déjà clôturé.'
+                'message' => 'Ce litige est déjà clôturé.',
             ], 422);
         }
 
@@ -62,7 +61,7 @@ class LitigeJuryController extends Controller
 
         return response()->json([
             'success' => true,
-            'message' => 'Votre vote a été enregistré avec succès.'
+            'message' => 'Votre vote a été enregistré avec succès.',
         ]);
     }
 }

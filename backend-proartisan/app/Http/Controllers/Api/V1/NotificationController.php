@@ -18,10 +18,10 @@ class NotificationController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => NotificationResource::collection($notifications->items()),
-            'meta'    => [
-                'total'   => $notifications->total(),
-                'unread'  => Notification::where('user_id', $request->user()->id)
+            'data' => NotificationResource::collection($notifications->items()),
+            'meta' => [
+                'total' => $notifications->total(),
+                'unread' => Notification::where('user_id', $request->user()->id)
                     ->whereNull('read_at')->count(),
             ],
         ]);

@@ -79,6 +79,8 @@ export default function SupplierCatalog() {
     }, []);
 
     useEffect(() => {
+        // loadProducts est asynchrone : l'état n'est modifié qu'après l'appel réseau.
+        // eslint-disable-next-line react-hooks/set-state-in-effect
         void loadProducts();
     }, [loadProducts]);
 

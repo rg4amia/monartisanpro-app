@@ -4,7 +4,8 @@ import { router } from '@inertiajs/react';
 
 import { cn } from '@/lib/utils';
 
-import { BellIcon, CheckCircleIcon, DataTable, EmptyState, PlusIcon, SearchIcon, SectionTitle, Surface, useConfirm, type ConfirmOptions } from '../shared';
+import { BellIcon, CheckCircleIcon, DataTable, EmptyState, PlusIcon, SearchIcon, SectionTitle, Surface, useConfirm  } from '../shared';
+import type {ConfirmOptions} from '../shared';
 
 type Communication = any;
 

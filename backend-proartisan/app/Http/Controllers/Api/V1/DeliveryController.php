@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Validator;
 
 class DeliveryController extends Controller
 {
@@ -19,7 +20,7 @@ class DeliveryController extends Controller
     public function available(Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!in_array($user->role, ['driver', 'livreur'])) {
+        if (! in_array($user->role, ['driver', 'livreur'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Seuls les livreurs peuvent consulter les courses disponibles.',
@@ -48,15 +49,15 @@ class DeliveryController extends Controller
     public function accept(Order $order, Request $request): JsonResponse
     {
         $user = $request->user();
-        if (!in_array($user->role, ['driver', 'livreur'])) {
+        if (! in_array($user->role, ['driver', 'livreur'])) {
             return response()->json([
                 'success' => false,
                 'message' => 'Seuls les livreurs peuvent accepter une course.',
             ], 403);
         }
 
-        if (!$user->payment_phone) {
-            $validator = \Illuminate\Support\Facades\Validator::make($request->all(), [
+        if (! $user->payment_phone) {
+            $validator = Validator::make($request->all(), [
                 'payment_phone' => ['required', 'string', 'max:20'],
                 'preferred_payment_provider' => ['required', 'in:wave,orange_money'],
             ]);

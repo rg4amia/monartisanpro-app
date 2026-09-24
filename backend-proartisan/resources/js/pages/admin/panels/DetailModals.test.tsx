@@ -1,13 +1,13 @@
 import { fireEvent, render, screen, waitFor } from '@testing-library/react';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
+import type { AdminMission, AdminOrder, AdminTransaction, ArtisanScoreItem, ScoreLedgerEntryItem } from '../shared';
 import {
     ArtisanLedgerModal,
     MissionDetailModal,
     OrderDetailModal,
     TransactionDetailModal,
 } from './DetailModals';
-import type { AdminMission, AdminOrder, AdminTransaction, ArtisanScoreItem, ScoreLedgerEntryItem } from '../shared';
 
 function makeArtisan(overrides: Partial<ArtisanScoreItem> = {}): ArtisanScoreItem {
     return {

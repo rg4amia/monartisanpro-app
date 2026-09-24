@@ -30,9 +30,7 @@ class FraudDetectionService
     /**
      * Analyse la soumission d'un jalon par l'artisan (photos, GPS, doublons).
      *
-     * @param Jalon $jalon
-     * @param array $photos Liste des photos soumises [{"url": "...", "lat": 5.3, "lng": -4.0}]
-     * @return FraudAlert|null
+     * @param  array  $photos  Liste des photos soumises [{"url": "...", "lat": 5.3, "lng": -4.0}]
      */
     public function analyzeMilestoneSubmission(Jalon $jalon, array $photos = []): ?FraudAlert
     {
@@ -66,7 +64,7 @@ class FraudDetectionService
 
                     if ($distance > self::MAX_SITE_ANOMALY_METERS) {
                         $reasons[] = sprintf(
-                            "Photo #%d prise à %.1f km du chantier déclaré (seuil max : %.1f km).",
+                            'Photo #%d prise à %.1f km du chantier déclaré (seuil max : %.1f km).',
                             $idx + 1,
                             $distance / 1000,
                             self::MAX_SITE_ANOMALY_METERS / 1000
@@ -90,7 +88,7 @@ class FraudDetectionService
                 $url = is_string($photo) ? $photo : ($photo['url'] ?? null);
                 if ($url) {
                     $existing = Jalon::where('id', '!=', $jalon->id)
-                        ->where('photos_json', 'LIKE', '%' . basename($url) . '%')
+                        ->where('photos_json', 'LIKE', '%'.basename($url).'%')
                         ->first();
 
                     if ($existing) {
@@ -125,10 +123,6 @@ class FraudDetectionService
 
     /**
      * Analyse la validation d'un jalon par le client (vitesse de validation OTP, collusion).
-     *
-     * @param Jalon $jalon
-     * @param User|null $client
-     * @return FraudAlert|null
      */
     public function analyzeMilestoneValidation(Jalon $jalon, ?User $client = null, $submittedAt = null): ?FraudAlert
     {
@@ -139,7 +133,7 @@ class FraudDetectionService
 
         $submittedAtTime = $submittedAt ?? $jalon->getOriginal('updated_at') ?? $jalon->updated_at ?? now();
         if (is_string($submittedAtTime)) {
-            $submittedAtTime = \Carbon\Carbon::parse($submittedAtTime);
+            $submittedAtTime = Carbon::parse($submittedAtTime);
         }
         $validatedAt = now();
         $secondsToValidate = abs($validatedAt->getTimestamp() - $submittedAtTime->getTimestamp());
@@ -190,13 +184,6 @@ class FraudDetectionService
 
     /**
      * Analyse le scan et l'encaissement d'un J-Code par un fournisseur.
-     *
-     * @param JCode $jcode
-     * @param User $fournisseur
-     * @param float $scanLat
-     * @param float $scanLng
-     * @param float $distanceMetres
-     * @return FraudAlert|null
      */
     public function analyzeJCodeRedemption(
         JCode $jcode,
@@ -213,7 +200,7 @@ class FraudDetectionService
         // 1. Vérification distance GPS boutique (> 100m)
         if ($distanceMetres > 100) {
             $reasons[] = sprintf(
-                "Scan J-Code hors périmètre boutique : distance mesurée à %.1f m de la boutique (max autorisé : 100 m).",
+                'Scan J-Code hors périmètre boutique : distance mesurée à %.1f m de la boutique (max autorisé : 100 m).',
                 $distanceMetres
             );
             $type = 'gps_anomaly_jcode';
@@ -229,7 +216,7 @@ class FraudDetectionService
 
         if ($recentRedemptions >= 3) {
             $reasons[] = sprintf(
-                "Fréquence anormale : %d scans de J-Codes effectués entre cet artisan et cette quincaillerie au cours des dernières 24h.",
+                'Fréquence anormale : %d scans de J-Codes effectués entre cet artisan et cette quincaillerie au cours des dernières 24h.',
                 $recentRedemptions + 1
             );
             $type = 'collusion_artisan_fournisseur';
@@ -286,7 +273,7 @@ class FraudDetectionService
 
         if ($actionTaken === 'payment_hold') {
             Log::warning(sprintf(
-                "[FRAUD PAYMENT HOLD] Alerte #%s | Type: %s | Score: %d/100 | Mission #%s",
+                '[FRAUD PAYMENT HOLD] Alerte #%s | Type: %s | Score: %d/100 | Mission #%s',
                 $alert->reference,
                 $alert->type,
                 $alert->risk_score,
@@ -355,41 +342,41 @@ class FraudDetectionService
 
         $reasons = [];
         $reasons[] = sprintf(
-            "Incohérence visuelle détectée par Gemini Vision sur le jalon #%d : score de conformité de %d/100 (seuil de conformité : 40).",
+            'Incohérence visuelle détectée par Gemini Vision sur le jalon #%d : score de conformité de %d/100 (seuil de conformité : 40).',
             $jalon->ordre,
             $conformityScore
         );
 
         if (! empty($visionAnalysis['anomalies'])) {
-            $reasons[] = 'Anomalies relevées : ' . implode(', ', (array) $visionAnalysis['anomalies']);
+            $reasons[] = 'Anomalies relevées : '.implode(', ', (array) $visionAnalysis['anomalies']);
         }
 
         if (! empty($visionAnalysis['summary'])) {
-            $reasons[] = 'Analyse technique : ' . $visionAnalysis['summary'];
+            $reasons[] = 'Analyse technique : '.$visionAnalysis['summary'];
         }
 
         $metadata = [
-            'jalon_id'          => $jalon->id,
-            'jalon_ordre'       => $jalon->ordre,
-            'mission_id'        => $mission->id,
-            'artisan_id'        => $mission->artisan_id,
-            'client_id'         => $mission->client_id,
-            'conformity_score'  => $conformityScore,
+            'jalon_id' => $jalon->id,
+            'jalon_ordre' => $jalon->ordre,
+            'mission_id' => $mission->id,
+            'artisan_id' => $mission->artisan_id,
+            'client_id' => $mission->client_id,
+            'conformity_score' => $conformityScore,
             'detected_elements' => $visionAnalysis['detected_elements'] ?? [],
-            'anomalies'         => $visionAnalysis['anomalies'] ?? [],
-            'summary'           => $visionAnalysis['summary'] ?? null,
-            'confidence'        => $visionAnalysis['confidence'] ?? 'medium',
+            'anomalies' => $visionAnalysis['anomalies'] ?? [],
+            'summary' => $visionAnalysis['summary'] ?? null,
+            'confidence' => $visionAnalysis['confidence'] ?? 'medium',
         ];
 
         return $this->createAlert([
-            'mission_id'     => $mission->id,
-            'user_id'        => $mission->artisan_id,
+            'mission_id' => $mission->id,
+            'user_id' => $mission->artisan_id,
             'target_user_id' => $mission->client_id,
-            'type'           => 'vision_mismatch',
-            'severity'       => $severity,
-            'risk_score'     => $riskScore,
-            'reasons_json'   => $reasons,
-            'metadata_json'  => $metadata,
+            'type' => 'vision_mismatch',
+            'severity' => $severity,
+            'risk_score' => $riskScore,
+            'reasons_json' => $reasons,
+            'metadata_json' => $metadata,
         ]);
     }
 }

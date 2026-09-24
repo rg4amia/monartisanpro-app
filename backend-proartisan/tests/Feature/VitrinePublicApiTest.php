@@ -1,16 +1,16 @@
 <?php
 
 use App\Models\User;
-use App\Models\Vitrine\VitrineSlide;
-use App\Models\Vitrine\VitrineArtisanDuMois;
 use App\Models\Vitrine\VitrineArticle;
-use App\Models\Vitrine\VitrineVideo;
+use App\Models\Vitrine\VitrineArtisanDuMois;
 use App\Models\Vitrine\VitrineFormation;
-use App\Models\Vitrine\VitrineRecrutement;
 use App\Models\Vitrine\VitrinePopup;
+use App\Models\Vitrine\VitrineRecrutement;
 use App\Models\Vitrine\VitrineSetting;
-use Database\Seeders\SectorSeeder;
+use App\Models\Vitrine\VitrineSlide;
+use App\Models\Vitrine\VitrineVideo;
 use Database\Seeders\CommuneSeeder;
+use Database\Seeders\SectorSeeder;
 
 beforeEach(function () {
     // Seed communes and sectors/trades
@@ -24,7 +24,7 @@ test('can retrieve public slides', function () {
         'sous_titre' => 'Sous-titre',
         'image_url' => 'http://example.com/img.jpg',
         'actif' => true,
-        'ordre' => 1
+        'ordre' => 1,
     ]);
 
     $response = $this->getJson('/api/v1/vitrine/slides');
@@ -40,7 +40,7 @@ test('can retrieve artisan of the month', function () {
         'name' => 'Artisan Test',
         'password' => bcrypt('password'),
         'role' => 'artisan',
-        'kyc_status' => 'actif'
+        'kyc_status' => 'actif',
     ]);
 
     VitrineArtisanDuMois::create([
@@ -48,7 +48,7 @@ test('can retrieve artisan of the month', function () {
         'mois' => now()->startOfMonth()->toDateString(),
         'photo_override_url' => 'http://example.com/override.jpg',
         'texte_editorial' => 'Super artisan',
-        'actif' => true
+        'actif' => true,
     ]);
 
     $response = $this->getJson('/api/v1/vitrine/artisan-du-mois');
@@ -159,7 +159,7 @@ test('can retrieve active popup', function () {
 test('can retrieve public vitrine settings', function () {
     VitrineSetting::create([
         'cle' => 'vitrine_test_key',
-        'valeur' => 'valeur_test'
+        'valeur' => 'valeur_test',
     ]);
 
     $response = $this->getJson('/api/v1/vitrine/settings');
@@ -175,7 +175,7 @@ test('can list highly rated artisans and search artisans', function () {
         'password' => bcrypt('password'),
         'role' => 'artisan',
         'kyc_status' => 'actif',
-        'score_prosartisan' => 950
+        'score_prosartisan' => 950,
     ]);
 
     $responseTop = $this->getJson('/api/v1/vitrine/artisans-stars');

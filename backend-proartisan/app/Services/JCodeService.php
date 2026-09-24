@@ -2,9 +2,13 @@
 
 namespace App\Services;
 
+use App\Enums\WalletType;
+use App\Jobs\PaySupplierJob;
 use App\Models\JCode;
 use App\Models\Mission;
+use App\Models\Setting;
 use App\Models\SupplierProduct;
+use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -30,8 +34,7 @@ class JCodeService
         User $fournisseur,
         array $items,
         ?int $montant = null
-    ): JCode
-    {
+    ): JCode {
         $this->supplierCatalogService->ensureApprovedSupplier($fournisseur);
 
         return DB::transaction(function () use ($mission, $artisan, $fournisseur, $items, $montant) {
@@ -122,7 +125,7 @@ class JCodeService
                 'artisan_id' => $artisan->id,
                 'fournisseur_id' => $fournisseur->id,
                 'code' => $code,
-                'ussd_code' => '*555*' . str_replace('PA-', '', $code) . '#',
+                'ussd_code' => '*555*'.str_replace('PA-', '', $code).'#',
                 'qr_url' => null,
                 'montant' => $computedTotal,
                 'statut' => 'actif',
@@ -161,7 +164,7 @@ class JCodeService
         if (! $gpsCheck['valid']) {
             Log::warning("[GPS FRAUD ALERT] J-Code {$jcode->code} | Fournisseur #{$fournisseur->id} | Distance: {$gpsCheck['distance']} m (max: {$gpsCheck['max']} m)");
 
-            app(\App\Services\FraudDetectionService::class)->analyzeJCodeRedemption(
+            app(FraudDetectionService::class)->analyzeJCodeRedemption(
                 $jcode,
                 $fournisseur,
                 $lat,
@@ -184,7 +187,7 @@ class JCodeService
         }
 
         // Analyse anti-collusion et cadence de rachat J-Code (même si GPS valide)
-        app(\App\Services\FraudDetectionService::class)->analyzeJCodeRedemption(
+        app(FraudDetectionService::class)->analyzeJCodeRedemption(
             $jcode,
             $fournisseur,
             $lat,
@@ -199,7 +202,7 @@ class JCodeService
                 $remainingQty = $item->quantity - ($item->quantity_served ?? 0);
                 if ($remainingQty > 0) {
                     $servedItems[] = [
-                        'jcode_item_id'   => $item->id,
+                        'jcode_item_id' => $item->id,
                         'quantity_served' => $remainingQty,
                     ];
                 }
@@ -253,8 +256,8 @@ class JCodeService
                 $isFullyServed = ($newQtyServed >= $item->quantity);
 
                 $item->update([
-                    'quantity_served'       => $newQtyServed,
-                    'status'                => $isFullyServed ? 'served' : 'partial',
+                    'quantity_served' => $newQtyServed,
+                    'status' => $isFullyServed ? 'served' : 'partial',
                     'served_by_supplier_id' => $fournisseur->id,
                 ]);
             }
@@ -265,9 +268,9 @@ class JCodeService
 
             $jcode->update([
                 'montant_consomme' => $newMontantConsomme,
-                'statut'           => $isFullyConsumed ? 'utilise' : 'partiellement_utilise',
-                'scanned_at'       => now(),
-                'paiement_status'  => 'programme',
+                'statut' => $isFullyConsumed ? 'utilise' : 'partiellement_utilise',
+                'scanned_at' => now(),
+                'paiement_status' => 'programme',
             ]);
 
             return [
@@ -276,7 +279,7 @@ class JCodeService
         });
 
         // Dispatcher le paiement J+1 pour le montant servi par CE fournisseur lors de CE scan
-        \App\Jobs\PaySupplierJob::dispatch(
+        PaySupplierJob::dispatch(
             $jcode->id,
             $fournisseur->id,
             $montantServiCeScan
@@ -295,23 +298,23 @@ class JCodeService
         $this->scoreService->recordJCodeSuccess($fournisseur, $jcode->mission_id, $jcode->code);
 
         return [
-            'valid'             => true,
-            'distance'          => $gpsCheck['distance'],
-            'montant_servi'     => $montantServiCeScan,
-            'montant_consomme'  => $jcode->montant_consomme,
-            'montant_restant'   => $jcode->montant_restant,
-            'statut'            => $jcode->statut,
-            'items_served'      => count($servedItems),
-            'fully_consumed'    => $scanResult['fully_consumed'],
-            'artisan'           => ['id' => $jcode->artisan_id, 'name' => $jcode->artisan->name],
+            'valid' => true,
+            'distance' => $gpsCheck['distance'],
+            'montant_servi' => $montantServiCeScan,
+            'montant_consomme' => $jcode->montant_consomme,
+            'montant_restant' => $jcode->montant_restant,
+            'statut' => $jcode->statut,
+            'items_served' => count($servedItems),
+            'fully_consumed' => $scanResult['fully_consumed'],
+            'artisan' => ['id' => $jcode->artisan_id, 'name' => $jcode->artisan->name],
         ];
     }
 
     /**
      * Règle le paiement fournisseur pour un scan (total ou partiel).
      *
-     * @param int|null $specificFournisseurId  Fournisseur à payer (pour scan partiel)
-     * @param int|null $montantServi           Montant servi lors de ce scan spécifique
+     * @param  int|null  $specificFournisseurId  Fournisseur à payer (pour scan partiel)
+     * @param  int|null  $montantServi  Montant servi lors de ce scan spécifique
      */
     public function settleSupplierPayment(JCode $jcode, ?int $specificFournisseurId = null, ?int $montantServi = null, bool $force = false): void
     {
@@ -323,6 +326,7 @@ class JCodeService
 
         if ($jcode->mission?->funds_frozen && ! $force) {
             Log::warning("Paiement fournisseur suspendu: mission #{$jcode->mission_id} en litige");
+
             return;
         }
 
@@ -332,17 +336,17 @@ class JCodeService
         $montantBase = $montantServi ?? $jcode->montant;
 
         // Calculer les commissions basées sur le montant servi
-        $platformFeeRatio = \App\Models\Setting::getValueByKey('platform_fee_ratio', 0.03);
+        $platformFeeRatio = Setting::getValueByKey('platform_fee_ratio', 0.03);
         $debitTtc = (int) round($montantBase * (1 + $platformFeeRatio));
         $platformFee = $debitTtc - $montantBase;
 
-        $supplierCommissionRatio = \App\Models\Setting::getValueByKey('commission_fournisseur', 0.05);
+        $supplierCommissionRatio = Setting::getValueByKey('commission_fournisseur', 0.05);
         $supplierCommission = (int) round($montantBase * $supplierCommissionRatio);
         $gainNetSupplier = $montantBase - $supplierCommission;
 
         $this->walletService->debit(
             $jcode->artisan,
-            \App\Enums\WalletType::WALLET_MATERIAUX,
+            WalletType::WALLET_MATERIAUX,
             $debitTtc,
             "Paiement fournisseur J-Code {$jcode->code} (partiel: {$montantBase} FCFA)",
             [
@@ -376,13 +380,13 @@ class JCodeService
             $reference = $result['id'] ?? null;
         }
 
-        \App\Models\Transaction::create([
+        Transaction::create([
             'mission_id' => $jcode->mission_id,
             'user_id' => $fournisseurId,
             'type' => 'paiement_fournisseur',
             'montant' => $gainNetSupplier,
-            'wallet_source' => 'escrow_mission_' . $jcode->mission_id,
-            'wallet_dest' => 'supplier_mobile_money_' . $fournisseurId,
+            'wallet_source' => 'escrow_mission_'.$jcode->mission_id,
+            'wallet_dest' => 'supplier_mobile_money_'.$fournisseurId,
             'provider' => $provider,
             'statut' => 'confirme',
             'reference_externe' => $reference,
@@ -416,14 +420,14 @@ class JCodeService
     private function generateUniqueCode(): string
     {
         $prefix = config('prosartisan.jcode.prefix', 'PA-');
-        $chars  = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sans I, O, 0, 1
+        $chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'; // sans I, O, 0, 1
 
         do {
             $suffix = '';
             for ($i = 0; $i < 4; $i++) {
                 $suffix .= $chars[random_int(0, strlen($chars) - 1)];
             }
-            $code = $prefix . $suffix;
+            $code = $prefix.$suffix;
         } while (JCode::where('code', $code)->exists());
 
         return $code;

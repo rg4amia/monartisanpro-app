@@ -24,8 +24,8 @@ vi.mock('@inertiajs/react', () => ({
     },
 }));
 
-import { WhatsAppPanel } from './WhatsAppPanel';
 import type { Paginated, WhatsappClickLogItem, WhatsappClickStats, WhatsappSettings } from '../shared';
+import { WhatsAppPanel } from './WhatsAppPanel';
 
 const stats: WhatsappClickStats = { total: 42, today: 3, last_7_days: 15 };
 const settings: WhatsappSettings = {

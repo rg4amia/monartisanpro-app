@@ -14,10 +14,10 @@ class SectorController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $sectors->map(fn ($s) => [
-                'id'    => $s->id,
-                'name'  => $s->name,
-                'icon'  => $s->icon,
+            'data' => $sectors->map(fn ($s) => [
+                'id' => $s->id,
+                'name' => $s->name,
+                'icon' => $s->icon,
                 'color' => $s->color,
             ]),
         ]);
@@ -29,9 +29,9 @@ class SectorController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $trades->map(fn ($t) => [
-                'id'       => $t->id,
-                'name'     => $t->name,
+            'data' => $trades->map(fn ($t) => [
+                'id' => $t->id,
+                'name' => $t->name,
                 'sectorId' => $t->sector_id,
             ]),
         ]);

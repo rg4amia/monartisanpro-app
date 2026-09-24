@@ -7,6 +7,7 @@ use App\Http\Requests\Admin\AssignPermissionRequest;
 use App\Http\Requests\Admin\RevokePermissionRequest;
 use App\Services\RolePermissionService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 
 class AdminRolePermissionController extends Controller
 {
@@ -46,7 +47,7 @@ class AdminRolePermissionController extends Controller
     /**
      * Assigner une action/permission à un rôle.
      */
-    public function assign(AssignPermissionRequest $request): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function assign(AssignPermissionRequest $request): JsonResponse|RedirectResponse
     {
         $this->rolePermissionService->assignPermissionToRole(
             $request->validated('role'),
@@ -66,7 +67,7 @@ class AdminRolePermissionController extends Controller
     /**
      * Révoquer une action/permission d'un rôle.
      */
-    public function revoke(RevokePermissionRequest $request): JsonResponse|\Illuminate\Http\RedirectResponse
+    public function revoke(RevokePermissionRequest $request): JsonResponse|RedirectResponse
     {
         $this->rolePermissionService->revokePermissionFromRole(
             $request->validated('role'),

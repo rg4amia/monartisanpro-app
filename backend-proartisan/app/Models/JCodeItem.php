@@ -25,10 +25,10 @@ class JCodeItem extends Model
     protected function casts(): array
     {
         return [
-            'quantity'        => 'integer',
+            'quantity' => 'integer',
             'quantity_served' => 'integer',
-            'unit_price'      => 'integer',
-            'subtotal'        => 'integer',
+            'unit_price' => 'integer',
+            'subtotal' => 'integer',
         ];
     }
 

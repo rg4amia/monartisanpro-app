@@ -2,9 +2,9 @@
 
 namespace Tests\Feature;
 
+use App\Models\JCode;
 use App\Models\Mission;
 use App\Models\User;
-use App\Models\JCode;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 

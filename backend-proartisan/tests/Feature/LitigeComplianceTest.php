@@ -6,6 +6,7 @@ use App\Models\Litige;
 use App\Models\LitigeEvidence;
 use App\Models\Mission;
 use App\Models\User;
+use App\Services\PdfService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Storage;
@@ -306,17 +307,17 @@ class LitigeComplianceTest extends TestCase
         [$client, $artisan, $mission] = $this->makeMission(walletMateriaux: 65000, walletMo: 35000);
 
         $litige = Litige::create([
-            'mission_id'               => $mission->id,
-            'declencheur_id'           => $client->id,
-            'type'                     => 'client',
-            'motif'                    => 'Facture test',
-            'description'              => 'Litige pour vérifier la génération de facture de décaissement.',
-            'statut'                   => 'en_cours',
-            'workflow_step'            => 'arbitrage',
-            'funds_locked_at'          => now(),
-            'evidence_deadline_at'     => now()->subHours(3),
-            'arbitration_started_at'   => now()->subHour(),
-            'arbitration_deadline_at'  => now()->addHours(20),
+            'mission_id' => $mission->id,
+            'declencheur_id' => $client->id,
+            'type' => 'client',
+            'motif' => 'Facture test',
+            'description' => 'Litige pour vérifier la génération de facture de décaissement.',
+            'statut' => 'en_cours',
+            'workflow_step' => 'arbitrage',
+            'funds_locked_at' => now(),
+            'evidence_deadline_at' => now()->subHours(3),
+            'arbitration_started_at' => now()->subHour(),
+            'arbitration_deadline_at' => now()->addHours(20),
         ]);
 
         $response = $this->actingAs($admin)
@@ -361,23 +362,23 @@ class LitigeComplianceTest extends TestCase
 
         // Create a dummy invoice file
         $invoiceDir = storage_path('app/public/invoices');
-        if (!file_exists($invoiceDir)) {
+        if (! file_exists($invoiceDir)) {
             mkdir($invoiceDir, 0755, true);
         }
-        $invoicePath = $invoiceDir . "/test_invoice_{$mission->id}.pdf";
+        $invoicePath = $invoiceDir."/test_invoice_{$mission->id}.pdf";
         file_put_contents($invoicePath, 'dummy PDF content');
 
         $litige = Litige::create([
-            'mission_id'             => $mission->id,
-            'declencheur_id'         => $client->id,
-            'type'                   => 'client',
-            'motif'                  => 'Download test',
-            'description'            => 'Test de téléchargement de facture.',
-            'statut'                 => 'resolu',
-            'workflow_step'          => 'resolu',
-            'decision'               => 'artisan',
-            'resolu_at'              => now(),
-            'resolution_payload'     => ['invoice_path' => $invoicePath],
+            'mission_id' => $mission->id,
+            'declencheur_id' => $client->id,
+            'type' => 'client',
+            'motif' => 'Download test',
+            'description' => 'Test de téléchargement de facture.',
+            'statut' => 'resolu',
+            'workflow_step' => 'resolu',
+            'decision' => 'artisan',
+            'resolu_at' => now(),
+            'resolution_payload' => ['invoice_path' => $invoicePath],
         ]);
 
         $response = $this->actingAs($admin)
@@ -396,14 +397,14 @@ class LitigeComplianceTest extends TestCase
     {
         // Create a real temp file to simulate the generated PDF
         $invoicesDir = storage_path('app/public/invoices');
-        if (!file_exists($invoicesDir)) {
+        if (! file_exists($invoicesDir)) {
             mkdir($invoicesDir, 0755, true);
         }
-        $fakePdfPath = $invoicesDir . '/test_disbursement_invoice.pdf';
+        $fakePdfPath = $invoicesDir.'/test_disbursement_invoice.pdf';
         file_put_contents($fakePdfPath, '%PDF-1.4 fake content');
 
         // Mock PdfService to return the fake path without requiring DomPDF
-        $pdfMock = $this->mock(\App\Services\PdfService::class, function ($mock) use ($fakePdfPath) {
+        $pdfMock = $this->mock(PdfService::class, function ($mock) use ($fakePdfPath) {
             $mock->shouldReceive('generateDisbursementInvoice')
                 ->once()
                 ->andReturn($fakePdfPath);

@@ -44,7 +44,7 @@ class WalletTransaction extends Model
 
         static::creating(function ($walletTransaction) {
             if (empty($walletTransaction->reference)) {
-                $walletTransaction->reference = 'WT-' . strtoupper(Str::random(12));
+                $walletTransaction->reference = 'WT-'.strtoupper(Str::random(12));
             }
         });
     }

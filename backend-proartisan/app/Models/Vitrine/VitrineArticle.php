@@ -41,7 +41,7 @@ class VitrineArticle extends Model
     {
         static::creating(function (self $article) {
             if (empty($article->slug)) {
-                $article->slug = Str::slug($article->titre) . '-' . Str::random(5);
+                $article->slug = Str::slug($article->titre).'-'.Str::random(5);
             }
         });
     }

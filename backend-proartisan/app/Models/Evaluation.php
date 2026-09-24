@@ -14,10 +14,10 @@ class Evaluation extends Model
     protected function casts(): array
     {
         return [
-            'note'       => 'integer',
-            'fiabilite'  => 'integer',
-            'integrite'  => 'integer',
-            'qualite'    => 'integer',
+            'note' => 'integer',
+            'fiabilite' => 'integer',
+            'integrite' => 'integer',
+            'qualite' => 'integer',
             'reactivite' => 'integer',
         ];
     }

@@ -7,10 +7,11 @@ use Illuminate\Database\Eloquent\Model;
 class StagingItem extends Model
 {
     protected $table = 'staging_items';
-    
+
     public $incrementing = false;
+
     protected $keyType = 'string';
-    
+
     public $timestamps = false;
 
     protected $fillable = [
@@ -22,7 +23,7 @@ class StagingItem extends Model
         'reviewer_notes',
         'created_at',
         'updated_at',
-        'validated_at'
+        'validated_at',
     ];
 
     protected $casts = [

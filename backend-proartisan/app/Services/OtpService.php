@@ -3,23 +3,28 @@
 namespace App\Services;
 
 use App\Models\Otp;
+use App\Models\Setting;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
 
 class OtpService
 {
     private int $length;
+
     private int $ttlMinutes;
+
     private int $maxAttempts;
+
     private SmsService $smsService;
+
     private WhatsAppService $whatsAppService;
 
     public function __construct(SmsService $smsService, WhatsAppService $whatsAppService)
     {
-        $this->length          = config('prosartisan.otp.length', 4);
-        $this->ttlMinutes      = config('prosartisan.otp.ttl', 5);
-        $this->maxAttempts     = config('prosartisan.otp.max_attempts', 5);
-        $this->smsService      = $smsService;
+        $this->length = config('prosartisan.otp.length', 4);
+        $this->ttlMinutes = config('prosartisan.otp.ttl', 5);
+        $this->maxAttempts = config('prosartisan.otp.max_attempts', 5);
+        $this->smsService = $smsService;
         $this->whatsAppService = $whatsAppService;
     }
 
@@ -33,14 +38,14 @@ class OtpService
         $user = User::where('phone', $phone)->first();
 
         Otp::create([
-            'phone'      => $phone,
-            'user_id'    => $user?->id,
-            'code'       => $otp,
-            'action'     => $action,
+            'phone' => $phone,
+            'user_id' => $user?->id,
+            'code' => $otp,
+            'action' => $action,
             'expires_at' => now()->addMinutes($this->ttlMinutes),
         ]);
 
-        $globalChannel = \App\Models\Setting::getValueByKey('otp_delivery_channel', 'sms');
+        $globalChannel = Setting::getValueByKey('otp_delivery_channel', 'sms');
         $resolvedChannel = $channel ?: $globalChannel;
 
         if (strtolower($resolvedChannel) === 'both') {
@@ -122,12 +127,12 @@ class OtpService
         // refusé. L'identifiant auto-incrémenté lève cette ambiguïté.
         $otpRecord = $query->latest('id')->first();
 
-        if (!$otpRecord) {
+        if (! $otpRecord) {
             return false;
         }
 
         // hash_equals : comparaison à temps constant.
-        if (!hash_equals($otpRecord->code, $code)) {
+        if (! hash_equals($otpRecord->code, $code)) {
             $otpRecord->increment('attempts');
 
             if ($otpRecord->attempts >= $this->maxAttempts) {
@@ -136,8 +141,8 @@ class OtpService
                 $otpRecord->update(['used_at' => now()]);
 
                 Log::warning('[OTP] Code invalidé après trop de tentatives', [
-                    'phone'    => $phone,
-                    'action'   => $action,
+                    'phone' => $phone,
+                    'action' => $action,
                     'attempts' => $otpRecord->attempts,
                 ]);
             }

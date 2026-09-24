@@ -14,19 +14,19 @@ class Admin2faTest extends TestCase
 
     public function test_totp_cryptography_generation_and_validation(): void
     {
-        $service = new Google2faService();
+        $service = new Google2faService;
 
         // 1. Génération
         $secret = $service->generateSecretKey();
         $this->assertEquals(16, strlen($secret));
-        
+
         // 2. Vérification que les caractères sont dans l'alphabet Base32
         $this->assertMatchesRegularExpression('/^[A-Z2-7]+$/', $secret);
 
         // 3. QR Code URL
         $url = $service->getQrCodeUrl('test@prosartisan.ci', $secret);
         $this->assertStringContainsString('otpauth://totp/', $url);
-        $this->assertStringContainsString('secret=' . $secret, $url);
+        $this->assertStringContainsString('secret='.$secret, $url);
         $this->assertStringContainsString('issuer=ProsArtisan', $url);
 
         // 4. Génération et validation immédiate du code actuel
@@ -77,7 +77,7 @@ class Admin2faTest extends TestCase
             ->get('/admin/login/verify-2fa');
 
         $response->assertStatus(200);
-        
+
         // Vérifie qu'on passe à Inertia les données d'enrôlement
         $inertiaPage = $response->original->getData()['page'];
         $this->assertEquals('admin/auth/verify-2fa', $inertiaPage['component']);
@@ -99,7 +99,7 @@ class Admin2faTest extends TestCase
             'google_2fa_secret' => null,
         ]);
 
-        $service = new Google2faService();
+        $service = new Google2faService;
         $tempSecret = $service->generateSecretKey();
         $code = $service->getCurrentCode($tempSecret);
 
@@ -112,7 +112,7 @@ class Admin2faTest extends TestCase
 
         $response->assertRedirect(route('admin.dashboard'));
         $this->assertAuthenticatedAs($admin);
-        
+
         $admin->refresh();
         $this->assertEquals($tempSecret, $admin->google_2fa_secret);
         $this->assertNull(session('admin_2fa_user_id'));
@@ -120,7 +120,7 @@ class Admin2faTest extends TestCase
 
     public function test_2fa_verification_logs_in_configured_user(): void
     {
-        $service = new Google2faService();
+        $service = new Google2faService;
         $secret = $service->generateSecretKey();
 
         $admin = User::create([
@@ -148,7 +148,7 @@ class Admin2faTest extends TestCase
 
     public function test_2fa_verification_fails_with_invalid_code(): void
     {
-        $service = new Google2faService();
+        $service = new Google2faService;
         $secret = $service->generateSecretKey();
 
         $admin = User::create([

@@ -16,7 +16,7 @@ class ArtisanStockController extends Controller
 
         return response()->json([
             'success' => true,
-            'data'    => $stock,
+            'data' => $stock,
         ]);
     }
 
@@ -24,16 +24,16 @@ class ArtisanStockController extends Controller
     {
         $data = $request->validate([
             'description' => 'required|string',
-            'quantity'    => 'required|integer|min:1',
-            'unit_cost'   => 'required|integer|min:0',
-            'condition'   => 'required|in:neuf,occasion',
+            'quantity' => 'required|integer|min:1',
+            'unit_cost' => 'required|integer|min:0',
+            'condition' => 'required|in:neuf,occasion',
         ]);
 
         $stock = ArtisanStock::create(array_merge($data, ['artisan_id' => $request->user()->id]));
 
         return response()->json([
             'success' => true,
-            'data'    => $stock,
+            'data' => $stock,
         ], 201);
     }
 
@@ -45,16 +45,16 @@ class ArtisanStockController extends Controller
 
         $data = $request->validate([
             'description' => 'sometimes|string',
-            'quantity'    => 'sometimes|integer|min:0',
-            'unit_cost'   => 'sometimes|integer|min:0',
-            'condition'   => 'sometimes|in:neuf,occasion',
+            'quantity' => 'sometimes|integer|min:0',
+            'unit_cost' => 'sometimes|integer|min:0',
+            'condition' => 'sometimes|in:neuf,occasion',
         ]);
 
         $artisanStock->update($data);
 
         return response()->json([
             'success' => true,
-            'data'    => $artisanStock,
+            'data' => $artisanStock,
         ]);
     }
 

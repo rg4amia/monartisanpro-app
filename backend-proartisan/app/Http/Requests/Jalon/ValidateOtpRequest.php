@@ -22,7 +22,7 @@ class ValidateOtpRequest extends FormRequest
     {
         return [
             'otp.required' => 'Le code OTP est obligatoire.',
-            'otp.digits'   => 'Le code OTP doit comporter exactement 4 chiffres.',
+            'otp.digits' => 'Le code OTP doit comporter exactement 4 chiffres.',
         ];
     }
 }

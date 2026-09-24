@@ -44,10 +44,10 @@ class StoreCommunicationRequest extends FormRequest
         $isVideo = $this->input('type') === Communication::TYPE_VIDEO;
 
         return [
-            'type'     => ['required', 'string', Rule::in(Communication::TYPES)],
-            'titre'    => ['required', 'string', 'max:255'],
-            'contenu'  => ['required', 'string'],
-            'cibles'   => ['required', 'array', 'min:1'],
+            'type' => ['required', 'string', Rule::in(Communication::TYPES)],
+            'titre' => ['required', 'string', 'max:255'],
+            'contenu' => ['required', 'string'],
+            'cibles' => ['required', 'array', 'min:1'],
             'cibles.*' => ['required', 'string', Rule::in(['client', 'artisan', 'fournisseur', 'livreur'])],
 
             // Contenu vocal : fichier téléversé, obligatoire à la création.
@@ -76,22 +76,22 @@ class StoreCommunicationRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'type.required'    => 'Le type de communication est obligatoire.',
-            'type.in'          => 'Le type doit être : annonce, le_saviez_vous, audio ou video.',
-            'titre.required'   => 'Le titre est obligatoire.',
-            'titre.max'        => 'Le titre ne peut pas dépasser 255 caractères.',
+            'type.required' => 'Le type de communication est obligatoire.',
+            'type.in' => 'Le type doit être : annonce, le_saviez_vous, audio ou video.',
+            'titre.required' => 'Le titre est obligatoire.',
+            'titre.max' => 'Le titre ne peut pas dépasser 255 caractères.',
             'contenu.required' => 'Le contenu est obligatoire — il sert de résumé écrit à ceux qui ne liront pas le média.',
-            'cibles.required'  => 'Vous devez sélectionner au moins un espace cible.',
-            'cibles.min'       => 'Vous devez sélectionner au moins un espace cible.',
-            'cibles.*.in'      => 'Chaque cible doit être : client, artisan, fournisseur ou livreur.',
+            'cibles.required' => 'Vous devez sélectionner au moins un espace cible.',
+            'cibles.min' => 'Vous devez sélectionner au moins un espace cible.',
+            'cibles.*.in' => 'Chaque cible doit être : client, artisan, fournisseur ou livreur.',
 
             'media_file.required' => 'Un fichier audio est obligatoire pour une publication vocale.',
-            'media_file.mimes'    => 'Format audio non pris en charge. Formats acceptés : MP3, M4A, AAC, OGG, WAV.',
-            'media_file.max'      => 'Le fichier audio ne peut pas dépasser '
+            'media_file.mimes' => 'Format audio non pris en charge. Formats acceptés : MP3, M4A, AAC, OGG, WAV.',
+            'media_file.max' => 'Le fichier audio ne peut pas dépasser '
                 .app(UploadLimitService::class)->humanLimit(self::AUDIO_MAX_KB).'.',
 
-            'media_external_url.required'    => 'Un lien vers la vidéo est obligatoire pour une publication vidéo.',
-            'media_external_url.url'         => 'Le lien de la vidéo n\'est pas une URL valide.',
+            'media_external_url.required' => 'Un lien vers la vidéo est obligatoire pour une publication vidéo.',
+            'media_external_url.url' => 'Le lien de la vidéo n\'est pas une URL valide.',
             'media_external_url.starts_with' => 'Le lien doit être en HTTPS : l\'application refuse le trafic non chiffré et la vidéo ne se chargerait pas.',
         ];
     }

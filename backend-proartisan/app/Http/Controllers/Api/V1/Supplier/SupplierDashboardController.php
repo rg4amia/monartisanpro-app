@@ -3,8 +3,9 @@
 namespace App\Http\Controllers\Api\V1\Supplier;
 
 use App\Http\Controllers\Controller;
-use App\Models\Order;
 use App\Models\JCode;
+use App\Models\Mission;
+use App\Models\Order;
 use App\Models\SupplierProduct;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -20,7 +21,7 @@ class SupplierDashboardController extends Controller
 
         $totalOrders = Order::where('supplier_id', $supplier->id)->count();
         $pendingOrders = Order::where('supplier_id', $supplier->id)->where('status', 'paid')->count();
-        
+
         $totalRevenue = Order::where('supplier_id', $supplier->id)
             ->where('status', 'delivered')
             ->sum('subtotal');
@@ -81,7 +82,7 @@ class SupplierDashboardController extends Controller
 
         // 2. Litiges sur les chantiers/missions où il a fourni des matériaux via JCode
         $missionIds = JCode::where('fournisseur_id', $supplier->id)->pluck('mission_id')->unique();
-        $missionLitiges = \App\Models\Mission::whereIn('id', $missionIds)
+        $missionLitiges = Mission::whereIn('id', $missionIds)
             ->where('status', 'litige')
             ->with(['client', 'artisan', 'litiges'])
             ->get();

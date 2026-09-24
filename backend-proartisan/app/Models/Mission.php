@@ -4,12 +4,9 @@ namespace App\Models;
 
 use App\States\Mission\CompletedState;
 use App\States\Mission\DisputedState;
-use App\States\Mission\DraftState;
 use App\States\Mission\FundedLockedState;
 use App\States\Mission\InProgressState;
 use App\States\Mission\MissionState;
-use App\States\Mission\PendingApprovalState;
-use App\States\Mission\PendingFundingState;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -38,20 +35,20 @@ class Mission extends Model
     protected function casts(): array
     {
         return [
-            'status'              => MissionState::class,
-            'photos_json'         => 'array',
-            'montant_total'       => 'integer',
-            'montant_materiaux'   => 'integer',
-            'montant_mo'          => 'integer',
-            'ratio_materiaux'     => 'decimal:4',
-            'referent_required'   => 'boolean',
-            'funds_frozen'        => 'boolean',
+            'status' => MissionState::class,
+            'photos_json' => 'array',
+            'montant_total' => 'integer',
+            'montant_materiaux' => 'integer',
+            'montant_mo' => 'integer',
+            'ratio_materiaux' => 'decimal:4',
+            'referent_required' => 'boolean',
+            'funds_frozen' => 'boolean',
             'gemini_estimation_min' => 'integer',
             'gemini_estimation_max' => 'integer',
             'referent_validated_at' => 'datetime',
-            'artisan_rejected_at'   => 'datetime',
-            'client_latitude'       => 'float',
-            'client_longitude'      => 'float',
+            'artisan_rejected_at' => 'datetime',
+            'client_latitude' => 'float',
+            'client_longitude' => 'float',
         ];
     }
 

@@ -59,7 +59,7 @@ class MissionResource extends JsonResource
                 fn () => [
                     'id' => $this->client->id,
                     'name' => $this->client->name,
-                    'phone' => $this->shouldRevealClientDetails($request) ? $this->client->phone : null
+                    'phone' => $this->shouldRevealClientDetails($request) ? $this->client->phone : null,
                 ]
             ),
             'artisan' => $this->when(
@@ -126,6 +126,7 @@ class MissionResource extends JsonResource
     private function mapMissionStatusToGemini(mixed $status): string
     {
         $statusStr = (string) $status;
+
         return match ($statusStr) {
             'pending_artisan_acceptance' => 'pending_artisan_acceptance',
             'pending_funding' => 'sent',
@@ -150,6 +151,7 @@ class MissionResource extends JsonResource
     private function mapPaymentStatus(): string
     {
         $statusStr = (string) $this->status;
+
         return match ($statusStr) {
             'funded_locked', 'financee', 'in_progress', 'en_cours', 'completed', 'terminee' => 'funded',
             'disputed', 'litige' => $this->funds_frozen ? 'blocked' : 'funded',
@@ -164,7 +166,7 @@ class MissionResource extends JsonResource
     private function shouldRevealClientDetails(Request $request): bool
     {
         $user = $request->user();
-        if (!$user) {
+        if (! $user) {
             return false;
         }
 
@@ -186,8 +188,9 @@ class MissionResource extends JsonResource
                 'in_progress', 'en_cours',
                 'pending_approval',
                 'completed', 'terminee',
-                'disputed', 'litige'
+                'disputed', 'litige',
             ];
+
             return in_array($statusStr, $paidStatuses, true);
         }
 

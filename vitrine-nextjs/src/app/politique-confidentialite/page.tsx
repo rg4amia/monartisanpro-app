@@ -18,7 +18,7 @@ export default function PolitiqueConfidentialitePage() {
                         Politique de Confidentialité
                     </h1>
                     <p className="text-emerald-100/80 text-sm sm:text-base max-w-2xl mx-auto">
-                        ProsArtisan Côte d'Ivoire &bull; Conformité stricte aux exigences de la Loi n° 2013-450 et aux directives de l'ARTCI.
+                        ProsArtisan Côte d&apos;Ivoire &bull; Conformité stricte aux exigences de la Loi n° 2013-450 et aux directives de l&apos;ARTCI.
                     </p>
                     <p className="text-xs text-emerald-400 font-medium">
                         Dernière mise à jour : 30 Août 2026
@@ -72,12 +72,12 @@ export default function PolitiqueConfidentialitePage() {
                     </div>
                     <div className="space-y-4 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            La présente politique définit la manière dont l'application <strong>ProsArtisan</strong> collecte, traite, stocke et protège les données à caractère personnel de ses utilisateurs (Clients, Artisans, Fournisseurs et Livreurs). ProsArtisan agit en tant que responsable de traitement exclusif de cet environnement.
+                            La présente politique définit la manière dont l&apos;application <strong>ProsArtisan</strong> collecte, traite, stocke et protège les données à caractère personnel de ses utilisateurs (Clients, Artisans, Fournisseurs et Livreurs). ProsArtisan agit en tant que responsable de traitement exclusif de cet environnement.
                         </p>
                         <div className="p-4 rounded-2xl bg-emerald-50 border border-emerald-200 text-emerald-950">
                             <p className="font-bold text-emerald-900 mb-1">Étanchéité institutionnelle absolue :</p>
                             <p className="text-xs sm:text-sm">
-                                L'infrastructure de ProsArtisan opère dans une étanchéité absolue vis-à-vis de toute application institutionnelle tierce : aucune donnée utilisateur n'est synchronisée, partagée ou accessible par des démembrements administratifs ou des agences régionales.
+                                L&apos;infrastructure de ProsArtisan opère dans une étanchéité absolue vis-à-vis de toute application institutionnelle tierce : aucune donnée utilisateur n&apos;est synchronisée, partagée ou accessible par des démembrements administratifs ou des agences régionales.
                             </p>
                         </div>
                     </div>
@@ -93,19 +93,19 @@ export default function PolitiqueConfidentialitePage() {
                     </div>
                     <div className="space-y-4 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            L'architecture de collecte obéit au principe strict de <strong>minimisation</strong> (seules les données strictement nécessaires au service sont requises) :
+                            L&apos;architecture de collecte obéit au principe strict de <strong>minimisation</strong> (seules les données strictement nécessaires au service sont requises) :
                         </p>
                         <ul className="space-y-3 pl-2">
                             <li className="flex items-start gap-2">
                                 <span className="w-2 h-2 rounded-full bg-emerald-600 mt-2 shrink-0"></span>
                                 <div>
-                                    <strong className="text-[#201712]">Données d’identification :</strong> Noms, prénoms, numéros de téléphone (vérifiés par code OTP), adresses e-mail. Pour les Artisans et Livreurs : copie numérisée de la pièce d'identité (CNI, Passeport, Attestation) et selfie liveness.
+                                    <strong className="text-[#201712]">Données d’identification :</strong> Noms, prénoms, numéros de téléphone (vérifiés par code OTP), adresses e-mail. Pour les Artisans et Livreurs : copie numérisée de la pièce d&apos;identité (CNI, Passeport, Attestation) et selfie liveness.
                                 </div>
                             </li>
                             <li className="flex items-start gap-2">
                                 <span className="w-2 h-2 rounded-full bg-emerald-600 mt-2 shrink-0"></span>
                                 <div>
-                                    <strong className="text-[#201712]">Données de localisation :</strong> Coordonnées GPS collectées uniquement lors de l'utilisation active de l'application, afin d'assurer le matching géographique entre la demande du Client et la position de l'Artisan. Un floutage systématique de 50 m est appliqué avant toute communication au client en phase de devis.
+                                    <strong className="text-[#201712]">Données de localisation :</strong> Coordonnées GPS collectées uniquement lors de l&apos;utilisation active de l&apos;application, afin d&apos;assurer le matching géographique entre la demande du Client et la position de l&apos;Artisan. Un floutage systématique de 50 m est appliqué avant toute communication au client en phase de devis.
                                 </div>
                             </li>
                             <li className="flex items-start gap-2">
@@ -117,7 +117,7 @@ export default function PolitiqueConfidentialitePage() {
                             <li className="flex items-start gap-2">
                                 <span className="w-2 h-2 rounded-full bg-emerald-600 mt-2 shrink-0"></span>
                                 <div>
-                                    <strong className="text-[#201712]">Données d'activité et IA :</strong> Historique des recherches, photographies des réalisations sur chantier, évaluations et requêtes textuelles. Les requêtes de recherche sont transformées en vecteurs pour alimenter notre moteur de recommandation, après anonymisation des identifiants directs.
+                                    <strong className="text-[#201712]">Données d&apos;activité et IA :</strong> Historique des recherches, photographies des réalisations sur chantier, évaluations et requêtes textuelles. Les requêtes de recherche sont transformées en vecteurs pour alimenter notre moteur de recommandation, après anonymisation des identifiants directs.
                                 </div>
                             </li>
                         </ul>
@@ -139,7 +139,7 @@ export default function PolitiqueConfidentialitePage() {
                         <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-2">
                             <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e6d3b2]/60">
                                 <p className="font-bold text-[#201712] text-sm">1. Authentification & Anti-Fraude</p>
-                                <p className="text-xs text-[#6f5d50] mt-1">Vérifier l'authenticité des profils et lutter contre l'usurpation d'identité et le blanchiment.</p>
+                                <p className="text-xs text-[#6f5d50] mt-1">Vérifier l&apos;authenticité des profils et lutter contre l&apos;usurpation d&apos;identité et le blanchiment.</p>
                             </div>
                             <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e6d3b2]/60">
                                 <p className="font-bold text-[#201712] text-sm">2. Matching Géolocalisé Intelligent</p>
@@ -151,7 +151,7 @@ export default function PolitiqueConfidentialitePage() {
                             </div>
                             <div className="p-4 rounded-2xl bg-[#faf8f5] border border-[#e6d3b2]/60">
                                 <p className="font-bold text-[#201712] text-sm">4. Preuves Numériques & Arbitrage</p>
-                                <p className="text-xs text-[#6f5d50] mt-1">Traiter équitablement les litiges grâce aux photos géolocalisées et à l'historique d'intervention.</p>
+                                <p className="text-xs text-[#6f5d50] mt-1">Traiter équitablement les litiges grâce aux photos géolocalisées et à l&apos;historique d&apos;intervention.</p>
                             </div>
                         </div>
                     </div>
@@ -167,14 +167,14 @@ export default function PolitiqueConfidentialitePage() {
                     </div>
                     <div className="space-y-4 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            Dans le cadre exclusif de l'exécution du service, certaines données chiffrées sont transmises à des tiers de confiance :
+                            Dans le cadre exclusif de l&apos;exécution du service, certaines données chiffrées sont transmises à des tiers de confiance :
                         </p>
                         <ul className="space-y-2 pl-4 list-disc marker:text-emerald-600">
-                            <li><strong>Agrégateurs de paiement certifiés (Wave, Orange Money, MTN, Moov) :</strong> Pour l'exécution et la libération sécurisée des fonds.</li>
-                            <li><strong>Fournisseurs d'infrastructure Cloud sécurisés :</strong> Pour l'hébergement chiffré des bases de données et des fichiers médias.</li>
+                            <li><strong>Agrégateurs de paiement certifiés (Wave, Orange Money, MTN, Moov) :</strong> Pour l&apos;exécution et la libération sécurisée des fonds.</li>
+                            <li><strong>Fournisseurs d&apos;infrastructure Cloud sécurisés :</strong> Pour l&apos;hébergement chiffré des bases de données et des fichiers médias.</li>
                         </ul>
                         <p className="text-xs sm:text-sm text-[#6f5d50] italic bg-[#faf8f5] p-3.5 rounded-xl border border-[#e6d3b2]/50">
-                            Tous les prestataires sont soumis à des clauses de confidentialité strictes. Aucune donnée n'est transférée en dehors de l'espace CEDEAO sans des garanties de sécurité équivalentes aux normes de l'ARTCI.
+                            Tous les prestataires sont soumis à des clauses de confidentialité strictes. Aucune donnée n&apos;est transférée en dehors de l&apos;espace CEDEAO sans des garanties de sécurité équivalentes aux normes de l&apos;ARTCI.
                         </p>
                     </div>
                 </section>
@@ -189,7 +189,7 @@ export default function PolitiqueConfidentialitePage() {
                     </div>
                     <div className="space-y-4 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            Les flux de données sont sécurisés de bout en bout (protocoles TLS 1.3). Les pièces d'identité et les données sensibles sont chiffrées au repos (AES-256) dans nos bases de données.
+                            Les flux de données sont sécurisés de bout en bout (protocoles TLS 1.3). Les pièces d&apos;identité et les données sensibles sont chiffrées au repos (AES-256) dans nos bases de données.
                         </p>
                         <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 pt-2">
                             <div className="bg-[#faf8f5] p-4 rounded-2xl border border-[#e6d3b2]/60">
@@ -221,7 +221,7 @@ export default function PolitiqueConfidentialitePage() {
                     </div>
                     <div className="space-y-4 text-sm sm:text-base text-[#5c4a3e] leading-relaxed">
                         <p>
-                            Conformément à la législation ivoirienne en vigueur (Loi n° 2013-450), tout utilisateur dispose d’un droit d’accès, de rectification, de limitation et de suppression de ses données ("droit à l'oubli").
+                            Conformément à la législation ivoirienne en vigueur (Loi n° 2013-450), tout utilisateur dispose d’un droit d’accès, de rectification, de limitation et de suppression de ses données (&quot;droit à l&apos;oubli&quot;).
                         </p>
                         <p>
                             Pour exercer ces droits ou pour toute question relative au traitement de vos données, vous pouvez formuler votre requête directement depuis les paramètres de votre compte ou contacter notre <strong>Délégué à la Protection des Données (DPO)</strong> :
@@ -238,8 +238,8 @@ export default function PolitiqueConfidentialitePage() {
                 {/* Bottom link to CGU */}
                 <div className="p-6 rounded-3xl bg-[#f0e4d0]/60 border border-[#e6d3b2] flex flex-col sm:flex-row items-center justify-between gap-4">
                     <div>
-                        <h3 className="font-bold text-[#201712] text-base">Consultez nos Conditions Générales d'Utilisation</h3>
-                        <p className="text-xs text-[#6f5d50] mt-1">Règles d'engagement, fonctionnement du séquestre financier et gestion des litiges.</p>
+                        <h3 className="font-bold text-[#201712] text-base">Consultez nos Conditions Générales d&apos;Utilisation</h3>
+                        <p className="text-xs text-[#6f5d50] mt-1">Règles d&apos;engagement, fonctionnement du séquestre financier et gestion des litiges.</p>
                     </div>
                     <Link
                         href="/cgu"

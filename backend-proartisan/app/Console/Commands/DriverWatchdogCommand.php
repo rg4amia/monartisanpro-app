@@ -4,6 +4,7 @@ namespace App\Console\Commands;
 
 use App\Models\Order;
 use App\Models\Setting;
+use App\Services\NotificationService;
 use App\Services\OrderService;
 use Illuminate\Console\Command;
 use Illuminate\Support\Facades\Log;
@@ -35,10 +36,10 @@ class DriverWatchdogCommand extends Command
 
     public function handle(): int
     {
-        $timeoutMinutes   = (int) Setting::getValueByKey('driver_watchdog_timeout_minutes', 15);
+        $timeoutMinutes = (int) Setting::getValueByKey('driver_watchdog_timeout_minutes', 15);
         $maxReassignments = (int) Setting::getValueByKey('driver_max_reassignments', 3);
-        $cutoff           = now()->subMinutes($timeoutMinutes);
-        $isDryRun         = $this->option('dry-run');
+        $cutoff = now()->subMinutes($timeoutMinutes);
+        $isDryRun = $this->option('dry-run');
 
         $this->info("=== Driver Watchdog (délai : {$timeoutMinutes} min, max réaffectations : {$maxReassignments}) ===");
 
@@ -64,8 +65,8 @@ class DriverWatchdogCommand extends Command
         $this->info("Courses inactives détectées : {$staleOrders->count()}");
 
         $reassigned = 0;
-        $escalated  = 0;
-        $skipped    = 0;
+        $escalated = 0;
+        $skipped = 0;
 
         foreach ($staleOrders as $order) {
             $driverName = $order->driver?->name ?? "#{$order->driver_id}";
@@ -74,6 +75,7 @@ class DriverWatchdogCommand extends Command
 
             if ($isDryRun) {
                 $this->line("  [DRY-RUN] Serait réaffectée : {$label}");
+
                 continue;
             }
 
@@ -82,17 +84,18 @@ class DriverWatchdogCommand extends Command
                 $this->warn("  ⚠️ Max atteint, escalade admin : {$label}");
 
                 try {
-                    app(\App\Services\NotificationService::class)->sendAdmin(
+                    app(NotificationService::class)->sendAdmin(
                         'fraud_alert',
                         'Commande sans livreur — escalade requise',
                         "La commande #{$order->id} a atteint {$maxReassignments} réaffectations sans succès. Intervention manuelle requise.",
                         ['order_id' => $order->id, 'reassignment_count' => $order->driver_reassignment_count]
                     );
                 } catch (\Throwable $e) {
-                    Log::warning("[DriverWatchdog] Notification escalade admin échouée: " . $e->getMessage());
+                    Log::warning('[DriverWatchdog] Notification escalade admin échouée: '.$e->getMessage());
                 }
 
                 $escalated++;
+
                 continue;
             }
 
@@ -106,21 +109,21 @@ class DriverWatchdogCommand extends Command
             } catch (\Throwable $e) {
                 $this->error("  ❌ Erreur sur {$label} : {$e->getMessage()}");
                 Log::error('[DriverWatchdog] Erreur de réaffectation', [
-                    'order_id'  => $order->id,
+                    'order_id' => $order->id,
                     'driver_id' => $order->driver_id,
-                    'error'     => $e->getMessage(),
+                    'error' => $e->getMessage(),
                 ]);
                 $skipped++;
             }
         }
 
-        if (!$isDryRun) {
+        if (! $isDryRun) {
             $this->info("=== Résumé : {$reassigned} réaffectées, {$escalated} escaladées admin, {$skipped} erreurs ===");
             Log::info('[DriverWatchdog] Traitement terminé', [
                 'reassigned' => $reassigned,
-                'escalated'  => $escalated,
-                'skipped'    => $skipped,
-                'timeout_min'=> $timeoutMinutes,
+                'escalated' => $escalated,
+                'skipped' => $skipped,
+                'timeout_min' => $timeoutMinutes,
             ]);
         }
 

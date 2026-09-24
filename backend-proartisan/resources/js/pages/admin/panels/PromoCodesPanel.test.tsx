@@ -1,8 +1,8 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { PromoCodesPanel } from './PromoCodesPanel';
 import type { PromoCodeItem } from '../shared';
+import { PromoCodesPanel } from './PromoCodesPanel';
 
 function makePromo(overrides: Partial<PromoCodeItem> = {}): PromoCodeItem {
     return {

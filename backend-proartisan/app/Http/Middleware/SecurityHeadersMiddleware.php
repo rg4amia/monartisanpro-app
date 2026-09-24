@@ -10,10 +10,6 @@ class SecurityHeadersMiddleware
 {
     /**
      * Handle an incoming request.
-     *
-     * @param  \Illuminate\Http\Request  $request
-     * @param  \Closure  $next
-     * @return \Symfony\Component\HttpFoundation\Response
      */
     public function handle(Request $request, Closure $next): Response
     {
@@ -34,7 +30,7 @@ class SecurityHeadersMiddleware
             "frame-ancestors 'none'",
         ];
 
-        if (!app()->isProduction()) {
+        if (! app()->isProduction()) {
             $vitePort = '5173';
             $hotFile = public_path('hot');
             if (file_exists($hotFile)) {

@@ -5,10 +5,16 @@ namespace App\Services;
 use App\Enums\WalletType;
 use App\Models\EvidenceVault;
 use App\Models\JCode;
+use App\Models\JuryReview;
 use App\Models\Litige;
 use App\Models\LitigeEvidence;
 use App\Models\Mission;
+use App\Models\Parrainage;
+use App\Models\ScoreLedgerEntry;
 use App\Models\User;
+use App\States\Mission\CancelledState;
+use App\States\Mission\CompletedState;
+use App\States\Mission\DisputedState;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -34,7 +40,7 @@ class LitigeService
                 'mission.artisan',
                 'preuves.user',
             ])
-            ->when($statut, fn($q) => $q->where('statut', $statut))
+            ->when($statut, fn ($q) => $q->where('statut', $statut))
             ->orderByDesc('created_at');
 
         if ($user->role !== 'admin') {
@@ -73,7 +79,7 @@ class LitigeService
 
         $litige = DB::transaction(function () use ($user, $mission, $data) {
             $mission->update([
-                'status' => \App\States\Mission\DisputedState::class,
+                'status' => DisputedState::class,
                 'funds_frozen' => true,
             ]);
 
@@ -162,11 +168,11 @@ class LitigeService
                 }
 
                 EvidenceVault::create([
-                    'litige_id'   => $litige->id,
+                    'litige_id' => $litige->id,
                     'uploaded_by' => $user->id,
-                    'file_url'    => $uploaded['url'],
+                    'file_url' => $uploaded['url'],
                     'sha256_hash' => $fileHash,
-                    'ip_address'  => request()?->ip(),
+                    'ip_address' => request()?->ip(),
                     'uploaded_at' => now(),
                 ]);
 
@@ -292,7 +298,7 @@ class LitigeService
             ->whereNotNull('evidence_deadline_at')
             ->where('evidence_deadline_at', '<=', now())
             ->get()
-            ->each(fn(Litige $litige) => $this->evaluateSla($litige));
+            ->each(fn (Litige $litige) => $this->evaluateSla($litige));
     }
 
     public function arbitrate(?User $admin, Litige $litige, array $payload): Litige
@@ -343,14 +349,14 @@ class LitigeService
             if ($decision === 'client') {
                 $this->walletService->refundClientFromDispute($mission, $refundMateriaux, $refundMo, $litige);
                 $mission->update([
-                    'status' => \App\States\Mission\CancelledState::class,
+                    'status' => CancelledState::class,
                     'funds_frozen' => false,
                 ]);
             } elseif ($decision === 'artisan') {
                 $this->walletService->releaseLaborEscrowToArtisan($mission, $releaseMo, $litige, true);
                 $this->walletService->releaseMaterialEscrowToArtisan($mission, $releaseMateriaux, $litige);
                 $mission->update([
-                    'status' => \App\States\Mission\CompletedState::class,
+                    'status' => CompletedState::class,
                     'funds_frozen' => false,
                 ]);
             } elseif ($decision === 'mixte') {
@@ -363,12 +369,12 @@ class LitigeService
                 }
 
                 $mission->update([
-                    'status' => \App\States\Mission\CompletedState::class,
+                    'status' => CompletedState::class,
                     'funds_frozen' => false,
                 ]);
             } else {
                 $mission->update([
-                    'status' => \App\States\Mission\DisputedState::class,
+                    'status' => DisputedState::class,
                     'funds_frozen' => true,
                 ]);
             }
@@ -472,8 +478,8 @@ class LitigeService
 
         $mission->jcodes
             ->where('statut', 'utilise')
-            ->filter(fn(JCode $jcode) => $jcode->paiement_status !== 'paye')
-            ->each(fn(JCode $jcode) => $this->jCodeService->settleSupplierPayment($jcode, true));
+            ->filter(fn (JCode $jcode) => $jcode->paiement_status !== 'paye')
+            ->each(fn (JCode $jcode) => $this->jCodeService->settleSupplierPayment($jcode, true));
     }
 
     private function applySanctions(Litige $litige): array
@@ -505,15 +511,15 @@ class LitigeService
                         $query
                             ->where(function ($clientQuery) use ($user): void {
                                 $clientQuery->where('decision', 'client')
-                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('artisan_id', $user->id));
+                                    ->whereHas('mission', fn ($missionQuery) => $missionQuery->where('artisan_id', $user->id));
                             })
                             ->orWhere(function ($artisanQuery) use ($user): void {
                                 $artisanQuery->where('decision', 'artisan')
-                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('client_id', $user->id));
+                                    ->whereHas('mission', fn ($missionQuery) => $missionQuery->where('client_id', $user->id));
                             })
                             ->orWhere(function ($mixedQuery) use ($user): void {
                                 $mixedQuery->where('decision', 'mixte')
-                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('artisan_id', $user->id));
+                                    ->whereHas('mission', fn ($missionQuery) => $missionQuery->where('artisan_id', $user->id));
                             });
                     })
                     ->count();
@@ -522,7 +528,7 @@ class LitigeService
                 $eventType = ($lostCount >= 2) ? 'dispute_abandon' : 'dispute_fraud';
 
                 if ($user->role === 'artisan') {
-                    \App\Models\ScoreLedgerEntry::create([
+                    ScoreLedgerEntry::create([
                         'user_id' => $user->id,
                         'event_type' => $eventType,
                         'points' => $penaltyPoints,
@@ -534,11 +540,11 @@ class LitigeService
                     app(ScoreService::class)->recalculateFromLedger($user);
 
                     // Caution penalty for sponsor (parrain)
-                    $parrainage = \App\Models\Parrainage::where('filleul_id', $user->id)->first();
+                    $parrainage = Parrainage::where('filleul_id', $user->id)->first();
                     if ($parrainage) {
                         $parrain = $parrainage->parrain;
                         if ($parrain) {
-                            \App\Models\ScoreLedgerEntry::create([
+                            ScoreLedgerEntry::create([
                                 'user_id' => $parrain->id,
                                 'event_type' => 'dispute_fraud',
                                 'points' => -50,
@@ -563,15 +569,15 @@ class LitigeService
                         $query
                             ->where(function ($clientQuery) use ($user): void {
                                 $clientQuery->where('decision', 'client')
-                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('artisan_id', $user->id));
+                                    ->whereHas('mission', fn ($missionQuery) => $missionQuery->where('artisan_id', $user->id));
                             })
                             ->orWhere(function ($artisanQuery) use ($user): void {
                                 $artisanQuery->where('decision', 'artisan')
-                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('client_id', $user->id));
+                                    ->whereHas('mission', fn ($missionQuery) => $missionQuery->where('client_id', $user->id));
                             })
                             ->orWhere(function ($mixedQuery) use ($user): void {
                                 $mixedQuery->where('decision', 'mixte')
-                                    ->whereHas('mission', fn($missionQuery) => $missionQuery->where('artisan_id', $user->id));
+                                    ->whereHas('mission', fn ($missionQuery) => $missionQuery->where('artisan_id', $user->id));
                             });
                     })
                     ->count();
@@ -691,7 +697,7 @@ class LitigeService
         }
 
         foreach ($jurors as $juror) {
-            \App\Models\JuryReview::create([
+            JuryReview::create([
                 'litige_id' => $litige->id,
                 'jure_id' => $juror->id,
                 'compensation' => 1500,
@@ -714,11 +720,11 @@ class LitigeService
 
     public function submitJuryVote(Litige $litige, User $jure, string $verdict): void
     {
-        $review = \App\Models\JuryReview::where('litige_id', $litige->id)
+        $review = JuryReview::where('litige_id', $litige->id)
             ->where('jure_id', $jure->id)
             ->first();
 
-        if (!$review) {
+        if (! $review) {
             throw ValidationException::withMessages([
                 'jury' => ['Vous n\'êtes pas assigné comme juré pour ce litige.'],
             ]);
@@ -743,7 +749,7 @@ class LitigeService
             ['litige_id' => $litige->id, 'jury_review_id' => $review->id]
         );
 
-        $votes = \App\Models\JuryReview::where('litige_id', $litige->id)
+        $votes = JuryReview::where('litige_id', $litige->id)
             ->whereNotNull('verdict')
             ->get();
 
@@ -755,7 +761,7 @@ class LitigeService
 
             $this->arbitrate(null, $litige, [
                 'decision' => $decision,
-                'notes' => 'Résolution automatique par consensus du Jury ProsArtisan (Votes: ' . $conformeCount . ' CONFORME, ' . $nonConformeCount . ' NON_CONFORME).',
+                'notes' => 'Résolution automatique par consensus du Jury ProsArtisan (Votes: '.$conformeCount.' CONFORME, '.$nonConformeCount.' NON_CONFORME).',
                 'resolution_reason' => $decision === 'artisan' ? 'jury_consensual_conforme' : 'jury_consensual_non_conforme',
             ]);
         }
