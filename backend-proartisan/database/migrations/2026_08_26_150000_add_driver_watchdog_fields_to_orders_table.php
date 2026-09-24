@@ -9,10 +9,23 @@ return new class extends Migration
 {
     public function up(): void
     {
-        Schema::table('orders', function (Blueprint $table) {
-            $table->timestamp('driver_assigned_at')->nullable()->after('driver_id');
-            $table->unsignedTinyInteger('driver_reassignment_count')->default(0)->after('driver_assigned_at');
-        });
+        if (! Schema::hasColumn('orders', 'driver_assigned_at')) {
+            Schema::table('orders', function (Blueprint $table) {
+                $column = $table->timestamp('driver_assigned_at')->nullable();
+                if (Schema::hasColumn('orders', 'driver_id')) {
+                    $column->after('driver_id');
+                }
+            });
+        }
+
+        if (! Schema::hasColumn('orders', 'driver_reassignment_count')) {
+            Schema::table('orders', function (Blueprint $table) {
+                $column = $table->unsignedTinyInteger('driver_reassignment_count')->default(0);
+                if (Schema::hasColumn('orders', 'driver_assigned_at')) {
+                    $column->after('driver_assigned_at');
+                }
+            });
+        }
 
         // Settings configurables pour le watchdog livreur
         DB::table('settings')->insertOrIgnore([
