@@ -3,6 +3,7 @@
 namespace Tests\Feature;
 
 use App\Enums\PaymentStatus;
+use App\Models\Notification;
 use App\Models\RecruitmentApplication;
 use App\Models\RecruitmentEngagement;
 use App\Models\RecruitmentOffer;
@@ -10,6 +11,7 @@ use App\Models\Sector;
 use App\Models\Trade;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\PaymentService;
 use App\Services\RecruitmentEngagementService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
@@ -271,6 +273,84 @@ class RecruitmentEngagementTest extends TestCase
             ->assertOk();
 
         $this->assertSame('pending', $extensionWorkday->fresh()->status);
+    }
+
+    /**
+     * Règle d'or 36 (plafond cumulatif) : un paiement ne débloque que les
+     * journées qu'il couvre. Une prolongation ajoutée entre l'initiation et
+     * l'activation restait sinon validable — donc payable à l'artisan — sans
+     * avoir été financée.
+     */
+    public function test_escrow_payment_only_activates_the_workdays_it_paid_for(): void
+    {
+        ['application' => $application, 'client' => $client, 'artisan' => $artisan] = $this->setupConfirmableApplication();
+
+        $this->actingAs($client)->postJson("/api/v1/recruitment-applications/{$application->id}/engage", ['daily_rate' => 10000]);
+        $engagement = RecruitmentEngagement::first();
+        $this->actingAs($artisan)->postJson("/api/v1/recruitment-engagements/{$engagement->id}/accept");
+
+        $transactionId = $this->actingAs($client)
+            ->postJson("/api/v1/recruitment-engagements/{$engagement->id}/pay", ['provider' => 'wave', 'phone' => '+2250700000000'])
+            ->json('data.transaction_id');
+        $this->assertSame(30000, Transaction::findOrFail($transactionId)->montant);
+
+        // Prolongation de 2 jours AVANT que le paiement des 3 premiers soit confirmé.
+        $this->actingAs($client)->postJson("/api/v1/recruitment-engagements/{$engagement->id}/extend", ['additional_days' => 2])->assertOk();
+
+        Transaction::findOrFail($transactionId)->update(['statut' => PaymentStatus::CONFIRME]);
+        $this->actingAs($client)->postJson("/api/v1/recruitment-engagements/{$engagement->id}/activate", ['transaction_id' => $transactionId])->assertOk();
+
+        $this->assertSame(3, $engagement->workdays()->where('status', 'pending')->count());
+        $this->assertSame(2, $engagement->workdays()->where('status', 'awaiting_payment')->count());
+    }
+
+    /**
+     * Règle d'or 36 : toute voie de confirmation d'un paiement (webhook,
+     * interrogation de statut, simulateur) produit le même effet, sans
+     * attendre que l'application appelle l'activation.
+     */
+    public function test_confirmed_payment_activates_engagement_escrow_without_app_call(): void
+    {
+        ['application' => $application, 'client' => $client, 'artisan' => $artisan] = $this->setupConfirmableApplication();
+
+        $this->actingAs($client)->postJson("/api/v1/recruitment-applications/{$application->id}/engage", ['daily_rate' => 10000]);
+        $engagement = RecruitmentEngagement::first();
+        $this->actingAs($artisan)->postJson("/api/v1/recruitment-engagements/{$engagement->id}/accept");
+
+        $transactionId = $this->actingAs($client)
+            ->postJson("/api/v1/recruitment-engagements/{$engagement->id}/pay", ['provider' => 'wave', 'phone' => '+2250700000000'])
+            ->json('data.transaction_id');
+
+        app(PaymentService::class)->confirmSimulatedPayment(Transaction::findOrFail($transactionId));
+
+        $engagement->refresh();
+        $this->assertSame('active', $engagement->status);
+        $this->assertTrue($engagement->workdays->every(fn ($w) => $w->status === 'pending'));
+
+        // L'activation demandée ensuite par l'application reste un succès (idempotence).
+        $this->actingAs($client)
+            ->postJson("/api/v1/recruitment-engagements/{$engagement->id}/activate", ['transaction_id' => $transactionId])
+            ->assertOk();
+        $this->assertSame(1, Notification::where('user_id', $artisan->id)->where('title', 'Séquestre payé')->count());
+    }
+
+    public function test_confirmed_payment_unlocks_offer_applicants_without_app_call(): void
+    {
+        ['offer' => $offer, 'client' => $client] = $this->setupConfirmableApplication();
+
+        $transactionId = $this->actingAs($client)->postJson("/api/v1/recruitment-offers/{$offer->id}/unlock-applicants", [
+            'daily_rate' => 10000,
+            'provider' => 'wave',
+            'phone' => '+2250700000000',
+        ])->json('data.transaction_id');
+
+        app(PaymentService::class)->confirmSimulatedPayment(Transaction::findOrFail($transactionId));
+
+        $this->assertTrue($offer->fresh()->applicantsUnlocked());
+
+        $this->actingAs($client)
+            ->postJson("/api/v1/recruitment-offers/{$offer->id}/activate-applicants-unlock", ['transaction_id' => $transactionId])
+            ->assertOk();
     }
 
     public function test_only_recruiter_owning_engagement_can_validate_workdays(): void

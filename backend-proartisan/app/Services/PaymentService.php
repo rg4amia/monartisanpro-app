@@ -9,6 +9,8 @@ use App\Models\Devis;
 use App\Models\Jalon;
 use App\Models\Mission;
 use App\Models\PromoCode;
+use App\Models\RecruitmentEngagement;
+use App\Models\RecruitmentOffer;
 use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Support\Facades\Log;
@@ -161,6 +163,69 @@ class PaymentService
     }
 
     /**
+     * Initie le paiement du séquestre d'un engagement de recrutement : les
+     * journées en attente de paiement (lot initial ou prolongation). Leurs
+     * identifiants sont figés sur la transaction, qui ne pourra débloquer
+     * qu'elles (Règle d'or 36, plafond cumulatif).
+     */
+    public function initiateRecruitmentEngagementPayment(User $recruiter, RecruitmentEngagement $engagement, PaymentProvider $provider, ?string $phone): array
+    {
+        $workdays = $engagement->workdays()->where('status', 'awaiting_payment')->orderBy('day_number')->get();
+        $montant = (int) $workdays->sum('montant');
+
+        if ($montant <= 0) {
+            throw new PaymentException('Aucun jour en attente de paiement pour cet engagement.');
+        }
+
+        $this->assertMobileMoneyLimit($montant, $provider);
+
+        $transaction = $this->createRecruitmentTransaction($recruiter, 'recruitment_escrow', $montant, 'escrow_recruitment_'.$engagement->id, $provider, $phone, [
+            'recruitment_engagement_id' => $engagement->id,
+            'workday_ids' => $workdays->pluck('id')->all(),
+            'description' => "Séquestre recrutement #{$engagement->id}",
+        ]);
+
+        return $this->startCheckout(
+            $transaction,
+            $provider,
+            $transaction->client_phone,
+            "Séquestre recrutement #{$engagement->id}",
+            ['recruitment_engagement_id' => $engagement->id],
+            $this->bankReference(),
+            'Instructions de virement bancaire pour séquestre de recrutement',
+            'Paiement',
+            [],
+        );
+    }
+
+    /**
+     * Initie le paiement du séquestre d'accès aux candidatures d'une offre
+     * (verrou anti-contournement payé avant toute consultation des postulants).
+     */
+    public function initiateApplicantsUnlockPayment(User $recruiter, RecruitmentOffer $offer, int $montant, PaymentProvider $provider, ?string $phone): array
+    {
+        $this->assertMobileMoneyLimit($montant, $provider);
+
+        $label = "Séquestre d'accès aux candidatures — offre #{$offer->id}";
+        $transaction = $this->createRecruitmentTransaction($recruiter, 'recruitment_offer_escrow', $montant, 'escrow_recruitment_offer_'.$offer->id, $provider, $phone, [
+            'recruitment_offer_id' => $offer->id,
+            'description' => $label,
+        ]);
+
+        return $this->startCheckout(
+            $transaction,
+            $provider,
+            $transaction->client_phone,
+            $label,
+            ['recruitment_offer_id' => $offer->id],
+            $this->bankReference(),
+            $label,
+            'Paiement',
+            [],
+        );
+    }
+
+    /**
      * Interroge l'opérateur pour une transaction non finalisée et répercute
      * son statut (confirmation → financement du jalon le cas échéant).
      */
@@ -273,7 +338,14 @@ class PaymentService
      */
     public function applyConfirmedPayment(Transaction $transaction): void
     {
-        if (! $transaction->statut->isSuccessful() || ($transaction->metadata['payment_type'] ?? '') !== 'jalon') {
+        if (! $transaction->statut->isSuccessful()) {
+            return;
+        }
+
+        // Séquestres de recrutement (engagement journalier, accès aux candidatures).
+        app(RecruitmentEngagementService::class)->applyConfirmedPayment($transaction);
+
+        if (($transaction->metadata['payment_type'] ?? '') !== 'jalon') {
             return;
         }
 
@@ -415,6 +487,26 @@ class PaymentService
             'client_phone' => $phone,
             'metadata' => $metadata,
         ]);
+    }
+
+    private function createRecruitmentTransaction(User $recruiter, string $type, int $montant, string $walletDest, PaymentProvider $provider, ?string $phone, array $metadata): Transaction
+    {
+        return Transaction::create([
+            'user_id' => $recruiter->id,
+            'type' => $type,
+            'montant' => $montant,
+            'wallet_source' => $provider === PaymentProvider::VIREMENT_BANCAIRE ? 'client_bank_'.$recruiter->id : 'client_mobile_money_'.$recruiter->id,
+            'wallet_dest' => $walletDest,
+            'provider' => $provider,
+            'statut' => PaymentStatus::EN_ATTENTE,
+            'client_phone' => (string) ($phone ?? $recruiter->phone ?? ''),
+            'metadata' => $metadata,
+        ]);
+    }
+
+    private function bankReference(): string
+    {
+        return 'REF-'.str_pad((string) random_int(0, 999999), 6, '0', STR_PAD_LEFT);
     }
 
     /**

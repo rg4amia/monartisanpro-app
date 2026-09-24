@@ -252,8 +252,10 @@ class RecruitmentEngagementService
     }
 
     /**
-     * Active le séquestre après confirmation d'un paiement Wave/Orange Money :
-     * les jours en attente de paiement deviennent validables par le client.
+     * Active le séquestre après confirmation d'un paiement Wave/Orange Money,
+     * à la demande du recruteur (appel de l'application). Idempotent : si la
+     * confirmation de l'opérateur l'a déjà appliqué, l'appel réussit sans
+     * effet supplémentaire.
      */
     public function activateEscrow(User $recruiter, RecruitmentEngagement $engagement, Transaction $transaction): RecruitmentEngagement
     {
@@ -272,31 +274,69 @@ class RecruitmentEngagementService
             ]);
         }
 
-        if (! empty($transaction->metadata['activated'])) {
-            throw ValidationException::withMessages([
-                'transaction' => ['Ce paiement a déjà été appliqué.'],
-            ]);
-        }
+        $this->applyEngagementEscrow($engagement, $transaction);
 
-        DB::transaction(function () use ($engagement, $transaction) {
-            $engagement->workdays()->where('status', 'awaiting_payment')->update(['status' => 'pending']);
+        return $engagement->fresh();
+    }
+
+    /**
+     * Applique un paiement confirmé au séquestre d'un engagement, quelle que
+     * soit la voie de confirmation (webhook, interrogation de statut,
+     * simulateur, appel de l'application — Règle d'or 36).
+     *
+     * Seules les journées couvertes par CE paiement deviennent validables :
+     * leurs identifiants sont figés à l'initiation (`workday_ids`). Une
+     * prolongation ajoutée entre-temps attend son propre paiement. Idempotent.
+     *
+     * @return bool vrai si le paiement vient d'être appliqué
+     */
+    public function applyEngagementEscrow(RecruitmentEngagement $engagement, Transaction $transaction): bool
+    {
+        $applied = DB::transaction(function () use ($engagement, $transaction) {
+            $transaction = Transaction::whereKey($transaction->id)->lockForUpdate()->first();
+
+            if (! $transaction->statut->isSuccessful() || ! empty($transaction->metadata['activated'])) {
+                return false;
+            }
+
+            $awaiting = $engagement->workdays()->where('status', 'awaiting_payment')->orderBy('day_number')->get();
+            $paidIds = $transaction->metadata['workday_ids'] ?? null;
+
+            if (is_array($paidIds)) {
+                $covered = $awaiting->whereIn('id', $paidIds);
+            } else {
+                // Paiement initié avant la mémorisation des journées : on ne
+                // débloque que ce que son montant couvre, dans l'ordre des jours.
+                $budget = (int) $transaction->montant;
+                $covered = $awaiting->takeWhile(function ($workday) use (&$budget) {
+                    $budget -= $workday->montant;
+
+                    return $budget >= 0;
+                });
+            }
+
+            $engagement->workdays()->whereIn('id', $covered->pluck('id'))->update(['status' => 'pending']);
 
             $engagement->update([
                 'status' => in_array($engagement->status, ['pending_payment', 'active'], true) ? 'active' : $engagement->status,
             ]);
 
             $transaction->update(['metadata' => array_merge($transaction->metadata ?? [], ['activated' => true])]);
+
+            return true;
         });
 
-        $this->notifications->send(
-            $engagement->artisan,
-            'payment',
-            'Séquestre payé',
-            "Le recruteur a payé le séquestre de votre mission « {$engagement->offer->title} ». Vous pouvez commencer à travailler.",
-            ['recruitment_engagement_id' => $engagement->id],
-        );
+        if ($applied) {
+            $this->notifications->send(
+                $engagement->artisan,
+                'payment',
+                'Séquestre payé',
+                "Le recruteur a payé le séquestre de votre mission « {$engagement->offer->title} ». Vous pouvez commencer à travailler.",
+                ['recruitment_engagement_id' => $engagement->id],
+            );
+        }
 
-        return $engagement->fresh();
+        return $applied;
     }
 
     /**
@@ -445,9 +485,9 @@ class RecruitmentEngagementService
     }
 
     /**
-     * Active le séquestre d'accès aux candidatures après confirmation du
-     * paiement Wave/Orange Money : la liste des postulants devient
-     * consultable par le recruteur.
+     * Active le séquestre d'accès aux candidatures à la demande du recruteur.
+     * Idempotent : si la confirmation de l'opérateur a déjà débloqué l'offre
+     * avec cette même transaction, l'appel réussit.
      */
     public function activateApplicantsUnlock(User $recruiter, RecruitmentOffer $offer, Transaction $transaction): RecruitmentOffer
     {
@@ -466,18 +506,58 @@ class RecruitmentEngagementService
             ]);
         }
 
-        if ($offer->applicantsUnlocked()) {
+        if ($offer->applicantsUnlocked() && $offer->applicants_escrow_transaction_id !== $transaction->id) {
             throw ValidationException::withMessages([
                 'transaction' => ['Les candidatures de cette offre sont déjà consultables.'],
             ]);
         }
 
-        $offer->update([
-            'applicants_escrow_transaction_id' => $transaction->id,
-            'applicants_unlocked_at' => now(),
-        ]);
+        $this->applyApplicantsUnlock($offer, $transaction);
 
         return $offer->fresh();
+    }
+
+    /**
+     * Applique un paiement confirmé du séquestre d'accès aux candidatures,
+     * quelle que soit la voie de confirmation (Règle d'or 36). Idempotent.
+     *
+     * @return bool vrai si l'offre vient d'être débloquée
+     */
+    public function applyApplicantsUnlock(RecruitmentOffer $offer, Transaction $transaction): bool
+    {
+        return DB::transaction(function () use ($offer, $transaction) {
+            $offer = RecruitmentOffer::whereKey($offer->id)->lockForUpdate()->first();
+
+            if (! $transaction->statut->isSuccessful() || $offer->applicantsUnlocked()) {
+                return false;
+            }
+
+            $offer->update([
+                'applicants_escrow_transaction_id' => $transaction->id,
+                'applicants_unlocked_at' => now(),
+            ]);
+
+            return true;
+        });
+    }
+
+    /**
+     * Point d'entrée des confirmations de paiement (PaymentService) pour les
+     * séquestres de recrutement ; sans effet sur les autres transactions.
+     */
+    public function applyConfirmedPayment(Transaction $transaction): void
+    {
+        if ($transaction->type === 'recruitment_escrow') {
+            $engagement = RecruitmentEngagement::find($transaction->metadata['recruitment_engagement_id'] ?? null);
+            if ($engagement) {
+                $this->applyEngagementEscrow($engagement, $transaction);
+            }
+        } elseif ($transaction->type === 'recruitment_offer_escrow') {
+            $offer = RecruitmentOffer::find($transaction->metadata['recruitment_offer_id'] ?? null);
+            if ($offer) {
+                $this->applyApplicantsUnlock($offer, $transaction);
+            }
+        }
     }
 
     private function assertArtisanOwnsEngagement(User $artisan, RecruitmentEngagement $engagement): void
