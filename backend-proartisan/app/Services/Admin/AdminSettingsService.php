@@ -5,15 +5,28 @@ namespace App\Services\Admin;
 use App\Models\AiUserQuota;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\BankTransferSettingsService;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Validation\ValidationException;
 
 class AdminSettingsService
 {
-    public function __construct(private AdminActivityLogger $audit) {}
+    public function __construct(
+        private AdminActivityLogger $audit,
+        private BankTransferSettingsService $bankTransfer,
+    ) {}
 
     public function updateSetting(Setting $setting, ?string $value): Setting
     {
+        // Les coordonnées bancaires passent obligatoirement par leur formulaire
+        // dédié, qui valide l'IBAN : l'édition générique le contournerait.
+        if ($setting->group === BankTransferSettingsService::GROUP) {
+            throw ValidationException::withMessages([
+                'value' => ['Modifiez les coordonnées de virement depuis leur formulaire dédié.'],
+            ]);
+        }
+
         $before = $setting->value;
 
         $setting->update(['value' => $value]);
@@ -25,6 +38,23 @@ class AdminSettingsService
         ]);
 
         return $setting;
+    }
+
+    /**
+     * Coordonnées de virement bancaire affichées aux payeurs. Modification
+     * auditée (avant / après) : un changement d'IBAN détourne les paiements.
+     *
+     * @param  array{bank_name: string, account_name: string, iban: string}  $data
+     */
+    public function updateBankTransfer(array $data): void
+    {
+        $before = $this->bankTransfer->values();
+        $this->bankTransfer->update($data);
+
+        $this->audit->log('settings.bank_transfer.updated', null, [
+            'before' => $before,
+            'after' => $this->bankTransfer->values(),
+        ], 'Coordonnées de virement bancaire');
     }
 
     /**

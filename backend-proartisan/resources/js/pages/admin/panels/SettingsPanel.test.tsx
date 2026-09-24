@@ -10,6 +10,11 @@ vi.mock('@inertiajs/react', () => ({
     },
 }));
 
+// La carte des coordonnées bancaires (useForm) a son propre test.
+vi.mock('./BankTransferSettingsCard', () => ({
+    BankTransferSettingsCard: () => <div>carte-virement-bancaire</div>,
+}));
+
 import type { SectorItem, SettingItem } from '../shared';
 import { SettingsPanel } from './SettingsPanel';
 

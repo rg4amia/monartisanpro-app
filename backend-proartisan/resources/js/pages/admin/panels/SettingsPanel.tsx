@@ -16,6 +16,8 @@ import {
     WalletIcon,
 } from '../shared';
 import type { SectorItem, SettingItem } from '../shared';
+import { BankTransferSettingsCard } from './BankTransferSettingsCard';
+import type { BankTransferSettings } from './BankTransferSettingsCard';
 
 interface SettingsPanelProps {
     adminName: string;
@@ -25,6 +27,7 @@ interface SettingsPanelProps {
     onToggleOfflineSimulated: () => void;
     onRefresh: () => void;
     settingsList: SettingItem[];
+    bankTransferSettings?: BankTransferSettings;
     sectors: SectorItem[];
     expandedSectors: Record<number, boolean>;
     onToggleSector: (sectorId: number) => void;
@@ -38,6 +41,7 @@ export function SettingsPanel({
     onToggleOfflineSimulated,
     onRefresh,
     settingsList,
+    bankTransferSettings = { bank_name: '', account_name: '', iban: '' },
     sectors,
     expandedSectors,
     onToggleSector,
@@ -107,6 +111,8 @@ export function SettingsPanel({
                     </button>
                 </div>
             </Surface>
+
+            <BankTransferSettingsCard settings={bankTransferSettings} />
 
             <Surface className="rounded-[32px] p-5 lg:p-6 xl:col-span-2">
                 <SectionTitle

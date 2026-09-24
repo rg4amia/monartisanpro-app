@@ -95,6 +95,7 @@ export interface AdminPageProps {
     promoCodes?: PromoCodeItem[];
     campagnesParrainage?: CampagneParrainageItem[];
     settingsList?: SettingItem[];
+    bankTransferSettings?: { bank_name: string; account_name: string; iban: string };
     sectors?: SectorItem[];
     rolesPermissions?: Record<string, string[]>;
     allPermissions?: Array<{ id: number; name: string; description: string; category: string }>;

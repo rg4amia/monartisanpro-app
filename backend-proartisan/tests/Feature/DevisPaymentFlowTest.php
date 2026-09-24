@@ -6,6 +6,7 @@ use App\Models\Devis;
 use App\Models\Mission;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\BankTransferSettingsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
@@ -143,6 +144,13 @@ class DevisPaymentFlowTest extends TestCase
             ])
             ->assertStatus(422)
             ->assertJsonPath('success', false);
+
+        // Coordonnées de virement renseignées dans le backoffice.
+        app(BankTransferSettingsService::class)->update([
+            'bank_name' => 'Banque de test',
+            'account_name' => 'PROSARTISAN SEQUESTRE',
+            'iban' => 'CI93CI0080111301134291200589',
+        ]);
 
         // Attempt Bank Transfer -> should succeed and return instructions
         $response = $this->actingAs($client)

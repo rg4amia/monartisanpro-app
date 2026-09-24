@@ -24,17 +24,12 @@ use Illuminate\Support\Facades\Log;
  */
 class PaymentService
 {
-    private const BANK_NAME = 'ECOBANK CI';
-
-    private const BANK_ACCOUNT_NAME = 'PROSARTISAN ESCROW';
-
-    private const BANK_IBAN = 'CI59 CI05 9012 3456 7890 12';
-
     public function __construct(
         private WaveService $waveService,
         private OrangeMoneyService $orangeMoneyService,
         private WalletService $walletService,
         private DevisService $devisService,
+        private BankTransferSettingsService $bankTransfer,
     ) {}
 
     /**
@@ -74,7 +69,7 @@ class PaymentService
         // Plafond jugé sur le montant réellement encaissé, jamais sur le montant
         // déclaré par le client (ignoré ci-dessus) : sinon `montant: 100` suffisait
         // à régler un devis de plusieurs millions en Mobile Money.
-        $this->assertMobileMoneyLimit($montant, $provider);
+        $this->assertPaymentAllowed($montant, $provider);
 
         $phone = (string) ($phone ?? $client->phone ?? '');
         $metadataMatch = ['devis_id' => $devis->id, 'payment_type' => $paymentType];
@@ -130,7 +125,7 @@ class PaymentService
         }
 
         $montant = $jalon->montant;
-        $this->assertMobileMoneyLimit($montant, $provider);
+        $this->assertPaymentAllowed($montant, $provider);
 
         $phone = (string) ($phone ?? $client->phone ?? '');
         $metadataMatch = ['jalon_id' => $jalon->id, 'payment_type' => 'jalon'];
@@ -177,7 +172,7 @@ class PaymentService
             throw new PaymentException('Aucun jour en attente de paiement pour cet engagement.');
         }
 
-        $this->assertMobileMoneyLimit($montant, $provider);
+        $this->assertPaymentAllowed($montant, $provider);
 
         $transaction = $this->createRecruitmentTransaction($recruiter, 'recruitment_escrow', $montant, 'escrow_recruitment_'.$engagement->id, $provider, $phone, [
             'recruitment_engagement_id' => $engagement->id,
@@ -204,7 +199,7 @@ class PaymentService
      */
     public function initiateApplicantsUnlockPayment(User $recruiter, RecruitmentOffer $offer, int $montant, PaymentProvider $provider, ?string $phone): array
     {
-        $this->assertMobileMoneyLimit($montant, $provider);
+        $this->assertPaymentAllowed($montant, $provider);
 
         $label = "Séquestre d'accès aux candidatures — offre #{$offer->id}";
         $transaction = $this->createRecruitmentTransaction($recruiter, 'recruitment_offer_escrow', $montant, 'escrow_recruitment_offer_'.$offer->id, $provider, $phone, [
@@ -358,10 +353,18 @@ class PaymentService
     }
 
     /**
-     * Grands comptes : au-delà du seuil Référent, virement bancaire obligatoire.
+     * Refus métier communs à toute initiation de paiement, vérifiés avant de
+     * créer la transaction :
+     * - grands comptes : au-delà du seuil Référent, virement bancaire obligatoire ;
+     * - virement : indisponible tant que les coordonnées bancaires ne sont pas
+     *   renseignées dans le backoffice (jamais de compte inventé, Règle d'or 29).
      */
-    private function assertMobileMoneyLimit(int $montant, PaymentProvider $provider): void
+    private function assertPaymentAllowed(int $montant, PaymentProvider $provider): void
     {
+        if ($provider === PaymentProvider::VIREMENT_BANCAIRE && $this->bankTransfer->details() === null) {
+            throw new PaymentException('Le paiement par virement bancaire est momentanément indisponible. Veuillez réessayer plus tard ou contacter le support ProsArtisan.', 422);
+        }
+
         $seuil = config('prosartisan.mission.referent_threshold', 2000000);
 
         if ($montant >= $seuil && $provider !== PaymentProvider::VIREMENT_BANCAIRE) {
@@ -459,14 +462,16 @@ class PaymentService
             ];
         }
 
+        $bank = $this->bankTransfer->details();
+
         return [
             'message' => "{$prefix} par Virement Bancaire existant récupéré",
             'data' => $base + [
                 'provider' => 'virement_bancaire',
                 'virement_instructions' => [
-                    'bank_name' => $existing->metadata['bank_name'] ?? self::BANK_NAME,
-                    'account_name' => $existing->metadata['bank_account_name'] ?? self::BANK_ACCOUNT_NAME,
-                    'iban' => $existing->metadata['bank_iban'] ?? self::BANK_IBAN,
+                    'bank_name' => $existing->metadata['bank_name'] ?? $bank['bank_name'] ?? null,
+                    'account_name' => $existing->metadata['bank_account_name'] ?? $bank['account_name'] ?? null,
+                    'iban' => $existing->metadata['bank_iban'] ?? $bank['iban'] ?? null,
                     'reference' => $existing->reference_externe,
                 ],
             ],
@@ -573,12 +578,15 @@ class PaymentService
             ];
         }
 
+        // Vérifiées disponibles par assertPaymentAllowed() avant la création de la transaction.
+        $bank = $this->bankTransfer->details();
+
         $transaction->update([
             'reference_externe' => $bankReference,
             'metadata' => array_merge($transaction->metadata ?? [], [
-                'bank_name' => self::BANK_NAME,
-                'bank_account_name' => self::BANK_ACCOUNT_NAME,
-                'bank_iban' => self::BANK_IBAN,
+                'bank_name' => $bank['bank_name'],
+                'bank_account_name' => $bank['account_name'],
+                'bank_iban' => $bank['iban'],
                 'bank_reference' => $bankReference,
                 'description' => $bankDescription,
             ]),
@@ -589,9 +597,9 @@ class PaymentService
             'data' => $base + [
                 'provider' => 'virement_bancaire',
                 'virement_instructions' => [
-                    'bank_name' => self::BANK_NAME,
-                    'account_name' => self::BANK_ACCOUNT_NAME,
-                    'iban' => self::BANK_IBAN,
+                    'bank_name' => $bank['bank_name'],
+                    'account_name' => $bank['account_name'],
+                    'iban' => $bank['iban'],
                     'reference' => $bankReference,
                 ],
             ],

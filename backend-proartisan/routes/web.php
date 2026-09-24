@@ -157,6 +157,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Plateforme
         Route::get('/settings', [BackofficeController::class, 'settings'])->middleware('can:admin.settings.manage')->name('settings');
+        // Déclarée avant /settings/{setting}, qui intercepterait « bank-transfer ».
+        Route::put('/settings/bank-transfer', [BackofficeController::class, 'updateBankTransfer'])->middleware('can:admin.settings.manage')->name('settings.bank-transfer.update');
         Route::put('/settings/{setting}', [BackofficeController::class, 'updateSetting'])->middleware('can:admin.settings.manage')->name('settings.update');
         Route::post('/sectors', [BackofficeController::class, 'storeSector'])->middleware('can:admin.taxonomy.manage')->name('sectors.store');
         Route::put('/sectors/{sector}', [BackofficeController::class, 'updateSector'])->middleware('can:admin.taxonomy.manage')->name('sectors.update');

@@ -26,6 +26,7 @@ use App\Models\Vitrine\VitrineSlide;
 use App\Models\Vitrine\VitrineVideo;
 use App\Models\WhatsappClickLog;
 use App\Services\AdminService;
+use App\Services\BankTransferSettingsService;
 use App\Services\GeneratedDocumentService;
 use App\Services\UploadLimitService;
 use Illuminate\Http\Request;
@@ -303,7 +304,14 @@ class AdminPanelData
     public function settings(): array
     {
         return [
-            'settingsList' => Schema::hasTable('settings') ? Setting::all() : [],
+            // Les coordonnées bancaires ont leur propre formulaire validé : elles
+            // ne doivent pas être modifiables par l'édition générique des réglages.
+            'settingsList' => Schema::hasTable('settings')
+                ? Setting::where('group', '!=', BankTransferSettingsService::GROUP)->get()
+                : [],
+            'bankTransferSettings' => Schema::hasTable('settings')
+                ? app(BankTransferSettingsService::class)->values()
+                : ['bank_name' => '', 'account_name' => '', 'iban' => ''],
             'sectors' => Schema::hasTable('sectors') ? Sector::with('trades')->get() : [],
         ];
     }

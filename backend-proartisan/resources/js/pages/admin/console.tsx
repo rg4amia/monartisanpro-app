@@ -96,6 +96,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         transactions = [] as AdminTransaction[],
         users = [] as AdminUser[],
         settingsList = [],
+        bankTransferSettings,
         evaluationsList = [] as AdminEvaluation[],
         artisansScores = [] as ArtisanScoreItem[],
         scoreLedger = [] as ScoreLedgerEntryItem[],
@@ -864,6 +865,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     onToggleOfflineSimulated={toggleOfflineSimulated}
                                     onRefresh={refreshData}
                                     settingsList={settingsList}
+                                    bankTransferSettings={bankTransferSettings}
                                     sectors={sectors}
                                     expandedSectors={expandedSectors}
                                     onToggleSector={(sectorId) => setExpandedSectors((prev) => ({ ...prev, [sectorId]: !prev[sectorId] }))}

@@ -18,6 +18,7 @@ use App\Http\Requests\Admin\SyncAdminPermissionsRequest;
 use App\Http\Requests\Admin\ToggleUserStatusRequest;
 use App\Http\Requests\Admin\UpdateAiSettingsRequest;
 use App\Http\Requests\Admin\UpdateAiUserQuotaRequest;
+use App\Http\Requests\Admin\UpdateBankTransferSettingsRequest;
 use App\Http\Requests\Admin\UpdateSettingRequest;
 use App\Http\Requests\Admin\UpdateTradeRequest;
 use App\Http\Requests\Admin\UpdateUserRequest;
@@ -367,6 +368,13 @@ class BackofficeController extends Controller
         $settings->updateSetting($setting, $request->validated('value'));
 
         return back()->with('success', 'Paramètre mis à jour.');
+    }
+
+    public function updateBankTransfer(UpdateBankTransferSettingsRequest $request, AdminSettingsService $settings): RedirectResponse
+    {
+        $settings->updateBankTransfer($request->validated());
+
+        return back()->with('success', 'Coordonnées de virement bancaire enregistrées.');
     }
 
     public function updateSector(StoreSectorRequest $request, Sector $sector, AdminTaxonomyService $taxonomy): RedirectResponse
