@@ -21,6 +21,9 @@ export interface ConfirmOptions {
     promptOptional?: boolean;
 }
 
+/** Signature de `confirm` renvoyée par `useConfirm()`, à transmettre aux hooks d'actions. */
+export type AskConfirm = (options: ConfirmOptions) => Promise<boolean | string>;
+
 type Resolver = (value: boolean | string) => void;
 
 interface DialogState extends ConfirmOptions {

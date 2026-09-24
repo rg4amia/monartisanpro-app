@@ -17,3 +17,7 @@ export * from './ConfirmDialog';
 export * from './loading';
 export * from './permissions';
 export * from './ErrorBoundary';
+export * from './consoleProps';
+export * from './heroStats';
+export * from './navigation';
+export * from './pagination';

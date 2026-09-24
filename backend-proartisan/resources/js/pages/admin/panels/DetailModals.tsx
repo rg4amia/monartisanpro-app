@@ -154,7 +154,7 @@ export function MissionDetailModal({
                             {mission.artisan_rejected_at || (mission as any).is_artisan_rejected ? (
                                 <>
                                     <p className="mt-1 text-sm text-rose-600 font-bold">Non affecté (Demande refusée)</p>
-                                    <p className="text-xs text-rose-500">Refusée le {shortDate(mission.artisan_rejected_at)}</p>
+                                    <p className="text-xs text-rose-500">{mission.artisan_rejected_at ? `Refusée le ${shortDate(mission.artisan_rejected_at)}` : 'Refusée'}</p>
                                 </>
                             ) : (
                                 <>

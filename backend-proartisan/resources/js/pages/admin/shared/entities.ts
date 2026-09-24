@@ -108,6 +108,7 @@ export interface AdminMission {
     transactions?: any[];
     litiges?: any[];
     evaluations?: any[];
+    artisan_id?: number | null;
     artisan_rejected_at?: string | null;
     is_artisan_rejected?: boolean;
     has_artisan?: boolean;
