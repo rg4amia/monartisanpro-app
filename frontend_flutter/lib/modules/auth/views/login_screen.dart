@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:get/get.dart';
@@ -8,23 +9,13 @@ import '../../../core/theme/app_colors.dart';
 // Pour d'éventuels globals
 import '../../../data/services/app_settings_service.dart';
 import '../controllers/auth_controller.dart';
+import '../widgets/login/login_account_dialogs.dart';
+import '../widgets/login/login_glow_bubble.dart';
+import '../widgets/login/login_profile_card.dart';
+import '../widgets/login/login_sections.dart';
+import '../widgets/login/login_tokens.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
-
-class _Dt {
-  static const primary = AppColors.primary;
-  static const primaryLight = AppColors.primaryLight;
-  static const bg = AppColors.background;
-  static const surface = AppColors.surface;
-  static const ink = AppColors.textPrimary;
-  static const muted = AppColors.textSecondary;
-  static const border = AppColors.border;
-  static const success = AppColors.success;
-  static const client = AppColors.client;
-  static const artisan = AppColors.accent;
-  static const fournisseur = AppColors.success;
-  static const driver = AppColors.driver;
-}
 
 // ─── Login Screen ────────────────────────────────────────────────────────────
 
@@ -95,7 +86,7 @@ class _LoginScreenState extends State<LoginScreen>
         statusBarIconBrightness: Brightness.dark,
       ),
       child: Scaffold(
-        backgroundColor: _Dt.bg,
+        backgroundColor: LoginTokens.bg,
         // Debug button - remove in production or wrap with kDebugMode
         // floatingActionButton: FloatingActionButton(
         //   mini: true,
@@ -117,7 +108,7 @@ class _LoginScreenState extends State<LoginScreen>
             Positioned(
               top: -80,
               left: -40,
-              child: _GlowBubble(
+              child: LoginGlowBubble(
                 size: 180,
                 color: AppColors.client.withValues(alpha: 0.12),
               ),
@@ -125,7 +116,7 @@ class _LoginScreenState extends State<LoginScreen>
             Positioned(
               top: 110,
               right: -70,
-              child: _GlowBubble(
+              child: LoginGlowBubble(
                 size: 220,
                 color: AppColors.accent.withValues(alpha: 0.10),
               ),
@@ -133,7 +124,7 @@ class _LoginScreenState extends State<LoginScreen>
             Positioned(
               bottom: -90,
               left: 30,
-              child: _GlowBubble(
+              child: LoginGlowBubble(
                 size: 200,
                 color: AppColors.success.withValues(alpha: 0.10),
               ),
@@ -148,7 +139,7 @@ class _LoginScreenState extends State<LoginScreen>
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       const SizedBox(height: 8),
-                      _buildWelcomeSection(),
+                      buildLoginWelcomeSection(),
                       const SizedBox(height: 28),
                       _buildProfileSelection(),
                       const SizedBox(height: 24),
@@ -163,14 +154,14 @@ class _LoginScreenState extends State<LoginScreen>
                         return AnimatedContainer(
                           duration: const Duration(milliseconds: 300),
                           margin: const EdgeInsets.only(bottom: 16),
-                          child: _buildError(_c.errorMsg.value!),
+                          child: buildLoginError(_c.errorMsg.value!),
                         );
                       }),
                       _buildContinueButton(),
                       const SizedBox(height: 12),
                       _buildResetLink(),
                       const SizedBox(height: 12),
-                      _buildFooter(),
+                      buildLoginFooter(),
                       const SizedBox(height: 12),
                     ],
                   ),
@@ -185,84 +176,6 @@ class _LoginScreenState extends State<LoginScreen>
 
   // ── Welcome Section ───────────────────────────────────────────────────────
 
-  Widget _buildWelcomeSection() {
-    return Column(
-      children: [
-        // Logo with glow & subtle animation
-        Hero(
-          tag: 'app_logo',
-          child: Container(
-            padding: const EdgeInsets.all(4),
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              boxShadow: [
-                BoxShadow(
-                  color: AppColors.primary.withValues(alpha: 0.15),
-                  blurRadius: 24,
-                  offset: const Offset(0, 8),
-                ),
-              ],
-            ),
-            child: Image.asset(
-              'assets/logo/logos.png',
-              width: 100,
-              height: 100,
-            ),
-          ),
-        ),
-        const SizedBox(height: 16),
-
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-          decoration: BoxDecoration(
-            color: AppColors.secondary,
-            borderRadius: BorderRadius.circular(999),
-          ),
-          child: const Text(
-            'Client, artisan ou fournisseur',
-            style: TextStyle(
-              fontSize: 12,
-              fontWeight: FontWeight.w800,
-              color: _Dt.primary,
-              letterSpacing: 0.4,
-            ),
-          ),
-        ),
-        const SizedBox(height: 14),
-        ShaderMask(
-          shaderCallback: (bounds) => const LinearGradient(
-            colors: [Color(0xFF1E1E1E), Color(0xFFC0842C)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ).createShader(bounds),
-          child: const Text(
-            'Bienvenue sur ProsArtisan',
-            style: TextStyle(
-              fontSize: 30,
-              fontWeight: FontWeight.w900,
-              color: Colors.white,
-              letterSpacing: -0.8,
-              height: 1.1,
-            ),
-            textAlign: TextAlign.center,
-          ),
-        ),
-        const SizedBox(height: 10),
-
-        Text(
-          'Accédez à votre espace sécurisé pour gérer vos missions, vos paiements et votre suivi KYC.',
-          style: TextStyle(
-            fontSize: 14.5,
-            color: _Dt.muted,
-            fontWeight: FontWeight.w600,
-            height: 1.4,
-          ),
-          textAlign: TextAlign.center,
-        ),
-      ],
-    );
-  }
-
   // ── Profile Selection ─────────────────────────────────────────────────────
 
   Widget _buildProfileSelection() {
@@ -273,7 +186,7 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (!appSettings.isHidden('CLIENT')) {
         visibleCards.add(
-          _buildProfileCard(
+          buildLoginProfileCard(
             'CLIENT',
             Icons.person_outline_rounded,
             '👩‍💼',
@@ -290,7 +203,7 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (!appSettings.isHidden('ARTISAN')) {
         visibleCards.add(
-          _buildProfileCard(
+          buildLoginProfileCard(
             'ARTISAN',
             Icons.construction_outlined,
             '👨‍🔧',
@@ -307,7 +220,7 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (!appSettings.isHidden('FOURNISSEUR')) {
         visibleCards.add(
-          _buildProfileCard(
+          buildLoginProfileCard(
             'FOURNISSEUR',
             Icons.warehouse_outlined,
             '🏭',
@@ -324,7 +237,7 @@ class _LoginScreenState extends State<LoginScreen>
 
       if (!appSettings.isHidden('LIVREUR')) {
         visibleCards.add(
-          _buildProfileCard(
+          buildLoginProfileCard(
             'LIVREUR',
             Icons.local_shipping_outlined,
             '🚚',
@@ -430,168 +343,6 @@ class _LoginScreenState extends State<LoginScreen>
     });
   }
 
-  Widget _buildProfileCard(
-    String label,
-    IconData icon,
-    String emoji,
-    bool isSelected,
-    bool isBlocked,
-    VoidCallback onTap,
-  ) {
-    final appSettings = Get.find<AppSettingsService>();
-    final accent = _roleColor(label);
-    return GestureDetector(
-      onTap: isBlocked
-          ? () {
-              Get.snackbar(
-                'Accès désactivé',
-                appSettings.getDisabledMessage(label),
-                snackPosition: SnackPosition.BOTTOM,
-                backgroundColor: Colors.red.withValues(alpha: 0.9),
-                colorText: Colors.white,
-                margin: const EdgeInsets.all(16),
-              );
-            }
-          : onTap,
-      child: AnimatedScale(
-        scale: isSelected ? 1.03 : 1.0,
-        duration: const Duration(milliseconds: 250),
-        curve: Curves.easeOutBack,
-        child: Opacity(
-          opacity: isBlocked ? 0.4 : 1.0,
-          child: AnimatedContainer(
-            duration: const Duration(milliseconds: 280),
-            curve: Curves.easeOutCubic,
-            transform: isSelected
-                ? Matrix4.translationValues(0, -5, 0)
-                : Matrix4.identity(),
-            padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 8),
-            decoration: BoxDecoration(
-              color: isSelected ? accent.withValues(alpha: 0.10) : _Dt.surface,
-              borderRadius: BorderRadius.circular(16),
-              border: Border.all(
-                color: isSelected ? accent : _Dt.border,
-                width: isSelected ? 2.5 : 1.5,
-              ),
-              boxShadow: isSelected
-                  ? [
-                      BoxShadow(
-                        color: accent.withValues(alpha: 0.20),
-                        blurRadius: 18,
-                        offset: const Offset(0, 8),
-                      ),
-                    ]
-                  : [
-                      BoxShadow(
-                        color: Colors.black.withValues(alpha: 0.03),
-                        blurRadius: 4,
-                        offset: const Offset(0, 2),
-                      ),
-                    ],
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Stack(
-                  clipBehavior: Clip.none,
-                  alignment: Alignment.center,
-                  children: [
-                    AnimatedContainer(
-                      duration: const Duration(milliseconds: 280),
-                      width: 56,
-                      height: 56,
-                      decoration: BoxDecoration(
-                        gradient: isSelected
-                            ? LinearGradient(
-                                colors: [
-                                  accent,
-                                  accent.withValues(alpha: 0.82),
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              )
-                            : null,
-                        color: isSelected ? null : _Dt.bg,
-                        borderRadius: BorderRadius.circular(14),
-                      ),
-                      child: Center(
-                        child: Text(
-                          emoji,
-                          style: const TextStyle(fontSize: 28),
-                        ),
-                      ),
-                    ),
-                    if (isSelected)
-                      Positioned(
-                        top: -6,
-                        right: -6,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: accent,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: accent.withValues(alpha: 0.35),
-                                blurRadius: 8,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.check_rounded,
-                            color: Colors.white,
-                            size: 12,
-                          ),
-                        ),
-                      ),
-                    if (isBlocked)
-                      Positioned(
-                        top: -6,
-                        right: -6,
-                        child: Container(
-                          padding: const EdgeInsets.all(4),
-                          decoration: BoxDecoration(
-                            color: Colors.red.shade400,
-                            shape: BoxShape.circle,
-                            boxShadow: [
-                              BoxShadow(
-                                color: Colors.red.withValues(alpha: 0.3),
-                                blurRadius: 6,
-                                offset: const Offset(0, 2),
-                              ),
-                            ],
-                          ),
-                          child: const Icon(
-                            Icons.lock_outline_rounded,
-                            color: Colors.white,
-                            size: 14,
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: 10),
-                Text(
-                  label,
-                  style: TextStyle(
-                    fontSize: 11.5,
-                    fontWeight: FontWeight.w900,
-                    color: isSelected ? accent : _Dt.ink,
-                    letterSpacing: 0.4,
-                  ),
-                  textAlign: TextAlign.center,
-                  maxLines: 1,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
   // ── Phone Input ───────────────────────────────────────────────────────────
 
   Widget _buildPhoneInput() {
@@ -601,7 +352,7 @@ class _LoginScreenState extends State<LoginScreen>
         Row(
           children: [
             Obx(() {
-              final activeColor = _roleColor(_selectedProfile.value);
+              final activeColor = loginRoleColor(_selectedProfile.value);
               return Container(
                 padding: const EdgeInsets.all(6),
                 decoration: BoxDecoration(
@@ -621,14 +372,14 @@ class _LoginScreenState extends State<LoginScreen>
               style: TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w700,
-                color: _Dt.ink,
+                color: LoginTokens.ink,
               ),
             ),
           ],
         ),
         const SizedBox(height: 12),
         Obx(() {
-          final activeColor = _roleColor(_selectedProfile.value);
+          final activeColor = loginRoleColor(_selectedProfile.value);
           final hasContent = _c.phone.value.length > 4;
           return Container(
             decoration: BoxDecoration(
@@ -647,7 +398,7 @@ class _LoginScreenState extends State<LoginScreen>
                   padding:
                       const EdgeInsets.symmetric(horizontal: 14, vertical: 16),
                   decoration: BoxDecoration(
-                    color: _Dt.surface,
+                    color: LoginTokens.surface,
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(16),
                       bottomLeft: Radius.circular(16),
@@ -655,7 +406,7 @@ class _LoginScreenState extends State<LoginScreen>
                     border: Border.all(
                       color: _selectedProfile.value != null
                           ? activeColor.withValues(alpha: 0.6)
-                          : _Dt.border,
+                          : LoginTokens.border,
                       width: 1.5,
                     ),
                   ),
@@ -668,7 +419,7 @@ class _LoginScreenState extends State<LoginScreen>
                         style: TextStyle(
                           fontWeight: FontWeight.w800,
                           fontSize: 15,
-                          color: _Dt.ink,
+                          color: LoginTokens.ink,
                         ),
                       ),
                     ],
@@ -684,20 +435,20 @@ class _LoginScreenState extends State<LoginScreen>
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
-                      color: _Dt.ink,
+                      color: LoginTokens.ink,
                       letterSpacing: 1.2,
                     ),
                     decoration: InputDecoration(
                       hintText: '01 23 45 67 89',
                       hintStyle: TextStyle(
-                        color: _Dt.muted.withValues(alpha: 0.4),
+                        color: LoginTokens.muted.withValues(alpha: 0.4),
                         fontWeight: FontWeight.w500,
                         letterSpacing: 1.2,
                       ),
                       suffixIcon: hasContent
                           ? Icon(
                               Icons.check_circle,
-                              color: _roleColor(_selectedProfile.value),
+                              color: loginRoleColor(_selectedProfile.value),
                               size: 20,
                             )
                           : null,
@@ -714,7 +465,7 @@ class _LoginScreenState extends State<LoginScreen>
                         borderSide: BorderSide(
                           color: _selectedProfile.value != null
                               ? activeColor.withValues(alpha: 0.6)
-                              : _Dt.border,
+                              : LoginTokens.border,
                           width: 1.5,
                         ),
                       ),
@@ -726,7 +477,7 @@ class _LoginScreenState extends State<LoginScreen>
                         borderSide: BorderSide(
                           color: _selectedProfile.value != null
                               ? activeColor.withValues(alpha: 0.6)
-                              : _Dt.border,
+                              : LoginTokens.border,
                           width: 1.5,
                         ),
                       ),
@@ -737,7 +488,7 @@ class _LoginScreenState extends State<LoginScreen>
                         ),
                         borderSide: BorderSide(color: activeColor, width: 2.5),
                       ),
-                      fillColor: _Dt.surface,
+                      fillColor: LoginTokens.surface,
                       filled: true,
                     ),
                   ),
@@ -754,7 +505,7 @@ class _LoginScreenState extends State<LoginScreen>
 
   Widget _buildKycNotice() {
     return Obx(() {
-      final activeColor = _roleColor(_selectedProfile.value);
+      final activeColor = loginRoleColor(_selectedProfile.value);
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -797,7 +548,7 @@ class _LoginScreenState extends State<LoginScreen>
                     style: TextStyle(
                       fontSize: 13.5,
                       fontWeight: FontWeight.w800,
-                      color: _Dt.ink,
+                      color: LoginTokens.ink,
                     ),
                   ),
                   const SizedBox(height: 6),
@@ -805,7 +556,7 @@ class _LoginScreenState extends State<LoginScreen>
                     text: TextSpan(
                       style: const TextStyle(
                         fontSize: 12,
-                        color: _Dt.muted,
+                        color: LoginTokens.muted,
                         fontWeight: FontWeight.w600,
                         height: 1.5,
                       ),
@@ -849,7 +600,7 @@ class _LoginScreenState extends State<LoginScreen>
     return Obx(() {
       final canContinue =
           _selectedProfile.value != null && _c.phone.value.length >= 14;
-      final activeColor = _roleColor(_selectedProfile.value);
+      final activeColor = loginRoleColor(_selectedProfile.value);
       final darkActiveColor =
           Color.alphaBlend(Colors.black.withValues(alpha: 0.15), activeColor);
 
@@ -949,509 +700,19 @@ class _LoginScreenState extends State<LoginScreen>
 
   // ── Error Display ─────────────────────────────────────────────────────────
 
-  Widget _buildError(String msg) {
-    return TweenAnimationBuilder<double>(
-      duration: const Duration(milliseconds: 400),
-      tween: Tween(begin: 0.0, end: 1.0),
-      curve: Curves.easeOutBack,
-      builder: (context, value, child) {
-        return Transform.scale(
-          scale: value,
-          child: Opacity(
-            opacity: value,
-            child: child,
-          ),
-        );
-      },
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          gradient: const LinearGradient(
-            colors: [Color(0xFFFEF2F2), Color(0xFFFEE2E2)],
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-          ),
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: const Color(0xFFFECACA), width: 1.5),
-          boxShadow: [
-            BoxShadow(
-              color: const Color(0xFFB91C1C).withValues(alpha: 0.1),
-              blurRadius: 8,
-              offset: const Offset(0, 2),
-            ),
-          ],
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(6),
-              decoration: const BoxDecoration(
-                color: Color(0xFFB91C1C),
-                shape: BoxShape.circle,
-              ),
-              child: const Icon(
-                Icons.error_outline_rounded,
-                color: Colors.white,
-                size: 16,
-              ),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Text(
-                msg,
-                style: const TextStyle(
-                  color: Color(0xFF7F1D1D),
-                  fontSize: 13,
-                  fontWeight: FontWeight.w700,
-                  height: 1.4,
-                ),
-              ),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
   // ── Footer ────────────────────────────────────────────────────────────────
-
-  Widget _buildFooter() {
-    return Column(
-      children: [
-        // Sign up prompt
-        Wrap(
-          alignment: WrapAlignment.center,
-          crossAxisAlignment: WrapCrossAlignment.center,
-          children: [
-            const Text(
-              'Nouveau sur ProsArtisan ? ',
-              style: TextStyle(
-                fontSize: 13.5,
-                color: _Dt.muted,
-                fontWeight: FontWeight.w500,
-              ),
-            ),
-            TextButton(
-              onPressed: () {
-                HapticFeedback.lightImpact();
-                // Navigate to registration
-              },
-              style: TextButton.styleFrom(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
-                minimumSize: Size.zero,
-                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
-              ),
-              child: ShaderMask(
-                shaderCallback: (bounds) => const LinearGradient(
-                  colors: [_Dt.primary, _Dt.primaryLight],
-                ).createShader(bounds),
-                child: const Text(
-                  'Créer un compte',
-                  style: TextStyle(
-                    fontSize: 13.5,
-                    fontWeight: FontWeight.w800,
-                    color: Colors.white,
-                  ),
-                ),
-              ),
-            ),
-          ],
-        ),
-        const SizedBox(height: 14),
-
-        // Help link
-        InkWell(
-          onTap: () {
-            HapticFeedback.lightImpact();
-            // Show KYC help
-          },
-          borderRadius: BorderRadius.circular(8),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Icon(
-                  Icons.help_outline_rounded,
-                  size: 16,
-                  color: _Dt.muted.withValues(alpha: 0.8),
-                ),
-                const SizedBox(width: 6),
-                Text(
-                  'Aide sur la vérification KYC',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w600,
-                    color: _Dt.muted.withValues(alpha: 0.8),
-                    decoration: TextDecoration.underline,
-                    decorationColor: _Dt.muted.withValues(alpha: 0.4),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Color _roleColor(String? label) {
-    if (label == null) return _Dt.primary;
-    switch (label) {
-      case 'ARTISAN':
-        return _Dt.artisan;
-      case 'FOURNISSEUR':
-        return _Dt.fournisseur;
-      case 'LIVREUR':
-        return _Dt.driver;
-      case 'CLIENT':
-      default:
-        return _Dt.client;
-    }
-  }
 
   Widget _buildResetLink() {
     return Center(
       child: TextButton(
-        onPressed: _showResetOptionsDialog,
+        onPressed: () => showLoginResetOptionsDialog(_c),
         child: const Text(
           'Paramètres perdus ? Réinitialiser',
           style: TextStyle(
-            color: _Dt.muted,
+            color: LoginTokens.muted,
             fontSize: 13,
             fontWeight: FontWeight.w700,
             decoration: TextDecoration.underline,
-          ),
-        ),
-      ),
-    );
-  }
-
-  void _showResetOptionsDialog() {
-    Get.dialog(
-      AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Réinitialisation de connexion',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-        content: const Text(
-          'Choisissez l\'action de réinitialisation appropriée pour votre situation :',
-          style: TextStyle(color: _Dt.muted),
-        ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-        actions: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.stretch,
-            children: [
-              OutlinedButton.icon(
-                onPressed: () async {
-                  Get.back();
-                  await _c.resetLocalSession();
-                  Get.snackbar(
-                    'Session réinitialisée',
-                    'Le cache local a été vidé. Vous pouvez à présent vous reconnecter.',
-                    backgroundColor: _Dt.success,
-                    colorText: Colors.white,
-                    snackPosition: SnackPosition.TOP,
-                  );
-                },
-                icon: const Icon(Icons.refresh_rounded),
-                label: const Text('Réinitialiser l\'application (local)'),
-                style: OutlinedButton.styleFrom(
-                  foregroundColor: _Dt.primary,
-                  side: const BorderSide(color: _Dt.primary),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 8),
-              ElevatedButton.icon(
-                onPressed: () {
-                  Get.back();
-                  _showRecoverAccountDialog();
-                },
-                icon: const Icon(Icons.swap_calls_rounded),
-                label: const Text('Changement de numéro de téléphone'),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: _Dt.primary,
-                  foregroundColor: Colors.white,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                ),
-              ),
-              const SizedBox(height: 8),
-              TextButton(
-                onPressed: () => Get.back(),
-                child: const Text('Fermer'),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _showRecoverAccountDialog() {
-    final oldPhoneCtrl = TextEditingController(text: '+225');
-    final newPhoneCtrl = TextEditingController(text: '+225');
-    final nameCtrl = TextEditingController();
-    final otpCtrl = TextEditingController();
-
-    // Reset controller states
-    _c.resetOldPhone.value = '+225';
-    _c.resetNewPhone.value = '+225';
-    _c.resetName.value = '';
-    _c.resetRole.value = null;
-    _c.resetOtp.value = '';
-    _c.isResetOtpSent.value = false;
-    _c.errorMsg.value = null;
-
-    Get.dialog(
-      Obx(
-        () => AlertDialog(
-          shape:
-              RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-          title: const Text(
-            'Récupération de compte',
-            style: TextStyle(fontWeight: FontWeight.w800),
-          ),
-          content: SingleChildScrollView(
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Text(
-                  'Rattachez votre ancien compte à votre nouveau numéro de téléphone.',
-                  style: TextStyle(color: _Dt.muted, fontSize: 13),
-                ),
-                const SizedBox(height: 16),
-
-                // Role Selector
-                DropdownButtonFormField<String>(
-                  initialValue: _c.resetRole.value,
-                  decoration: const InputDecoration(
-                    labelText: 'Votre espace / rôle',
-                    border: OutlineInputBorder(),
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  items: const [
-                    DropdownMenuItem(value: 'client', child: Text('Client')),
-                    DropdownMenuItem(
-                      value: 'artisan',
-                      child: Text('Artisan'),
-                    ),
-                    DropdownMenuItem(
-                      value: 'fournisseur',
-                      child: Text('Fournisseur'),
-                    ),
-                    DropdownMenuItem(value: 'driver', child: Text('Livreur')),
-                  ],
-                  onChanged: _c.isResetOtpSent.value
-                      ? null
-                      : (val) {
-                          _c.resetRole.value = val;
-                        },
-                ),
-                const SizedBox(height: 12),
-
-                // Name
-                TextField(
-                  controller: nameCtrl,
-                  enabled: !_c.isResetOtpSent.value,
-                  decoration: const InputDecoration(
-                    labelText: 'Nom complet exact',
-                    border: OutlineInputBorder(),
-                    hintText: 'Ex: Jean Dupont',
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  onChanged: (val) => _c.resetName.value = val,
-                ),
-                const SizedBox(height: 12),
-
-                // Old Phone
-                TextField(
-                  controller: oldPhoneCtrl,
-                  enabled: !_c.isResetOtpSent.value,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Ancien numéro (+225)',
-                    border: OutlineInputBorder(),
-                    hintText: '+2250707000000',
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  onChanged: (val) => _c.resetOldPhone.value = val,
-                ),
-                const SizedBox(height: 12),
-
-                // New Phone
-                TextField(
-                  controller: newPhoneCtrl,
-                  enabled: !_c.isResetOtpSent.value,
-                  keyboardType: TextInputType.phone,
-                  decoration: const InputDecoration(
-                    labelText: 'Nouveau numéro (+225)',
-                    border: OutlineInputBorder(),
-                    hintText: '+2250707000000',
-                    contentPadding:
-                        EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  ),
-                  onChanged: (val) => _c.resetNewPhone.value = val,
-                ),
-
-                if (_c.isResetOtpSent.value) ...[
-                  const SizedBox(height: 16),
-                  const Divider(),
-                  const SizedBox(height: 8),
-                  const Text(
-                    'Entrez le code OTP reçu sur votre nouveau numéro :',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                  ),
-                  const SizedBox(height: 8),
-                  TextField(
-                    controller: otpCtrl,
-                    keyboardType: TextInputType.number,
-                    maxLength: 4,
-                    textAlign: TextAlign.center,
-                    style: const TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      letterSpacing: 8,
-                    ),
-                    decoration: const InputDecoration(
-                      border: OutlineInputBorder(),
-                      counterText: '',
-                      hintText: '0000',
-                      contentPadding: EdgeInsets.symmetric(vertical: 8),
-                    ),
-                    onChanged: (val) => _c.resetOtp.value = val,
-                  ),
-                ],
-
-                if (_c.errorMsg.value != null) ...[
-                  const SizedBox(height: 12),
-                  Text(
-                    _c.errorMsg.value!,
-                    style: const TextStyle(
-                      color: Colors.red,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Get.back(),
-              child: const Text('Annuler'),
-            ),
-            // À l'étape OTP, les champs d'identité sont désactivés : sans ce
-            // retour, une saisie erronée obligeait à annuler tout le
-            // formulaire et à tout ressaisir.
-            if (_c.isResetOtpSent.value)
-              TextButton(
-                onPressed: _c.isResetting.value
-                    ? null
-                    : () {
-                        _c.isResetOtpSent.value = false;
-                        _c.errorMsg.value = null;
-                        _c.resetOtp.value = '';
-                        otpCtrl.clear();
-                      },
-                child: const Text('Précédent'),
-              ),
-            ElevatedButton(
-              onPressed: _c.isResetting.value
-                  ? null
-                  : () async {
-                      if (!_c.isResetOtpSent.value) {
-                        // Envoyer OTP
-                        await _c.requestResetPhone();
-                        if (_c.errorMsg.value != null) {
-                          Get.snackbar(
-                            'Erreur',
-                            _c.errorMsg.value!,
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                          );
-                        } else {
-                          Get.snackbar(
-                            'OTP envoyé',
-                            'Un code de validation a été envoyé sur votre nouveau numéro.',
-                            backgroundColor: _Dt.success,
-                            colorText: Colors.white,
-                          );
-                        }
-                      } else {
-                        // Confirmer la récupération
-                        final success = await _c.confirmResetPhone();
-                        if (success) {
-                          Get.back();
-                          Get.snackbar(
-                            'Compte récupéré',
-                            'Votre compte a été associé à votre nouveau numéro avec succès.',
-                            backgroundColor: _Dt.success,
-                            colorText: Colors.white,
-                          );
-                          unawaited(Get.offAllNamed(Routes.mainTab));
-                        } else {
-                          Get.snackbar(
-                            'Code OTP erroné',
-                            _c.errorMsg.value ?? 'Le code saisi est invalide.',
-                            backgroundColor: Colors.red,
-                            colorText: Colors.white,
-                          );
-                        }
-                      }
-                    },
-              child: _c.isResetting.value
-                  ? const SizedBox(
-                      width: 18,
-                      height: 18,
-                      child: CircularProgressIndicator(
-                        strokeWidth: 2,
-                        color: Colors.white,
-                      ),
-                    )
-                  : Text(_c.isResetOtpSent.value ? 'Confirmer' : 'Suivant'),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-}
-
-class _GlowBubble extends StatelessWidget {
-  const _GlowBubble({
-    required this.size,
-    required this.color,
-  });
-
-  final double size;
-  final Color color;
-
-  @override
-  Widget build(BuildContext context) {
-    return IgnorePointer(
-      child: Container(
-        width: size,
-        height: size,
-        decoration: BoxDecoration(
-          shape: BoxShape.circle,
-          gradient: RadialGradient(
-            colors: [
-              color,
-              color.withValues(alpha: 0),
-            ],
           ),
         ),
       ),
