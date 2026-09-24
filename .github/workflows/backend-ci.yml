@@ -1,14 +1,16 @@
 name: Deploy to Production (Hostinger Optimized)
 
+# new-dev-inz est l'unique branche principale : elle seule porte les tests
+# et la mise en production. new-develop n'est plus qu'une archive.
 on:
   push:
-    branches: [new-develop, new-dev-inz]
+    branches: [new-dev-inz]
     paths:
       - "backend-proartisan/**"
       - "vitrine-nextjs/**"
       - ".github/workflows/backend-ci.yml"
   pull_request:
-    branches: [new-develop, new-dev-inz]
+    branches: [new-dev-inz]
     paths:
       - "backend-proartisan/**"
       - "vitrine-nextjs/**"
@@ -157,7 +159,10 @@ jobs:
     needs: [tests, tests-mariadb]
     # Une pull request ne fait qu'exécuter les tests : jamais de mise en
     # production depuis la référence d'une PR (refs/pull/N/merge).
-    if: github.event_name != 'pull_request'
+    # Seule new-dev-inz déploie, y compris via workflow_dispatch : le serveur
+    # fait un `git reset --hard` sur la branche déclenchante, une branche
+    # périmée écraserait donc la production.
+    if: github.event_name != 'pull_request' && github.ref_name == 'new-dev-inz'
     runs-on: ubuntu-24.04
 
     steps:

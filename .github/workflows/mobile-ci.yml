@@ -2,12 +2,12 @@ name: Mobile CI
 
 on:
   push:
-    branches: [new-develop, new-dev-inz]
+    branches: [new-dev-inz]
     paths:
       - "frontend_flutter/**"
       - ".github/workflows/mobile-ci.yml"
   pull_request:
-    branches: [new-develop]
+    branches: [new-dev-inz]
     paths:
       - "frontend_flutter/**"
       - ".github/workflows/mobile-ci.yml"
