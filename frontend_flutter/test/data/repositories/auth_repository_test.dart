@@ -1,3 +1,9 @@
+// Test d'intégration : exige un backend Laravel démarré (voir test_config.dart).
+// Ignoré par `flutter test` par défaut (dart_test.yaml) ; à lancer avec
+// `flutter test --tags integration --run-skipped`.
+@Tags(['integration'])
+library;
+
 import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';

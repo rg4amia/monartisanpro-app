@@ -146,7 +146,8 @@ cd frontend_flutter
 
 flutter pub get          # installer les dépendances
 flutter run              # lancer sur émulateur/device
-flutter test             # tests unitaires
+flutter test             # tests unitaires et widget (tests `integration` ignorés, cf. dart_test.yaml)
+flutter test --tags integration --run-skipped  # tests d'intégration, backend Herd démarré
 flutter build apk        # build Android release → build/app/outputs/flutter-apk/ (emplacement de référence des APK, jamais la racine du dépôt)
 ```
 

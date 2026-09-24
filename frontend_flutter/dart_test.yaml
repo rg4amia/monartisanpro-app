@@ -1,0 +1,8 @@
+# Configuration du lanceur de tests (package:test, lu par `flutter test`).
+tags:
+  # Tests qui appellent un backend Laravel réel (Herd en local) : sans lui,
+  # ils échouent tous et masquent les vraies régressions. Ignorés par défaut
+  # (comptés « ~ » dans le résultat) ; backend démarré, les lancer avec :
+  #   flutter test --tags integration --run-skipped
+  integration:
+    skip: "Test d'intégration : exige un backend Laravel démarré (flutter test --tags integration --run-skipped)."

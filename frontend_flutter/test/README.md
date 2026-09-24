@@ -2,9 +2,16 @@
 
 ## Configuration
 
-Les tests sont configurés pour utiliser le backend Laravel Herd:
+Deux familles de tests coexistent :
 
-- **URL Backend**: `http://backend-proartisan.test/api/v1`
+- **Tests unitaires et widget** (la grande majorité) : autonomes, sans réseau.
+  `flutter test` les exécute, en local comme en CI.
+- **Tests d'intégration**, étiquetés `@Tags(['integration'])`
+  (`test/data/repositories/*_repository_test.dart`,
+  `test/integration/full_workflow_test.dart`) : ils appellent le backend
+  Laravel Herd réel (`http://backend-proartisan.test/api/v1`). `dart_test.yaml`
+  les **ignore par défaut** (comptés `~` dans le résultat) : sans backend, ils
+  échouaient tous et masquaient les vraies régressions.
 
 ## Structure des Tests
 
@@ -29,18 +36,27 @@ test/
 
 ## Exécution des Tests
 
-### Tous les tests
-
-```bash
-./test_runner.sh
-```
-
-Ou directement avec Flutter:
+### Tests unitaires et widget (par défaut)
 
 ```bash
 cd frontend_flutter
 flutter test
 ```
+
+### Tests d'intégration (backend Herd démarré)
+
+```bash
+flutter test --tags integration --run-skipped
+```
+
+### Tout d'un coup
+
+```bash
+./frontend_flutter/test_runner.sh   # depuis la racine du dépôt
+```
+
+Le script lance les tests unitaires, puis les tests d'intégration si le
+backend Herd répond.
 
 ### Tests spécifiques
 
@@ -63,7 +79,7 @@ genhtml coverage/lcov.info -o coverage/html
 open coverage/html/index.html
 ```
 
-## Prérequis
+## Prérequis des tests d'intégration
 
 1. **Backend Laravel Herd démarré**
    - Assurez-vous que `http://backend-proartisan.test` est accessible
@@ -119,7 +135,7 @@ Configurées dans `test_config.dart`:
 
 ## Notes Importantes
 
-1. **Tests avec backend réel**: Les tests utilisent le backend Herd réel, pas de mocks
+1. **Tests avec backend réel**: les tests d'intégration utilisent le backend Herd réel, pas de mocks ; tout nouveau test de ce type doit porter `@Tags(['integration'])`, sans quoi il casserait `flutter test` et la CI
 2. **Nettoyage**: Chaque test nettoie les données après exécution
 3. **Authentification**: Certains tests nécessitent un token valide
 4. **Données temporaires**: Les tests créent des données temporaires qui peuvent persister
@@ -148,16 +164,10 @@ curl http://backend-proartisan.test/api/v1/sectors
 
 ## CI/CD
 
-Pour intégrer dans un pipeline CI/CD:
-
-```yaml
-# .github/workflows/test.yml
-- name: Run Flutter tests
-  run: |
-    cd frontend_flutter
-    flutter pub get
-    flutter test --coverage
-```
+`.github/workflows/mobile-ci.yml` exécute `flutter analyze --fatal-infos`
+puis `flutter test` sur toute la suite : aucun dossier à déclarer, un nouveau
+fichier de test est exécuté d'office. Les tests d'intégration y restent
+ignorés (aucun backend Laravel en CI).
 
 ## Contribution
 

@@ -16,11 +16,13 @@ fi
 
 # Vérifier que le backend Herd est accessible
 echo "🔍 Vérification de la connexion au backend Herd..."
+BACKEND_OK=0
 if curl -s -o /dev/null -w "%{http_code}" http://backend-proartisan.test/api/v1/sectors | grep -q "200\|401"; then
-    echo "✅ Backend Herd accessible"
+    echo "✅ Backend Herd accessible : les tests d'intégration seront aussi lancés"
+    BACKEND_OK=1
 else
-    echo "⚠️  Backend Herd non accessible - certains tests pourraient échouer"
-    echo "   Assurez-vous que Laravel Herd est démarré"
+    echo "⚠️  Backend Herd non accessible : tests d'intégration ignorés"
+    echo "   Démarrez Laravel Herd pour les exécuter"
 fi
 
 echo ""
@@ -32,11 +34,21 @@ echo ""
 echo "🧪 Exécution des tests unitaires..."
 echo "================================================"
 
-# Exécuter tous les tests
+# Tests unitaires et widget (les tests étiquetés `integration` sont ignorés
+# par dart_test.yaml)
 flutter test --coverage
+STATUS=$?
+
+# Tests d'intégration contre le backend réel, s'il répond
+if [ $STATUS -eq 0 ] && [ $BACKEND_OK -eq 1 ]; then
+    echo ""
+    echo "🔌 Exécution des tests d'intégration (backend Herd)..."
+    flutter test --tags integration --run-skipped
+    STATUS=$?
+fi
 
 # Vérifier le résultat
-if [ $? -eq 0 ]; then
+if [ $STATUS -eq 0 ]; then
     echo ""
     echo "================================================"
     echo "✅ Tous les tests sont passés avec succès!"

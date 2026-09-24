@@ -37,14 +37,12 @@ jobs:
         working-directory: frontend_flutter
         run: flutter analyze --fatal-infos
 
-      # Tests unitaires / widget uniquement — les tests d'intégration
-      # (test/integration, test/data/repositories) exigent un backend Laravel live.
+      # Toute la suite : les tests étiquetés `integration` (backend Laravel
+      # live) sont ignorés par dart_test.yaml. Aucune liste de dossiers à
+      # maintenir : un nouveau fichier de test est exécuté d'office.
       - name: Run unit & widget tests
         working-directory: frontend_flutter
-        run: >-
-          flutter test
-          test/core test/data/models test/modules test/shared
-          test/unit_tests_simple_test.dart test/widget_test.dart
+        run: flutter test
 
   build-android:
     runs-on: ubuntu-24.04
