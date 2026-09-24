@@ -13,6 +13,7 @@ use App\Http\Controllers\Admin\RecruitmentAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\KycDocumentController;
+use App\Http\Controllers\RecruitmentVoiceNoteController;
 use App\Http\Controllers\UserPhotoController;
 use Illuminate\Support\Facades\Route;
 use Inertia\Inertia;
@@ -46,6 +47,13 @@ Route::get('/', function () {
 Route::get('/kyc/documents/{document}/file', [KycDocumentController::class, 'show'])
     ->middleware('signed')
     ->name('kyc.document.file');
+
+// Note vocale de candidature au recrutement : même principe
+// (RecruitmentApplication::voiceNoteUrl), servie uniquement une fois validée
+// sans coordonnées.
+Route::get('/recruitment/voice-notes/{application}/file', [RecruitmentVoiceNoteController::class, 'show'])
+    ->middleware('signed')
+    ->name('recruitment.voice-note.file');
 
 // Photo de profil : même principe que la route ci-dessus (User::photoUrl).
 Route::get('/users/{user}/photo', [UserPhotoController::class, 'show'])

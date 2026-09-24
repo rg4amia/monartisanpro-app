@@ -35,6 +35,15 @@ class RecruitmentApplicationModel {
   final RecruitmentApplicantModel? artisan;
   final int? engagementId;
 
+  /// Note vocale de candidature : l'URL (signée, 15 min) et la transcription
+  /// ne sont fournies qu'une fois la note validée sans coordonnées.
+  final String? voiceNoteUrl;
+  final String? voiceTranscription;
+  final int? voiceNoteDuration;
+
+  /// pending · approved · contact_detected · failed — null sans note vocale.
+  final String? voiceStatus;
+
   const RecruitmentApplicationModel({
     required this.id,
     required this.offerId,
@@ -44,6 +53,10 @@ class RecruitmentApplicationModel {
     this.offer,
     this.artisan,
     this.engagementId,
+    this.voiceNoteUrl,
+    this.voiceTranscription,
+    this.voiceNoteDuration,
+    this.voiceStatus,
   });
 
   static int _asInt(dynamic value) {
@@ -79,6 +92,10 @@ class RecruitmentApplicationModel {
       engagementId: engagementJson is Map<String, dynamic>
           ? _asInt(engagementJson['id'])
           : null,
+      voiceNoteUrl: readString(json['voice_note_url']),
+      voiceTranscription: readString(json['voice_transcription']),
+      voiceNoteDuration: readInt(json['voice_note_duration']),
+      voiceStatus: readString(json['voice_status']),
     );
   }
 }

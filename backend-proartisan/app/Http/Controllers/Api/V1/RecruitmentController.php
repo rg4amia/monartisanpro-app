@@ -153,8 +153,20 @@ class RecruitmentController extends Controller
 
     public function apply(Request $request, RecruitmentOffer $offer): JsonResponse
     {
+        // Note vocale facultative : 20 s au plus (durée déclarée) et 1 Mo, ce
+        // qui borne aussi la durée réelle d'un enregistrement AAC/M4A.
+        $validated = $request->validate([
+            'voice_note' => 'nullable|file|max:1024|mimes:m4a,mp4,aac,mp3,wav,ogg,oga,webm,3gp',
+            'voice_note_duration' => 'required_with:voice_note|nullable|integer|min:1|max:20',
+        ]);
+
         try {
-            $application = $this->recruitment->applyToOffer($request->user(), $offer);
+            $application = $this->recruitment->applyToOffer(
+                $request->user(),
+                $offer,
+                $request->file('voice_note'),
+                isset($validated['voice_note_duration']) ? (int) $validated['voice_note_duration'] : null,
+            );
         } catch (ValidationException $e) {
             return response()->json(['success' => false, 'message' => $e->getMessage(), 'errors' => $e->errors()], 422);
         }

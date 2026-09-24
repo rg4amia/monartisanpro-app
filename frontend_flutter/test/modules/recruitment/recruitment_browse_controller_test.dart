@@ -1,3 +1,6 @@
+import 'dart:io';
+
+import 'package:dio/dio.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/core/network/api_client.dart';
@@ -41,7 +44,11 @@ void main() {
     test('détecte une candidature déjà déposée sur une offre', () {
       final controller = RecruitmentBrowseController()
         ..myApplications.value = [
-          const RecruitmentApplicationModel(id: 1, offerId: 42, status: 'en_attente'),
+          const RecruitmentApplicationModel(
+            id: 1,
+            offerId: 42,
+            status: 'en_attente',
+          ),
         ];
 
       expect(controller.hasAppliedTo(42), isTrue);
@@ -55,7 +62,8 @@ void main() {
   });
 
   group('RecruitmentBrowseController.load', () {
-    test('charge les offres actives, candidatures et engagements en parallèle', () async {
+    test('charge les offres actives, candidatures et engagements en parallèle',
+        () async {
       adapter
         ..on(
           'GET',
@@ -115,10 +123,15 @@ void main() {
   });
 
   group('RecruitmentBrowseController.apply', () {
-    testWidgets('ignore une nouvelle candidature si déjà postulé', (tester) async {
+    testWidgets('ignore une nouvelle candidature si déjà postulé',
+        (tester) async {
       final controller = RecruitmentBrowseController()
         ..myApplications.value = [
-          const RecruitmentApplicationModel(id: 1, offerId: 7, status: 'en_attente'),
+          const RecruitmentApplicationModel(
+            id: 1,
+            offerId: 7,
+            status: 'en_attente',
+          ),
         ];
 
       await runControllerAction(tester, () => controller.apply(_offer()));
@@ -127,13 +140,23 @@ void main() {
       expect(controller.applyingOfferId.value, isNull);
     });
 
-    testWidgets('envoie la candidature puis recharge la liste en cas de succès', (tester) async {
+    testWidgets('envoie la candidature puis recharge la liste en cas de succès',
+        (tester) async {
       adapter
-        ..on('POST', '/recruitment-offers/7/apply', const CannedResponse(statusCode: 200, body: {}))
+        ..on(
+          'POST',
+          '/recruitment-offers/7/apply',
+          const CannedResponse(statusCode: 200, body: {}),
+        )
         ..on(
           'GET',
           '/recruitment-offers',
-          const CannedResponse(statusCode: 200, body: {'data': {'data': []}}),
+          const CannedResponse(
+            statusCode: 200,
+            body: {
+              'data': {'data': []},
+            },
+          ),
         )
         ..on(
           'GET',
@@ -152,7 +175,12 @@ void main() {
         ..on(
           'GET',
           '/recruitment-engagements/mine',
-          const CannedResponse(statusCode: 200, body: {'data': {'data': []}}),
+          const CannedResponse(
+            statusCode: 200,
+            body: {
+              'data': {'data': []},
+            },
+          ),
         );
 
       final controller = RecruitmentBrowseController();
@@ -163,7 +191,67 @@ void main() {
       expect(controller.applyingOfferId.value, isNull);
     });
 
-    testWidgets('une panne réseau ne laisse pas applyingOfferId bloqué', (tester) async {
+    testWidgets('joint la note vocale et sa durée en multipart',
+        (tester) async {
+      adapter
+        ..on(
+          'POST',
+          '/recruitment-offers/7/apply',
+          const CannedResponse(statusCode: 201, body: {}),
+        )
+        ..on(
+          'GET',
+          '/recruitment-offers',
+          const CannedResponse(
+            statusCode: 200,
+            body: {
+              'data': {'data': []},
+            },
+          ),
+        )
+        ..on(
+          'GET',
+          '/recruitment-applications/mine',
+          const CannedResponse(
+            statusCode: 200,
+            body: {
+              'data': {'data': []},
+            },
+          ),
+        )
+        ..on(
+          'GET',
+          '/recruitment-engagements/mine',
+          const CannedResponse(
+            statusCode: 200,
+            body: {
+              'data': {'data': []},
+            },
+          ),
+        );
+
+      final file = File('${Directory.systemTemp.path}/candidature_test.m4a');
+      await tester.runAsync(() => file.writeAsBytes([0, 1, 2, 3]));
+
+      final controller = RecruitmentBrowseController();
+      await runControllerAction(
+        tester,
+        () => controller.apply(
+          _offer(),
+          voiceNotePath: file.path,
+          voiceNoteDuration: 14,
+        ),
+      );
+
+      final request = adapter.requests.firstWhere((r) => r.method == 'POST');
+      final form = request.data as FormData;
+      expect(form.files.single.key, 'voice_note');
+      expect(Map.fromEntries(form.fields)['voice_note_duration'], '14');
+      expect(controller.applyingOfferId.value, isNull);
+    });
+
+    testWidgets('une panne réseau ne laisse pas applyingOfferId bloqué',
+        (tester) async {
       // Aucune route enregistrée ⇒ connectionError simulée.
       final controller = RecruitmentBrowseController();
 

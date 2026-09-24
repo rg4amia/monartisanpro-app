@@ -415,6 +415,99 @@ class GeminiService
     }
 
     /**
+     * Transcrit la note vocale (≤ 20 s) jointe à une candidature de recrutement
+     * et signale toute coordonnée : le numéro de l'artisan n'est jamais
+     * transmis au recruteur, la note ne doit pas servir à le contourner.
+     *
+     * Renvoie null si le service est indisponible (clé absente, erreur) :
+     * aucune transcription n'est inventée (Règle d'or 29).
+     *
+     * @return array{transcription: string, contains_contact_details: bool}|null
+     */
+    public function transcribeRecruitmentVoiceNote(string $audioBase64, string $mimeType, ?int $userId = null): ?array
+    {
+        if (config('app.env') === 'testing') {
+            // Simulation déterministe : un audio dont le contenu mentionne
+            // « contact » est traité comme contenant des coordonnées.
+            $flagged = str_contains(base64_decode($audioBase64), 'contact');
+
+            return [
+                'transcription' => 'Transcription simulée (tests) : maçon, dix ans d\'expérience, disponible dès lundi.',
+                'contains_contact_details' => $flagged,
+            ];
+        }
+
+        if (empty($this->apiKey)) {
+            return null;
+        }
+
+        $startTime = microtime(true);
+        $prompt = "Tu reçois la note vocale (20 secondes au plus) d'un artisan du bâtiment ivoirien qui postule à une offre d'emploi.
+Comprends le français, le langage familier ivoirien, le nouchi et le vocabulaire de chantier.
+
+1. Transcris fidèlement ce qu'il dit dans \"transcription\", en français correct.
+2. Mets \"contains_contact_details\" à true s'il communique un moyen de le joindre ou de le trouver en dehors de la plateforme :
+   numéro de téléphone (même épelé ou découpé), adresse e-mail, compte WhatsApp / Facebook / réseau social, adresse précise.
+
+Retourne obligatoirement ce format JSON uniquement:
+{
+  \"transcription\": \"...\",
+  \"contains_contact_details\": true|false
+}";
+
+        try {
+            $response = Http::timeout(25)
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
+                ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]])
+                ->post($this->getEndpointUrl(), [
+                    'contents' => [[
+                        'parts' => [
+                            ['inlineData' => ['mimeType' => $mimeType, 'data' => $audioBase64]],
+                            ['text' => $prompt],
+                        ],
+                    ]],
+                    'generationConfig' => ['response_mime_type' => 'application/json'],
+                ]);
+
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+
+            if ($response->successful()) {
+                $rawJson = $response->json();
+                $result = json_decode($rawJson['candidates'][0]['content']['parts'][0]['text'] ?? '', true);
+                $usage = $rawJson['usageMetadata'] ?? [];
+
+                AiMonitoringService::log(
+                    $this->model,
+                    'recruitment_voice_note',
+                    (int) ($usage['promptTokenCount'] ?? 0),
+                    (int) ($usage['candidatesTokenCount'] ?? 0),
+                    $responseTimeMs,
+                    200,
+                    null,
+                    $userId,
+                );
+
+                if (is_array($result) && isset($result['transcription'])) {
+                    return [
+                        'transcription' => trim((string) $result['transcription']),
+                        'contains_contact_details' => (bool) ($result['contains_contact_details'] ?? false),
+                    ];
+                }
+
+                return null;
+            }
+
+            AiMonitoringService::log($this->model, 'recruitment_voice_note', 0, 0, $responseTimeMs, $response->status(), $response->body(), $userId);
+            Log::error('Gemini Recruitment Voice Note API Error', ['status' => $response->status()]);
+        } catch (\Exception $e) {
+            AiMonitoringService::log($this->model, 'recruitment_voice_note', 0, 0, (microtime(true) - $startTime) * 1000, 500, $e->getMessage(), $userId);
+            Log::error('Gemini Recruitment Voice Note Exception', ['message' => $e->getMessage()]);
+        }
+
+        return null;
+    }
+
+    /**
      * Analyse un enregistrement audio dicté par un artisan pour générer les lignes et jalons de devis.
      * Supporte les accents ivoiriens, le nouchi et le vocabulaire BTP local.
      */

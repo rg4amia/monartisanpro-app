@@ -2,10 +2,14 @@
 
 namespace App\Services;
 
+use App\Jobs\TranscribeRecruitmentVoiceNote;
 use App\Models\RecruitmentApplication;
 use App\Models\RecruitmentOffer;
 use App\Models\User;
+use Illuminate\Filesystem\FilesystemAdapter;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
 
 /**
@@ -15,7 +19,10 @@ use Illuminate\Validation\ValidationException;
  */
 class RecruitmentService
 {
-    public function __construct(private NotificationService $notifications) {}
+    public function __construct(
+        private NotificationService $notifications,
+        private GeminiService $gemini,
+    ) {}
 
     private const CREATOR_TYPES = ['admin', 'client', 'fournisseur'];
 
@@ -76,7 +83,10 @@ class RecruitmentService
         return $offer->fresh();
     }
 
-    public function applyToOffer(User $artisan, RecruitmentOffer $offer): RecruitmentApplication
+    /** Dossier des notes vocales de candidature sur le disque privé. */
+    private const VOICE_NOTE_DIR = 'recruitment/voice-notes';
+
+    public function applyToOffer(User $artisan, RecruitmentOffer $offer, ?UploadedFile $voiceNote = null, ?int $voiceNoteDuration = null): RecruitmentApplication
     {
         if ($artisan->role !== 'artisan') {
             throw ValidationException::withMessages([
@@ -110,6 +120,16 @@ class RecruitmentService
             'applied_at' => now(),
         ]);
 
+        if ($voiceNote) {
+            $application->update([
+                'voice_note_path' => $voiceNote->store(self::VOICE_NOTE_DIR, 'local'),
+                'voice_note_duration' => $voiceNoteDuration,
+                'voice_status' => 'pending',
+            ]);
+
+            TranscribeRecruitmentVoiceNote::dispatchAfterResponse($application->id);
+        }
+
         $this->notifications->send(
             $offer->creator,
             'recruitment',
@@ -119,6 +139,66 @@ class RecruitmentService
         );
 
         return $application;
+    }
+
+    /**
+     * Transcrit la note vocale d'une candidature et applique la règle
+     * anti-contournement : le numéro de l'artisan n'est jamais transmis au
+     * recruteur, une note qui contient des coordonnées est donc supprimée
+     * sans lui être transmise. Sans transcription possible, la note est
+     * retenue plutôt que servie non vérifiée.
+     */
+    public function transcribeVoiceNote(int $applicationId): void
+    {
+        $application = RecruitmentApplication::with(['artisan', 'offer'])->find($applicationId);
+
+        if (! $application || $application->voice_status !== 'pending' || ! $application->voice_note_path) {
+            return;
+        }
+
+        /** @var FilesystemAdapter $disk */
+        $disk = Storage::disk('local');
+        if (! $disk->exists($application->voice_note_path)) {
+            $application->update(['voice_status' => 'failed']);
+
+            return;
+        }
+
+        $result = $this->gemini->transcribeRecruitmentVoiceNote(
+            base64_encode($disk->get($application->voice_note_path)),
+            $disk->mimeType($application->voice_note_path) ?: 'audio/mp4',
+            $application->artisan_id,
+        );
+
+        if ($result === null) {
+            $application->update(['voice_status' => 'failed']);
+
+            return;
+        }
+
+        if ($result['contains_contact_details']) {
+            $disk->delete($application->voice_note_path);
+            $application->update([
+                'voice_note_path' => null,
+                'voice_transcription' => null,
+                'voice_status' => 'contact_detected',
+            ]);
+
+            $this->notifications->send(
+                $application->artisan,
+                'recruitment',
+                'Note vocale non transmise',
+                "Votre note vocale pour « {$application->offer->title} » contenait des coordonnées : elle n'a pas été transmise au recruteur. Votre candidature reste valable.",
+                ['recruitment_application_id' => $application->id],
+            );
+
+            return;
+        }
+
+        $application->update([
+            'voice_transcription' => $result['transcription'],
+            'voice_status' => 'approved',
+        ]);
     }
 
     private const APPLICATION_STATUSES = ['shortlisted', 'contacted', 'rejected', 'confirmed'];

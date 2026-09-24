@@ -49,11 +49,20 @@ class RecruitmentBrowseController extends GetxController {
   bool hasAppliedTo(int offerId) =>
       myApplications.any((a) => a.offerId == offerId);
 
-  Future<void> apply(RecruitmentOfferModel offer) async {
+  /// Postule à [offer], avec une note vocale facultative (≤ 20 s).
+  Future<void> apply(
+    RecruitmentOfferModel offer, {
+    String? voiceNotePath,
+    int? voiceNoteDuration,
+  }) async {
     if (hasAppliedTo(offer.id)) return;
     applyingOfferId.value = offer.id;
     try {
-      await _repo.applyToOffer(offer.id);
+      await _repo.applyToOffer(
+        offer.id,
+        voiceNotePath: voiceNotePath,
+        voiceNoteDuration: voiceNoteDuration,
+      );
       Get.snackbar(
         'Candidature envoyée',
         'Votre candidature a bien été transmise.',

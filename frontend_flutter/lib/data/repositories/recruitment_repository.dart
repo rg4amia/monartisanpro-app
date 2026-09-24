@@ -1,3 +1,5 @@
+import 'package:dio/dio.dart';
+
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
@@ -100,9 +102,32 @@ class RecruitmentRepository {
     return RecruitmentOfferModel.fromJson(offerJson);
   }
 
-  Future<void> applyToOffer(int offerId) async {
+  /// Postule à une offre, avec une note vocale facultative (≤ 20 s) envoyée
+  /// en multipart ; sa transcription est faite côté serveur.
+  Future<void> applyToOffer(
+    int offerId, {
+    String? voiceNotePath,
+    int? voiceNoteDuration,
+  }) async {
+    if (voiceNotePath == null) {
+      await NetworkExecutor.run(
+        () => _client.post(ApiEndpoints.recruitmentOfferApply(offerId)),
+      );
+      return;
+    }
+
+    final formData = FormData.fromMap({
+      'voice_note': await MultipartFile.fromFile(
+        voiceNotePath,
+        filename: 'note_vocale.m4a',
+      ),
+      'voice_note_duration': voiceNoteDuration,
+    });
     await NetworkExecutor.run(
-      () => _client.post(ApiEndpoints.recruitmentOfferApply(offerId)),
+      () => _client.postMultipart(
+        ApiEndpoints.recruitmentOfferApply(offerId),
+        formData,
+      ),
     );
   }
 

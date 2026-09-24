@@ -7,6 +7,7 @@ import '../../../data/models/recruitment_engagement_model.dart';
 import '../../../data/models/recruitment_offer_model.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
 import '../controllers/recruitment_browse_controller.dart';
+import '../widgets/voice_application_sheet.dart';
 
 const _missionTypeLabels = {
   'tacheron_brigade': 'Brigade / tâcheron',
@@ -365,8 +366,10 @@ class _OfferCard extends GetView<RecruitmentBrowseController> {
             SizedBox(
               width: double.infinity,
               child: ElevatedButton(
-                onPressed:
-                    applied || applying ? null : () => controller.apply(offer),
+                onPressed: applied || applying
+                    ? null
+                    : () =>
+                        VoiceApplicationSheet.show(context, offer, controller),
                 style: ElevatedButton.styleFrom(
                   backgroundColor:
                       applied ? AppColors.textMuted : AppColors.primary,

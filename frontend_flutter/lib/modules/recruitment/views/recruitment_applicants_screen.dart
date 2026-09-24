@@ -6,6 +6,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/models/recruitment_application_model.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
 import '../controllers/recruitment_applicants_controller.dart';
+import '../widgets/voice_note_card.dart';
 
 const _applicationStatusLabels = {
   'submitted': 'Nouvelle',
@@ -214,6 +215,11 @@ class _ApplicantCard extends GetView<RecruitmentApplicantsController> {
                   ),
               ],
             ),
+            if (application.voiceNoteUrl != null ||
+                (application.voiceTranscription ?? '').isNotEmpty) ...[
+              const SizedBox(height: 12),
+              VoiceNoteCard(application: application),
+            ],
             const SizedBox(height: 14),
             if (artisan != null)
               SizedBox(
