@@ -1,12 +1,18 @@
-import { Link, router, usePage, useForm } from '@inertiajs/react';
-import { useDeferredValue, useEffect, useMemo, useState } from 'react';
-
-import { cn } from '@/lib/utils';
+import { router, usePage } from '@inertiajs/react';
+import { useDeferredValue, useMemo, useState } from 'react';
 
 import AiDashboardPanel from './ai-dashboard-panel';
 import { useAdminAnalytics } from './hooks/useAdminAnalytics';
+import { useAdminNotifications } from './hooks/useAdminNotifications';
+import { useAiQuotaForm } from './hooks/useAiQuotaForm';
+import { useAuditLogFilters } from './hooks/useAuditLogFilters';
+import { useCampagneParrainageForm } from './hooks/useCampagneParrainageForm';
+import { useCommunicationForm } from './hooks/useCommunicationForm';
+import { useExchangeRates, useOnlineStatus, useThemeMode } from './hooks/useConsoleEnvironment';
+import { usePromoCodeForm } from './hooks/usePromoCodeForm';
 import { useRowSelection } from './hooks/useRowSelection';
 import { useServerTable } from './hooks/useServerTable';
+import { useUserManagement } from './hooks/useUserManagement';
 import LlmAdminPanel from './llm-admin-panel';
 import { AiQuotasPanel } from './panels/AiQuotasPanel';
 import { AuditLogsPanel } from './panels/AuditLogsPanel';
@@ -36,216 +42,30 @@ import type {
     AdminMission,
     AdminNotificationItem,
     AdminOrder,
+    AdminPageProps,
     AdminTab,
     AdminTransaction,
     AdminUser,
-    AiUserQuotaRow,
     ArtisanScoreItem,
-    AuditAdminOption,
     CampagneParrainageItem,
-    CommuneHeatmapItem,
-    CommuneListItem,
-    DashboardData,
-    DeliveryStats,
-    DistrictHeatmapItem,
-    DistrictListItem,
-    DocumentStats,
-    EvaluationStats,
-    FlashMessages,
     FournisseurItem,
-    GeneratedDocumentItem,
-    KycStats,
     KycUser,
     LitigeItem,
-    LitigeStats,
-    MissionStats,
-    NavigationGroup,
-    ObservabilitySnapshot,
-    Paginated,
-    PaginatedAuditLogs,
-    SectorItem,
-    SettingItem,
     PromoCodeItem,
     ScoreLedgerEntryItem,
-    TerritoryEntityItem,
-    TerritorySummary,
-    ThemeMode,
-    TransactionStats,
-    UserStats,
-    WhatsappClickLogItem,
-    WhatsappClickStats,
-    WhatsappSettings,
-    FaqItem,
-    FaqStats,
-    RecruitmentOfferItem,
-    RecruitmentStats,
-    RecruitmentSettings,
 } from './shared';
 import {
     AdminShell,
+    buildHeroStats,
+    buildNavigation,
     can,
-    canOpenTab,
     money,
     numberFormat,
-    tabMeta,
+    renderPagination,
     tabRoutes,
     useConfirm,
 } from './shared';
 import VitrinePanel from './vitrine-panel';
-
-interface AuthUser {
-    email?: string | null;
-    name: string;
-    phone?: string | null;
-    role?: string | null;
-}
-
-interface AdminPageProps {
-    [key: string]: unknown;
-    auth: {
-        user?: AuthUser | null;
-        // Capacités fines du backoffice — `['*']` = accès total (Chantier C6 / P2-10).
-        permissions?: string[];
-    };
-    dashboard: DashboardData;
-    errors: Record<string, string>;
-    flash?: FlashMessages;
-    fournisseurs: FournisseurItem[];
-    kycUsers: KycUser[];
-    cnmciUsers?: Array<{
-        id: number;
-        name: string;
-        phone: string;
-        cnmci_number?: string | null;
-        cnmci_card_url?: string | null;
-        cnmci_status: string;
-        created_at: string;
-    }>;
-    litiges: LitigeItem[];
-    missions: AdminMission[];
-    orders?: AdminOrder[];
-    transactions: AdminTransaction[];
-    users: AdminUser[];
-    evaluationsList: AdminEvaluation[];
-    artisansScores: ArtisanScoreItem[];
-    scoreLedger: ScoreLedgerEntryItem[];
-    navBadges?: {
-        transactions_en_attente?: number;
-        communications_publiees?: number;
-        promo_codes_actifs?: number;
-        campagnes_parrainage_actives?: number;
-        contact_messages_nouveaux?: number;
-    };
-    financialKpis?: any;
-    promoCodes?: PromoCodeItem[];
-    campagnesParrainage?: CampagneParrainageItem[];
-    settingsList?: SettingItem[];
-    sectors?: SectorItem[];
-    rolesPermissions?: Record<string, string[]>;
-    allPermissions?: Array<{ id: number; name: string; description: string; category: string }>;
-    // Capacités fines du backoffice (Chantier C6 / P2-10).
-    adminCapabilityCatalog?: Record<string, Record<string, string>>;
-    admins?: Array<{ id: number; name: string; email: string | null; phone: string | null; capabilities: string[]; protected: boolean }>;
-    // Santé & observabilité (Chantier C7 / P2-12).
-    observability?: ObservabilitySnapshot;
-    auditLogs?: PaginatedAuditLogs;
-    auditActions?: string[];
-    auditAdmins?: AuditAdminOption[];
-    usersPage?: Paginated<AdminUser>;
-    userStats?: UserStats;
-    pendingFournisseurs?: FournisseurItem[];
-    topArtisans?: AdminUser[];
-    transactionsPage?: Paginated<AdminTransaction>;
-    transactionStats?: TransactionStats;
-    documentsPage?: Paginated<GeneratedDocumentItem>;
-    documentStats?: DocumentStats;
-    litigesPage?: Paginated<LitigeItem>;
-    litigeStats?: LitigeStats;
-    evaluationsPage?: Paginated<AdminEvaluation>;
-    artisansScoresPage?: Paginated<ArtisanScoreItem>;
-    evaluationStats?: EvaluationStats;
-    missionsPage?: Paginated<AdminMission>;
-    ordersPage?: Paginated<AdminOrder>;
-    missionStats?: MissionStats;
-    deliveryStats?: DeliveryStats;
-    kycUsersPage?: Paginated<KycUser>;
-    pendingFournisseursList?: FournisseurItem[];
-    kycStats?: KycStats;
-    // Onglet « Suivi & Coûts IA » (props non typées via `pageProps as any` — sauf la liste paginée).
-    aiUserQuotasPage?: Paginated<AiUserQuotaRow>;
-    adminNotifications?: AdminNotificationItem[];
-    allNotifications?: PaginatedNotifications;
-    communications?: Array<{
-        id: number;
-        titre: string;
-        contenu: string;
-        statut: string;
-        canal: string;
-        destinataires_role: string;
-        scheduled_at: string | null;
-        sent_at: string | null;
-        created_at: string;
-        updated_at: string;
-        auteur?: { id: number; name: string; phone: string } | null;
-    }>;
-    /** Plafond de televersement audio reellement applicable (borne par PHP). */
-    audioUploadLimit?: string;
-    vitrineSlides?: any[];
-    vitrineArtisanDuMois?: any[];
-    vitrineArticles?: any[];
-    vitrineVideos?: any[];
-    vitrineFormations?: any[];
-    vitrineRecrutements?: any[];
-    vitrinePopups?: any[];
-    vitrineSettings?: any[];
-    contactMessages?: any[];
-    whatsappClicksPage?: Paginated<WhatsappClickLogItem> | null;
-    whatsappClickStats?: WhatsappClickStats;
-    whatsappSettings?: WhatsappSettings;
-    faqs?: FaqItem[];
-    faqStats?: FaqStats;
-    recruitmentOffersPage?: Paginated<RecruitmentOfferItem> | null;
-    recruitmentStats?: RecruitmentStats;
-    recruitmentSettings?: RecruitmentSettings;
-    territorySummary?: TerritorySummary;
-    districtsHeatmap?: Record<string, DistrictHeatmapItem>;
-    communesHeatmap?: Record<string, CommuneHeatmapItem>;
-    districtsList?: DistrictListItem[];
-    communesList?: CommuneListItem[];
-    entities?: {
-        data: TerritoryEntityItem[];
-        current_page: number;
-        last_page: number;
-        total: number;
-        per_page: number;
-    };
-    filters?: {
-        district: string | null;
-        commune: string | null;
-        entity_type: string;
-        search: string;
-    };
-}
-
-interface AuditNotificationItem extends AdminNotificationItem {
-    user?: {
-        id: number;
-        name: string;
-        phone: string;
-        role: string;
-    } | null;
-}
-
-interface PaginatedNotifications {
-    data: AuditNotificationItem[];
-    current_page: number;
-    last_page: number;
-    total: number;
-    per_page: number;
-    next_page_url: string | null;
-    prev_page_url: string | null;
-    links: Array<{ url: string | null; label: string; active: boolean }>;
-}
 
 export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const activeTab = initialTab;
@@ -359,152 +179,43 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const [missionSubTab, setMissionSubTab] = useState<'chantiers' | 'livraisons'>('chantiers');
     const [selectedOrderForDetails, setSelectedOrderForDetails] = useState<AdminOrder | null>(null);
 
-    const [notificationsOpen, setNotificationsOpen] = useState<boolean>(false);
-    const [notifFilter, setNotifFilter] = useState<'all' | 'unread' | 'alerts'>('all');
-
-    const [notifTab, setNotifTab] = useState<'alerts' | 'history'>('alerts');
-    const [searchNotif, setSearchNotif] = useState(new URLSearchParams(window.location.search).get('search_notification') || '');
-    const [roleNotif, setRoleNotif] = useState(new URLSearchParams(window.location.search).get('role_notification') || '');
-    const [typeNotif, setTypeNotif] = useState(new URLSearchParams(window.location.search).get('type_notification') || '');
-
-    const liveNotifications = useMemo<AdminNotificationItem[]>(() => {
-        const list: AdminNotificationItem[] = [];
-
-        if (adminNotifications && Array.isArray(adminNotifications)) {
-            list.push(...adminNotifications);
-        }
-
-        if (dashboard.kyc_en_attente > 0) {
-            list.push({
-                id: 'alert-kyc',
-                type: 'kyc',
-                title: 'Dossiers KYC en attente',
-                body: `${dashboard.kyc_en_attente} dossier(s) KYC requièrent une validation administrative.`,
-                read_at: null,
-                created_at: new Date().toISOString(),
-                action_url: tabRoutes.kyc,
-                action_label: 'Vérifier KYC',
-            });
-        }
-        if (dashboard.litiges_ouverts > 0) {
-            list.push({
-                id: 'alert-litiges',
-                type: 'litige',
-                title: 'Litiges ouverts',
-                body: `${dashboard.litiges_ouverts} litige(s) en attente d'arbitrage ou d'intervention.`,
-                read_at: null,
-                created_at: new Date().toISOString(),
-                action_url: tabRoutes.litiges,
-                action_label: 'Arbitrer litiges',
-            });
-        }
-        if (dashboard.recent_fraud_alerts > 0) {
-            list.push({
-                id: 'alert-fraud',
-                type: 'fraud',
-                title: 'Alertes Fraude / Écart GPS',
-                body: `${dashboard.recent_fraud_alerts} anomalie(s) détectée(s) lors de scans J-Code ou d'interventions.`,
-                read_at: null,
-                created_at: new Date().toISOString(),
-                action_url: tabRoutes.transactions,
-                action_label: 'Vérifier fraudes',
-            });
-        }
-        if (dashboard.referent_required_open > 0) {
-            list.push({
-                id: 'alert-referent',
-                type: 'referent',
-                title: 'Missions seuil Référent (> 2M)',
-                body: `${dashboard.referent_required_open} mission(s) dépassent 2 000 000 FCFA et exigent un visa terrain.`,
-                read_at: null,
-                created_at: new Date().toISOString(),
-                action_url: tabRoutes.missions,
-                action_label: 'Consulter missions',
-            });
-        }
-
-        return list;
-    }, [adminNotifications, dashboard]);
-
-    const unreadNotifsCount = useMemo(() => {
-        return liveNotifications.filter((n) => !n.read_at).length;
-    }, [liveNotifications]);
-
-    const filteredNotifs = useMemo(() => {
-        return liveNotifications.filter((n) => {
-            if (notifFilter === 'unread') return !n.read_at;
-            if (notifFilter === 'alerts') return ['kyc', 'litige', 'fraud', 'fraud_alert', 'referent'].includes(n.type);
-            return true;
-        });
-    }, [liveNotifications, notifFilter]);
-
-    const handleMarkAllNotifsRead = () => {
-        router.post('/admin/notifications/mark-all-read', {}, { preserveScroll: true });
-    };
-
-    const handleMarkNotifRead = (notif: AdminNotificationItem) => {
-        if (typeof notif.id === 'number') {
-            router.post(`/admin/notifications/${notif.id}/read`, {}, { preserveScroll: true });
-        }
-        if (notif.action_url) {
-            setNotificationsOpen(false);
-            router.visit(notif.action_url);
-        }
-    };
-
-    const handleFilterNotifications = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.get('/admin/notifications', {
-            search_notification: searchNotif,
-            role_notification: roleNotif,
-            type_notification: typeNotif,
-        }, {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['allNotifications'],
-        });
-    };
-
-    const handleResetFilters = () => {
-        setSearchNotif('');
-        setRoleNotif('');
-        setTypeNotif('');
-        router.get('/admin/notifications', {}, {
-            preserveState: true,
-            preserveScroll: true,
-            only: ['allNotifications'],
-        });
-    };
+    const {
+        notificationsOpen,
+        setNotificationsOpen,
+        notifFilter,
+        setNotifFilter,
+        notifTab,
+        setNotifTab,
+        searchNotif,
+        setSearchNotif,
+        roleNotif,
+        setRoleNotif,
+        typeNotif,
+        setTypeNotif,
+        liveNotifications,
+        unreadNotifsCount,
+        filteredNotifs,
+        markAllRead: handleMarkAllNotifsRead,
+        markRead: handleMarkNotifRead,
+        applyHistoryFilters: handleFilterNotifications,
+        resetHistoryFilters: handleResetFilters,
+    } = useAdminNotifications(adminNotifications, dashboard);
 
     // Journal d'audit (Chantier C3 / P0-4) — filtres serveur via rechargement partiel.
-    const auditParams = new URLSearchParams(window.location.search);
-    const [searchAudit, setSearchAudit] = useState(auditParams.get('search_audit') || '');
-    const [actionAudit, setActionAudit] = useState(auditParams.get('action_audit') || '');
-    const [adminAudit, setAdminAudit] = useState(auditParams.get('admin_audit') || '');
-    const [dateFromAudit, setDateFromAudit] = useState(auditParams.get('date_from_audit') || '');
-    const [dateToAudit, setDateToAudit] = useState(auditParams.get('date_to_audit') || '');
-
-    const auditOnly = { only: ['auditLogs', 'auditActions', 'auditAdmins'], preserveState: true, preserveScroll: true };
-
-    const handleFilterAudit = (e: React.FormEvent) => {
-        e.preventDefault();
-        router.get('/admin/audit-logs', {
-            search_audit: searchAudit,
-            action_audit: actionAudit,
-            admin_audit: adminAudit,
-            date_from_audit: dateFromAudit,
-            date_to_audit: dateToAudit,
-        }, auditOnly);
-    };
-
-    const handleResetAudit = () => {
-        setSearchAudit('');
-        setActionAudit('');
-        setAdminAudit('');
-        setDateFromAudit('');
-        setDateToAudit('');
-        router.get('/admin/audit-logs', {}, auditOnly);
-    };
+    const {
+        search: searchAudit,
+        setSearch: setSearchAudit,
+        action: actionAudit,
+        setAction: setActionAudit,
+        admin: adminAudit,
+        setAdmin: setAdminAudit,
+        dateFrom: dateFromAudit,
+        setDateFrom: setDateFromAudit,
+        dateTo: dateToAudit,
+        setDateTo: setDateToAudit,
+        apply: handleFilterAudit,
+        reset: handleResetAudit,
+    } = useAuditLogFilters();
 
     // Utilisateurs (Chantier C4 / P1-6) — liste paginée + filtres serveur.
     const usersTable = useServerTable({
@@ -641,12 +352,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         });
     };
 
-    const [themeMode, setThemeMode] = useState<ThemeMode>(() => {
-        if (typeof window !== 'undefined' && window.localStorage) {
-            return (localStorage.getItem('prosartisan_admin_theme') as ThemeMode) || 'light';
-        }
-        return 'light';
-    });
+    const { themeMode, toggleTheme } = useThemeMode();
     const [search, setSearch] = useState<string>('');
     const [actionLoading, setActionLoading] = useState<boolean>(false);
     const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -657,283 +363,80 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const [selectedArtisanForLedger, setSelectedArtisanForLedger] = useState<ArtisanScoreItem | null>(null);
     const [expandedSectors, setExpandedSectors] = useState<Record<number, boolean>>({});
 
-    const [exchangeRates, setExchangeRates] = useState<{ usdToXof: number; eurToXof: number; eurToUsd: number } | null>(null);
-    const [isOnline, setIsOnline] = useState(() => typeof navigator !== 'undefined' ? navigator.onLine : true);
-    const [isOfflineSimulated, setIsOfflineSimulated] = useState(false);
+    const exchangeRates = useExchangeRates();
+    const { offlineActive, isOfflineSimulated, toggleOfflineSimulated } = useOnlineStatus();
 
-    useEffect(() => {
-        const handleOnline = () => setIsOnline(true);
-        const handleOffline = () => setIsOnline(false);
-
-        window.addEventListener('online', handleOnline);
-        window.addEventListener('offline', handleOffline);
-
-        return () => {
-            window.removeEventListener('online', handleOnline);
-            window.removeEventListener('offline', handleOffline);
-        };
-    }, []);
-
-    const offlineActive = !isOnline || isOfflineSimulated;
-
-    useEffect(() => {
-        fetch('https://open.er-api.com/v6/latest/EUR')
-            .then(res => res.json())
-            .then(data => {
-                if (data && data.rates) {
-                    const eurToXof = data.rates.XOF || 655.957;
-                    const eurToUsd = data.rates.USD || 1.09;
-                    const usdToXof = eurToXof / eurToUsd;
-                    setExchangeRates({
-                        usdToXof: Math.round(usdToXof * 100) / 100,
-                        eurToXof: Math.round(eurToXof * 100) / 100,
-                        eurToUsd: Math.round(eurToUsd * 10000) / 10000
-                    });
-                }
-            })
-            .catch(() => {
-                setExchangeRates({
-                    usdToXof: 605.5,
-                    eurToXof: 655.96,
-                    eurToUsd: 1.085
-                });
-            });
-    }, []);
-
-    const [userModalOpen, setUserModalOpen] = useState<boolean>(false);
-    const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
-    const [statusModalOpen, setStatusModalOpen] = useState<boolean>(false);
-    const [statusTargetUser, setStatusTargetUser] = useState<AdminUser | null>(null);
     const [selectedMissionForDetails, setSelectedMissionForDetails] = useState<AdminMission | null>(null);
     const [selectedTransactionForDetails, setSelectedTransactionForDetails] = useState<AdminTransaction | null>(null);
-    const [selectedUserForRgpd, setSelectedUserForRgpd] = useState<AdminUser | null>(null);
 
-    const [commModalOpen, setCommModalOpen] = useState<boolean>(false);
-    const [editingComm, setEditingComm] = useState<any>(null);
-    const [commTypeFilter, setCommTypeFilter] = useState<string>('all');
-    const [commStatusFilter, setCommStatusFilter] = useState<string>('all');
-    const commForm = useForm({
-        type: 'annonce',
-        titre: '',
-        contenu: '',
-        cibles: [] as string[],
-        // Contenu vocal : fichier televerse. Contenu video : lien externe.
-        media_file: null as File | null,
-        media_external_url: '',
-        media_duration: '',
-    });
+    const {
+        userForm,
+        statusForm,
+        userModalOpen,
+        closeUserModal,
+        editingUser,
+        statusModalOpen,
+        closeStatusModal,
+        statusTargetUser,
+        selectedUserForRgpd,
+        setSelectedUserForRgpd,
+        openCreateUserModal,
+        openEditUserModal,
+        submitUserForm: handleUserFormSubmit,
+        toggleUserStatus: handleToggleUserStatus,
+        submitStatusForm: handleStatusSubmit,
+        deleteUser: handleDeleteUser,
+        impersonate: handleImpersonate,
+        anonymize: handleAnonymizeUser,
+    } = useUserManagement({ currentAdmin: auth?.user, askConfirm, setActionLoading, canDeleteUsers, canImpersonate, canManageRgpd });
 
-    const filteredCommunications = useMemo(() => {
-        if (!communications) return [];
-        return communications.filter((comm: any) => {
-            const matchesSearch = !deferredSearch ||
-                comm.titre.toLowerCase().includes(deferredSearch) ||
-                comm.contenu.toLowerCase().includes(deferredSearch);
-            const matchesType = commTypeFilter === 'all' || comm.type === commTypeFilter;
-            const matchesStatus = commStatusFilter === 'all' || comm.statut === commStatusFilter;
-            return matchesSearch && matchesType && matchesStatus;
-        });
-    }, [communications, deferredSearch, commTypeFilter, commStatusFilter]);
+    const {
+        commForm,
+        commModalOpen,
+        closeCommModal,
+        editingComm,
+        commTypeFilter,
+        setCommTypeFilter,
+        commStatusFilter,
+        setCommStatusFilter,
+        filteredCommunications,
+        openCreateCommModal,
+        openEditCommModal,
+        submitCommForm: handleCommSubmit,
+    } = useCommunicationForm(communications, deferredSearch);
 
-    const userForm = useForm<{
-        name: string;
-        phone: string;
-        email: string;
-        role: string;
-        password: string;
-        kyc_status: string;
-        account_status: string;
-        score_frozen: boolean;
-        device_fingerprint: string;
-        photo: File | null;
-        documents: { cni: File | null; selfie: File | null };
-        fournisseur_sector_id: number | '';
-        fournisseur_trade_id: number | '';
-    }>({
-        name: '',
-        phone: '',
-        email: '',
-        role: 'client',
-        password: '',
-        kyc_status: 'en_attente',
-        account_status: 'actif',
-        score_frozen: false,
-        device_fingerprint: '',
-        photo: null,
-        documents: { cni: null, selfie: null },
-        fournisseur_sector_id: '',
-        fournisseur_trade_id: '',
-    });
+    const {
+        promoForm,
+        promoModalOpen,
+        closePromoModal,
+        editingPromo,
+        openCreatePromoModal,
+        openEditPromoModal,
+        submitPromoForm: handlePromoSubmit,
+        deletePromo: handleDeletePromo,
+        togglePromo: handleTogglePromo,
+    } = usePromoCodeForm(askConfirm);
 
-    const statusForm = useForm({
-        account_status: 'actif',
-        account_status_reason: '',
-    });
+    const {
+        campagneForm,
+        campagneModalOpen,
+        closeCampagneModal,
+        editingCampagne,
+        openCreateCampagneModal,
+        openEditCampagneModal,
+        submitCampagneForm: handleCampagneSubmit,
+        deleteCampagne: handleDeleteCampagne,
+        toggleCampagne: handleToggleCampagne,
+    } = useCampagneParrainageForm(askConfirm);
 
-    const openCreateUserModal = (): void => {
-        setEditingUser(null);
-        userForm.reset();
-        userForm.clearErrors();
-        userForm.setData({
-            name: '',
-            phone: '',
-            email: '',
-            role: 'client',
-            password: '',
-            kyc_status: 'en_attente',
-            account_status: 'actif',
-            score_frozen: false,
-            device_fingerprint: '',
-            photo: null,
-            documents: { cni: null, selfie: null },
-            fournisseur_sector_id: '',
-            fournisseur_trade_id: '',
-        });
-        setUserModalOpen(true);
-    };
-
-    const openEditUserModal = (user: AdminUser): void => {
-        setEditingUser(user);
-        userForm.clearErrors();
-        userForm.setData({
-            name: user.name,
-            phone: user.phone,
-            email: user.email ?? '',
-            role: user.role as any,
-            password: '',
-            kyc_status: user.kyc_status as any,
-            account_status: (user.account_status ?? 'actif') as any,
-            score_frozen: Boolean(user.score_frozen),
-            device_fingerprint: user.device_fingerprint ?? '',
-            photo: null,
-            documents: { cni: null, selfie: null },
-            fournisseur_sector_id: user.fournisseur_sector_id ?? '',
-            fournisseur_trade_id: user.fournisseur_trade_id ?? '',
-        });
-        setUserModalOpen(true);
-    };
-
-    const handleUserFormSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
-        event.preventDefault();
-        if (editingUser) {
-            userForm.put(`/admin/users/${editingUser.id}`, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setUserModalOpen(false);
-                    userForm.reset();
-                },
-            });
-        } else {
-            userForm.post('/admin/users', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setUserModalOpen(false);
-                    userForm.reset();
-                },
-            });
-        }
-    };
-
-    const handleToggleUserStatus = async (user: AdminUser): Promise<void> => {
-        if (auth?.user?.phone === user.phone || auth?.user?.email === user.email) {
-            await askConfirm({
-                title: 'Action impossible',
-                message: 'Vous ne pouvez pas modifier votre propre statut.',
-                confirmLabel: 'Compris',
-                cancelLabel: 'Fermer',
-            });
-            return;
-        }
-
-        const isActif = (user.account_status ?? 'actif') === 'actif';
-        if (isActif) {
-            setStatusTargetUser(user);
-            statusForm.reset();
-            statusForm.clearErrors();
-            statusForm.setData({
-                account_status: 'suspendu',
-                account_status_reason: '',
-            });
-            setStatusModalOpen(true);
-        } else {
-            const ok = await askConfirm({
-                title: 'Réactiver le compte',
-                message: `Voulez-vous réactiver le compte de ${user.name} ?`,
-                confirmLabel: 'Réactiver',
-            });
-            if (!ok) return;
-            router.post(`/admin/users/${user.id}/toggle-status`, {
-                account_status: 'actif',
-                account_status_reason: '',
-            }, {
-                preserveScroll: true,
-            });
-        }
-    };
-
-    const handleStatusSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
-        event.preventDefault();
-        if (!statusTargetUser) return;
-
-        statusForm.post(`/admin/users/${statusTargetUser.id}/toggle-status`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setStatusModalOpen(false);
-                statusForm.reset();
-            },
-        });
-    };
-
-    const handleDeleteUser = async (user: AdminUser): Promise<void> => {
-        if (!canDeleteUsers) return;
-        if (auth?.user?.phone === user.phone || auth?.user?.email === user.email) {
-            await askConfirm({
-                title: 'Action impossible',
-                message: 'Vous ne pouvez pas supprimer votre propre compte.',
-                confirmLabel: 'Compris',
-                cancelLabel: 'Fermer',
-            });
-            return;
-        }
-
-        const ok = await askConfirm({
-            title: `Supprimer ${user.name} ?`,
-            message: 'Cette action est irréversible.',
-            tone: 'danger',
-            confirmLabel: 'Supprimer',
-        });
-        if (!ok) return;
-        router.delete(`/admin/users/${user.id}`, { preserveScroll: true });
-    };
-
-    const handleImpersonate = async (user: AdminUser): Promise<void> => {
-        if (!canImpersonate) return;
-        const ok = await askConfirm({
-            title: `Se connecter en tant que ${user.name} ?`,
-            message: 'Votre session basculera sur ce compte. Un bandeau permettra de revenir à votre compte administrateur.',
-            confirmLabel: 'Usurper la session',
-        });
-        if (!ok) return;
-        router.post(`/admin/users/${user.id}/impersonate`);
-    };
-
-    const handleAnonymizeUser = async (user: AdminUser): Promise<void> => {
-        if (!canManageRgpd) return;
-        const ok = await askConfirm({
-            title: `Anonymiser le compte #${user.id}`,
-            message: `Anonymisation RGPD irréversible de ${user.name}. Toutes les données personnelles seront expurgées.`,
-            tone: 'danger',
-            confirmLabel: 'Anonymiser',
-            requireText: 'ANONYMISER',
-        });
-        if (!ok) return;
-        setActionLoading(true);
-        router.post(`/admin/users/${user.id}/anonymize`, {}, {
-            preserveScroll: true,
-            onSuccess: () => setSelectedUserForRgpd(null),
-            onFinish: () => setActionLoading(false),
-        });
-    };
+    const {
+        aiQuotaForm,
+        aiQuotaModalOpen,
+        closeAiQuotaModal,
+        aiQuotaTarget,
+        openEditAiQuota,
+        submitAiQuotaForm: handleAiQuotaSubmit,
+    } = useAiQuotaForm();
 
     const handleRetryFailedJobs = async (): Promise<void> => {
         if (!canManageObservability) return;
@@ -962,315 +465,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         });
     };
 
-    const openCreateCommModal = (): void => {
-        setEditingComm(null);
-        commForm.reset();
-        commForm.clearErrors();
-        commForm.setData({
-            type: 'annonce',
-            titre: '',
-            contenu: '',
-            cibles: [],
-            media_file: null,
-            media_external_url: '',
-            media_duration: '',
-        });
-        setCommModalOpen(true);
-    };
-
-    const openEditCommModal = (comm: any): void => {
-        setEditingComm(comm);
-        commForm.clearErrors();
-        commForm.setData({
-            type: comm.type,
-            titre: comm.titre,
-            contenu: comm.contenu,
-            cibles: comm.cibles_json,
-            // Le fichier deja televerse n'est pas renvoye : le laisser vide
-            // conserve l'existant, en choisir un nouveau le remplace.
-            media_file: null,
-            media_external_url: comm.media_external_url ?? '',
-            media_duration: comm.media_duration ? String(comm.media_duration) : '',
-        });
-        setCommModalOpen(true);
-    };
-
-    const handleCommSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
-        event.preventDefault();
-        if (commForm.processing) return;
-        const onSuccess = (): void => {
-            setCommModalOpen(false);
-            commForm.reset();
-        };
-
-        if (editingComm) {
-            // Inertia ne sait pas transporter un fichier en PUT : on poste en
-            // usurpant la methode, ce qui fonctionne avec ou sans fichier.
-            commForm.transform((data) => ({ ...data, _method: 'put' }));
-            commForm.post(`/admin/communications/${editingComm.id}`, {
-                preserveScroll: true,
-                forceFormData: true,
-                onSuccess,
-            });
-        } else {
-            commForm.post('/admin/communications', {
-                preserveScroll: true,
-                forceFormData: true,
-                onSuccess,
-            });
-        }
-    };
-
-    const [promoModalOpen, setPromoModalOpen] = useState<boolean>(false);
-    const [editingPromo, setEditingPromo] = useState<PromoCodeItem | null>(null);
-
-    const promoForm = useForm({
-        code: '',
-        description: '',
-        discount_type: 'percent' as 'percent' | 'fixed',
-        discount_value: 10,
-        min_order_amount: 0,
-        max_discount_amount: 0,
-        usage_limit: 0,
-        starts_at: '',
-        expires_at: '',
-        is_active: true,
-    });
-
-    const openCreatePromoModal = (): void => {
-        setEditingPromo(null);
-        promoForm.reset();
-        promoForm.clearErrors();
-        promoForm.setData({
-            code: '',
-            description: '',
-            discount_type: 'percent',
-            discount_value: 10,
-            min_order_amount: 0,
-            max_discount_amount: 0,
-            usage_limit: 0,
-            starts_at: '',
-            expires_at: '',
-            is_active: true,
-        });
-        setPromoModalOpen(true);
-    };
-
-    const openEditPromoModal = (promo: PromoCodeItem): void => {
-        setEditingPromo(promo);
-        promoForm.clearErrors();
-        promoForm.setData({
-            code: promo.code,
-            description: promo.description || '',
-            discount_type: promo.discount_type,
-            discount_value: promo.discount_value,
-            min_order_amount: promo.min_order_amount || 0,
-            max_discount_amount: promo.max_discount_amount || 0,
-            usage_limit: promo.usage_limit || 0,
-            starts_at: promo.starts_at ? promo.starts_at.slice(0, 10) : '',
-            expires_at: promo.expires_at ? promo.expires_at.slice(0, 10) : '',
-            is_active: promo.is_active,
-        });
-        setPromoModalOpen(true);
-    };
-
-    const handlePromoSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
-        event.preventDefault();
-        if (promoForm.processing) return;
-
-        promoForm.transform(() => ({
-            ...promoForm.data,
-            code: promoForm.data.code.trim().toUpperCase(),
-            min_order_amount: Number(promoForm.data.min_order_amount) || 0,
-            max_discount_amount: Number(promoForm.data.max_discount_amount) || null,
-            usage_limit: Number(promoForm.data.usage_limit) || null,
-            starts_at: promoForm.data.starts_at || null,
-            expires_at: promoForm.data.expires_at || null,
-        }));
-
-        if (editingPromo) {
-            promoForm.put(`/admin/promo-codes/${editingPromo.id}`, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setPromoModalOpen(false);
-                    promoForm.reset();
-                },
-            });
-        } else {
-            promoForm.post('/admin/promo-codes', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setPromoModalOpen(false);
-                    promoForm.reset();
-                },
-            });
-        }
-    };
-
-    const handleDeletePromo = async (promo: PromoCodeItem): Promise<void> => {
-        const ok = await askConfirm({
-            title: 'Supprimer le code promo',
-            message: `Supprimer définitivement le code promo "${promo.code}" ?`,
-            tone: 'danger',
-            confirmLabel: 'Supprimer',
-        });
-        if (!ok) return;
-        router.delete(`/admin/promo-codes/${promo.id}`, {
-            preserveScroll: true,
-        });
-    };
-
-    const [campagneModalOpen, setCampagneModalOpen] = useState<boolean>(false);
-    const [editingCampagne, setEditingCampagne] = useState<CampagneParrainageItem | null>(null);
-
-    const campagneForm = useForm({
-        libelle: '',
-        discount_type: 'percent' as 'percent' | 'fixed',
-        discount_value: 10,
-        max_discount_amount: 0,
-        min_montant: 0,
-        starts_at: '',
-        expires_at: '',
-        is_active: true,
-    });
-
-    const openCreateCampagneModal = (): void => {
-        setEditingCampagne(null);
-        campagneForm.reset();
-        campagneForm.clearErrors();
-        campagneForm.setData({
-            libelle: '',
-            discount_type: 'percent',
-            discount_value: 10,
-            max_discount_amount: 0,
-            min_montant: 0,
-            starts_at: '',
-            expires_at: '',
-            is_active: true,
-        });
-        setCampagneModalOpen(true);
-    };
-
-    const openEditCampagneModal = (campagne: CampagneParrainageItem): void => {
-        setEditingCampagne(campagne);
-        campagneForm.clearErrors();
-        campagneForm.setData({
-            libelle: campagne.libelle,
-            discount_type: campagne.discount_type,
-            discount_value: campagne.discount_value,
-            max_discount_amount: campagne.max_discount_amount || 0,
-            min_montant: campagne.min_montant || 0,
-            starts_at: campagne.starts_at ? campagne.starts_at.slice(0, 10) : '',
-            expires_at: campagne.expires_at ? campagne.expires_at.slice(0, 10) : '',
-            is_active: campagne.is_active,
-        });
-        setCampagneModalOpen(true);
-    };
-
-    const handleCampagneSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
-        event.preventDefault();
-        if (campagneForm.processing) return;
-
-        campagneForm.transform(() => ({
-            ...campagneForm.data,
-            libelle: campagneForm.data.libelle.trim(),
-            max_discount_amount: Number(campagneForm.data.max_discount_amount) || null,
-            min_montant: Number(campagneForm.data.min_montant) || 0,
-            starts_at: campagneForm.data.starts_at || null,
-            expires_at: campagneForm.data.expires_at || null,
-        }));
-
-        if (editingCampagne) {
-            campagneForm.put(`/admin/campagnes-parrainage/${editingCampagne.id}`, {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setCampagneModalOpen(false);
-                    campagneForm.reset();
-                },
-            });
-        } else {
-            campagneForm.post('/admin/campagnes-parrainage', {
-                preserveScroll: true,
-                onSuccess: () => {
-                    setCampagneModalOpen(false);
-                    campagneForm.reset();
-                },
-            });
-        }
-    };
-
-    const handleDeleteCampagne = async (campagne: CampagneParrainageItem): Promise<void> => {
-        const ok = await askConfirm({
-            title: 'Supprimer la campagne de parrainage',
-            message: `Supprimer définitivement la campagne "${campagne.libelle}" ?`,
-            tone: 'danger',
-            confirmLabel: 'Supprimer',
-        });
-        if (!ok) return;
-        router.delete(`/admin/campagnes-parrainage/${campagne.id}`, {
-            preserveScroll: true,
-        });
-    };
-
-    const handleToggleCampagne = (campagne: CampagneParrainageItem): void => {
-        router.post(`/admin/campagnes-parrainage/${campagne.id}/toggle`, {}, {
-            preserveScroll: true,
-        });
-    };
-
-    // ── Quota IA par utilisateur ──────────────────────────────────────────────
-    const [aiQuotaModalOpen, setAiQuotaModalOpen] = useState<boolean>(false);
-    const [aiQuotaTarget, setAiQuotaTarget] = useState<AiUserQuotaRow | null>(null);
-    const aiQuotaForm = useForm<{ daily_limit: string; monthly_limit: string; blocked: boolean; note: string }>({
-        daily_limit: '',
-        monthly_limit: '',
-        blocked: false,
-        note: '',
-    });
-
-    const openEditAiQuota = (row: AiUserQuotaRow): void => {
-        setAiQuotaTarget(row);
-        aiQuotaForm.clearErrors();
-        aiQuotaForm.setData({
-            daily_limit: row.override_daily === null ? '' : String(row.override_daily),
-            monthly_limit: row.override_monthly === null ? '' : String(row.override_monthly),
-            blocked: Boolean(row.blocked),
-            note: row.note ?? '',
-        });
-        setAiQuotaModalOpen(true);
-    };
-
-    const handleAiQuotaSubmit = (event: React.FormEvent<HTMLFormElement>): void => {
-        event.preventDefault();
-        if (aiQuotaForm.processing || !aiQuotaTarget) return;
-        aiQuotaForm.transform((data) => ({
-            ...data,
-            daily_limit: data.daily_limit === '' ? null : Number(data.daily_limit),
-            monthly_limit: data.monthly_limit === '' ? null : Number(data.monthly_limit),
-        }));
-        aiQuotaForm.put(`/admin/ai-dashboard/quotas/${aiQuotaTarget.id}`, {
-            preserveScroll: true,
-            onSuccess: () => {
-                setAiQuotaModalOpen(false);
-                aiQuotaForm.reset();
-            },
-        });
-    };
-
-    const handleTogglePromo = (promo: PromoCodeItem): void => {
-        router.post(`/admin/promo-codes/${promo.id}/toggle`, {}, {
-            preserveScroll: true,
-        });
-    };
-
-    useEffect(() => {
-        if (typeof window === 'undefined') {
-            return;
-        }
-
-        localStorage.setItem('prosartisan_admin_theme', themeMode);
-    }, [themeMode]);
-
     const analytics = useAdminAnalytics({
         dashboard,
         deferredSearch,
@@ -1295,7 +489,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const fournisseursAgrees = dashboard.fournisseurs_agrees ?? 0; // Already a primitive or stable
     const kycPending = useMemo(() => dashboard.kyc_en_attente ?? kycUsers.length, [dashboard.kyc_en_attente, kycUsers]);
     const openDisputes = useMemo(() => dashboard.litiges_ouverts ?? litiges.filter((litige) => litige.statut !== 'resolu').length, [dashboard.litiges_ouverts, litiges]);
-    const missionsInProgress = useMemo(() => dashboard.missions_en_cours ?? missions.filter((mission) => mission.status === 'en_cours').length, [dashboard.missions_en_cours, missions]);
+    const missionsInProgress = useMemo(() => dashboard.missions_en_cours ?? missions.filter((mission) => ['in_progress', 'pending_approval'].includes(mission.status)).length, [dashboard.missions_en_cours, missions]);
     const referentRequired = dashboard.referent_required_open ?? 0; // Already a primitive or stable
     const fraudAlerts = dashboard.recent_fraud_alerts ?? 0; // Already a primitive or stable
     const volume24h = dashboard.volume_transactions_24h ?? 0; // Already a primitive or stable
@@ -1303,243 +497,61 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const firstError = Object.values(errors ?? {})[0];
     const bannerError = flash?.error ?? firstError;
 
-    const navigation: NavigationGroup[] = ([
-        {
-            label: 'Pilotage',
-            items: [
-                { id: 'dashboard', label: tabMeta.dashboard.label },
-                { id: 'cartography', label: tabMeta.cartography.label },
-                { count: kycPending, id: 'kyc', label: tabMeta.kyc.label },
-                { count: missionsInProgress, id: 'missions', label: tabMeta.missions.label },
-                { count: recruitmentStats.pending_review, id: 'recruitment', label: tabMeta.recruitment.label },
-                { count: openDisputes, id: 'litiges', label: tabMeta.litiges.label },
-                { count: unreadNotifsCount, id: 'notifications', label: 'Notifications' },
-                { id: 'llm_admin', label: 'Administration LLM' },
-                { id: 'ai_dashboard', label: 'Suivi & Coûts IA' },
-            ],
-        },
-        {
-            label: 'Réseau',
-            items: [
-                { count: totalUsers, id: 'users', label: tabMeta.users.label },
-                { id: 'evaluations', label: tabMeta.evaluations.label },
-                { count: navBadges.transactions_en_attente ?? analytics.pendingTransactions.length, id: 'transactions', label: tabMeta.transactions.label },
-            ],
-        },
-        {
-            label: 'Plateforme',
-            items: [
-                { id: 'settings', label: tabMeta.settings.label },
-                { id: 'roles_permissions', label: tabMeta.roles_permissions.label },
-                { id: 'audit_logs', label: tabMeta.audit_logs.label },
-                { id: 'observability', label: tabMeta.observability.label },
-                { count: navBadges.communications_publiees ?? (communications ?? []).filter(c => c.statut === 'publie').length, id: 'communications', label: tabMeta.communications.label },
-                { count: navBadges.promo_codes_actifs ?? (promoCodes ?? []).filter(p => p.is_active).length, id: 'promo_codes', label: 'Codes Promo' },
-                { count: navBadges.campagnes_parrainage_actives ?? (campagnesParrainage ?? []).filter(c => c.is_active).length, id: 'campagnes_parrainage', label: 'Parrainage Clients' },
-                { count: navBadges.contact_messages_nouveaux ?? (contactMessages ?? []).filter(c => c.statut === 'nouveau').length, id: 'vitrine', label: tabMeta.vitrine.label },
-                { count: whatsappClickStats.today, id: 'whatsapp', label: tabMeta.whatsapp.label },
-                { count: faqs.length, id: 'faq', label: tabMeta.faq.label },
-            ],
-        },
-    ] as NavigationGroup[])
-        .map((group) => ({ ...group, items: group.items.filter((item) => canOpenTab(permissions, item.id)) }))
-        .filter((group) => group.items.length > 0);
+    const navigation = buildNavigation(permissions, {
+        kycPending,
+        missionsInProgress,
+        recruitmentPendingReview: recruitmentStats.pending_review,
+        openDisputes,
+        unreadNotifications: unreadNotifsCount,
+        totalUsers,
+        pendingTransactions: navBadges.transactions_en_attente ?? analytics.pendingTransactions.length,
+        publishedCommunications: navBadges.communications_publiees ?? (communications ?? []).filter(c => c.statut === 'publie').length,
+        activePromoCodes: navBadges.promo_codes_actifs ?? (promoCodes ?? []).filter(p => p.is_active).length,
+        activeCampagnes: navBadges.campagnes_parrainage_actives ?? (campagnesParrainage ?? []).filter(c => c.is_active).length,
+        newContactMessages: navBadges.contact_messages_nouveaux ?? (contactMessages ?? []).filter(c => c.statut === 'nouveau').length,
+        whatsappClicksToday: whatsappClickStats.today,
+        faqCount: faqs.length,
+    });
 
-    const heroStats = useMemo(() => {
-        switch (activeTab) {
-            case 'promo_codes':
-                return [
-                    { label: 'Codes Promo Total', tone: 'amber' as const, value: `${(promoCodes ?? []).length}` },
-                    { label: 'Codes Actifs', tone: 'green' as const, value: `${(promoCodes ?? []).filter(p => p.is_active).length}` },
-                    { label: 'Utilisations Totales', tone: 'blue' as const, value: `${(promoCodes ?? []).reduce((sum, p) => sum + (p.used_count || 0), 0)}` },
-                    { label: 'Campagnes Fixes & %', tone: 'slate' as const, value: `${(promoCodes ?? []).filter(p => p.discount_type === 'percent').length} % / ${(promoCodes ?? []).filter(p => p.discount_type === 'fixed').length} Fixe` },
-                ];
-            case 'campagnes_parrainage':
-                return [
-                    { label: 'Campagnes Total', tone: 'amber' as const, value: `${(campagnesParrainage ?? []).length}` },
-                    { label: 'Campagnes Actives', tone: 'green' as const, value: `${(campagnesParrainage ?? []).filter(c => c.is_active).length}` },
-                    { label: 'Campagnes Fixes & %', tone: 'slate' as const, value: `${(campagnesParrainage ?? []).filter(c => c.discount_type === 'percent').length} % / ${(campagnesParrainage ?? []).filter(c => c.discount_type === 'fixed').length} Fixe` },
-                ];
-            case 'notifications':
-                return [
-                    { label: 'Alertes globales', tone: 'amber' as const, value: `${liveNotifications.length}` },
-                    { label: 'Non lues', tone: 'rose' as const, value: `${unreadNotifsCount}` },
-                    { label: 'Dossiers KYC', tone: 'blue' as const, value: `${dashboard.kyc_en_attente ?? 0}` },
-                    { label: 'Litiges ouverts', tone: 'green' as const, value: `${dashboard.litiges_ouverts ?? 0}` },
-                ];
-            case 'dashboard':
-                return [
-                    { label: 'Utilisateurs', tone: 'amber' as const, value: numberFormat.format(totalUsers) },
-                    { label: 'Missions en cours', tone: 'green' as const, value: numberFormat.format(missionsInProgress) },
-                    { label: 'KYC à valider', tone: 'blue' as const, value: numberFormat.format(kycPending) },
-                    { label: 'Volume 24h', tone: 'slate' as const, value: money(volume24h) },
-                ];
-            case 'cartography':
-                return [
-                    { label: 'Territoire', tone: 'amber' as const, value: territorySummary?.zone?.name ?? 'Côte d’Ivoire' },
-                    { label: 'Districts', tone: 'blue' as const, value: '14' },
-                    { label: 'Communes Abidjan', tone: 'green' as const, value: '13' },
-                    { label: 'Couverture Réseau', tone: 'slate' as const, value: '100%' },
-                ];
-            case 'kyc':
-                return [
-                    { label: 'Dossiers ouverts', tone: 'amber' as const, value: numberFormat.format(kycStats.pending || kycPending) },
-                    { label: 'Artisans prioritaires', tone: 'green' as const, value: numberFormat.format(kycStats.artisans_pending) },
-                    { label: 'Fournisseurs à valider', tone: 'blue' as const, value: numberFormat.format(kycStats.fournisseurs_pending) },
-                    { label: 'Rejets récents', tone: 'rose' as const, value: numberFormat.format(kycStats.rejected) },
-                ];
-            case 'missions':
-                return [
-                    { label: 'Missions en cours', tone: 'green' as const, value: numberFormat.format(missionStats.en_cours || missionsInProgress) },
-                    { label: 'En litige', tone: 'rose' as const, value: numberFormat.format(missionStats.en_litige) },
-                    { label: 'Référent requis', tone: 'amber' as const, value: numberFormat.format(missionStats.referent_required || referentRequired) },
-                    { label: 'Livraisons actives', tone: 'slate' as const, value: numberFormat.format(deliveryStats.in_transit + deliveryStats.awaiting_driver) },
-                ];
-            case 'litiges':
-                return [
-                    { label: 'Litiges ouverts', tone: 'rose' as const, value: numberFormat.format(litigeStats.open || openDisputes) },
-                    { label: 'Haute priorité', tone: 'amber' as const, value: numberFormat.format(litigeStats.high_risk) },
-                    { label: 'Référent requis', tone: 'blue' as const, value: numberFormat.format(referentRequired) },
-                    { label: 'Alertes fraude', tone: 'slate' as const, value: numberFormat.format(fraudAlerts) },
-                ];
-            case 'users':
-                return [
-                    { label: 'Comptes', tone: 'amber' as const, value: numberFormat.format(totalUsers) },
-                    { label: 'Artisans actifs', tone: 'green' as const, value: numberFormat.format(artisansActifs) },
-                    { label: 'Clients actifs', tone: 'blue' as const, value: numberFormat.format(clientsActifs) },
-                    { label: 'Fournisseurs agréés', tone: 'slate' as const, value: numberFormat.format(fournisseursAgrees) },
-                ];
-            case 'transactions':
-                return [
-                    { label: 'Volume 24h', tone: 'amber' as const, value: money(transactionStats.volume_24h || volume24h) },
-                    { label: 'En attente', tone: 'blue' as const, value: numberFormat.format(transactionStats.pending) },
-                    { label: 'Échouées', tone: 'rose' as const, value: numberFormat.format(transactionStats.failed) },
-                    { label: 'Fonds libérés', tone: 'green' as const, value: money(transactionStats.released) },
-                ];
-            case 'settings':
-                return [
-                    { label: 'Pays', tone: 'amber' as const, value: "Côte d'Ivoire" },
-                    { label: 'Devise', tone: 'green' as const, value: 'FCFA' },
-                    { label: 'Paiements', tone: 'blue' as const, value: 'Wave / Orange' },
-                    { label: 'Mode mobile', tone: 'slate' as const, value: 'Hors-ligne' },
-                ];
-            case 'roles_permissions':
-                return [
-                    { label: 'Rôles gérés', tone: 'amber' as const, value: '5 Rôles' },
-                    { label: 'Actions système', tone: 'green' as const, value: `${allPermissions?.length ?? 0} Actions` },
-                    { label: 'Sécurité d\'accès', tone: 'blue' as const, value: 'RBAC Actif' },
-                    { label: 'Mode', tone: 'slate' as const, value: 'Cache Actif' },
-                ];
-            case 'evaluations':
-                return [
-                    { label: 'Évaluations', tone: 'amber' as const, value: numberFormat.format(evaluationStats.evaluations_total) },
-                    { label: 'Note moyenne', tone: 'green' as const, value: evaluationStats.evaluations_total > 0 ? `${evaluationStats.note_moyenne} / 5` : 'N/A' },
-                    { label: 'Artisans suivis', tone: 'blue' as const, value: numberFormat.format(evaluationStats.artisans_suivis) },
-                    { label: 'Scores gelés', tone: 'rose' as const, value: numberFormat.format(evaluationStats.scores_geles) },
-                ];
-            case 'communications': {
-                const comms = communications ?? [];
-                return [
-                    { label: 'Total', tone: 'amber' as const, value: numberFormat.format(comms.length) },
-                    { label: 'Publi\u00e9es', tone: 'green' as const, value: numberFormat.format(comms.filter(c => c.statut === 'publie').length) },
-                    { label: 'Brouillons', tone: 'blue' as const, value: numberFormat.format(comms.filter(c => c.statut === 'brouillon').length) },
-                    { label: 'Cl\u00f4tur\u00e9es', tone: 'slate' as const, value: numberFormat.format(comms.filter(c => c.statut === 'cloture').length) },
-                ];
-            }
-            case 'vitrine': {
-                const newContacts = (contactMessages ?? []).filter(c => c.statut === 'nouveau').length;
-                return [
-                    { label: 'Demandes Contact', tone: newContacts > 0 ? ('rose' as const) : ('amber' as const), value: `${newContacts} Nouvelle${newContacts > 1 ? 's' : ''}` },
-                    { label: 'Articles & Actus', tone: 'green' as const, value: `${(vitrineArticles ?? []).length}` },
-                    { label: 'Formations & Slides', tone: 'blue' as const, value: `${(vitrineFormations ?? []).length} / ${(vitrineSlides ?? []).length}` },
-                    { label: 'Vidéos & Recrut.', tone: 'slate' as const, value: `${(vitrineVideos ?? []).length} / ${(vitrineRecrutements ?? []).length}` },
-                ];
-            }
-            case 'whatsapp':
-                return [
-                    { label: 'Total des clics', tone: 'amber' as const, value: numberFormat.format(whatsappClickStats.total) },
-                    { label: "Aujourd'hui", tone: 'green' as const, value: numberFormat.format(whatsappClickStats.today) },
-                    { label: '7 derniers jours', tone: 'blue' as const, value: numberFormat.format(whatsappClickStats.last_7_days) },
-                    { label: 'Bouton', tone: 'slate' as const, value: whatsappSettings.whatsapp_widget_enabled === '1' ? 'Actif' : 'Désactivé' },
-                ];
-            case 'faq': {
-                const rolesCovered = new Set(faqs.flatMap((f) => f.roles));
-                return [
-                    { label: 'Questions publiées', tone: 'amber' as const, value: numberFormat.format(faqs.filter((f) => f.actif).length) },
-                    { label: 'Masquées', tone: 'slate' as const, value: numberFormat.format(faqs.filter((f) => !f.actif).length) },
-                    { label: 'Espaces couverts', tone: 'blue' as const, value: `${rolesCovered.size} / 4` },
-                    { label: 'Total', tone: 'green' as const, value: numberFormat.format(faqs.length) },
-                ];
-            }
-            case 'recruitment':
-                return [
-                    { label: 'Total des offres', tone: 'slate' as const, value: numberFormat.format(recruitmentStats.total) },
-                    { label: 'À modérer', tone: 'amber' as const, value: numberFormat.format(recruitmentStats.pending_review) },
-                    { label: 'Actives', tone: 'green' as const, value: numberFormat.format(recruitmentStats.active) },
-                    { label: 'Pourvues', tone: 'blue' as const, value: numberFormat.format(recruitmentStats.filled) },
-                ];
-            case 'audit_logs': {
-                const logs = auditLogs?.data ?? [];
-                const failures = logs.filter((l) => l.action.includes('failed') || l.action.includes('denied')).length;
-                return [
-                    { label: 'Entrées (total)', tone: 'amber' as const, value: numberFormat.format(auditLogs?.total ?? 0) },
-                    { label: 'Page courante', tone: 'blue' as const, value: `${auditLogs?.current_page ?? 1} / ${auditLogs?.last_page ?? 1}` },
-                    { label: 'Admins actifs', tone: 'green' as const, value: numberFormat.format(auditAdmins.length) },
-                    { label: 'Échecs de connexion (page)', tone: failures > 0 ? ('rose' as const) : ('slate' as const), value: numberFormat.format(failures) },
-                ];
-            }
-            case 'observability': {
-                if (!observability) return [];
-                return [
-                    { label: 'Jobs en échec', tone: observability.queue.failed > 0 ? ('rose' as const) : ('green' as const), value: numberFormat.format(observability.queue.failed) },
-                    { label: 'Paiements KO (24 h)', tone: observability.payments.failed_24h > 0 ? ('rose' as const) : ('green' as const), value: numberFormat.format(observability.payments.failed_24h) },
-                    { label: 'Fraude GPS (7 j)', tone: observability.fraud.gps_attempts_7d > 0 ? ('amber' as const) : ('green' as const), value: numberFormat.format(observability.fraud.gps_attempts_7d) },
-                    { label: 'Bloquées Référent', tone: observability.referent.blocked > 0 ? ('amber' as const) : ('green' as const), value: numberFormat.format(observability.referent.blocked) },
-                ];
-            }
-            default:
-                return [];
-        }
-    }, [
-        activeTab,
-        auditLogs,
-        observability,
-        auditAdmins.length,
-        transactionStats,
-        litigeStats,
-        evaluationStats,
-        missionStats,
-        deliveryStats,
-        kycStats,
+    const heroStats = buildHeroStats(activeTab, {
+        dashboard,
+        promoCodes,
+        campagnesParrainage,
+        liveNotificationsCount: liveNotifications.length,
+        unreadNotifsCount,
+        totalUsers,
+        missionsInProgress,
+        kycPending,
+        volume24h,
+        referentRequired,
+        openDisputes,
+        fraudAlerts,
         artisansActifs,
         clientsActifs,
-        dashboard.kyc_en_attente,
-        dashboard.litiges_ouverts,
         fournisseursAgrees,
-        fraudAlerts,
-        kycPending,
-        liveNotifications.length,
-        missionsInProgress,
-        openDisputes,
-        promoCodes,
-        referentRequired,
-        totalUsers,
-        unreadNotifsCount,
-        volume24h,
-        allPermissions?.length,
+        territorySummary,
+        kycStats,
+        missionStats,
+        deliveryStats,
+        litigeStats,
+        transactionStats,
+        evaluationStats,
+        allPermissions,
         communications,
-        vitrineSlides,
+        contactMessages,
         vitrineArticles,
         vitrineFormations,
+        vitrineSlides,
         vitrineVideos,
         vitrineRecrutements,
-        contactMessages,
-        territorySummary?.zone?.name,
         whatsappClickStats,
         whatsappSettings,
         faqs,
         recruitmentStats,
-    ]);
+        auditLogs,
+        auditAdmins,
+        observability,
+    });
 
     const summaryCards = [
         {
@@ -1648,31 +660,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         });
     };
 
-    const renderPagination = (links: any[], only: string[] = ['allNotifications']) => {
-        if (!links || links.length <= 3) return null;
-        return (
-            <div className="flex justify-center gap-1.5 mt-5">
-                {links.map((link: any, idx: number) => (
-                    <Link
-                        key={idx}
-                        href={link.url || '#'}
-                        className={cn(
-                            "px-3 py-1.5 rounded-xl text-xs font-semibold border transition",
-                            link.active
-                                ? "bg-[#ebb95e] border-[#ebb95e] text-[#241b16]"
-                                : "border-[var(--admin-border)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]",
-                            !link.url && "opacity-50 cursor-not-allowed"
-                        )}
-                        only={only}
-                        preserveScroll
-                        preserveState
-                        dangerouslySetInnerHTML={{ __html: link.label }}
-                    />
-                ))}
-            </div>
-        );
-    };
-
     const adminName = auth?.user?.name ?? 'Admin ProsArtisan';
     const adminContact = auth?.user?.email ?? auth?.user?.phone ?? 'Administrateur';
 
@@ -1682,7 +669,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
             navigation={navigation}
             heroStats={heroStats}
             themeMode={themeMode}
-            onToggleTheme={() => setThemeMode((current) => (current === 'light' ? 'dark' : 'light'))}
+            onToggleTheme={toggleTheme}
             isMobileSidebarOpen={isMobileSidebarOpen}
             onMobileSidebarChange={setIsMobileSidebarOpen}
             search={search}
@@ -1874,7 +861,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     adminContact={adminContact}
                                     offlineActive={offlineActive}
                                     isOfflineSimulated={isOfflineSimulated}
-                                    onToggleOfflineSimulated={() => setIsOfflineSimulated((prev) => !prev)}
+                                    onToggleOfflineSimulated={toggleOfflineSimulated}
                                     onRefresh={refreshData}
                                     settingsList={settingsList}
                                     sectors={sectors}
@@ -2092,7 +1079,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         editing={editingComm}
                         adminName={auth?.user?.name ?? ''}
                         onSubmit={handleCommSubmit}
-                        onClose={() => setCommModalOpen(false)}
+                        onClose={closeCommModal}
                     />
                 )}
 
@@ -2101,7 +1088,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         form={promoForm}
                         editing={editingPromo}
                         onSubmit={handlePromoSubmit}
-                        onClose={() => setPromoModalOpen(false)}
+                        onClose={closePromoModal}
                     />
                 )}
 
@@ -2110,7 +1097,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         form={campagneForm}
                         editing={editingCampagne}
                         onSubmit={handleCampagneSubmit}
-                        onClose={() => setCampagneModalOpen(false)}
+                        onClose={closeCampagneModal}
                     />
                 )}
 
@@ -2120,7 +1107,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         editing={editingUser}
                         sectors={sectors}
                         onSubmit={handleUserFormSubmit}
-                        onClose={() => setUserModalOpen(false)}
+                        onClose={closeUserModal}
                     />
                 )}
 
@@ -2129,7 +1116,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         form={statusForm}
                         targetUser={statusTargetUser}
                         onSubmit={handleStatusSubmit}
-                        onClose={() => setStatusModalOpen(false)}
+                        onClose={closeStatusModal}
                     />
                 )}
 
@@ -2140,7 +1127,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         globalDailyLimit={Number((pageProps as any).settings?.daily_user_limit ?? 0)}
                         globalMonthlyLimit={Number((pageProps as any).settings?.monthly_user_limit ?? 0)}
                         onSubmit={handleAiQuotaSubmit}
-                        onClose={() => setAiQuotaModalOpen(false)}
+                        onClose={closeAiQuotaModal}
                     />
                 )}
 
