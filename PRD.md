@@ -44,15 +44,21 @@
 ### 🔍 Phase 1 : Diagnostic & Matching Géospatial
 #### Workflow — Phase 1
 1. Le client décrit son problème et sélectionne le **type d'intervention** souhaité dans une liste (`GET /intervention-types` : Maintenance, Assistance, Dépannage, ou simple Déplacement / Diagnostic). L'API **Gemini** analyse la demande, classe la catégorie, évalue l'urgence, et propose une estimation de prix.
-2. Le système recherche les artisans actifs dans un rayon $\le$ 2 km à l'aide de requêtes spatiales MariaDB / MySQL (`ST_Distance_Sphere`).
-3. La position GPS exacte de l'artisan est floutée d'environ 50 mètres pour préserver sa vie privée.
-4. Tri par **Score de Réputation ProsArtisan** (enregistré sous la colonne `score_prosartisan` en BDD).
+2. **Matching Adaptatif Multi-Paliers :** Le système recherche les artisans actifs selon une cascade progressive configurable (`config('prosartisan.gps.matching_tiers')`) :
+   * **Palier Immédiat :** rayon $\le$ 2 km (proximité piétonne/quartier).
+   * **Palier Local :** rayon $\le$ 5 km (commune).
+   * **Palier Ville :** rayon $\le$ 15 km (Grand Abidjan métropole).
+   * **Palier Élargi :** rayon $\le$ 50 km (zone périphérique et interurbaine).
+   Le premier palier retournant au moins un artisan actif et KYC-validé est automatiquement sélectionné, et l'API enrichit les métadonnées de réponse (`tier_id`, `tier_label`, `is_extended_search`). Côté application mobile, l'utilisateur peut commuter « Élargir la zone » pour forcer immédiatement la recherche jusqu'au palier maximal de 50 km.
+3. La position GPS de l'artisan retournée au client est floutée d'environ 50 mètres pour préserver sa vie privée (offset stable en PHP avant sérialisation, Règle d'Or 6).
+4. Tri par **Score ProsArtisan** (`score_prosartisan`, échelle 0–1000) et affichage du marqueur doré pour les artisans prioritaires ($\ge 700$).
 
 #### 🔍 Retours Observés — Phase 1
 * **Points Forts :**
-  * Floutage efficace et diagnostic intelligent.
-* **Points Faibles :**
-  * Rayon fixe de 2 km trop restrictif en dehors des zones urbaines denses.
+  * Floutage efficace et diagnostic intelligent par IA.
+  * Couverture géographique fluide : élimine le problème des "zones blanches" hors d'Abidjan grâce aux 4 paliers d'extension automatique.
+* **Améliorations Actives :**
+  * Matching adaptatif multi-paliers 2 km / 5 km / 15 km / 50 km opérationnel backend et mobile.
 
 ---
 
@@ -70,7 +76,7 @@
 ---
 
 ### 🚚 Flux Logistique E-commerce & Livreur (Livreurs / Drivers)
-Le système gère également un flux de livraison de matériaux en 3 étapes :
+Le système gère également un flux de livraison de matériaux en 4 étapes supervisé par un double watchdog :
 #### Workflow — Logistique
 1. **Recherche de Livreur (Radar de courses) :**
    * Dès que le fournisseur marque la commande comme prête (`status = prepared`), le statut passe à `searching_driver`.
@@ -85,38 +91,48 @@ Le système gère également un flux de livraison de matériaux en 3 étapes :
 3. **Récupération chez le Fournisseur (Verify Pickup) :**
    * Le livreur se rend chez le fournisseur et présente le `pickup_code`.
    * Le fournisseur valide le code. Les fonds des matériaux sont immédiatement transférés du séquestre vers le portefeuille réel du fournisseur.
-   * L'état de la commande passe à `driver_picked_up`. Le livreur reçoit l'adresse de livraison du client et le client reçoit le code secret de livraison (`reception_code`).
+   * L'état de la commande passe à `driver_picked_up` avec horodatage strict `driver_picked_up_at = now()`. Le livreur reçoit l'adresse de livraison du client et le client reçoit le code secret de livraison (`reception_code`).
 4. **Remise au Client final (Verify Delivery) :**
    * Le livreur remet les colis au client.
    * Le client fournit son `reception_code` secret au livreur.
    * Le livreur saisit le code dans l'application. Les frais de livraison sont alors libérés du séquestre vers le portefeuille réel du livreur.
    * L'état passe à `delivered`.
 
+#### 🛡️ Double Watchdog Livreur Automatisé (`DriverWatchdogCommand`)
+* **Volet 1 (Assignation sans retrait — `driver_assigned`) :**
+  Si le coursier reste inactif $> 15$ min après acceptation sans retirer les matériaux, la course est automatiquement réaffectée et remise dans le radar (plafond de 3 tentatives avant escalade admin).
+* **Volet 2 (En transit avec matériaux — `driver_picked_up`) :**
+  Si le coursier a retiré les matériaux mais ne transmet aucun point GPS depuis $> 25$ min (`driver_in_transit_timeout_minutes`), le système déclenche une relance Push/SMS de confirmation et notifie l'administrateur pour intervention.
+  **RÈGLE D'OR ABSOLUE : Le séquestre et le statut de commande restent strictement préservés.** Aucune annulation ni réaffectation brutale n'est effectuée tant que les matériaux sont physiquement chez le transporteur.
+
 #### 🔍 Retours Observés — Logistique
 * **Points Forts :**
   * Calcul de tarification dynamique intelligent (ajusté selon la classe de véhicule : moto, voiture, cargo).
   * Double contrôle à double clé (`pickup_code` pour le fournisseur et `reception_code` pour le livreur) évitant tout détournement de marchandise ou fraude à la livraison.
-* **Points Faibles / Risques :**
-  * Pas de gestion automatisée de réaffectation de livreur si celui-ci a un contretemps en chemin après acceptation.
+  * Supervision continue 360° du transport avec double watchdog prévenant à la fois l'abandon de course et le blocage en transit.
 
 ---
 
-### 📍 Carnet d'Adresses de Livraison & Géolocalisation
+### 📍 Carnet d'Adresses Unifié (Missions de Travaux & E-commerce)
 #### Workflow — Adresses & Géolocalisation
-1. Le client gère un **carnet d'adresses multiple** (`GET/POST /api/v1/addresses`, `PUT/DELETE /api/v1/addresses/{id}`, `POST /api/v1/addresses/{id}/default`) : libellé (Domicile, Bureau…), nom et téléphone du destinataire, adresse texte, ville, région, position GPS optionnelle.
+1. Le client gère un **carnet d'adresses multiple unifié** (`GET/POST /api/v1/addresses`, `PUT/DELETE /api/v1/addresses/{id}`, `POST /api/v1/addresses/{id}/default`) : libellé (Maison, Chantier, Bureau…), nom et téléphone du destinataire, adresse textuelle, ville, région, position GPS.
 2. La toute première adresse enregistrée devient automatiquement l'adresse par défaut ; définir une nouvelle adresse par défaut désactive l'ancienne, et supprimer l'adresse par défaut promeut automatiquement la plus récente restante — le carnet n'est jamais laissé sans défaut tant qu'il contient au moins une adresse.
-3. Au moment du checkout matériaux (`OrderCheckoutScreen`), le client sélectionne ou modifie son adresse de livraison via un écran dédié (`AddressListScreen` / `AddressFormScreen`), avec un bouton **« Utiliser ma position actuelle »** qui réutilise l'écran carte/recherche déjà éprouvé pour les missions (`LocationPickerController`, appel GPS borné).
-4. Une commande en mode `delivery` **exige** un `address_id` valide appartenant au client (HTTP 422 sinon) ; cette adresse sert au calcul du tarif de livraison réel (distance vers la destination) et son contenu (nom, téléphone, adresse, ville) est **figé sur la commande** au moment de sa création — une modification ultérieure du carnet ne réécrit jamais l'historique d'une commande déjà passée.
-5. La demande de mission (`MissionRequestScreen`) récupère désormais la position GPS réelle du client dès l'ouverture de l'écran (appel borné, repli Abidjan), au lieu d'attendre que l'utilisateur ouvre manuellement le sélecteur de carte — la coordonnée et le libellé d'adresse envoyés à la création de mission reflètent donc la position réelle par défaut.
+3. **Application aux Missions de Travaux (`missions.address_id`) :**
+   * Lors de la demande d'intervention (`MissionRequestScreen`), le client dispose d'une interface tri-mode :
+     1. **GPS automatique en temps réel** (détection bornée par `timeLimit`).
+     2. **Mon carnet d'adresses** : sélection One-Tap d'un emplacement favori pré-enregistré.
+     3. **Sélectionner sur la carte** : pointage manuel précis.
+   * **Sécurité Anti-IDOR :** `MissionService::create` vérifie impérativement que `$address->user_id === $client->id` (rejet 403 Forbidden immédiat en cas d'adresse appartenant à autrui).
+   * **Snapshot Immuable :** l'adresse texte et les coordonnées GPS sont figées sur la mission (`client_address`, `client_latitude`, `client_longitude`). Une modification ou suppression ultérieure de l'adresse du carnet ne corrompt jamais l'intégrité de la mission.
+   * **Gating de Protection Artisan (Règle d'Or 19) :** `address_id` et coordonnées exactes sont strictement masqués dans `MissionResource` tant que le devis n'a pas été accepté et payé par le client (`funded_locked`).
+4. **Application aux Commandes de Matériaux (`orders.address_id`) :**
+   * Au checkout matériaux (`OrderCheckoutScreen`), sélection de l'adresse de livraison pour le calcul de distance de livraison Yandex, avec snapshot textuel immuable.
 
 #### 🔍 Retours Observés — Adresses & Géolocalisation
 * **Points Forts :**
-  * Élimine la classe de bug la plus visible pour le client : une adresse de livraison figée en dur (ou une position (0,0) au large du golfe de Guinée) affichée comme si elle était réelle.
-  * Réutilisation du sélecteur GPS/carte déjà conforme à la Règle d'Or 50 (bornage `timeLimit`) plutôt qu'une nouvelle implémentation d'appel GPS.
-  * Snapshot immuable de l'adresse sur la commande : un litige ou un contrôle a posteriori se réfère toujours à l'adresse réellement utilisée, pas à sa version courante dans le carnet.
-* **Points Faibles / Risques :**
-  * Le carnet d'adresses ne couvre pour l'instant que le flux e-commerce matériaux (`orders`) ; les missions artisan continuent de transmettre une position ponctuelle (`lat`/`lng` + texte libre) sans carnet dédié.
-  * Pas encore de validation d'adresse par géocodage inverse strict (l'utilisateur peut saisir une ville incohérente avec la position GPS choisie).
+  * Unification complète entre commandes e-commerce et chantiers de travaux : le client retrouve l'ensemble de ses adresses de confiance sur tous les flux.
+  * Sécurité étanche : rejet strict anti-usurpation (IDOR) et respect du gating de confidentialité avant financement.
+  * Snapshot immuable éliminant tout risque d'altération rétroactive de chantier.
 
 ---
 
@@ -416,6 +432,9 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
 17. **Résilience, Typage Strict et Linting du Backoffice Console :** [COMPLÉTÉ] Sécurisation et normalisation du composant central `console.tsx`. Déclaration explicite et typage strict des props transverses (`vitrineSettings?: any[]`, `territorySummary?: TerritorySummary`) dans `AdminPageProps` pour éliminer tout type `unknown`. Respect de l'ordre d'importation ESLint (`import/order`), complétude des dépendances réactives du hook `useMemo` (`territorySummary?.zone?.name`), et fonctions extractrices numériques robustes (`getActorCount`) protégées par `ErrorBoundary`.
 18. **Intégration Passerelle SMS/OTP Professionnelle & Trésorerie Mobile Money :** [COMPLÉTÉ] Support opérationnel de la passerelle SMS dédiée Afrique de l'Ouest `smspro.africa` pour la distribution des codes de vérification OTP (connexion, validation de livraison et de jalons). Découplage de la couche d'encaissement et de déblocage pour l'accueil direct des clés d'API Wave CI et Orange Money CI avec tolérance aux simulations et webhooks sans blocage.
 19. **Fiabilisation du Build Release & Signing Android Dédié :** [COMPLÉTÉ] Génération d'un keystore d'upload dédié (`upload-keystore.jks`, signing release découplé du keystore debug) éliminant la dépendance à une empreinte de certificat volatile. Correction de la double injection de la clé Yandex MapKit (manifeste natif **et** couche Dart via `--dart-define-from-file=env.json`, cette dernière systématiquement omise auparavant en release) qui provoquait un rejet silencieux `Forbidden : Invalid client information` de toutes les requêtes réseau MapKit (tuiles, itinéraires OSRM) malgré une configuration apparemment correcte côté manifeste et console Yandex (Règle d'Or 30). Script de contournement des verrous de fichiers Windows intermittents (antivirus / synchronisation IDE en tâche de fond) sur les tâches Gradle de nettoyage/merge d'assets et de bibliothèques natives.
+20. **Matching Géospatial Multi-Paliers Adaptatif :** [COMPLÉTÉ] Algorithme d'élargissement progressif du rayon de recherche d'artisans (2 km $\rightarrow$ 5 km $\rightarrow$ 15 km $\rightarrow$ 50 km) dans `GeoService::adaptiveNearbyArtisans`. Si aucun artisan qualifié n'est trouvé dans le rayon standard (2 km), le système élargit dynamiquement la zone pour éviter les écrans vides dans les zones à faible densité tout en préservant le tri prioritaire par Score ProsArtisan et distance réelle. L'API enrichit les réponses avec les métadonnées de matching (`radius_used_km`, `fallback_applied`, `tier_label`).
+21. **Unification du Carnet d'Adresses pour les Travaux :** [COMPLÉTÉ] Liaison explicite `address_id` sur la table `missions` (`foreign key` vers `addresses`), avec vérification d'appartenance client (IDOR) et copie immuable de l'adresse (`address_snapshot`) pour préserver l'historique en cas de modification ultérieure du carnet. Intégration sur mobile avec un sélecteur tri-mode sur l'écran de demande de travaux (`AddressPickerField` : carnet d'adresses client, saisie libre / géocodage, position GPS actuelle). Les coordonnées précises restent strictement masquées à l'artisan avant financement (Règle d'or 19).
+22. **Watchdog Livreur Étendu en Transit & Préservation du Séquestre :** [COMPLÉTÉ] Extension de la commande `OrderDeliveryWatchdogCommand` pour surveiller les commandes en transit (`driver_picked_up`) sans ping de télémétrie depuis plus de 25 minutes. Contrairement au statut `driver_assigned` (où le livreur inactif depuis > 15 min est automatiquement retiré et la commande réattribuée), le statut `driver_picked_up` signifie que le coursier a déjà retiré les matériaux en quincaillerie : le système déclenche une relance proactive par SMS/Push et une alerte admin haute priorité (`delivery_in_transit_unresponsive`), en interdisant formellement l'annulation de la course ou la réaffectation sans confirmation physique pour préserver le séquestre matériaux.
 
 ### 🧪 Qualité, Tests Automatisés & Fiabilité
 1. **Couverture de Tests Mobile — Modules Auth, J-Code & Devis :** [COMPLÉTÉ] Suite `flutter test` étendue aux trois derniers modules mobile dépourvus de couverture : `AuthController` (OTP, inscription, CGU, upload KYC, réinitialisation de téléphone perdu), `JcodeController` (composition du panier matériaux, génération de J-Code, **scan anti-fraude GPS**, catalogue fournisseur, import de devis) et `DevisController` (lignes/jalons, soumission, paiement du séquestre avec confirmation Wave/Orange Money, refus).
@@ -431,3 +450,6 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
 11. **Audit des Cash-Outs Quincaillerie Rétabli :** [COMPLÉTÉ] `AdminCashoutController` recevait `AdminActivityLogger` en dépendance optionnelle, résolue à `null` : aucune création, approbation, paiement ni rejet de cash-out n'était journalisé (Règle d'Or 25). Injection rendue obligatoire, appels corrigés (ils passaient l'administrateur à la place du nom de l'action), couverts par `AdminCashoutAuditTest`.
 12. **Isolement des Tests Mobiles Dépendant d'un Backend Réel :** [COMPLÉTÉ] Les quatre fichiers qui appellent le backend Herd (`auth_repository_test`, `jcode_repository_test`, `mission_repository_test`, `full_workflow_test`) portent `@Tags(['integration'])` ; `frontend_flutter/dart_test.yaml` les ignore par défaut (comptés « ~ » dans le résultat, jamais masqués). `flutter test` passe ainsi au vert sans backend (315 tests, au lieu de 65 échecs parasites) ; `flutter test --tags integration --run-skipped` les exécute backend démarré, et `test_runner.sh` les enchaîne automatiquement si Herd répond. La CI mobile lance désormais `flutter test` sur toute la suite au lieu d'une liste de dossiers à tenir à jour, qui aurait laissé hors CI tout nouveau dossier de tests.
 13. **Découpage des Fichiers Volumineux :** [COMPLÉTÉ] `console.tsx` 2 189 → 1 180 lignes : les hooks et modules partagés extraits lors d'un découpage antérieur (`useAdminNotifications`, `useUserManagement`, formulaires, `buildNavigation`, `buildHeroStats`, `renderPagination`) n'étaient importés nulle part — la console en gardait une copie ; ils sont désormais branchés, après comparaison ligne à ligne, et couverts par un test de rendu de bout en bout (`console.test.tsx`). Au passage, le repli « missions en cours » filtrait sur l'ancien libellé `en_cours` (Règle d'Or 27). `OrderService.php` 1 278 → ~1 015 lignes : la télémétrie livreur passe dans `DeliveryTrackingService` (`findNearbyDrivers`, jamais appelée, supprimée). Écrans Flutter : `settings_screen` 1 506 → 32, `mission_request_screen` 1 370 → 408, `jcode_screen` 1 365 → 169, `login_screen` 1 460 → 721, `driver_home_screen` 1 449 → 522 lignes ; widgets et fonctions déplacés dans `modules/<module>/widgets/<écran>/`, noms génériques préfixés, contrôleur passé en paramètre. Chaque découpage mobile a été vérifié par comparaison automatique avant/après (code identique aux renommages près).
+
+### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
+1. **Mise à Jour Systématique du PRD et des Fichiers de Règles (Règle d'Or 90) :** [OBLIGATOIRE] À chaque nouvelle implémentation, refactorisation, évolution produit ou correction de bug, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être obligatoirement et immédiatement mis à jour afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production.
