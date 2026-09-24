@@ -25,9 +25,9 @@ Tu m'assistes sur le développement de **ProsArtisan**, une plateforme marketpla
 | Couche | Technologie |
 |---|---|
 | Backend API | Laravel 11 (PHP 8.3) |
-| Base de données | **MySQL 8.0+ avec extension spatiale (InnoDB + SRID 4326)** |
-| App mobile | prosartisan-marketplace (Android prioritaire) |
-| IA | Google Gemini API |
+| Base de données | **MariaDB 11.8 en production (Hostinger) · MySQL 8.4 en local · SQLite pour les tests — spatial : POINT sans SRID + ST_Distance_Sphere** |
+| App mobile | prosartisan-marketplace (Android prioritaire : arm64-v8a et Universel) |
+| IA | Google Gemini API (gemini-3.6-flash avec Cloudflare AI Gateway & fallback) |
 | SMS / OTP | Infobip ou Twilio |
 | Paiements | Wave CI API + Orange Money CI API |
 | PDF | Laravel Snappy (DomPDF en fallback) |

@@ -6,7 +6,7 @@
 
 Build **ProsArtisan**, a full-stack marketplace platform connecting clients, artisans (craftsmen), and hardware suppliers (quincailleries) in Côte d'Ivoire, West Africa.
 
-The app is in **French**, uses **FCFA** as currency, and is built with **Laravel 11 (PHP)** for the backend API and **prosartisan-marketplace** for the mobile frontend. The database is **MYSQL** for geospatial queries.
+The app is in **French**, uses **FCFA** as currency, and is built with **Laravel 11 (PHP)** for the backend API and **prosartisan-marketplace** for the mobile frontend. The database is **MariaDB 11.8 in production (Hostinger) / MySQL in local** for geospatial queries (`POINT` without SRID + `ST_Distance_Sphere`).
 
 ---
 
@@ -42,7 +42,7 @@ ProsArtisan solves a trust problem in the informal artisan market by:
 #### REQ-02 — Mission Request & AI Matching
 - Client describes need in free text + photos
 - Call **Google Gemini API** to analyze and return: work category, urgency level, estimated price range in FCFA
-- Use **PostGIS** to search artisans within 2 km radius
+- Use **MariaDB / MySQL spatial queries (`ST_Distance_Sphere`)** to search artisans within 2 km radius
 - Artisan positions are blurred to 50 m precision for privacy
 - Prioritized artisans shown with "marqueur doré" (golden badge) status
 - Client views artisan profile: photo, trade, Score ProsArtisan (0–1000), rating, completed missions
