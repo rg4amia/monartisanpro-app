@@ -96,6 +96,48 @@ void main() {
       expect(controller.errorMsg.value, isNotNull);
       expect(controller.isLoading.value, isFalse);
     });
+
+    test('fetchSecurityChallenge charge le défi et met à jour le token', () async {
+      adapter.on(
+        'GET',
+        '/auth/security-challenge',
+        const CannedResponse(
+          statusCode: 200,
+          body: {
+            'success': true,
+            'data': {
+              'token': 'tok_security_xyz',
+              'question': 'Combien font 3 + 4 ?',
+            },
+          },
+        ),
+      );
+
+      final controller = AuthController();
+      final res = await controller.fetchSecurityChallenge();
+
+      expect(res, isNotNull);
+      expect(controller.challengeToken.value, 'tok_security_xyz');
+      expect(controller.challengeQuestion.value, 'Combien font 3 + 4 ?');
+    });
+
+    test('sendOtp transmet bot_token et bot_answer', () async {
+      adapter.on('POST', '/auth/send-otp', const CannedResponse(statusCode: 200));
+
+      final controller = AuthController()
+        ..phone.value = '+2250700000001'
+        ..challengeToken.value = 'tok_security_xyz'
+        ..challengeQuestion.value = '3 + 4 = ?';
+
+      await controller.sendOtp(answer: '7');
+
+      expect(controller.otpSent.value, isTrue);
+      final lastReq = adapter.requests.last;
+      final body = lastReq.data as Map<String, dynamic>;
+      expect(body['bot_token'], 'tok_security_xyz');
+      expect(body['bot_answer'], '7');
+      expect(body['bot_trap'], '');
+    });
   });
 
   group('AuthController.verifyOtp', () {

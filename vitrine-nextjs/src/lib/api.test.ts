@@ -176,6 +176,40 @@ describe('api — normalisation du numéro fournisseur (format +225)', () => {
         expect(body.phone).toBe('+2250700000001');
     });
 
+    it('transmet les paramètres anti-robot lors de l\'envoi OTP', async () => {
+        const fetchMock = mockFetchOnce({ json: async () => ({ success: true }) });
+
+        await api.supplierSendOtp('0700000001', {
+            token: 'test_token',
+            answer: '14',
+            trap: '',
+        });
+
+        const body = JSON.parse((fetchMock.mock.calls[0][1] as RequestInit).body as string);
+        expect(body.bot_token).toBe('test_token');
+        expect(body.bot_answer).toBe('14');
+        expect(body.bot_trap).toBe('');
+    });
+
+    it('récupère un défi anti-robot via getSecurityChallenge', async () => {
+        mockFetchOnce({
+            json: async () => ({
+                success: true,
+                challenge: {
+                    token: 'tok_challenge',
+                    question: '5 + 3 = ?',
+                    a: 5,
+                    b: 3,
+                },
+            }),
+        });
+
+        const challenge = await api.getSecurityChallenge('send_otp');
+
+        expect(challenge?.token).toBe('tok_challenge');
+        expect(challenge?.question).toBe('5 + 3 = ?');
+    });
+
     it('retourne hasCompletedProfile et sauvegarde le token à la vérification OTP', async () => {
         mockFetchOnce({
             json: async () => ({ success: true, token: 'tok_abc', user: { id: 1 }, has_completed_profile: true }),

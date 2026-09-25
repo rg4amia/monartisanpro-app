@@ -36,7 +36,7 @@ class EscrowSection extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  'Fonds Séquestrés',
+                  'Coffre de Sécurité — Paiement Garanti',
                   style: TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w700,
@@ -44,7 +44,7 @@ class EscrowSection extends StatelessWidget {
                   ),
                 ),
               ),
-              Icon(Icons.lock_outline, color: AppColors.primary, size: 20),
+              Icon(Icons.shield_outlined, color: AppColors.primary, size: 20),
             ],
           ),
           const SizedBox(height: 16),
@@ -55,7 +55,7 @@ class EscrowSection extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
             ),
             child: const Text(
-              'Vos fonds sont sécurisés et ne sont libérés à l\'artisan qu\'après votre validation par OTP.',
+              'Votre argent est protégé dans le coffre ProsArtisan. Il ne sera versé à l\'artisan qu\'après votre validation par code secret.',
               style: TextStyle(
                 fontSize: 12,
                 color: AppColors.primary,
@@ -65,21 +65,21 @@ class EscrowSection extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           BudgetBar(
-            label: 'Matériaux (Bloqué/Fournisseur)',
+            label: 'Part Matériaux (Réservée Quincaillerie)',
             amount: mission.montantMateriaux,
             percentage: pct(mission.montantMateriaux),
             color: AppColors.accent,
           ),
           const SizedBox(height: 14),
           BudgetBar(
-            label: 'Main d\'œuvre (Libéré)',
+            label: 'Part Travail (Déjà versée à l\'artisan)',
             amount: libereMo,
             percentage: pct(libereMo),
             color: AppColors.success,
           ),
           const SizedBox(height: 14),
           BudgetBar(
-            label: 'Main d\'œuvre (Restant bloqué)',
+            label: 'Part Travail (Gardée au coffre)',
             amount: restMo,
             percentage: pct(restMo),
             color: AppColors.primary,

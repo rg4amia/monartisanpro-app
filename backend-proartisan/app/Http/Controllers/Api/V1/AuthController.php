@@ -9,6 +9,7 @@ use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\AntiBotService;
 use App\Services\AuthService;
 use App\Services\OtpService;
 use Illuminate\Http\JsonResponse;
@@ -19,13 +20,43 @@ class AuthController extends Controller
     public function __construct(
         private OtpService $otpService,
         private AuthService $authService,
+        private AntiBotService $antiBotService,
     ) {}
+
+    /**
+     * Génère un défi anti-robot chiffré pour sécuriser les formulaires web.
+     */
+    public function getSecurityChallenge(Request $request): JsonResponse
+    {
+        $action = (string) $request->query('action', 'send_otp');
+        $challenge = $this->antiBotService->generateChallenge($action);
+
+        return response()->json([
+            'success' => true,
+            'challenge' => $challenge,
+            'data' => $challenge,
+        ]);
+    }
 
     /**
      * Envoie un OTP par SMS ou par WhatsApp au numéro indiqué.
      */
     public function sendOtp(SendOtpRequest $request): JsonResponse
     {
+        // Vérification anti-robot pour les requêtes contenant un défi ou venant du web
+        if ($request->has('bot_trap') || $request->has('website_url') || $request->has('bot_token') || $request->has('_bot_token') || $request->input('client_type') === 'web') {
+            $botCheck = $this->antiBotService->check($request, 'send_otp');
+            if (! $botCheck['success']) {
+                $errorCode = ($botCheck['reason'] ?? '') === 'honeypot' ? 'BOT_DETECTED' : 'BOT_CHALLENGE_FAILED';
+
+                return response()->json([
+                    'success' => false,
+                    'error_code' => $errorCode,
+                    'message' => $botCheck['message'] ?? 'Vérification de sécurité anti-robot requise.',
+                ], 422);
+            }
+        }
+
         $roleParam = $request->input('role');
         if ($roleParam) {
             $role = strtolower($roleParam);

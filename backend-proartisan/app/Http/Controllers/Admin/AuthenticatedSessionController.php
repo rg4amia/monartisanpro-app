@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Admin\AdminActivityLogger;
 use App\Services\Admin\AdminLoginThrottle;
+use App\Services\AntiBotService;
 use App\Services\Google2faService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -23,6 +24,7 @@ class AuthenticatedSessionController extends Controller
     public function __construct(
         private AdminLoginThrottle $throttle,
         private AdminActivityLogger $audit,
+        private AntiBotService $antiBotService,
         ?Google2faService $google2faService = null,
     ) {
         $this->google2faService = $google2faService ?? app(Google2faService::class);
@@ -37,11 +39,28 @@ class AuthenticatedSessionController extends Controller
             Auth::guard('web')->logout();
         }
 
-        return Inertia::render('admin/auth/login');
+        $challenge = $this->antiBotService->generateChallenge('admin_login');
+
+        return Inertia::render('admin/auth/login', [
+            'challenge' => $challenge,
+        ]);
     }
 
     public function store(Request $request): RedirectResponse
     {
+        // 1. Vérification anti-robot et anti-automatisation
+        $botCheck = $this->antiBotService->check($request, 'admin_login');
+        if (! $botCheck['success']) {
+            $field = $botCheck['field'] ?? '_bot_answer';
+            $this->audit->log('admin.login.blocked_bot', null, [
+                'identifier' => $request->input('identifier'),
+                'reason' => $botCheck['message'] ?? 'action_automatisee_bloquee',
+            ]);
+
+            throw ValidationException::withMessages([
+                $field => $botCheck['message'] ?? 'Vérification de sécurité anti-robot requise.',
+            ]);
+        }
         $credentials = $request->validate(
             [
                 'identifier' => ['required', 'string', 'max:255'],

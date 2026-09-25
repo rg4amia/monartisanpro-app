@@ -35,20 +35,52 @@ class AuthController extends GetxController {
   final selfiePath = Rx<String?>(null);
   final kycStep = 0.obs;
 
+  // Contrôle de sécurité anti-robot
+  final challengeToken = Rx<String?>(null);
+  final challengeQuestion = Rx<String?>(null);
+  final botAnswer = ''.obs;
+  final botTrap = ''.obs;
+  final isFetchingChallenge = false.obs;
+
   bool get canSendOtp =>
       phone.value.length >= 14 && phone.value.startsWith('+225');
 
   bool get canVerifyOtp => otp.value.length == 4;
 
-  Future<void> sendOtp() async {
+  Future<Map<String, dynamic>?> fetchSecurityChallenge() async {
+    isFetchingChallenge.value = true;
+    try {
+      final challenge = await _repo.getSecurityChallenge('send_otp');
+      if (challenge != null) {
+        challengeToken.value = challenge['token'] as String?;
+        challengeQuestion.value = challenge['question'] as String?;
+        botAnswer.value = '';
+        return challenge;
+      }
+    } finally {
+      isFetchingChallenge.value = false;
+    }
+    return null;
+  }
+
+  Future<void> sendOtp({String? answer}) async {
     if (!canSendOtp) return;
     isLoading.value = true;
     errorMsg.value = null;
     try {
-      await _repo.sendOtp(phone.value, role: role.value);
+      final effectiveAnswer = answer ?? (botAnswer.value.isNotEmpty ? botAnswer.value : null);
+      await _repo.sendOtp(
+        phone.value,
+        role: role.value,
+        botToken: challengeToken.value,
+        botAnswer: effectiveAnswer,
+        botTrap: botTrap.value,
+      );
       otpSent.value = true;
     } catch (e) {
       errorMsg.value = _parseError(e);
+      // Renouveler le défi si échec
+      unawaited(fetchSecurityChallenge());
     } finally {
       isLoading.value = false;
     }

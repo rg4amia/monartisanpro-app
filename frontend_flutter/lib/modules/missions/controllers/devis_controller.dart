@@ -113,14 +113,16 @@ class DevisController extends GetxController {
     try {
       final suggestion = await _repo.getDevisSuggestion(missionId!);
 
-      final List<dynamic> suggestedLignes = suggestion['lignes'] ?? [];
+      final suggestedLignes = (suggestion['lignes'] as List<dynamic>?) ?? [];
       lignes.value = suggestedLignes
-          .map((l) => DevisLigne.fromJson(l as Map<String, dynamic>))
+          .whereType<Map>()
+          .map((l) => DevisLigne.fromJson(Map<String, dynamic>.from(l)))
           .toList();
 
-      final List<dynamic> suggestedJalons = suggestion['jalons'] ?? [];
+      final suggestedJalons = (suggestion['jalons'] as List<dynamic>?) ?? [];
       jalons.value = suggestedJalons
-          .map((j) => DevisJalon.fromJson(j as Map<String, dynamic>))
+          .whereType<Map>()
+          .map((j) => DevisJalon.fromJson(Map<String, dynamic>.from(j)))
           .toList();
 
       Get.snackbar(
@@ -152,14 +154,16 @@ class DevisController extends GetxController {
     try {
       final suggestion = await _repo.parseVoiceQuote(missionId!, audioPath);
 
-      final List<dynamic> suggestedLignes = suggestion['lignes'] ?? [];
+      final suggestedLignes = (suggestion['lignes'] as List<dynamic>?) ?? [];
       lignes.value = suggestedLignes
-          .map((l) => DevisLigne.fromJson(l as Map<String, dynamic>))
+          .whereType<Map>()
+          .map((l) => DevisLigne.fromJson(Map<String, dynamic>.from(l)))
           .toList();
 
-      final List<dynamic> suggestedJalons = suggestion['jalons'] ?? [];
+      final suggestedJalons = (suggestion['jalons'] as List<dynamic>?) ?? [];
       jalons.value = suggestedJalons
-          .map((j) => DevisJalon.fromJson(j as Map<String, dynamic>))
+          .whereType<Map>()
+          .map((j) => DevisJalon.fromJson(Map<String, dynamic>.from(j)))
           .toList();
 
       voiceTranscription.value = suggestion['transcription'] as String?;

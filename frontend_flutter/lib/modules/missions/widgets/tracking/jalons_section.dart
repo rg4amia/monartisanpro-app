@@ -26,18 +26,35 @@ class JalonsSection extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          const Row(
+            children: [
+              Icon(Icons.stairs_outlined, color: AppColors.primary, size: 20),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Étapes du chantier (Jalons)',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 4),
           const Text(
-            'Jalons et validations',
+            'Chaque étape validée débloque la tranche de paiement convenue.',
             style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
+              fontSize: 12,
+              color: AppColors.textSecondary,
+              height: 1.3,
             ),
           ),
           const SizedBox(height: 14),
           if (jalons.isEmpty)
             const Text(
-              'Aucun jalon n\'est encore disponible pour cette mission.',
+              'Aucune étape de travail n\'est encore planifiée pour cette mission.',
               style: TextStyle(
                 fontSize: 13,
                 color: AppColors.textSecondary,

@@ -48,6 +48,9 @@ class ApiClient {
 
   factory ApiClient() => _instance ??= ApiClient._();
 
+  @visibleForTesting
+  ApiClient.withDio(this._dio);
+
   Dio get dio => _dio;
 
   /// Met à jour le baseUrl de Dio après une re-découverte réseau.

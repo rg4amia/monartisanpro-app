@@ -257,7 +257,7 @@ class JalonCard extends StatelessWidget {
       AlertDialog(
         title: const Text('Accepter les preuves ?'),
         content: const Text(
-          'En acceptant ces preuves, vous validez la réalisation de ce jalon et débloquez le paiement pour l\'artisan.',
+          'En acceptant ces preuves, vous confirmez que cette étape de travail est bien réalisée et vous débloquez le paiement de cette tranche pour l\'artisan.',
         ),
         actions: [
           TextButton(
@@ -269,7 +269,7 @@ class JalonCard extends StatelessWidget {
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.success,
             ),
-            child: const Text('Accepter'),
+            child: const Text('Valider l\'étape'),
           ),
         ],
       ),
@@ -285,7 +285,7 @@ class JalonCard extends StatelessWidget {
         color: AppColors.success,
         bg: AppColors.supplierSoft,
         border: Color(0xFFB8E7CC),
-        message: 'Paiement libere sur le wallet main d\'oeuvre.',
+        message: 'Paiement de cette étape versé à l\'artisan.',
       );
     }
 
@@ -296,7 +296,7 @@ class JalonCard extends StatelessWidget {
           bg: AppColors.artisanSoft,
           border: Color(0xFFF6D68A),
           message:
-              'OTP valide. La liberation attend la validation physique du referent.',
+              'Étape validée. Le paiement sera débloqué après l\'inspection de l\'expert contrôleur.',
         );
       }
 
@@ -304,7 +304,7 @@ class JalonCard extends StatelessWidget {
         color: AppColors.success,
         bg: AppColors.supplierSoft,
         border: Color(0xFFB8E7CC),
-        message: 'OTP valide. Le paiement est en cours de liberation.',
+        message: 'Étape validée. Le virement de cette tranche est en cours.',
       );
     }
 
@@ -314,7 +314,7 @@ class JalonCard extends StatelessWidget {
         bg: AppColors.secondary,
         border: Color(0xFFC7D2FE),
         message:
-            'Preuves envoyees. Le client doit maintenant confirmer l\'OTP recu par SMS.',
+            'Preuves photos envoyées. Le client confirme avec le code SMS pour libérer le paiement.',
       );
     }
 
@@ -323,7 +323,7 @@ class JalonCard extends StatelessWidget {
       bg: Color(0xFFFFFBEB),
       border: Color(0xFFFDE68A),
       message:
-          'Ce jalon doit etre documente avec des photos geolocalisees avant soumission.',
+          'Cette étape doit être réalisée et photographiée sur place avant d\'être validée.',
     );
   }
 }

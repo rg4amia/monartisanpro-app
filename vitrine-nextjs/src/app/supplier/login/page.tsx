@@ -16,6 +16,35 @@ export default function SupplierLogin() {
     const [success, setSuccess] = useState<string | null>(null);
     const [timer, setTimer] = useState(0);
 
+    // Défi anti-robot
+    const [challenge, setChallenge] = useState<{
+        token: string;
+        question: string;
+        instruction?: string;
+        a?: number;
+        b?: number;
+    } | null>(null);
+    const [botAnswer, setBotAnswer] = useState('');
+    const [botTrap, setBotTrap] = useState('');
+    const [loadingChallenge, setLoadingChallenge] = useState(false);
+
+    const fetchChallenge = async () => {
+        try {
+            setLoadingChallenge(true);
+            const data = await api.getSecurityChallenge('send_otp');
+            setChallenge(data);
+            setBotAnswer('');
+        } catch (e) {
+            console.error('Failed to load anti-bot challenge', e);
+        } finally {
+            setLoadingChallenge(false);
+        }
+    };
+
+    useEffect(() => {
+        fetchChallenge();
+    }, []);
+
     useEffect(() => {
         // Redirection si déjà connecté
         if (typeof window !== 'undefined' && localStorage.getItem('supplier_token')) {
@@ -43,17 +72,34 @@ export default function SupplierLogin() {
             return;
         }
 
+        if (challenge && !botAnswer.trim()) {
+            setError('Veuillez résoudre le calcul de sécurité anti-robot.');
+            setLoading(false);
+            return;
+        }
+
         try {
-            const sent = await api.supplierSendOtp(cleanPhone);
+            const sent = await api.supplierSendOtp(
+                cleanPhone,
+                challenge
+                    ? {
+                          token: challenge.token,
+                          answer: botAnswer,
+                          trap: botTrap,
+                      }
+                    : undefined
+            );
             if (sent) {
                 setStep('otp');
                 setTimer(60);
                 setSuccess('Code OTP envoyé par SMS.');
             } else {
                 setError("Échec de l'envoi du code. Vérifiez le numéro.");
+                fetchChallenge();
             }
         } catch (err: unknown) {
             setError((err instanceof Error && err.message) || "Erreur lors de l'envoi du code OTP.");
+            fetchChallenge();
         } finally {
             setLoading(false);
         }
@@ -169,10 +215,60 @@ export default function SupplierLogin() {
                             </p>
                         </div>
 
+                        {/* Honeypot anti-robot invisible */}
+                        <div className="hidden" aria-hidden="true" style={{ display: 'none' }}>
+                            <label htmlFor="bot_trap">Ne pas remplir ce champ</label>
+                            <input
+                                type="text"
+                                id="bot_trap"
+                                name="bot_trap"
+                                value={botTrap}
+                                onChange={(e) => setBotTrap(e.target.value)}
+                                tabIndex={-1}
+                                autoComplete="off"
+                            />
+                        </div>
+
+                        {/* Défi de sécurité anti-robot */}
+                        {challenge && (
+                            <div className="bg-slate-950/90 border border-slate-800 rounded-lg p-3.5 space-y-2">
+                                <div className="flex items-center justify-between">
+                                    <span className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">
+                                        <span className="w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+                                        Contrôle de sécurité anti-robot
+                                    </span>
+                                    <button
+                                        type="button"
+                                        onClick={fetchChallenge}
+                                        disabled={loadingChallenge}
+                                        className="text-[11px] text-amber-500 hover:text-amber-400 transition"
+                                    >
+                                        Changer le calcul
+                                    </button>
+                                </div>
+                                <div className="flex items-center gap-3">
+                                    <span className="bg-slate-900 border border-slate-700 px-3 py-1.5 rounded font-mono font-bold text-amber-400 text-sm tracking-wider">
+                                        {challenge.question}
+                                    </span>
+                                    <input
+                                        type="number"
+                                        placeholder="Votre réponse"
+                                        value={botAnswer}
+                                        onChange={(e) => setBotAnswer(e.target.value)}
+                                        required
+                                        className="flex-1 bg-slate-900 border border-slate-800 text-white rounded px-3 py-1.5 text-sm focus:border-amber-500 focus:ring-1 focus:ring-amber-500 outline-none"
+                                    />
+                                </div>
+                                <p className="text-[11px] text-slate-500">
+                                    Résolvez cette addition pour confirmer que vous êtes un humain.
+                                </p>
+                            </div>
+                        )}
+
                         <button
                             type="submit"
-                            disabled={loading}
-                            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 text-slate-950 font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-amber-500/20 active:scale-[0.98]"
+                            disabled={loading || (!!challenge && !botAnswer.trim())}
+                            className="w-full bg-gradient-to-r from-amber-500 to-amber-600 hover:from-amber-400 hover:to-amber-500 disabled:opacity-50 disabled:cursor-not-allowed text-slate-950 font-bold py-3 rounded-lg text-sm transition shadow-lg shadow-amber-500/20 active:scale-[0.98]"
                         >
                             {loading ? 'Envoi en cours...' : 'Obtenir le code OTP'}
                         </button>

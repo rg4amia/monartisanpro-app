@@ -1,8 +1,9 @@
 import 'dart:async';
+import 'dart:io';
 import 'package:connectivity_plus/connectivity_plus.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/foundation.dart';
-import 'package:get/get.dart';
+import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:hive_flutter/hive_flutter.dart';
 
 import 'api_client.dart';
@@ -13,6 +14,8 @@ class QueuedRequest {
   final String method;
   final String url;
   final Map<String, dynamic>? data;
+  final bool isMultipart;
+  final Map<String, String>? filePaths;
   final DateTime timestamp;
 
   QueuedRequest({
@@ -20,6 +23,8 @@ class QueuedRequest {
     required this.method,
     required this.url,
     this.data,
+    this.isMultipart = false,
+    this.filePaths,
     required this.timestamp,
   });
 
@@ -28,17 +33,23 @@ class QueuedRequest {
         'method': method,
         'url': url,
         'data': data,
+        'is_multipart': isMultipart,
+        if (filePaths != null) 'file_paths': filePaths,
         'timestamp': timestamp.toIso8601String(),
       };
 
   factory QueuedRequest.fromJson(Map<String, dynamic> json) => QueuedRequest(
-        id: json['id'],
-        method: json['method'],
-        url: json['url'],
+        id: json['id'] as String,
+        method: json['method'] as String,
+        url: json['url'] as String,
         data: json['data'] != null
-            ? Map<String, dynamic>.from(json['data'])
+            ? Map<String, dynamic>.from(json['data'] as Map)
             : null,
-        timestamp: DateTime.parse(json['timestamp']),
+        isMultipart: json['is_multipart'] == true,
+        filePaths: json['file_paths'] != null
+            ? Map<String, String>.from(json['file_paths'] as Map)
+            : null,
+        timestamp: DateTime.parse(json['timestamp'] as String),
       );
 }
 
@@ -125,6 +136,28 @@ class SyncService extends GetxService {
     pendingCount.value = _queueBox!.length;
   }
 
+  /// Met en file d'attente une requête multipart (avec fichiers locaux)
+  Future<void> enqueueMultipartRequest(
+    String url, {
+    Map<String, dynamic>? data,
+    Map<String, String>? filePaths,
+  }) async {
+    if (_queueBox == null) return;
+
+    final request = QueuedRequest(
+      id: DateTime.now().millisecondsSinceEpoch.toString(),
+      method: 'POST',
+      url: url,
+      data: data,
+      isMultipart: true,
+      filePaths: filePaths,
+      timestamp: DateTime.now(),
+    );
+
+    await _queueBox!.put(request.id, request.toJson());
+    pendingCount.value = _queueBox!.length;
+  }
+
   /// Force une tentative de synchronisation (ex: après un login réussi).
   Future<void> flush() => _syncQueue();
 
@@ -155,13 +188,37 @@ class SyncService extends GetxService {
         }
 
         try {
-          switch (request.method.toUpperCase()) {
-            case 'POST':
-              await _dio.post(request.url, data: request.data);
-            case 'PUT':
-              await _dio.put(request.url, data: request.data);
-            case 'DELETE':
-              await _dio.delete(request.url);
+          if (request.isMultipart) {
+            final formMap = <String, dynamic>{};
+            if (request.data != null) {
+              formMap.addAll(request.data!);
+            }
+            if (request.filePaths != null) {
+              for (final entry in request.filePaths!.entries) {
+                final file = File(entry.value);
+                if (await file.exists()) {
+                  formMap[entry.key] = await MultipartFile.fromFile(
+                    entry.value,
+                    filename: entry.value.split(RegExp(r'[/\\]')).last,
+                  );
+                } else {
+                  debugPrint(
+                    '[SyncService] Fichier local introuvable pour rejeu: ${entry.value}',
+                  );
+                }
+              }
+            }
+            final formData = FormData.fromMap(formMap);
+            await _dio.post(request.url, data: formData);
+          } else {
+            switch (request.method.toUpperCase()) {
+              case 'POST':
+                await _dio.post(request.url, data: request.data);
+              case 'PUT':
+                await _dio.put(request.url, data: request.data);
+              case 'DELETE':
+                await _dio.delete(request.url);
+            }
           }
 
           // Succès : on retire de la file

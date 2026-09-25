@@ -402,11 +402,29 @@ export const api = {
             };
         }
     },
+    async getSecurityChallenge(action = 'send_otp'): Promise<{ token: string; question: string; instruction?: string; a?: number; b?: number } | null> {
+        try {
+            const res = await fetchAuthApi<{ success: boolean; challenge?: { token: string; question: string; instruction?: string; a?: number; b?: number }; data?: { token: string; question: string; instruction?: string; a?: number; b?: number } }>(`/auth/security-challenge?action=${encodeURIComponent(action)}`);
+            return res.challenge || res.data || null;
+        } catch {
+            return null;
+        }
+    },
     // Espace Fournisseur APIs
-    async supplierSendOtp(phone: string): Promise<boolean> {
+    async supplierSendOtp(phone: string, antiBot?: { token?: string; answer?: string; trap?: string }): Promise<boolean> {
         const clean = phone.replace(/\s+/g, '');
         const formatted = clean.startsWith('+') ? clean : (clean.startsWith('225') ? `+${clean}` : `+225${clean}`);
-        const res = await fetchAuthApi<{ success: boolean }>('/auth/send-otp', 'POST', { phone: formatted, role: 'fournisseur' });
+        const payload: Record<string, unknown> = {
+            phone: formatted,
+            role: 'fournisseur',
+            client_type: 'web',
+        };
+        if (antiBot) {
+            if (antiBot.token !== undefined) payload.bot_token = antiBot.token;
+            if (antiBot.answer !== undefined) payload.bot_answer = antiBot.answer;
+            if (antiBot.trap !== undefined) payload.bot_trap = antiBot.trap;
+        }
+        const res = await fetchAuthApi<{ success: boolean }>('/auth/send-otp', 'POST', payload);
         return res.success;
     },
     async supplierVerifyOtp<U = Record<string, unknown>>(phone: string, otp: string): Promise<{ token?: string; user?: U; hasCompletedProfile: boolean }> {

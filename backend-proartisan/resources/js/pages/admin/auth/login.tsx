@@ -5,25 +5,44 @@ import { cn } from '@/lib/utils';
 
 type ThemeMode = 'light' | 'dark';
 
+interface ChallengeData {
+    token: string;
+    question: string;
+    instruction: string;
+    action: string;
+    expires_in: number;
+}
+
 interface LoginPageProps {
     errors: {
         identifier?: string;
         password?: string;
+        bot_answer?: string;
     };
     flash?: {
         error?: string | null;
         success?: string | null;
     };
+    challenge?: ChallengeData;
 }
 
-export default function AdminLoginPage({ errors, flash }: LoginPageProps) {
+export default function AdminLoginPage({ errors, flash, challenge }: LoginPageProps) {
     const [themeMode, setThemeMode] = useState<ThemeMode>('light');
 
     const form = useForm({
         identifier: '',
         password: '',
         remember: true,
+        bot_trap: '',
+        bot_token: challenge?.token || '',
+        bot_answer: '',
     });
+
+    useEffect(() => {
+        if (challenge?.token) {
+            form.setData('bot_token', challenge.token);
+        }
+    }, [challenge?.token]);
 
     useEffect(() => {
         if (typeof window === 'undefined') {
@@ -151,6 +170,45 @@ export default function AdminLoginPage({ errors, flash }: LoginPageProps) {
                                         />
                                         {errors.password ? <p className="text-sm text-[#b24f43]">{errors.password}</p> : null}
                                     </label>
+
+                                    {/* Honeypot invisible pour piéger les robots spammeurs */}
+                                    <div style={{ display: 'none' }} aria-hidden="true">
+                                        <input
+                                            type="text"
+                                            name="bot_trap"
+                                            tabIndex={-1}
+                                            autoComplete="off"
+                                            value={form.data.bot_trap}
+                                            onChange={(event) => form.setData('bot_trap', event.target.value)}
+                                        />
+                                    </div>
+
+                                    {/* Défi de sécurité Anti-Robot */}
+                                    {challenge ? (
+                                        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-surface)] p-4 shadow-sm space-y-2.5">
+                                            <div className="flex items-center justify-between">
+                                                <span className="flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.16em] text-[var(--admin-muted)]">
+                                                    <svg className="w-4 h-4 text-[#c99537]" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                                                    </svg>
+                                                    Vérification Anti-Robot
+                                                </span>
+                                                <span className="text-[11px] font-medium text-[var(--admin-text-soft)]">Humain requis</span>
+                                            </div>
+                                            <p className="text-sm font-medium text-[var(--admin-text)]">
+                                                {challenge.question}
+                                            </p>
+                                            <input
+                                                type="number"
+                                                value={form.data.bot_answer}
+                                                onChange={(event) => form.setData('bot_answer', event.target.value)}
+                                                className="admin-input w-full rounded-xl px-4 py-2.5 text-sm outline-none"
+                                                placeholder="Votre résultat (chiffre)"
+                                                required
+                                            />
+                                            {errors.bot_answer ? <p className="text-sm text-[#b24f43]">{errors.bot_answer}</p> : null}
+                                        </div>
+                                    ) : null}
 
                                     <label className="flex items-center gap-3 text-sm text-[var(--admin-text-soft)]">
                                         <input

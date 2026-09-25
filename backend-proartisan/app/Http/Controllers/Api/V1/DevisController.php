@@ -280,6 +280,13 @@ class DevisController extends Controller
             ], 403);
         }
 
+        if ($mission->artisan_id !== null && $mission->artisan_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette mission est réservée à un autre artisan.',
+            ], 403);
+        }
+
         // Vérification des quotas IA
         if (! AiMonitoringService::checkUserLimit($user->id)) {
             return response()->json([

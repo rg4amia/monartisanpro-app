@@ -59,16 +59,20 @@ class Formatters {
   }
 
   static String jcodeStatus(String status) {
-    const labels = {'actif': 'Actif', 'utilise': 'Utilisé', 'expire': 'Expiré'};
+    const labels = {
+      'actif': 'Bon disponible',
+      'utilise': 'Matériel retiré',
+      'expire': 'Bon expiré',
+    };
     return labels[status] ?? status;
   }
 
   static String jalonStatus(String status) {
     const labels = {
-      'en_attente': 'En attente',
-      'soumis': 'Soumis',
-      'valide': 'Validé',
-      'paye': 'Payé',
+      'en_attente': 'À réaliser',
+      'soumis': 'Preuves envoyées',
+      'valide': 'Étape validée',
+      'paye': 'Paiement versé',
     };
     return labels[status] ?? status;
   }

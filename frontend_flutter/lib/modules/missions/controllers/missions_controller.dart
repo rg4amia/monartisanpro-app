@@ -1,13 +1,14 @@
 import 'dart:async';
 
 import 'package:dio/dio.dart';
-import 'package:flutter/widgets.dart';
+import 'package:flutter/material.dart';
 import 'package:frontend_flutter/core/utils/json_readers.dart';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/network/realtime_stream_service.dart';
 import '../../../core/storage/storage_service.dart';
+import '../../../core/theme/app_colors.dart';
 import '../../../data/models/devis_model.dart';
 import '../../../data/models/jalon_model.dart';
 import '../../../data/models/mission_model.dart';
@@ -565,14 +566,14 @@ class MissionsController extends GetxController {
     errorMsg.value = null;
 
     try {
-      await _repo.uploadJalonPhotos(
+      final uploadedOnline = await _repo.uploadJalonPhotos(
         jalonId,
         localFiles,
         missionId: currentMission.value?.id,
       );
 
-      // Recharger la mission en arrière-plan
-      if (currentMission.value != null) {
+      // Recharger la mission en arrière-plan si uploadé en ligne
+      if (uploadedOnline && currentMission.value != null) {
         await loadMission(
           currentMission.value!.id,
           showLoader: false,
@@ -580,12 +581,23 @@ class MissionsController extends GetxController {
         );
       }
 
-      Get.snackbar(
-        'Preuves envoyées',
-        'Preuves supplémentaires uploadées avec succès.',
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 3),
-      );
+      if (uploadedOnline) {
+        Get.snackbar(
+          'Preuves envoyées',
+          'Preuves supplémentaires uploadées avec succès.',
+          snackPosition: SnackPosition.TOP,
+          duration: const Duration(seconds: 3),
+        );
+      } else {
+        Get.snackbar(
+          'Mode Hors-Ligne',
+          'Connexion indisponible. Vos preuves sont enregistrées sur l\'appareil et seront synchronisées dès le retour du réseau.',
+          snackPosition: SnackPosition.TOP,
+          backgroundColor: AppColors.warning,
+          colorText: Colors.black87,
+          duration: const Duration(seconds: 4),
+        );
+      }
 
       return true;
     } on DioException catch (e) {

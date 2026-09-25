@@ -64,6 +64,7 @@ Route::prefix('v1')->group(function () {
     // ─────────────────────────────────────────────────────────────────────────
 
     Route::prefix('auth')->middleware('throttle:auth')->group(function () {
+        Route::get('/security-challenge', [AuthController::class, 'getSecurityChallenge']);
         Route::post('/send-otp', [AuthController::class, 'sendOtp']);
         Route::post('/verify-otp', [AuthController::class, 'verifyOtp']);
         Route::post('/register', [AuthController::class, 'register']);

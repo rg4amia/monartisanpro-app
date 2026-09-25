@@ -17,24 +17,36 @@ class JCodeSection extends StatelessWidget {
   Widget build(BuildContext context) {
     final body = switch (mission.status) {
       'financee' =>
-        'Les fonds materiaux sont bloques. Generez le J-Code pour le fournisseur agree.',
+        'L\'argent des matériaux est sécurisé. Générez le bon de retrait pour la quincaillerie agréée.',
       'en_cours' =>
-        'Le chantier est lance. Utilisez le module J-Code pour suivre ou regenerer le jeton materiaux.',
+        'Chantier en cours. Utilisez votre bon de retrait pour récupérer vos matériaux chez le fournisseur.',
       _ =>
-        'Le J-Code materiaux sera accessible des que la mission sera financee.',
+        'Le bon de retrait matériaux sera disponible dès que le client aura validé le paiement.',
     };
 
     return SectionContainer(
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'J-Code materiaux',
-            style: TextStyle(
-              fontSize: 16,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
+          const Row(
+            children: [
+              Icon(
+                Icons.confirmation_number_outlined,
+                color: AppColors.primary,
+                size: 20,
+              ),
+              SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  'Bon Matériel Quincaillerie (J-Code)',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w700,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+            ],
           ),
           const SizedBox(height: 10),
           Text(
@@ -52,7 +64,7 @@ class JCodeSection extends StatelessWidget {
               arguments: <String, dynamic>{'missionId': mission.id},
             ),
             icon: const Icon(Icons.qr_code_2_outlined, size: 18),
-            label: const Text('Ouvrir le module J-Code'),
+            label: const Text('Ouvrir mon Bon Matériel'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,

@@ -10,9 +10,37 @@ import '../models/user_model.dart';
 class AuthRepository {
   final ApiClient _client = ApiClient();
 
-  Future<void> sendOtp(String phone, {String? role}) async {
-    final data = {'phone': phone};
+  Future<Map<String, dynamic>?> getSecurityChallenge([String action = 'send_otp']) async {
+    try {
+      final res = await _client.get(
+        ApiEndpoints.securityChallenge,
+        params: {'action': action},
+      );
+      final body = readMap(res.data);
+      if (body != null && body['success'] == true) {
+        return readMap(body['data']) ?? readMap(body['challenge']);
+      }
+    } catch (_) {
+      // Repli gracieux si indisponible
+    }
+    return null;
+  }
+
+  Future<void> sendOtp(
+    String phone, {
+    String? role,
+    String? botToken,
+    String? botAnswer,
+    String? botTrap,
+  }) async {
+    final data = <String, dynamic>{
+      'phone': phone,
+      'bot_trap': botTrap ?? '',
+    };
     if (role != null) data['role'] = role;
+    if (botToken != null) data['bot_token'] = botToken;
+    if (botAnswer != null) data['bot_answer'] = botAnswer;
+
     await _client.post(ApiEndpoints.sendOtp, data: data);
   }
 

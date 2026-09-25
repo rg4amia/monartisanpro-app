@@ -24,7 +24,7 @@ class JalonsSection extends StatelessWidget {
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const Text(
-              'Jalons de paiement',
+              'Étapes de paiement (Jalons)',
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.w700,
@@ -34,7 +34,7 @@ class JalonsSection extends StatelessWidget {
             TextButton.icon(
               onPressed: () => _showAddJalonDialog(context),
               icon: const Icon(Icons.add_circle_outline, size: 18),
-              label: const Text('Ajouter'),
+              label: const Text('Ajouter une étape'),
               style: TextButton.styleFrom(foregroundColor: AppColors.primary),
             ),
           ],
@@ -43,9 +43,9 @@ class JalonsSection extends StatelessWidget {
         Obx(() {
           if (controller.jalons.isEmpty) {
             return const CreationEmptyState(
-              icon: Icons.flag_outlined,
-              message: 'Aucun jalon défini',
-              hint: 'Définissez les étapes de validation du projet',
+              icon: Icons.stairs_outlined,
+              message: 'Aucune étape définie',
+              hint: 'Définissez les étapes de travail et de paiement du chantier',
             );
           }
 
@@ -92,7 +92,7 @@ class JalonsSection extends StatelessWidget {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const Text(
-                'Ajouter un jalon',
+                'Ajouter une étape de travail',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.w700,
@@ -100,15 +100,15 @@ class JalonsSection extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 20),
-              const _FieldLabel('Description'),
+              const _FieldLabel('Travaux prévus à cette étape'),
               const SizedBox(height: 8),
               TextField(
                 controller: descController,
                 maxLines: 2,
-                decoration: _fieldDecoration('Ex: Livraison des fondations'),
+                decoration: _fieldDecoration('Ex: Démontage, pose carrelage, finitions...'),
               ),
               const SizedBox(height: 16),
-              const _FieldLabel('Montant (FCFA)'),
+              const _FieldLabel('Montant de cette tranche (FCFA)'),
               const SizedBox(height: 8),
               TextField(
                 controller: montantController,
@@ -117,7 +117,7 @@ class JalonsSection extends StatelessWidget {
                 decoration: _fieldDecoration('0'),
               ),
               const SizedBox(height: 16),
-              const _FieldLabel('Date cible'),
+              const _FieldLabel('Date de fin estimée'),
               const SizedBox(height: 8),
               StatefulBuilder(
                 builder: (context, setState) => Column(

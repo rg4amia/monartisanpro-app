@@ -14,8 +14,12 @@ import '../models/mission_model.dart';
 import '../models/mission_site_map.dart';
 
 class MissionRepository {
-  final ApiClient _client = ApiClient();
-  final MissionCacheService _cache = MissionCacheService();
+  final ApiClient _client;
+  final MissionCacheService _cache;
+
+  MissionRepository({ApiClient? client, MissionCacheService? cache})
+      : _client = client ?? ApiClient(),
+        _cache = cache ?? MissionCacheService();
 
   /// Initialise le cache
   Future<void> initCache() async {
@@ -480,33 +484,60 @@ class MissionRepository {
   }
 
   /// Upload de preuves supplémentaires pour un jalon (artisan)
-  Future<void> uploadJalonPhotos(
+  /// Retourne true si uploadé en ligne, false si mis en file d'attente hors-ligne.
+  Future<bool> uploadJalonPhotos(
     int jalonId,
     List<Map<String, dynamic>> localFiles, {
     int? missionId,
   }) async {
-    final Map<String, dynamic> formMap = {};
+    final Map<String, dynamic> fields = {};
+    final Map<String, String> filePaths = {};
+
     for (int i = 0; i < localFiles.length; i++) {
       final fileMap = localFiles[i];
       final path = fileMap['url'] as String;
-      formMap['photos[$i][photo]'] = await MultipartFile.fromFile(
-        path,
-        filename: path.split('/').last,
-      );
-      formMap['photos[$i][latitude]'] = fileMap['lat'];
-      formMap['photos[$i][longitude]'] = fileMap['lng'];
+      filePaths['photos[$i][photo]'] = path;
+      fields['photos[$i][latitude]'] = fileMap['lat'];
+      fields['photos[$i][longitude]'] = fileMap['lng'];
       if (fileMap['description'] != null) {
-        formMap['photos[$i][description]'] = fileMap['description'];
+        fields['photos[$i][description]'] = fileMap['description'];
       }
     }
-    final formData = FormData.fromMap(formMap);
-    await _client.postMultipart(
-      ApiEndpoints.uploadJalonPhotos(jalonId),
-      formData,
-    );
 
-    if (missionId != null) {
-      await _cache.invalidate('jalons_$missionId');
+    try {
+      final Map<String, dynamic> formMap = Map.from(fields);
+      for (final entry in filePaths.entries) {
+        formMap[entry.key] = await MultipartFile.fromFile(
+          entry.value,
+          filename: entry.value.split(RegExp(r'[/\\]')).last,
+        );
+      }
+      final formData = FormData.fromMap(formMap);
+      await _client.postMultipart(
+        ApiEndpoints.uploadJalonPhotos(jalonId),
+        formData,
+      );
+
+      if (missionId != null) {
+        await _cache.invalidate('jalons_$missionId');
+      }
+      return true;
+    } on DioException catch (e) {
+      if (e.type == DioExceptionType.connectionTimeout ||
+          e.type == DioExceptionType.receiveTimeout ||
+          e.type == DioExceptionType.connectionError ||
+          e.type == DioExceptionType.sendTimeout) {
+        if (Get.isRegistered<SyncService>()) {
+          final syncService = Get.find<SyncService>();
+          await syncService.enqueueMultipartRequest(
+            ApiEndpoints.uploadJalonPhotos(jalonId),
+            data: fields,
+            filePaths: filePaths,
+          );
+        }
+        return false;
+      }
+      rethrow;
     }
   }
 
