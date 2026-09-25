@@ -27,6 +27,7 @@ use App\Models\Vitrine\VitrineVideo;
 use App\Models\WhatsappClickLog;
 use App\Services\AdminService;
 use App\Services\BankTransferSettingsService;
+use App\Services\DeliveryTrackingService;
 use App\Services\GeneratedDocumentService;
 use App\Services\UploadLimitService;
 use Illuminate\Http\Request;
@@ -51,6 +52,7 @@ class AdminPanelData
         private AdminObservabilityService $observability,
         private GeneratedDocumentService $documentService,
         private AdminTerritoryService $territoryService,
+        private DeliveryTrackingService $deliveryTrackingService,
     ) {}
 
     /**
@@ -137,6 +139,7 @@ class AdminPanelData
                 : null,
             'missionStats' => $this->adminService->missionStats(),
             'deliveryStats' => $this->adminService->deliveryStats(),
+            'fleetOverview' => $this->deliveryTrackingService->getFleetOverview(),
         ];
     }
 

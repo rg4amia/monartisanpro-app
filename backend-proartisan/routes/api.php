@@ -335,6 +335,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/{order}/reassign', [DeliveryTrackingController::class, 'reassign']);
         });
 
+        Route::get('/deliveries/fleet-map', [DeliveryTrackingController::class, 'getFleetOverview']);
+
         // ── Courses de Livraison (Livreurs agréés KYC) ─────────────────────────
         Route::prefix('deliveries')->middleware('kyc.verified')->group(function () {
             Route::get('/available', [DeliveryController::class, 'available']);

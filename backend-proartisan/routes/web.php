@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\LlmAdminController;
 use App\Http\Controllers\Admin\RecruitmentAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
+use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\KycDocumentController;
 use App\Http\Controllers\RecruitmentVoiceNoteController;
@@ -110,6 +111,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/missions', [BackofficeController::class, 'missions'])->middleware('can:admin.missions.view')->name('missions');
         Route::get('/cartographie', [BackofficeController::class, 'cartography'])->middleware('can:admin.territory.view')->name('cartography');
         Route::get('/cartographie/stats', [AdminTerritoryController::class, 'stats'])->middleware('can:admin.territory.view')->name('cartography.stats');
+        Route::get('/deliveries/fleet-map', [DeliveryTrackingController::class, 'getFleetOverview'])->middleware('can:admin.missions.view')->name('deliveries.fleet-map');
 
         // Litiges
         Route::get('/litiges', [BackofficeController::class, 'litiges'])->middleware('can:admin.litiges.view')->name('litiges');

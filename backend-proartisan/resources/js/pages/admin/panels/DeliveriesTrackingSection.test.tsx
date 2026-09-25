@@ -114,4 +114,120 @@ describe('DeliveriesTrackingSection', () => {
 
         expect(screen.queryByTitle('Réassigner un autre livreur')).not.toBeInTheDocument();
     });
+
+    it('bascule sur la vue carte flotte et affiche les indicateurs agrégés', () => {
+        const fleetData = {
+            summary: {
+                total_drivers: 3,
+                online_drivers: 3,
+                in_transit: 1,
+                available: 2,
+                stalled_alerts: 1,
+                active_orders_count: 1,
+                updated_at: '2026-09-25T19:00:00Z',
+            },
+            drivers: [
+                {
+                    id: 10,
+                    name: 'Moussa Koné',
+                    phone: '+2250700000010',
+                    status: 'delivering' as const,
+                    is_online: true,
+                    is_stalled: true,
+                    stalled_reason: 'Immobilisme prolongé détecté',
+                    estimated_commune: 'Cocody',
+                    speed_kmh: 32,
+                    battery_level: 85,
+                    position: { lat: 5.35, lng: -3.98 },
+                    active_order: {
+                        id: 101,
+                        status: 'shipping',
+                        delivery_cost: 1500,
+                        total_amount: 15000,
+                        supplier_name: 'Quincaillerie Centrale',
+                        client_name: 'Adama Diop',
+                        pickup_code: '4821',
+                        reception_code: '7734',
+                    },
+                    last_ping_at: '2026-09-25T18:58:00Z',
+                },
+                {
+                    id: 11,
+                    name: 'Kouassi Yves',
+                    phone: '+2250700000011',
+                    status: 'available' as const,
+                    is_online: true,
+                    is_stalled: false,
+                    estimated_commune: 'Yopougon',
+                    speed_kmh: 0,
+                    battery_level: 95,
+                    position: { lat: 5.34, lng: -4.08 },
+                    last_ping_at: '2026-09-25T18:55:00Z',
+                },
+            ],
+        };
+
+        render(<DeliveriesTrackingSection orders={[makeOrder()]} fleetOverview={fleetData} />);
+
+        // Bascule d'onglet
+        const mapTabButton = screen.getByRole('button', { name: /Carte Flotte en Direct/i });
+        fireEvent.click(mapTabButton);
+
+        // Vérification des indicateurs et de la présence des coursiers dans la liste
+        expect(screen.getByText('Moussa Koné')).toBeInTheDocument();
+        expect(screen.getByText('Kouassi Yves')).toBeInTheDocument();
+    });
+
+    it('permet de sélectionner un coursier sur la carte pour afficher sa télémétrie', () => {
+        const fleetData = {
+            summary: {
+                total_drivers: 1,
+                online_drivers: 1,
+                in_transit: 1,
+                available: 0,
+                stalled_alerts: 0,
+                active_orders_count: 1,
+                updated_at: '2026-09-25T19:00:00Z',
+            },
+            drivers: [
+                {
+                    id: 20,
+                    name: 'Bakary Diabaté',
+                    phone: '+2250700000020',
+                    status: 'delivering' as const,
+                    is_online: true,
+                    is_stalled: false,
+                    estimated_commune: 'Plateau',
+                    speed_kmh: 28,
+                    battery_level: 60,
+                    position: { lat: 5.32, lng: -4.02 },
+                    active_order: {
+                        id: 202,
+                        status: 'driver_picked_up',
+                        delivery_cost: 2000,
+                        total_amount: 25000,
+                        supplier_name: 'San Pedro Quincaillerie',
+                        client_name: 'Fatou Bamba',
+                        pickup_code: '1234',
+                        reception_code: '5678',
+                    },
+                    last_ping_at: '2026-09-25T18:59:00Z',
+                },
+            ],
+        };
+
+        render(<DeliveriesTrackingSection orders={[]} fleetOverview={fleetData} />);
+
+        fireEvent.click(screen.getByRole('button', { name: /Carte Flotte en Direct/i }));
+
+        // Clic sur le livreur dans la liste latérale
+        fireEvent.click(screen.getByText('Bakary Diabaté'));
+
+        // Vérification de la fiche détaillée
+        expect(screen.getByText(/Course #202/i)).toBeInTheDocument();
+        expect(screen.getByText(/28 km\/h/i)).toBeInTheDocument();
+        expect(screen.getByText(/60%/i)).toBeInTheDocument();
+        expect(screen.getByText('San Pedro Quincaillerie')).toBeInTheDocument();
+    });
 });
+

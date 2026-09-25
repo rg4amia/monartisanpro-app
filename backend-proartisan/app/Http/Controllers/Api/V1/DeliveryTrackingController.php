@@ -233,4 +233,24 @@ class DeliveryTrackingController extends Controller
             ], 400);
         }
     }
+
+    /**
+     * Supervision en direct de la flotte de livreurs pour le backoffice admin.
+     */
+    public function getFleetOverview(Request $request): JsonResponse
+    {
+        $user = $request->user();
+        if ($user->role !== 'admin' && ! $user->can('admin.missions.view')) {
+            return response()->json(['error' => 'Action réservée aux administrateurs.'], 403);
+        }
+
+        $commune = $request->query('commune');
+        $overview = $this->tracking->getFleetOverview($commune);
+
+        return response()->json([
+            'success' => true,
+            'data' => $overview,
+        ]);
+    }
 }
+

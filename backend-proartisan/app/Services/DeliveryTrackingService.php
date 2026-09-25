@@ -248,4 +248,231 @@ class DeliveryTrackingService
             'delivery_cost' => $order->delivery_cost,
         ];
     }
+
+    /**
+     * Récupère la cartographie en direct et le radar de supervision de toute la flotte livreur.
+     *
+     * @return array{
+     *     summary: array{
+     *         total_drivers: int,
+     *         online_drivers: int,
+     *         in_transit: int,
+     *         available: int,
+     *         stalled_alerts: int,
+     *         active_orders_count: int,
+     *         updated_at: string
+     *     },
+     *     drivers: array<int, array>
+     * }
+     */
+    public function getFleetOverview(?string $commune = null): array
+    {
+        $drivers = User::query()
+            ->whereIn('role', ['driver', 'livreur'])
+            ->where('kyc_status', 'actif')
+            ->get();
+
+        $driverIds = $drivers->pluck('id')->all();
+
+        // Récupérer les commandes actives pour ces chauffeurs
+        $activeOrders = Order::query()
+            ->whereIn('driver_id', $driverIds)
+            ->whereIn('status', ['driver_assigned', 'shipping', 'driver_picked_up'])
+            ->with([
+                'client',
+                'supplier.fournisseurAgree',
+            ])
+            ->get()
+            ->groupBy('driver_id');
+
+        // Récupérer le dernier point télémétrique pour chaque chauffeur
+        $latestTrackings = DeliveryTracking::query()
+            ->whereIn('driver_id', $driverIds)
+            ->orderByDesc('id')
+            ->get()
+            ->groupBy('driver_id')
+            ->map(fn ($list) => $list->first());
+
+        $now = now();
+        $fleetList = [];
+
+        $totalDrivers = $drivers->count();
+        $onlineDriversCount = 0;
+        $inTransitCount = 0;
+        $availableCount = 0;
+        $stalledAlertsCount = 0;
+        $activeOrdersCount = 0;
+
+        foreach ($drivers as $driver) {
+            $latest = $latestTrackings->get($driver->id);
+            $activeOrder = $activeOrders->get($driver->id)?->first();
+
+            $coords = null;
+            if ($latest && $latest->latitude && $latest->longitude) {
+                $coords = [
+                    'lat' => (float) $latest->latitude,
+                    'lng' => (float) $latest->longitude,
+                ];
+            } else {
+                $coords = $driver->getPositionCoords();
+            }
+
+            $lastPingAt = $latest?->created_at ?? $driver->updated_at;
+            $minutesAgo = $lastPingAt ? (int) $lastPingAt->diffInMinutes($now) : null;
+            $isOnline = $minutesAgo !== null && $minutesAgo <= 120;
+
+            if ($isOnline) {
+                $onlineDriversCount++;
+            }
+
+            // Statut opérationnel
+            $status = 'available';
+            $isStalled = false;
+            $stalledReason = null;
+
+            if ($activeOrder) {
+                $activeOrdersCount++;
+                if (in_array($activeOrder->status, ['driver_picked_up', 'shipping'])) {
+                    $status = 'delivering';
+                    $inTransitCount++;
+                    // En transit avec marchandise : alerte si pas de ping depuis > 25 min (Règle 89)
+                    if ($minutesAgo !== null && $minutesAgo > 25) {
+                        $isStalled = true;
+                        $stalledReason = 'Livraison en transit bloquée (> 25 min sans signal GPS)';
+                    }
+                } else { // driver_assigned
+                    $status = 'en_route_pickup';
+                    $inTransitCount++;
+                    // Assigné : alerte si pas de ping depuis > 15 min (Règle 74 / Watchdog)
+                    if ($minutesAgo !== null && $minutesAgo > 15) {
+                        $isStalled = true;
+                        $stalledReason = 'Retard d\'enlèvement boutique (> 15 min sans mouvement)';
+                    }
+                }
+
+                if ($activeOrder->driver_stalled_alert_at) {
+                    $isStalled = true;
+                    $stalledReason = $stalledReason ?? 'Alerte inactivité déclenchée par le watchdog';
+                }
+            } else {
+                if ($isOnline) {
+                    $status = 'available';
+                    $availableCount++;
+                } else {
+                    $status = 'offline';
+                }
+            }
+
+            if ($isStalled) {
+                $stalledAlertsCount++;
+            }
+
+            // Commune estimée à Abidjan
+            $estimatedCommune = null;
+            if ($coords) {
+                $estimatedCommune = $this->resolveClosestCommune($coords['lat'], $coords['lng']);
+            }
+
+            // Si filtre par commune demandé
+            if ($commune && $commune !== 'all' && $estimatedCommune) {
+                if (strtolower($estimatedCommune) !== strtolower($commune)) {
+                    continue;
+                }
+            }
+
+            $activeOrderData = null;
+            if ($activeOrder) {
+                $supplierPos = $activeOrder->supplier?->fournisseurAgree?->getPositionCoords();
+                $clientPos = $activeOrder->client?->getPositionCoords();
+                if (! $clientPos && $activeOrder->delivery_latitude && $activeOrder->delivery_longitude) {
+                    $clientPos = [
+                        'lat' => (float) $activeOrder->delivery_latitude,
+                        'lng' => (float) $activeOrder->delivery_longitude,
+                    ];
+                }
+
+                $activeOrderData = [
+                    'id' => $activeOrder->id,
+                    'status' => $activeOrder->status,
+                    'order_group_id' => $activeOrder->order_group_id,
+                    'delivery_cost' => (int) ($activeOrder->delivery_cost ?? 1500),
+                    'total_amount' => (int) ($activeOrder->total_amount ?? 0),
+                    'supplier_name' => $activeOrder->supplier?->fournisseurAgree?->nom_boutique ?? $activeOrder->supplier?->name ?? 'Quincaillerie',
+                    'supplier_position' => $supplierPos,
+                    'client_name' => $activeOrder->client?->name ?? 'Client',
+                    'client_position' => $clientPos,
+                    'pickup_code' => $activeOrder->pickup_code,
+                    'reception_code' => $activeOrder->reception_code,
+                ];
+            }
+
+            $fleetList[] = [
+                'id' => $driver->id,
+                'name' => $driver->name,
+                'phone' => $driver->phone,
+                'avatar_url' => $driver->photo_url,
+                'status' => $status,
+                'is_online' => $isOnline,
+                'is_stalled' => $isStalled,
+                'stalled_reason' => $stalledReason,
+                'position' => $coords,
+                'speed_kmh' => $latest?->speed_kmh !== null ? (float) $latest->speed_kmh : null,
+                'heading' => $latest?->heading !== null ? (float) $latest->heading : null,
+                'battery_level' => $latest?->battery_level !== null ? (int) $latest->battery_level : null,
+                'last_ping_at' => $lastPingAt?->toIso8601String(),
+                'minutes_since_ping' => $minutesAgo,
+                'estimated_commune' => $estimatedCommune,
+                'active_order' => $activeOrderData,
+            ];
+        }
+
+        return [
+            'summary' => [
+                'total_drivers' => $totalDrivers,
+                'online_drivers' => $onlineDriversCount,
+                'in_transit' => $inTransitCount,
+                'available' => $availableCount,
+                'stalled_alerts' => $stalledAlertsCount,
+                'active_orders_count' => $activeOrdersCount,
+                'updated_at' => $now->toIso8601String(),
+            ],
+            'drivers' => $fleetList,
+        ];
+    }
+
+    /**
+     * Identifie la commune du Grand Abidjan la plus proche des coordonnées GPS données.
+     */
+    private function resolveClosestCommune(float $lat, float $lng): string
+    {
+        $communes = [
+            'Cocody' => [5.3544, -3.9856],
+            'Yopougon' => [5.3400, -4.0800],
+            'Plateau' => [5.3261, -4.0197],
+            'Abobo' => [5.4167, -4.0167],
+            'Marcory' => [5.3000, -3.9833],
+            'Koumassi' => [5.3000, -3.9500],
+            'Treichville' => [5.3000, -4.0000],
+            'Port-Bouët' => [5.2500, -3.9333],
+            'Attécoubé' => [5.3333, -4.0333],
+            'Adjamé' => [5.3500, -4.0333],
+            'Bingerville' => [5.3556, -3.8861],
+            'Anyama' => [5.4944, -4.0519],
+            'Songon' => [5.3167, -4.2500],
+        ];
+
+        $closestName = 'Abidjan';
+        $minDist = PHP_FLOAT_MAX;
+
+        foreach ($communes as $name => [$cLat, $cLng]) {
+            $dist = (($lat - $cLat) ** 2) + (($lng - $cLng) ** 2);
+            if ($dist < $minDist) {
+                $minDist = $dist;
+                $closestName = $name;
+            }
+        }
+
+        return $closestName;
+    }
 }
+
