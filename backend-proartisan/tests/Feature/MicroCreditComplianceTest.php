@@ -54,12 +54,12 @@ class MicroCreditComplianceTest extends TestCase
             ])
             ->assertCreated()
             ->assertJsonPath('data.amount', 180000)
-            ->assertJsonPath('data.status', 'approuve');
+            ->assertJsonPath('data.status', 'debourse');
 
         $this->assertDatabaseHas('credit_applications', [
             'user_id' => $artisan->id,
             'amount' => 180000,
-            'status' => 'approuve',
+            'status' => 'debourse',
             'score_prosartisan_at_application' => 800,
         ]);
     }
