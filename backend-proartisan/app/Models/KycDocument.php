@@ -16,12 +16,19 @@ class KycDocument extends Model
     protected $fillable = [
         'user_id', 'type', 'file_url', 'statut',
         'reviewed_by', 'rejection_reason', 'reviewed_at',
+        'ocr_data', 'ocr_document_number', 'ai_confidence_score', 'ai_analysis',
+        'auto_verified', 'face_matched',
     ];
 
     protected function casts(): array
     {
         return [
             'reviewed_at' => 'datetime',
+            'ocr_data' => 'array',
+            'ai_analysis' => 'array',
+            'ai_confidence_score' => 'integer',
+            'auto_verified' => 'boolean',
+            'face_matched' => 'boolean',
         ];
     }
 

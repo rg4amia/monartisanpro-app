@@ -207,7 +207,7 @@ class AuthController extends GetxController {
     errorMsg.value = null;
 
     try {
-      await _repo.uploadCni(cniPath.value!);
+      _rememberKycStatus(await _repo.uploadCni(cniPath.value!));
       kycStep.value = kycStep.value < 2 ? kycStep.value + 1 : kycStep.value;
     } catch (e) {
       errorMsg.value = _parseError(e);
@@ -220,13 +220,20 @@ class AuthController extends GetxController {
     if (selfiePath.value == null) return;
     isLoading.value = true;
     try {
-      await _repo.uploadSelfie(selfiePath.value!);
+      _rememberKycStatus(await _repo.uploadSelfie(selfiePath.value!));
       kycStep.value = 2;
     } catch (e) {
       errorMsg.value = _parseError(e);
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Le serveur peut valider le dossier dès le téléversement (vérification IA) :
+  /// on mémorise aussitôt le statut renvoyé pour que l'app débloque les
+  /// transactions sans attendre la prochaine lecture du profil.
+  void _rememberKycStatus(String? status) {
+    if (status != null) StorageService.saveKycStatus(status);
   }
 
   bool get canSendResetOtp =>

@@ -47,6 +47,23 @@ export interface KycDocument {
     id: number;
     type: 'cni' | 'selfie';
     file_url: string;
+    /** Analyse IA (OCR de la pièce ou biométrie du selfie) ; absente sur les dossiers antérieurs. */
+    ai_confidence_score?: number | null;
+    face_matched?: boolean;
+    auto_verified?: boolean;
+    ai_analysis?: {
+        analysis_available?: boolean;
+        anomalies?: string[];
+        summary?: string;
+        liveness_detected?: boolean;
+    } | null;
+    ocr_data?: {
+        document_type?: string | null;
+        document_number?: string | null;
+        last_name?: string | null;
+        first_name?: string | null;
+        expiry_date?: string | null;
+    } | null;
 }
 
 export interface KycUser {

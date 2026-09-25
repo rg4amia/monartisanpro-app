@@ -148,8 +148,11 @@ Route::prefix('v1')->group(function () {
 
         // ── KYC ──────────────────────────────────────────────────────────────
         Route::prefix('kyc')->group(function () {
-            Route::post('/upload-cni', [KycController::class, 'uploadCni']);
-            Route::post('/upload-selfie', [KycController::class, 'uploadSelfie']);
+            // Chaque téléversement déclenche une analyse Gemini facturée : même
+            // plafond que les autres appels IA (limiteur « ai »).
+            Route::post('/upload-cni', [KycController::class, 'uploadCni'])->middleware('throttle:ai');
+            Route::post('/upload-selfie', [KycController::class, 'uploadSelfie'])->middleware('throttle:ai');
+            Route::post('/verify-ai', [KycController::class, 'verifyWithAi'])->middleware('throttle:ai');
             Route::get('/status', [KycController::class, 'status']);
         });
 

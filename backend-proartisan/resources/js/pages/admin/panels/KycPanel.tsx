@@ -17,7 +17,7 @@ import {
     Surface,
     VolumeBarChart,
 } from '../shared';
-import type { FournisseurItem, KycStats, KycUser, Paginated } from '../shared';
+import type { FournisseurItem, KycDocument, KycStats, KycUser, Paginated } from '../shared';
 
 export interface CnmciUser {
     id: number;
@@ -52,6 +52,40 @@ interface KycPanelProps {
     /** Capacités fines (Chantier C6 / P2-10). */
     canReview?: boolean;
     canReviewFournisseurs?: boolean;
+}
+
+/**
+ * Résultat de l'analyse IA d'un dossier (OCR de la pièce + biométrie du selfie).
+ * Simple aide à la décision : le modérateur reste seul juge des dossiers en attente.
+ */
+export function KycAiSummary({ documents }: { documents: KycDocument[] }) {
+    const cni = documents.find((doc) => doc.type === 'cni');
+    const selfie = documents.find((doc) => doc.type === 'selfie');
+    const analysed = [cni, selfie].some((doc) => doc?.ai_analysis?.analysis_available);
+
+    if (!analysed) {
+        return <span className="text-xs text-[var(--admin-muted)]">Non analysé</span>;
+    }
+
+    const anomalies = [...(cni?.ai_analysis?.anomalies ?? []), ...(selfie?.ai_analysis?.anomalies ?? [])];
+    const holder = [cni?.ocr_data?.last_name, cni?.ocr_data?.first_name].filter(Boolean).join(' ');
+
+    return (
+        <div className="space-y-1 text-xs text-[var(--admin-text-soft)]">
+            <p>
+                Pièce : {cni?.ai_analysis?.analysis_available ? `${cni.ai_confidence_score ?? 0} / 100` : 'non analysée'}
+                {cni?.ocr_data?.document_number ? ` · n° ${cni.ocr_data.document_number}` : ''}
+            </p>
+            {holder ? <p>Titulaire lu : {holder}</p> : null}
+            <p>
+                Visage :{' '}
+                {selfie?.ai_analysis?.analysis_available
+                    ? `${selfie.face_matched ? 'concordant' : 'non concordant'} (${selfie.ai_confidence_score ?? 0} / 100)`
+                    : 'non comparé'}
+            </p>
+            {anomalies.length > 0 ? <p className="text-[#b45309]">Anomalies : {anomalies.join(', ').replaceAll('_', ' ')}</p> : null}
+        </div>
+    );
 }
 
 export function KycPanel({
@@ -161,6 +195,7 @@ export function KycPanel({
                                 <th>Utilisateur</th>
                                 <th>Rôle</th>
                                 <th>Documents</th>
+                                <th>Analyse IA</th>
                                 <th>Déposé le</th>
                                 <th className="text-right">Actions</th>
                             </tr>
@@ -168,7 +203,7 @@ export function KycPanel({
                         <tbody>
                             {kycRows.length === 0 ? (
                                 <tr>
-                                    <td colSpan={6}>
+                                    <td colSpan={7}>
                                         <EmptyState description="Aucun dossier ne correspond à votre recherche." title="Rien à afficher" />
                                     </td>
                                 </tr>
@@ -209,6 +244,9 @@ export function KycPanel({
                                                     </a>
                                                 ))}
                                             </div>
+                                        </td>
+                                        <td>
+                                            <KycAiSummary documents={user.kyc_documents} />
                                         </td>
                                         <td className="text-sm text-[var(--admin-text-soft)]">{shortDate(user.created_at)}</td>
                                         <td>

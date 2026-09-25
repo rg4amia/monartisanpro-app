@@ -14,7 +14,7 @@
 | **Epic 4** | Suivi de Chantier & Preuves Sociales (Jalons) | ✅ Implémenté (OTP jalons, photos géolocalisées) |
 | **Epic 5** | Architecture Anti-Fraude & Télémétrie | ⚠️ Partiel (GPS J-Code, pas de Device Fingerprinting) |
 | **Epic 6** | Score Social ProsArtisan (Formule mathématique) | ⚠️ Partiel (4 composantes, pas d'Event Sourcing) |
-| **Epic 7** | Onboarding KYC/KYB Automatisé | ⚠️ Partiel (photo CNI, pas de Liveness detection IA) |
+| **Epic 7** | Onboarding KYC/KYB Automatisé | ✅ KYC : OCR de la pièce, biométrie faciale et vivacité IA (Gemini) avec auto-approbation sous conditions ; KYB fournisseur en revue humaine |
 | **Epic 8** | Topologie Micro-Services & Bus d'événements | ❌ Non implémenté (architecture monolithique Laravel) |
 | **Epic 9** | Machine à États du Projet (FSM immuable) | ⚠️ Partiel (statuts enum, pas de pattern State) |
 | **Epic 10** | MCD Financier (Ledger / Event Sourcing) | ❌ Non implémenté (pas de Ledger_Entry dédié) |

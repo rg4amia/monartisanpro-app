@@ -135,19 +135,28 @@ class AuthRepository {
     return status;
   }
 
-  Future<void> uploadCni(String filePath) async {
+  /// Téléverse la pièce d'identité. Renvoie le statut KYC du compte après
+  /// l'analyse IA (`actif` si le dossier a été validé automatiquement), ou
+  /// null si la réponse ne le précise pas.
+  Future<String?> uploadCni(String filePath) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath, filename: 'cni.jpg'),
     });
-    await _client.postMultipart(ApiEndpoints.kycUploadCni, formData);
+    final res = await _client.postMultipart(ApiEndpoints.kycUploadCni, formData);
+    return _kycStatusFromUpload(res.data);
   }
 
-  Future<void> uploadSelfie(String filePath) async {
+  /// Téléverse le selfie ; même contrat de retour que [uploadCni].
+  Future<String?> uploadSelfie(String filePath) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath, filename: 'selfie.jpg'),
     });
-    await _client.postMultipart(ApiEndpoints.kycUploadSelfie, formData);
+    final res = await _client.postMultipart(ApiEndpoints.kycUploadSelfie, formData);
+    return _kycStatusFromUpload(res.data);
   }
+
+  String? _kycStatusFromUpload(dynamic body) =>
+      readString(readMap(readMap(body)?['data'])?['kyc_status']);
 
   Future<void> updateLocation(int userId, double lat, double lng) async {
     await _client.put(

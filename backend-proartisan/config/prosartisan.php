@@ -92,4 +92,20 @@ return [
         // Backlog Epic 9 — "Trigger B (Le Force-Pass)"
         'force_release_delay_hours' => env('JALON_FORCE_RELEASE_HOURS', 72),
     ],
+
+    // Vérification KYC par IA (OCR de la pièce + biométrie faciale Gemini).
+    // L'auto-approbation n'est qu'un raccourci : tout dossier qui ne franchit
+    // pas l'ensemble des contrôles reste en revue humaine au backoffice.
+    'kyc' => [
+        // Interrupteur général de l'auto-approbation (l'analyse IA reste menée).
+        'auto_approval_enabled' => (bool) env('KYC_AUTO_APPROVAL_ENABLED', true),
+        // Rôles éligibles. Le fournisseur en est exclu : son agrément suit une
+        // revue humaine (CNMCI, quincaillerie) ; référents et admins aussi.
+        'auto_approval_roles' => ['client', 'artisan', 'livreur'],
+        // Score biométrique global minimum (0 à 100), plafonné par le plus
+        // faible des scores de similarité et de vivacité.
+        'auto_approval_threshold' => (int) env('KYC_AUTO_APPROVAL_THRESHOLD', 85),
+        // Score de qualité OCR minimum requis pour la pièce d'identité (0 à 100).
+        'ocr_min_quality' => (int) env('KYC_OCR_MIN_QUALITY', 70),
+    ],
 ];

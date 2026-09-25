@@ -861,7 +861,7 @@ Retourne obligatoirement ce format JSON uniquement:
     /**
      * Analyse multimodale (photos/vidéos + texte) pour le pré-diagnostic de panne ou travaux BTP.
      *
-     * @param array<int, UploadedFile|string> $mediaFiles
+     * @param  array<int, UploadedFile|string>  $mediaFiles
      * @return array{
      *     diagnostic_summary: string,
      *     severity: string,
@@ -928,7 +928,7 @@ Retourne obligatoirement ce format JSON uniquement:
         $prompt .= "    \"total_min\": 15000,\n";
         $prompt .= "    \"total_max\": 40000\n";
         $prompt .= "  }\n";
-        $prompt .= "}";
+        $prompt .= '}';
 
         $parts[] = ['text' => $prompt];
 
@@ -1177,5 +1177,308 @@ Retourne obligatoirement ce format JSON uniquement:
             'analyzed_at' => now()->toIso8601String(),
         ];
     }
-}
 
+    /**
+     * Analyse une pièce d'identité (CNI, passeport, attestation ONECI) par Gemini Vision :
+     * extraction OCR et contrôle d'intégrité.
+     *
+     * Échec fermé : sans clé configurée, sur erreur HTTP ou réponse illisible,
+     * le résultat porte `analysis_available = false` et des scores nuls. Aucune
+     * valeur n'est inventée (Règle d'or 29) — un repli « optimiste » activerait
+     * des comptes sans qu'aucune pièce n'ait été examinée.
+     *
+     * @return array{
+     *     analysis_available: bool,
+     *     document_type: ?string,
+     *     document_number: ?string,
+     *     last_name: ?string,
+     *     first_name: ?string,
+     *     birth_date: ?string,
+     *     expiry_date: ?string,
+     *     is_expired: bool,
+     *     is_legible: bool,
+     *     has_photo: bool,
+     *     is_tampered: bool,
+     *     quality_score: ?int,
+     *     anomalies: array<int, string>,
+     *     summary: string
+     * }
+     */
+    public function extractCniData(string $imageBytes, string $mimeType = 'image/jpeg', ?int $userId = null): array
+    {
+        $prompt = "Tu es un inspecteur spécialisé dans la vérification de pièces d'identité officielles en Côte d'Ivoire (CNI, passeport, attestation d'identité de l'ONECI).\n"
+            ."Examine attentivement l'image de la pièce d'identité fournie et effectue les contrôles suivants :\n"
+            ."1. Type de document : 'cni', 'passeport', 'attestation' ou 'autre'.\n"
+            ."2. Champs lisibles : numéro de document, nom de famille, prénom(s), date de naissance (AAAA-MM-JJ), date d'expiration (AAAA-MM-JJ). Laisse null tout champ illisible, n'invente rien.\n"
+            .'3. Document expiré par rapport au '.now()->toDateString()." (is_expired).\n"
+            ."4. Netteté et lisibilité (is_legible).\n"
+            ."5. Présence d'une photo d'identité nette (has_photo).\n"
+            ."6. Altération, montage, photo d'écran ou photocopie (is_tampered).\n"
+            ."7. Score global de qualité de 0 à 100 (quality_score).\n\n"
+            ."Réponds uniquement par un objet JSON strict :\n"
+            .'{"document_type": "cni", "document_number": "CI0123456789", "last_name": "NOM", "first_name": "Prénoms", '
+            .'"birth_date": "1990-05-15", "expiry_date": "2030-01-01", "is_expired": false, "is_legible": true, '
+            .'"has_photo": true, "is_tampered": false, "quality_score": 90, "anomalies": [], "summary": "Synthèse en français"}';
+
+        $result = $this->callKycVision([[$imageBytes, $mimeType]], $prompt, 'kyc_ocr_cni', 15, $userId);
+
+        if ($result === null) {
+            return $this->unavailableCniAnalysis();
+        }
+
+        $expiryDate = $this->kycDateOrNull($result['expiry_date'] ?? null);
+
+        return [
+            'analysis_available' => true,
+            'document_type' => $this->kycStringOrNull($result['document_type'] ?? null),
+            'document_number' => $this->normalizeDocumentNumber($result['document_number'] ?? null),
+            'last_name' => $this->kycStringOrNull($result['last_name'] ?? null),
+            'first_name' => $this->kycStringOrNull($result['first_name'] ?? null),
+            'birth_date' => $this->kycDateOrNull($result['birth_date'] ?? null),
+            'expiry_date' => $expiryDate,
+            // La date d'expiration lue fait foi : on ne s'en remet pas au seul
+            // jugement du modèle sur la date du jour.
+            'is_expired' => ($result['is_expired'] ?? false) === true
+                || ($expiryDate !== null && $expiryDate < now()->toDateString()),
+            'is_legible' => ($result['is_legible'] ?? false) === true,
+            'has_photo' => ($result['has_photo'] ?? false) === true,
+            'is_tampered' => ($result['is_tampered'] ?? true) !== false,
+            'quality_score' => $this->kycScore($result['quality_score'] ?? null) ?? 0,
+            'anomalies' => $this->kycStringList($result['anomalies'] ?? []),
+            'summary' => $this->kycStringOrNull($result['summary'] ?? null) ?? 'Analyse de la pièce d\'identité effectuée.',
+        ];
+    }
+
+    /**
+     * Compare le portrait de la pièce d'identité au selfie (biométrie faciale)
+     * et contrôle la vivacité du selfie (photo d'écran, tirage papier, masque).
+     *
+     * Échec fermé, comme `extractCniData` : aucune concordance n'est présumée.
+     *
+     * @return array{
+     *     analysis_available: bool,
+     *     face_matched: bool,
+     *     similarity_score: ?int,
+     *     liveness_detected: bool,
+     *     liveness_score: ?int,
+     *     overall_confidence_score: ?int,
+     *     anomalies: array<int, string>,
+     *     summary: string
+     * }
+     */
+    public function verifyFaceAndLiveness(
+        string $cniBytes,
+        string $cniMime,
+        string $selfieBytes,
+        string $selfieMime,
+        ?int $userId = null
+    ): array {
+        $prompt = "Tu es un expert biométrique spécialisé dans la reconnaissance faciale, la lutte contre l'usurpation d'identité et la détection de vivacité.\n"
+            ."Image 1 : pièce d'identité officielle portant le portrait de son titulaire.\n"
+            ."Image 2 : selfie pris par l'utilisateur lors de son inscription sur ProsArtisan.\n\n"
+            ."1. Détermine si les deux visages appartiennent à la même personne (face_matched).\n"
+            ."2. Score de similarité faciale de 0 à 100 (similarity_score).\n"
+            ."3. Vérifie que le selfie montre un visage réel et vivant, et non la photo d'un écran, un tirage papier, un masque ou un visage généré (liveness_detected, liveness_score de 0 à 100).\n"
+            ."4. Score de confiance global de 0 à 100 (overall_confidence_score).\n"
+            ."5. Liste les anomalies (ex. 'visage_partiellement_masque', 'eclairage_insuffisant', 'photo_d_un_ecran').\n\n"
+            ."Réponds uniquement par un objet JSON strict :\n"
+            .'{"face_matched": true, "similarity_score": 95, "liveness_detected": true, "liveness_score": 92, '
+            .'"overall_confidence_score": 94, "anomalies": [], "summary": "Explication synthétique en français"}';
+
+        $result = $this->callKycVision(
+            [[$cniBytes, $cniMime], [$selfieBytes, $selfieMime]],
+            $prompt,
+            'kyc_facial_match',
+            20,
+            $userId
+        );
+
+        if ($result === null) {
+            return [
+                'analysis_available' => false,
+                'face_matched' => false,
+                'similarity_score' => null,
+                'liveness_detected' => false,
+                'liveness_score' => null,
+                'overall_confidence_score' => null,
+                'anomalies' => ['analyse_ia_indisponible'],
+                'summary' => 'Vérification biométrique automatique indisponible : dossier transmis à la revue humaine.',
+            ];
+        }
+
+        $similarity = $this->kycScore($result['similarity_score'] ?? null) ?? 0;
+        $liveness = $this->kycScore($result['liveness_score'] ?? null) ?? 0;
+        // Le score global ne dépasse jamais le plus faible des deux contrôles :
+        // un visage concordant mais photographié sur un écran reste suspect.
+        $overall = min(
+            $this->kycScore($result['overall_confidence_score'] ?? null) ?? min($similarity, $liveness),
+            $similarity,
+            $liveness,
+        );
+
+        return [
+            'analysis_available' => true,
+            'face_matched' => ($result['face_matched'] ?? false) === true,
+            'similarity_score' => $similarity,
+            'liveness_detected' => ($result['liveness_detected'] ?? false) === true,
+            'liveness_score' => $liveness,
+            'overall_confidence_score' => $overall,
+            'anomalies' => $this->kycStringList($result['anomalies'] ?? []),
+            'summary' => $this->kycStringOrNull($result['summary'] ?? null) ?? 'Comparaison faciale effectuée.',
+        ];
+    }
+
+    /**
+     * Normalise un numéro de pièce pour la détection des doublons entre comptes :
+     * majuscules, sans espaces, tirets ni points.
+     */
+    public function normalizeDocumentNumber(mixed $value): ?string
+    {
+        $raw = $this->kycStringOrNull($value);
+        if ($raw === null) {
+            return null;
+        }
+
+        $normalized = strtoupper((string) preg_replace('/[^A-Za-z0-9]/', '', $raw));
+
+        return $normalized === '' ? null : substr($normalized, 0, 64);
+    }
+
+    /**
+     * Appel Gemini Vision commun aux contrôles KYC. Renvoie le JSON décodé,
+     * ou null si l'analyse n'a pas pu être menée (clé absente, erreur, réponse illisible).
+     *
+     * @param  array<int, array{0: string, 1: string}>  $images  Couples [octets, type MIME].
+     * @return array<string, mixed>|null
+     */
+    private function callKycVision(array $images, string $prompt, string $action, int $timeout, ?int $userId): ?array
+    {
+        if ($this->apiKey === '' || $this->apiKey === 'PLACEHOLDER_KEY') {
+            return null;
+        }
+
+        foreach ($images as [$bytes]) {
+            if ($bytes === '') {
+                return null;
+            }
+        }
+
+        $parts = array_map(fn (array $image) => [
+            'inline_data' => [
+                'mime_type' => $image[1],
+                'data' => base64_encode($image[0]),
+            ],
+        ], $images);
+        $parts[] = ['text' => $prompt];
+
+        $startTime = microtime(true);
+
+        try {
+            $response = Http::timeout($timeout)
+                ->connectTimeout(5)
+                ->post($this->getEndpointUrl(), [
+                    'contents' => [['parts' => $parts]],
+                    'generationConfig' => ['response_mime_type' => 'application/json'],
+                ]);
+
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+
+            if (! $response->successful()) {
+                AiMonitoringService::log($this->model, $action, 0, 0, $responseTimeMs, $response->status(), $response->body(), $userId);
+                Log::error('Gemini KYC : réponse en erreur', ['action' => $action, 'status' => $response->status()]);
+
+                return null;
+            }
+
+            AiMonitoringService::log(
+                $this->model,
+                $action,
+                (int) ($response->json('usageMetadata.promptTokenCount') ?? 0),
+                (int) ($response->json('usageMetadata.candidatesTokenCount') ?? 0),
+                $responseTimeMs,
+                200,
+                null,
+                $userId
+            );
+
+            $text = trim((string) ($response->json('candidates.0.content.parts.0.text') ?? ''));
+            $text = trim((string) preg_replace('/^```(?:json)?|```$/m', '', $text));
+            $decoded = json_decode($text, true);
+
+            if (! is_array($decoded)) {
+                Log::warning('Gemini KYC : réponse non JSON', ['action' => $action]);
+
+                return null;
+            }
+
+            return $decoded;
+        } catch (\Throwable $e) {
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+            AiMonitoringService::log($this->model, $action, 0, 0, $responseTimeMs, 500, $e->getMessage(), $userId);
+            Log::error('Gemini KYC : exception', ['action' => $action, 'message' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
+     * @return array<string, mixed>
+     */
+    private function unavailableCniAnalysis(): array
+    {
+        return [
+            'analysis_available' => false,
+            'document_type' => null,
+            'document_number' => null,
+            'last_name' => null,
+            'first_name' => null,
+            'birth_date' => null,
+            'expiry_date' => null,
+            'is_expired' => false,
+            'is_legible' => false,
+            'has_photo' => false,
+            'is_tampered' => false,
+            'quality_score' => null,
+            'anomalies' => ['analyse_ia_indisponible'],
+            'summary' => 'Analyse automatique de la pièce indisponible : dossier transmis à la revue humaine.',
+        ];
+    }
+
+    private function kycStringOrNull(mixed $value): ?string
+    {
+        if (! is_scalar($value)) {
+            return null;
+        }
+
+        $string = trim((string) $value);
+
+        return $string === '' || strtolower($string) === 'null' ? null : mb_substr($string, 0, 255);
+    }
+
+    private function kycDateOrNull(mixed $value): ?string
+    {
+        $string = $this->kycStringOrNull($value);
+
+        return $string !== null && preg_match('/^\d{4}-\d{2}-\d{2}$/', $string) === 1 ? $string : null;
+    }
+
+    private function kycScore(mixed $value): ?int
+    {
+        return is_numeric($value) ? max(0, min(100, (int) round((float) $value))) : null;
+    }
+
+    /**
+     * @return array<int, string>
+     */
+    private function kycStringList(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(fn ($item) => $this->kycStringOrNull($item), $value),
+            fn ($item) => $item !== null,
+        ));
+    }
+}

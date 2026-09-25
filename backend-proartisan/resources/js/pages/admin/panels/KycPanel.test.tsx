@@ -109,6 +109,43 @@ describe('KycPanel', () => {
         expect(onToggleRow).toHaveBeenCalledWith(9);
     });
 
+    it("signale un dossier que l'IA n'a pas analysé", () => {
+        renderPanel();
+        expect(screen.getByText('Non analysé')).toBeInTheDocument();
+    });
+
+    it("affiche le résultat de l'analyse IA et ses anomalies", () => {
+        renderPanel({
+            kycUsersPage: makePage([
+                makeUser({
+                    kyc_documents: [
+                        {
+                            id: 1,
+                            type: 'cni',
+                            file_url: 'https://example.test/cni.jpg',
+                            ai_confidence_score: 91,
+                            ai_analysis: { analysis_available: true, anomalies: [] },
+                            ocr_data: { document_number: 'CI0029384756', last_name: 'TRAORE', first_name: 'Awa' },
+                        },
+                        {
+                            id: 2,
+                            type: 'selfie',
+                            file_url: 'https://example.test/selfie.jpg',
+                            ai_confidence_score: 30,
+                            face_matched: false,
+                            ai_analysis: { analysis_available: true, anomalies: ['photo_d_un_ecran'] },
+                        },
+                    ],
+                }),
+            ]),
+        });
+
+        expect(screen.getByText(/Pièce : 91 \/ 100 · n° CI0029384756/)).toBeInTheDocument();
+        expect(screen.getByText('Titulaire lu : TRAORE Awa')).toBeInTheDocument();
+        expect(screen.getByText(/non concordant \(30 \/ 100\)/)).toBeInTheDocument();
+        expect(screen.getByText('Anomalies : photo d un ecran')).toBeInTheDocument();
+    });
+
     it('affiche un état vide sans dossier KYC', () => {
         renderPanel({ kycUsersPage: makePage([]) });
         expect(screen.getByText('Rien à afficher')).toBeInTheDocument();
