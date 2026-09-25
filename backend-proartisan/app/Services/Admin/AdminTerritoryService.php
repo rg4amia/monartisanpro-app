@@ -520,7 +520,7 @@ class AdminTerritoryService
                 'score_prosartisan' => (int) $user->score_prosartisan,
                 'commune' => $user->commune?->name ?? ($user->city ?? 'Abidjan'),
                 'location' => $user->commune?->name ?? ($user->city ?? 'Abidjan'),
-                'action_url' => '/admin/users?search_user='.urlencode($user->phone ?: $user->name),
+                'action_url' => '/admin/users?search_users='.urlencode($user->phone ?: $user->name),
                 'created_at' => $user->created_at?->toIso8601String(),
             ];
         });

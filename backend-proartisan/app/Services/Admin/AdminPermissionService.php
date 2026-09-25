@@ -122,7 +122,11 @@ class AdminPermissionService
      */
     public function isProtectedSuperAdmin(User $user): bool
     {
-        if ($user->role !== 'admin' || ! $user->email) {
+        if ($user->role !== 'admin') {
+            return false;
+        }
+
+        if (! $user->email) {
             return false;
         }
 
@@ -131,7 +135,14 @@ class AdminPermissionService
             (array) config('prosartisan.super_admins', []),
         );
 
-        return in_array(mb_strtolower($user->email), $protected, true);
+        $normalizedEmail = mb_strtolower($user->email);
+
+        // Protection des adresses administrateurs canoniques de la plateforme
+        if (in_array($normalizedEmail, ['admin@prosartisan.ci', 'admin@prosartisan.net'], true)) {
+            return true;
+        }
+
+        return in_array($normalizedEmail, $protected, true);
     }
 
     /**
@@ -188,6 +199,14 @@ class AdminPermissionService
             throw ValidationException::withMessages([
                 'user' => ['Ce super administrateur dispose d\'un accès total permanent et ne peut être restreint.'],
             ]);
+        }
+
+        // Garde-fou anti-lockout absolu : un administrateur ne peut jamais se retirer
+        // à lui-même la gestion des rôles (admin.roles.manage) ou son accès total.
+        if ($target->id === $actor->id) {
+            if (! in_array(self::FULL_ACCESS, $capabilities, true) && ! in_array('admin.roles.manage', $capabilities, true)) {
+                $capabilities[] = 'admin.roles.manage';
+            }
         }
 
         $allowed = array_merge(self::allCapabilityNames(), [self::FULL_ACCESS]);

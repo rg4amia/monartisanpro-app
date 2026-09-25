@@ -137,29 +137,44 @@ export default function RolesPermissionsPanel({
     const toggleAdminCapability = (capability: string) => {
         if (!selectedAdmin || adminIsProtected) return;
 
-        // Depuis l'accès total, cocher une capacité précise fait basculer le compte
-        // en périmètre restreint limité à cette seule capacité (intention : « ce
-        // compte ne gère que ce volet »). L'accès total se rétablit via sa case.
+        // Toutes les capacités répertoriées dans le catalogue
+        const allCapabilities = Object.values(adminCapabilityCatalog).flatMap((group) => Object.keys(group));
+
+        // Si l'administrateur possède l'accès total, décocher une capacité passe en mode
+        // personnalisé en conservant l'ensemble des autres capacités.
+        let next: string[];
         if (adminHasFullAccess) {
-            submitAdminCapabilities([capability]);
+            next = allCapabilities.filter((c) => c !== capability);
+        } else {
+            const current = selectedAdmin.capabilities.filter((c) => c !== '*');
+            next = current.includes(capability)
+                ? current.filter((c) => c !== capability)
+                : [...current, capability];
+        }
+
+        // Si toutes les capacités sont sélectionnées, réactiver la sentinelle d'accès total
+        if (allCapabilities.length > 0 && next.length >= allCapabilities.length) {
+            submitAdminCapabilities(['admin.full-access']);
             return;
         }
 
-        const current = selectedAdmin.capabilities.filter((c) => c !== '*');
-        const next = current.includes(capability)
-            ? current.filter((c) => c !== capability)
-            : [...current, capability];
-        // Un périmètre vide serait réinterprété comme « accès total » : on garde au
-        // minimum la lecture des comptes pour rester cohérent avec l'affichage.
-        submitAdminCapabilities(next.length > 0 ? next : ['admin.users.view']);
+        // Garde-fou anti-lockout : préserver au minimum la consultation des utilisateurs et la gestion des rôles
+        if (!next.includes('admin.users.view')) {
+            next.push('admin.users.view');
+        }
+        if (!next.includes('admin.roles.manage')) {
+            next.push('admin.roles.manage');
+        }
+
+        submitAdminCapabilities(next);
     };
 
     const setFullAccess = (full: boolean) => {
         if (full) {
             submitAdminCapabilities(['admin.full-access']);
         } else {
-            // Retirer l'accès total → périmètre minimal explicite (lecture des comptes).
-            submitAdminCapabilities(['admin.users.view']);
+            // Retirer l'accès total → périmètre minimal sécurisé (utilisateurs + gestion des rôles pour ne pas s'enfermer).
+            submitAdminCapabilities(['admin.users.view', 'admin.roles.manage']);
         }
     };
 

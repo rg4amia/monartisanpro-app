@@ -215,7 +215,7 @@ class AdminPanelData
 
         /** @var LengthAwarePaginator $usersPage */
         $usersPage = $this->adminService->listUsers(
-            $request->query('search_users') ?: null,
+            $request->query('search_users') ?: $request->query('search_user') ?: null,
             $request->query('role_users') ?: null,
             $request->query('kyc_users') ?: null,
             25,
