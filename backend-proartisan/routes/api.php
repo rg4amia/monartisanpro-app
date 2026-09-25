@@ -9,6 +9,7 @@ use App\Http\Controllers\Api\V1\ArtisanStockController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CommunicationController;
 use App\Http\Controllers\Api\V1\DashboardController;
+use App\Http\Controllers\Api\V1\DeliveryBatchController;
 use App\Http\Controllers\Api\V1\DeliveryController;
 use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\DevisController;
@@ -174,6 +175,9 @@ Route::prefix('v1')->group(function () {
         // ── Logistique & Livraisons (Courses) ──────────────────────────────────
         Route::post('/deliveries/estimate', [OrderController::class, 'estimateDelivery']);
         Route::get('/deliveries/available', [DeliveryController::class, 'available'])->middleware('kyc.verified');
+        Route::get('/deliveries/batches', [DeliveryBatchController::class, 'index'])->middleware('kyc.verified');
+        Route::post('/deliveries/batch-accept', [DeliveryBatchController::class, 'accept'])->middleware('kyc.verified');
+        Route::get('/deliveries/active-tour', [DeliveryBatchController::class, 'activeTour'])->middleware('kyc.verified');
         Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept'])->middleware('kyc.verified');
 
         // ── Utilisateurs ─────────────────────────────────────────────────────
@@ -334,6 +338,9 @@ Route::prefix('v1')->group(function () {
         // ── Courses de Livraison (Livreurs agréés KYC) ─────────────────────────
         Route::prefix('deliveries')->middleware('kyc.verified')->group(function () {
             Route::get('/available', [DeliveryController::class, 'available']);
+            Route::get('/batches', [DeliveryBatchController::class, 'index']);
+            Route::post('/batch-accept', [DeliveryBatchController::class, 'accept']);
+            Route::get('/active-tour', [DeliveryBatchController::class, 'activeTour']);
             Route::post('/{order}/accept', [DeliveryController::class, 'accept']);
         });
 

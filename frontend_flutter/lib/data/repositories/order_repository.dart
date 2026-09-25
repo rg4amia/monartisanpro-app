@@ -95,6 +95,45 @@ class OrderRepository {
     return [];
   }
 
+  /// Tournées groupées disponibles pour les livreurs (multi-drop).
+  Future<List<Map<String, dynamic>>> getDeliveryBatches() async {
+    try {
+      final res = await NetworkExecutor.run(
+        () => _client.get(ApiEndpoints.deliveryBatches),
+      );
+      final data = (res.data as Map<String, dynamic>)['data'];
+      if (data is List) {
+        return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
+      }
+    } catch (_) {}
+    return [];
+  }
+
+  /// Accepter une tournée groupée (lot multi-drop).
+  Future<Map<String, dynamic>> acceptDeliveryBatch(List<int> orderIds) async {
+    final res = await _client.post(
+      ApiEndpoints.deliveryBatchAccept,
+      data: {'order_ids': orderIds},
+    );
+    await _invalidateMyOrders();
+    return res.data;
+  }
+
+  /// Récupérer la tournée active du livreur.
+  Future<Map<String, dynamic>?> getActiveDeliveryTour() async {
+    try {
+      final res = await NetworkExecutor.run(
+        () => _client.get(ApiEndpoints.deliveryActiveTour),
+      );
+      final body = res.data as Map<String, dynamic>;
+      if (body['success'] == true && body['data'] is Map) {
+        return Map<String, dynamic>.from(body['data'] as Map);
+      }
+    } catch (_) {}
+    return null;
+  }
+
+
   Future<List<Map<String, dynamic>>> getMyOrders({
     bool forceRefresh = false,
   }) async {

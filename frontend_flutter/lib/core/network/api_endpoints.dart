@@ -182,6 +182,9 @@ class ApiEndpoints {
   static const String deliveriesEstimate = '/deliveries/estimate';
   static const String ordersEstimateDelivery = '/orders/estimate-delivery';
   static const String deliveriesAvailable = '/deliveries/available';
+  static const String deliveryBatches = '/deliveries/batches';
+  static const String deliveryBatchAccept = '/deliveries/batch-accept';
+  static const String deliveryActiveTour = '/deliveries/active-tour';
   static String acceptDelivery(int orderId) => '/deliveries/$orderId/accept';
   static String orderVerifyPickup(int orderId) =>
       '/orders/$orderId/verify-pickup';

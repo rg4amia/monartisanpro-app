@@ -102,6 +102,157 @@ class OsrmRoutingService
     }
 
     /**
+     * Calcule l'itinéraire multi-arrêts (tournée multi-drop) pour une série de points de passage.
+     *
+     * @param  array<int, array{lat: float, lng: float, label?: string, type?: string, order_id?: int}>  $waypoints
+     * @return array{
+     *     distance_km: float,
+     *     duration_min: float,
+     *     eta: string,
+     *     geometry: array,
+     *     stops: array<int, array{label: string, lat: float, lng: float, eta: string, leg_distance_km: float, leg_duration_min: float, type: string, order_id: int|null}>,
+     *     is_fallback: bool,
+     *     provider: string
+     * }
+     */
+    public function calculateMultiDropRoute(array $waypoints, string $profile = 'driving'): array
+    {
+        if (count($waypoints) < 2) {
+            return [
+                'distance_km' => 0.0,
+                'duration_min' => 0.0,
+                'eta' => Carbon::now()->toIso8601String(),
+                'geometry' => [],
+                'stops' => [],
+                'is_fallback' => true,
+                'provider' => 'none',
+            ];
+        }
+
+        try {
+            $coordStrings = array_map(function ($wp) {
+                return sprintf('%f,%f', (float) $wp['lng'], (float) $wp['lat']);
+            }, $waypoints);
+
+            $coordsPath = implode(';', $coordStrings);
+            $url = sprintf(
+                '%s/route/v1/%s/%s?overview=full&geometries=geojson&steps=true',
+                $this->baseUrl,
+                $profile,
+                $coordsPath
+            );
+
+            $response = Http::timeout(4)->get($url);
+
+            if ($response->successful()) {
+                $data = $response->json();
+                if (! empty($data['routes'][0])) {
+                    $route = $data['routes'][0];
+                    $totalDistanceKm = round(($route['distance'] ?? 0) / 1000, 2);
+                    $totalDurationMin = round(($route['duration'] ?? 0) / 60, 1);
+                    $geometry = $route['geometry']['coordinates'] ?? [];
+                    $legs = $route['legs'] ?? [];
+
+                    $currentTime = Carbon::now();
+                    $stops = [];
+
+                    foreach ($waypoints as $idx => $wp) {
+                        $legDistKm = 0.0;
+                        $legDurMin = 0.0;
+
+                        if ($idx > 0 && isset($legs[$idx - 1])) {
+                            $legDistKm = round(($legs[$idx - 1]['distance'] ?? 0) / 1000, 2);
+                            $legDurMin = round(($legs[$idx - 1]['duration'] ?? 0) / 60, 1);
+                            $currentTime = $currentTime->copy()->addMinutes((int) round($legDurMin));
+                        }
+
+                        $stops[] = [
+                            'index' => $idx,
+                            'label' => $wp['label'] ?? ('Arrêt '.($idx + 1)),
+                            'type' => $wp['type'] ?? ($idx === 0 ? 'pickup' : 'delivery'),
+                            'order_id' => $wp['order_id'] ?? null,
+                            'lat' => (float) $wp['lat'],
+                            'lng' => (float) $wp['lng'],
+                            'eta' => $currentTime->toIso8601String(),
+                            'leg_distance_km' => $legDistKm,
+                            'leg_duration_min' => $legDurMin,
+                        ];
+                    }
+
+                    return [
+                        'distance_km' => $totalDistanceKm,
+                        'duration_min' => $totalDurationMin,
+                        'eta' => Carbon::now()->addMinutes((int) round($totalDurationMin))->toIso8601String(),
+                        'geometry' => $geometry,
+                        'coordinates' => $geometry,
+                        'stops' => $stops,
+                        'is_fallback' => false,
+                        'provider' => 'osrm',
+                    ];
+                }
+            }
+        } catch (\Throwable $e) {
+            Log::warning('[OsrmRoutingService] Échec calcul tournée multi-drop OSRM : '.$e->getMessage().' — Repli séquentiel.');
+        }
+
+        // Repli séquentiel Haversine
+        return $this->calculateFallbackMultiDropRoute($waypoints);
+    }
+
+    /**
+     * Repli géométrique multi-arrêts basé sur Haversine segment par segment.
+     */
+    public function calculateFallbackMultiDropRoute(array $waypoints): array
+    {
+        $totalDistanceKm = 0.0;
+        $totalDurationMin = 0.0;
+        $currentTime = Carbon::now();
+        $stops = [];
+        $geometry = [];
+
+        foreach ($waypoints as $idx => $wp) {
+            $legDistKm = 0.0;
+            $legDurMin = 0.0;
+
+            if ($idx > 0) {
+                $prev = $waypoints[$idx - 1];
+                $straightDist = $this->haversineDistanceKm($prev['lat'], $prev['lng'], $wp['lat'], $wp['lng']);
+                $legDistKm = round($straightDist * self::URBAN_WINDING_FACTOR, 2);
+                $legDurMin = max(4.0, round(($legDistKm / self::AVERAGE_CITY_SPEED_KMH) * 60, 1));
+                $currentTime = $currentTime->copy()->addMinutes((int) round($legDurMin));
+
+                $totalDistanceKm += $legDistKm;
+                $totalDurationMin += $legDurMin;
+            }
+
+            $geometry[] = [(float) $wp['lng'], (float) $wp['lat']];
+
+            $stops[] = [
+                'index' => $idx,
+                'label' => $wp['label'] ?? ('Arrêt '.($idx + 1)),
+                'type' => $wp['type'] ?? ($idx === 0 ? 'pickup' : 'delivery'),
+                'order_id' => $wp['order_id'] ?? null,
+                'lat' => (float) $wp['lat'],
+                'lng' => (float) $wp['lng'],
+                'eta' => $currentTime->toIso8601String(),
+                'leg_distance_km' => $legDistKm,
+                'leg_duration_min' => $legDurMin,
+            ];
+        }
+
+        return [
+            'distance_km' => round($totalDistanceKm, 2),
+            'duration_min' => round($totalDurationMin, 1),
+            'eta' => Carbon::now()->addMinutes((int) round($totalDurationMin))->toIso8601String(),
+            'geometry' => $geometry,
+            'coordinates' => $geometry,
+            'stops' => $stops,
+            'is_fallback' => true,
+            'provider' => 'haversine_fallback',
+        ];
+    }
+
+    /**
      * Distance à vol d'oiseau (Haversine) en kilomètres.
      */
     public function haversineDistanceKm(float $lat1, float $lon1, float $lat2, float $lon2): float
@@ -120,3 +271,4 @@ class OsrmRoutingService
         return round($earthRadiusKm * $c, 3);
     }
 }
+
