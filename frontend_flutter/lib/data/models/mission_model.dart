@@ -36,6 +36,7 @@ class MissionModel {
   /// Messages de la discussion de chantier reçus et non encore lus par
   /// l'utilisateur courant (agrégé côté API, jamais recalculé localement).
   final int unreadMessagesCount;
+  final Map<String, dynamic>? diagnosticMediaAnalysis;
 
   const MissionModel({
     required this.id,
@@ -70,6 +71,7 @@ class MissionModel {
     this.artisanRejected = false,
     this.hasArtisan = true,
     this.unreadMessagesCount = 0,
+    this.diagnosticMediaAnalysis,
   });
 
   bool get needsReferent => montantTotal > 2000000;
@@ -206,6 +208,9 @@ class MissionModel {
         json['unreadMessagesCount'] ?? json['unread_messages_count'],
       ),
       addressId: readInt(json['address_id'] ?? json['addressId']),
+      diagnosticMediaAnalysis: readMap(
+        json['diagnosticMediaAnalysis'] ?? json['diagnostic_media_analysis'],
+      ),
     );
   }
 

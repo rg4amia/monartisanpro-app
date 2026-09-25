@@ -105,6 +105,7 @@ class ApiEndpoints {
   static String mission(int id) => '/missions/$id';
   static String missionSiteMap(int id) => '/missions/$id/site-map';
   static const String missionEstimate = '/missions/estimate';
+  static const String preDiagnostic = '/missions/pre-diagnostic';
   static String missionStatus(int id) => '/missions/$id/status';
   static String missionDevis(int id) => '/missions/$id/devis';
   static String missionDevisSuggest(int id) => '/missions/$id/devis/suggest';

@@ -38,6 +38,8 @@ class MissionResource extends JsonResource
                 'min' => $this->gemini_estimation_min,
                 'max' => $this->gemini_estimation_max,
             ] : null,
+            'diagnosticMediaAnalysis' => $this->diagnostic_media_analysis,
+            'diagnostic_media_analysis' => $this->diagnostic_media_analysis,
             'montantTotal' => $this->montant_total,
             'montantMateriaux' => $this->montant_materiaux,
             'montantMo' => $this->montant_mo,

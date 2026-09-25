@@ -857,4 +857,325 @@ Retourne obligatoirement ce format JSON uniquement:
             'analyzed_at' => now()->toIso8601String(),
         ];
     }
+
+    /**
+     * Analyse multimodale (photos/vidéos + texte) pour le pré-diagnostic de panne ou travaux BTP.
+     *
+     * @param array<int, UploadedFile|string> $mediaFiles
+     * @return array{
+     *     diagnostic_summary: string,
+     *     severity: string,
+     *     recommended_trade: string,
+     *     recommended_intervention_type: string,
+     *     key_visual_clues: array<int, string>,
+     *     urgency_precautions: array<int, string>,
+     *     estimated_materials: array<int, array{name: string, estimated_price: int}>,
+     *     pricing: array{
+     *         materials_min: int,
+     *         materials_max: int,
+     *         labor_min: int,
+     *         labor_max: int,
+     *         total_min: int,
+     *         total_max: int
+     *     }
+     * }
+     */
+    public function analyzePreDiagnostic(
+        array $mediaFiles = [],
+        string $description = '',
+        ?string $categoryHint = null,
+        ?int $userId = null
+    ): array {
+        if (empty($this->apiKey) || config('app.env') === 'testing' || (empty($mediaFiles) && empty($description))) {
+            return $this->getFallbackPreDiagnostic($description, $categoryHint);
+        }
+
+        $parts = [];
+        $prompt = "Tu es un ingénieur expert du bâtiment et des travaux publics en Côte d'Ivoire.\n";
+        $prompt .= "Un client demande un diagnostic technique pour un sinistre, une panne ou des travaux de rénovation.\n";
+        if (! empty($description)) {
+            $prompt .= "Description fournie par le client : \"{$description}\".\n";
+        }
+        if (! empty($categoryHint)) {
+            $prompt .= "Indication de domaine : \"{$categoryHint}\".\n";
+        }
+        $prompt .= "Examine attentivement les éléments visuels joints (photos et/ou vidéo) ainsi que le texte.\n";
+        $prompt .= "Tu dois identifier :\n";
+        $prompt .= "1. La nature exacte du problème ou de l'ouvrage (diagnostic synthétique clair en français).\n";
+        $prompt .= "2. La sévérité ('faible', 'moyen', 'eleve', 'urgent').\n";
+        $prompt .= "3. Le métier d'artisan requis (ex: Plomberie, Électricité, Maçonnerie, Peinture, Climatisation, Menuiserie, Serrurerie, Étanchéité).\n";
+        $prompt .= "4. Le type d'intervention conseillé ('Dépannage', 'Maintenance', 'Assistance', 'Déplacement / Diagnostic').\n";
+        $prompt .= "5. Les indices visuels clés observés sur l'image/vidéo.\n";
+        $prompt .= "6. Les précautions d'urgence immédiates pour la sécurité du client.\n";
+        $prompt .= "7. La liste des matériaux et pièces de rechange probables avec prix estimatifs du marché abidjanais en FCFA entiers.\n";
+        $prompt .= "8. La fourchette budgétaire réaliste en FCFA entiers (matériaux, main d'œuvre et total).\n\n";
+        $prompt .= "Réponds STRICTEMENT par un objet JSON au format suivant (sans texte additionnel) :\n";
+        $prompt .= "{\n";
+        $prompt .= "  \"diagnostic_summary\": \"Synthèse claire du problème détecté\",\n";
+        $prompt .= "  \"severity\": \"moyen\",\n";
+        $prompt .= "  \"recommended_trade\": \"Plomberie\",\n";
+        $prompt .= "  \"recommended_intervention_type\": \"Dépannage\",\n";
+        $prompt .= "  \"key_visual_clues\": [\"Trace d'infiltration\", \"Raccord dévissé\"],\n";
+        $prompt .= "  \"urgency_precautions\": [\"Couper l'arrivée d'eau principale\"],\n";
+        $prompt .= "  \"estimated_materials\": [\n";
+        $prompt .= "    {\"name\": \"Joint d'étanchéité\", \"estimated_price\": 2500}\n";
+        $prompt .= "  ],\n";
+        $prompt .= "  \"pricing\": {\n";
+        $prompt .= "    \"materials_min\": 5000,\n";
+        $prompt .= "    \"materials_max\": 15000,\n";
+        $prompt .= "    \"labor_min\": 10000,\n";
+        $prompt .= "    \"labor_max\": 25000,\n";
+        $prompt .= "    \"total_min\": 15000,\n";
+        $prompt .= "    \"total_max\": 40000\n";
+        $prompt .= "  }\n";
+        $prompt .= "}";
+
+        $parts[] = ['text' => $prompt];
+
+        // Charger jusqu'à 3 images ou 1 vidéo
+        $loadedMedia = 0;
+        foreach (array_slice($mediaFiles, 0, 3) as $media) {
+            $mimeType = null;
+            $dataBase64 = null;
+
+            if ($media instanceof UploadedFile) {
+                $mimeType = $media->getMimeType() ?: 'image/jpeg';
+                $dataBase64 = base64_encode(file_get_contents($media->getPathname()));
+            } elseif (is_string($media)) {
+                $path = $media;
+                if (Storage::disk('public')->exists($path)) {
+                    /** @var FilesystemAdapter $disk */
+                    $disk = Storage::disk('public');
+                    $mimeType = $disk->mimeType($path) ?: 'image/jpeg';
+                    $dataBase64 = base64_encode($disk->get($path));
+                } elseif (file_exists($path)) {
+                    $mimeType = mime_content_type($path) ?: 'image/jpeg';
+                    $dataBase64 = base64_encode(file_get_contents($path));
+                }
+            }
+
+            if ($mimeType && $dataBase64) {
+                $parts[] = [
+                    'inline_data' => [
+                        'mime_type' => $mimeType,
+                        'data' => $dataBase64,
+                    ],
+                ];
+                $loadedMedia++;
+            }
+        }
+
+        $startTime = microtime(true);
+
+        try {
+            $response = Http::timeout(15)
+                ->connectTimeout(5)
+                ->post($this->getEndpointUrl(), [
+                    'contents' => [
+                        ['parts' => $parts],
+                    ],
+                    'generationConfig' => [
+                        'response_mime_type' => 'application/json',
+                    ],
+                ]);
+
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+
+            if ($response->successful()) {
+                $jsonText = $response->json('candidates.0.content.parts.0.text') ?? '{}';
+                $result = json_decode($jsonText, true);
+
+                $promptTokens = $response->json('usageMetadata.promptTokenCount') ?? 0;
+                $completionTokens = $response->json('usageMetadata.candidatesTokenCount') ?? 0;
+
+                AiMonitoringService::log(
+                    $this->model,
+                    'pre_diagnostic',
+                    $promptTokens,
+                    $completionTokens,
+                    $responseTimeMs,
+                    200,
+                    null,
+                    $userId
+                );
+
+                if (is_array($result) && ! empty($result['diagnostic_summary'])) {
+                    return $this->normalizePreDiagnosticResult($result);
+                }
+            }
+
+            AiMonitoringService::log(
+                $this->model,
+                'pre_diagnostic',
+                0,
+                0,
+                $responseTimeMs,
+                $response->status(),
+                $response->body(),
+                $userId
+            );
+
+            Log::error('Gemini Pre-Diagnostic Error', ['status' => $response->status(), 'body' => $response->body()]);
+        } catch (\Throwable $e) {
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+            AiMonitoringService::log(
+                $this->model,
+                'pre_diagnostic',
+                0,
+                0,
+                $responseTimeMs,
+                500,
+                $e->getMessage(),
+                $userId
+            );
+            Log::error('Gemini Pre-Diagnostic Exception', ['message' => $e->getMessage()]);
+        }
+
+        return $this->getFallbackPreDiagnostic($description, $categoryHint);
+    }
+
+    /**
+     * Normalise et assainit le résultat JSON retourné par Gemini.
+     */
+    private function normalizePreDiagnosticResult(array $result): array
+    {
+        $severity = match (strtolower((string) ($result['severity'] ?? 'moyen'))) {
+            'faible', 'low' => 'faible',
+            'urgent', 'high', 'eleve', 'élevé', 'critique' => 'urgent',
+            'moyen', 'medium' => 'moyen',
+            default => 'moyen',
+        };
+
+        $materials = [];
+        if (! empty($result['estimated_materials']) && is_array($result['estimated_materials'])) {
+            foreach ($result['estimated_materials'] as $item) {
+                if (is_array($item) && ! empty($item['name'])) {
+                    $materials[] = [
+                        'name' => (string) $item['name'],
+                        'estimated_price' => max(0, (int) ($item['estimated_price'] ?? 0)),
+                    ];
+                }
+            }
+        }
+
+        $p = $result['pricing'] ?? [];
+        $matMin = max(0, (int) ($p['materials_min'] ?? 5000));
+        $matMax = max($matMin, (int) ($p['materials_max'] ?? ($matMin * 2)));
+        $labMin = max(0, (int) ($p['labor_min'] ?? 10000));
+        $labMax = max($labMin, (int) ($p['labor_max'] ?? ($labMin * 2)));
+        $totMin = max($matMin + $labMin, (int) ($p['total_min'] ?? ($matMin + $labMin)));
+        $totMax = max($totMin, (int) ($p['total_max'] ?? ($matMax + $labMax)));
+
+        return [
+            'diagnostic_summary' => (string) ($result['diagnostic_summary'] ?? 'Diagnostic technique visuel complété.'),
+            'severity' => $severity,
+            'recommended_trade' => (string) ($result['recommended_trade'] ?? 'Plomberie'),
+            'recommended_intervention_type' => (string) ($result['recommended_intervention_type'] ?? 'Dépannage'),
+            'key_visual_clues' => array_values(array_map('strval', (array) ($result['key_visual_clues'] ?? []))),
+            'urgency_precautions' => array_values(array_map('strval', (array) ($result['urgency_precautions'] ?? []))),
+            'estimated_materials' => $materials,
+            'pricing' => [
+                'materials_min' => $matMin,
+                'materials_max' => $matMax,
+                'labor_min' => $labMin,
+                'labor_max' => $labMax,
+                'total_min' => $totMin,
+                'total_max' => $totMax,
+            ],
+            'analyzed_at' => now()->toIso8601String(),
+        ];
+    }
+
+    /**
+     * Fallback déterministe hors-ligne ou environnement de test.
+     */
+    public function getFallbackPreDiagnostic(string $description = '', ?string $categoryHint = null): array
+    {
+        $text = strtolower($description.' '.$categoryHint);
+
+        $trade = 'Plomberie';
+        $interventionType = 'Dépannage';
+        $summary = 'Examen technique requis sur place pour établir un chiffrage précis.';
+        $severity = 'moyen';
+        $materials = [];
+        $precautions = [];
+        $clues = ['Examen visuel préliminaire'];
+        $totMin = 15000;
+        $totMax = 45000;
+
+        if (str_contains($text, 'fuite') || str_contains($text, 'eau') || str_contains($text, 'tuyau') || str_contains($text, 'robinet') || str_contains($text, 'wc')) {
+            $trade = 'Plomberie';
+            $summary = 'Fuite ou dysfonctionnement sur le réseau hydraulique / sanitaire.';
+            $severity = str_contains($text, 'inond') || str_contains($text, 'urgent') ? 'urgent' : 'moyen';
+            $precautions = ['Fermer la vanne d\'arrêt générale du domicile pour limiter les dégâts des eaux.'];
+            $clues = ['Écoulement visible', 'Présence d\'eau stagnante'];
+            $materials = [
+                ['name' => 'Joint d\'étanchéité & téflon', 'estimated_price' => 2000],
+                ['name' => 'Raccord ou flexible sanitaire', 'estimated_price' => 6000],
+            ];
+            $totMin = 15000;
+            $totMax = 35000;
+        } elseif (str_contains($text, 'disjoncteur') || str_contains($text, 'courant') || str_contains($text, 'prise') || str_contains($text, 'electr') || str_contains($text, 'court-circuit')) {
+            $trade = 'Électricité';
+            $summary = 'Anomalie électrique, défaut d\'isolement ou disjonction répétée.';
+            $severity = 'urgent';
+            $precautions = ['Couper le disjoncteur général et ne pas toucher aux fils dénudés.'];
+            $clues = ['Rupture de continuité électrique', 'Traces d\'échauffement ou étincelles'];
+            $materials = [
+                ['name' => 'Disjoncteur divisionnaire 16A/20A', 'estimated_price' => 8500],
+                ['name' => 'Câbles cuivre VGV & dominos', 'estimated_price' => 4500],
+            ];
+            $totMin = 20000;
+            $totMax = 50000;
+        } elseif (str_contains($text, 'clim') || str_contains($text, 'froid') || str_contains($text, 'gaz')) {
+            $trade = 'Climatisation';
+            $summary = 'Baisse de rendement thermique, encrassement ou fuite de fluide frigorigène.';
+            $severity = 'moyen';
+            $precautions = ['Éteindre le split pour préserver le compresseur extérieur.'];
+            $clues = ['Manque d\'air froid', 'Givre sur circuit cuivre'];
+            $materials = [
+                ['name' => 'Recharge fluide frigorigène R410A', 'estimated_price' => 25000],
+                ['name' => 'Nettoyage filtres et désinfection', 'estimated_price' => 5000],
+            ];
+            $totMin = 30000;
+            $totMax = 65000;
+        } elseif (str_contains($text, 'mur') || str_contains($text, 'fissure') || str_contains($text, 'ciment') || str_contains($text, 'dalle')) {
+            $trade = 'Maçonnerie';
+            $summary = 'Fissuration de maçonnerie ou dégradation de support cimentaire.';
+            $severity = 'moyen';
+            $precautions = ['Éviter de surcharger la zone concernée.'];
+            $clues = ['Fissure apparente', 'Écaillage de crépi'];
+            $materials = [
+                ['name' => 'Sac de ciment CPJ 42.5', 'estimated_price' => 5500],
+                ['name' => 'Sable fin et adjuvant d\'adhérence', 'estimated_price' => 6000],
+            ];
+            $totMin = 25000;
+            $totMax = 60000;
+        }
+
+        $matMin = (int) round($totMin * 0.4);
+        $matMax = (int) round($totMax * 0.45);
+        $labMin = $totMin - $matMin;
+        $labMax = $totMax - $matMax;
+
+        return [
+            'diagnostic_summary' => $summary,
+            'severity' => $severity,
+            'recommended_trade' => $trade,
+            'recommended_intervention_type' => $interventionType,
+            'key_visual_clues' => $clues,
+            'urgency_precautions' => $precautions,
+            'estimated_materials' => $materials,
+            'pricing' => [
+                'materials_min' => $matMin,
+                'materials_max' => $matMax,
+                'labor_min' => $labMin,
+                'labor_max' => $labMax,
+                'total_min' => $totMin,
+                'total_max' => $totMax,
+            ],
+            'analyzed_at' => now()->toIso8601String(),
+        ];
+    }
 }
+

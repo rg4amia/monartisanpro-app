@@ -251,6 +251,55 @@ class MissionRepository {
     throw Exception('Format de réponse inattendu pour estimate');
   }
 
+  /// Pré-diagnostic multimodal Gemini 3.6 Flash (photos, vidéo, texte)
+  Future<Map<String, dynamic>> preDiagnostic({
+    String? description,
+    String? category,
+    List<String>? photoPaths,
+    String? videoPath,
+  }) async {
+    final Map<String, dynamic> formMap = {
+      if (description != null && description.isNotEmpty)
+        'description': description,
+      if (category != null && category.isNotEmpty)
+        'category': category,
+    };
+
+    if (photoPaths != null && photoPaths.isNotEmpty) {
+      final List<MultipartFile> files = [];
+      for (final path in photoPaths) {
+        files.add(
+          await MultipartFile.fromFile(
+            path,
+            filename: path.split(RegExp(r'[/\\]')).last,
+          ),
+        );
+      }
+      formMap['photos[]'] = files;
+    }
+
+    if (videoPath != null && videoPath.isNotEmpty) {
+      formMap['video'] = await MultipartFile.fromFile(
+        videoPath,
+        filename: videoPath.split(RegExp(r'[/\\]')).last,
+      );
+    }
+
+    final formData = FormData.fromMap(formMap);
+    final res = await _client.postMultipart(
+      ApiEndpoints.preDiagnostic,
+      formData,
+    );
+
+    final data = res.data;
+    if (data is Map && data.containsKey('data')) {
+      return Map<String, dynamic>.from(data['data'] as Map);
+    } else if (data is Map) {
+      return Map<String, dynamic>.from(data);
+    }
+    return {};
+  }
+
   /// Met à jour le statut d'une mission
   Future<void> updateStatus(int id, String status) async {
     try {

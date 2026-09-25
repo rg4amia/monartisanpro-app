@@ -212,6 +212,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/missions/{mission}', [MissionController::class, 'show']);
         Route::get('/missions/{mission}/site-map', [MissionController::class, 'siteMap']);
         Route::post('/missions/estimate', [MissionController::class, 'estimate'])->middleware('can:mission.estimate');
+        Route::post('/missions/pre-diagnostic', [MissionController::class, 'preDiagnostic'])->middleware('kyc.verified');
         Route::put('/missions/{mission}/status', [MissionController::class, 'updateStatus']);
         Route::post('/missions/{mission}/accept-request', [MissionController::class, 'acceptRequest']);
         Route::post('/missions/{mission}/reject-request', [MissionController::class, 'rejectRequest']);

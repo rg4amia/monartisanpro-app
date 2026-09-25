@@ -41,6 +41,8 @@ class MissionsController extends GetxController {
   // Estimate response from Gemini AI
   final estimateResult = Rx<Map<String, dynamic>?>(null);
   final isEstimating = false.obs;
+  final preDiagnosticResult = Rx<Map<String, dynamic>?>(null);
+  final isAnalyzingPreDiagnostic = false.obs;
 
   RealtimeStreamService? _missionStreamService;
   StreamSubscription<RealtimeEvent>? _missionStreamSub;
@@ -257,6 +259,53 @@ class MissionsController extends GetxController {
     }
   }
 
+  /// Analyse multimodale vidéo & photo via Gemini 3.6 Flash
+  Future<Map<String, dynamic>?> analyzePreDiagnostic({
+    String? description,
+    String? category,
+    List<String>? photoPaths,
+    String? videoPath,
+  }) async {
+    isAnalyzingPreDiagnostic.value = true;
+    errorMsg.value = null;
+
+    try {
+      final result = await _repo.preDiagnostic(
+        description: description,
+        category: category,
+        photoPaths: photoPaths,
+        videoPath: videoPath,
+      );
+      preDiagnosticResult.value = result;
+
+      final pricing = result['pricing'] is Map ? result['pricing'] as Map : null;
+      estimateResult.value = {
+        'category': result['recommended_trade'] ?? result['category'] ?? category,
+        'urgency': result['severity'] ?? 'moyen',
+        'explanation': result['diagnostic_summary'],
+        'price_min': pricing?['total_min'] ?? 25000,
+        'price_max': pricing?['total_max'] ?? 75000,
+      };
+
+      Get.snackbar(
+        'Pré-diagnostic IA',
+        'Analyse technique Gemini 3.6 Flash terminée',
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 3),
+      );
+      return result;
+    } on DioException catch (e) {
+      errorMsg.value = _handleDioError(e);
+      _showErrorSnackbar('Échec du pré-diagnostic: ${errorMsg.value}');
+      return null;
+    } catch (e) {
+      _showErrorSnackbar('Impossible d\'exécuter le pré-diagnostic');
+      return null;
+    } finally {
+      isAnalyzingPreDiagnostic.value = false;
+    }
+  }
+
   /// Crée une nouvelle mission
   ///
   /// [artisanId] - ID de l'artisan sélectionné
@@ -265,6 +314,7 @@ class MissionsController extends GetxController {
   /// [urgency] - Niveau d'urgence (faible, moyen, urgent)
   /// [location] - Localisation optionnelle
   /// [photos] - Liste des URLs des photos/vidéos uploadées
+  /// [diagnosticMediaAnalysis] - Analyse multimodale Gemini stockée pour l'artisan
   Future<MissionModel?> createMission({
     required int artisanId,
     required String description,
@@ -278,6 +328,7 @@ class MissionsController extends GetxController {
     double? lng,
     String? location,
     List<String>? photos,
+    Map<String, dynamic>? diagnosticMediaAnalysis,
   }) async {
     isLoading.value = true;
     errorMsg.value = null;
@@ -296,6 +347,9 @@ class MissionsController extends GetxController {
         lng: lng,
         location: location,
         photos: photos,
+        additionalData: diagnosticMediaAnalysis != null
+            ? {'diagnostic_media_analysis': diagnosticMediaAnalysis}
+            : null,
       );
 
       // Invalider le cache pour forcer le refresh

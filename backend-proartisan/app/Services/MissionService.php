@@ -87,6 +87,7 @@ class MissionService
             'montant_materiaux' => 0,
             'montant_mo' => 0,
             'ratio_materiaux' => 0.0000,
+            'diagnostic_media_analysis' => $data['diagnostic_media_analysis'] ?? null,
         ]);
 
         // Enrichissement Gemini

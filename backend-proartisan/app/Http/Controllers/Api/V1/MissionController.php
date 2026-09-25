@@ -22,6 +22,8 @@ use App\States\Mission\PendingFundingState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
+use App\Services\AiMonitoringService;
+use App\Services\GeminiService;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -31,6 +33,7 @@ class MissionController extends Controller
         private MissionService $missionService,
         private NotificationService $notificationService,
         private AdminActivityLogger $audit,
+        private GeminiService $geminiService,
     ) {}
 
     /**
@@ -284,6 +287,74 @@ class MissionController extends Controller
         return response()->json([
             'success' => true,
             'data' => $estimate,
+        ]);
+    }
+
+    /**
+     * Pré-diagnostic vidéo & photo multimodal (Gemini 3.6 Flash).
+     * POST /api/v1/missions/pre-diagnostic
+     */
+    public function preDiagnostic(Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        // 1. Contrôle KYC obligatoire
+        if (! $user->isKycActif()) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Votre KYC doit être validé pour effectuer un pré-diagnostic IA.',
+            ], 403);
+        }
+
+        // 2. Contrôle de quota IA journalier
+        if (! AiMonitoringService::checkUserLimit($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Quota journalier IA atteint. Veuillez réessayer plus tard.',
+                'quota' => AiMonitoringService::remainingFor($user->id),
+            ], 429);
+        }
+
+        // 3. Validation des entrées
+        $validated = $request->validate([
+            'description' => ['nullable', 'string', 'max:2000'],
+            'category' => ['nullable', 'string', 'max:100'],
+            'photos' => ['nullable', 'array', 'max:5'],
+            'photos.*' => ['file', 'mimes:jpeg,jpg,png,webp', 'max:15360'],
+            'video' => ['nullable', 'file', 'mimes:mp4,mov,quicktime,webm', 'max:26214400'],
+        ]);
+
+        $hasPhotos = $request->hasFile('photos');
+        $hasVideo = $request->hasFile('video');
+        $hasDescription = ! empty(trim((string) ($validated['description'] ?? '')));
+
+        if (! $hasPhotos && ! $hasVideo && ! $hasDescription) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Veuillez fournir au moins une photo, une vidéo ou une description pour le pré-diagnostic.',
+            ], 422);
+        }
+
+        $mediaFiles = [];
+        if ($hasPhotos) {
+            foreach ($request->file('photos') as $photo) {
+                $mediaFiles[] = $photo;
+            }
+        }
+        if ($hasVideo) {
+            $mediaFiles[] = $request->file('video');
+        }
+
+        $result = $this->geminiService->analyzePreDiagnostic(
+            $mediaFiles,
+            $validated['description'] ?? '',
+            $validated['category'] ?? null,
+            $user->id
+        );
+
+        return response()->json([
+            'success' => true,
+            'data' => $result,
         ]);
     }
 

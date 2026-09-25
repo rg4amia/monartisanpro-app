@@ -774,7 +774,7 @@ class AdminService
             $commissionsByDriver = collect([]);
             if (Schema::hasTable('orders')) {
                 $commissionsByDriver = DB::table('users')
-                    ->where('users.role', '=', 'driver')
+                    ->whereIn('users.role', ['driver', 'livreur'])
                     ->leftJoin('orders', function ($join) {
                         $join->on('orders.driver_id', '=', 'users.id')
                             ->whereIn('orders.status', ['driver_assigned', 'driver_picked_up', 'shipping', 'delivered']);

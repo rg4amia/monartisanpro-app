@@ -82,9 +82,9 @@ class AiMonitoringService
 
     /**
      * Types d'appels IA comptabilisés dans le quota utilisateur (Assistant IA :
-     * chat BTP + recherche RAG + dictée vocale de devis). L'embedding technique n'est pas décompté.
+     * chat BTP + recherche RAG + dictée vocale de devis + pré-diagnostic multimodal). L'embedding technique n'est pas décompté.
      */
-    private const QUOTA_ACTIONS = ['chat', 'search', 'voice_quote'];
+    private const QUOTA_ACTIONS = ['chat', 'search', 'voice_quote', 'pre_diagnostic'];
 
     /**
      * L'utilisateur est-il dans les clous de son quota IA ?

@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 
 import '../../../app/routes/app_routes.dart';
 import '../../../core/utils/error_handler.dart';
+import '../../../core/utils/json_readers.dart';
 import '../../../data/models/artisan_model.dart';
 import '../../../data/repositories/artisan_repository.dart';
 import 'missions_controller.dart';
@@ -30,6 +31,7 @@ class ArtisanSelectionController extends GetxController {
   final video = Rx<XFile?>(null);
   final existingMissionId = 0.obs;
   final selectedAddressId = Rxn<int>();
+  final diagnosticMediaAnalysis = Rx<Map<String, dynamic>?>(null);
 
   void toggleSearchDistant() {
     searchDistant.value = !searchDistant.value;
@@ -99,6 +101,9 @@ class ArtisanSelectionController extends GetxController {
     nightIntervention.value = nextNightIntervention;
     photos.value = nextPhotos;
     video.value = nextVideo;
+    diagnosticMediaAnalysis.value = readMap(
+      data['diagnosticMediaAnalysis'] ?? data['diagnostic_media_analysis'],
+    );
 
     _loadNearbyArtisans();
   }
@@ -166,6 +171,8 @@ class ArtisanSelectionController extends GetxController {
         location:
             locationAddress.value.isNotEmpty ? locationAddress.value : null,
         photos: uploadedUrls.isNotEmpty ? uploadedUrls : null,
+        diagnosticMediaAnalysis: diagnosticMediaAnalysis.value ??
+            missionsController.preDiagnosticResult.value,
       );
 
       if (mission != null) {

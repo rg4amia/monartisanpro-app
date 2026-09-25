@@ -208,6 +208,17 @@ class User extends Authenticatable
         );
     }
 
+    /**
+     * Normalisation du rôle : 'driver' (anglais) est automatiquement converti
+     * en 'livreur' (valeur ENUM en base MariaDB/MySQL).
+     */
+    protected function role(): Attribute
+    {
+        return Attribute::make(
+            set: fn ($value) => $value === 'driver' ? 'livreur' : $value,
+        );
+    }
+
     public function missionsClient()
     {
         return $this->hasMany(Mission::class, 'client_id');

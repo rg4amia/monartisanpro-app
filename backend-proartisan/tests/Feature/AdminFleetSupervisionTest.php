@@ -13,7 +13,7 @@ uses(RefreshDatabase::class);
 
 test('non-admin user cannot access fleet map supervision', function () {
     $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-    $driver = User::factory()->create(['role' => 'driver', 'kyc_status' => 'actif']);
+    $driver = User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif']);
 
     $this->actingAs($client)->getJson('/api/v1/deliveries/fleet-map')
         ->assertStatus(403);
@@ -27,7 +27,7 @@ test('admin can view fleet map supervision with summary and driver statuses', fu
 
     // 1. Chauffeur disponible à Cocody (position récente, sans commande)
     $driverAvailable = User::factory()->create([
-        'role' => 'driver',
+        'role' => 'livreur',
         'name' => 'Kouamé Livreur',
         'phone' => '+2250701010101',
         'kyc_status' => 'actif',
@@ -36,7 +36,7 @@ test('admin can view fleet map supervision with summary and driver statuses', fu
 
     // 2. Chauffeur en transit avec commande à Yopougon
     $driverDelivering = User::factory()->create([
-        'role' => 'driver',
+        'role' => 'livreur',
         'name' => 'Sékou Livreur',
         'phone' => '+2250702020202',
         'kyc_status' => 'actif',
@@ -89,7 +89,7 @@ test('admin can view fleet map supervision with summary and driver statuses', fu
 
     // 3. Chauffeur bloqué / en retard (> 25 min sans ping en cours de livraison)
     $driverStalled = User::factory()->create([
-        'role' => 'driver',
+        'role' => 'livreur',
         'name' => 'Moussa Bloqué',
         'phone' => '+2250703030303',
         'kyc_status' => 'actif',
@@ -177,14 +177,14 @@ test('fleet map can filter drivers by commune', function () {
     $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
 
     $driverCocody = User::factory()->create([
-        'role' => 'driver',
+        'role' => 'livreur',
         'name' => 'Livreur Cocody',
         'kyc_status' => 'actif',
     ]);
     $driverCocody->setPosition(5.3544, -3.9856);
 
     $driverYopougon = User::factory()->create([
-        'role' => 'driver',
+        'role' => 'livreur',
         'name' => 'Livreur Yopougon',
         'kyc_status' => 'actif',
     ]);

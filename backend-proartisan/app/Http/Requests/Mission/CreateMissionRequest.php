@@ -32,6 +32,7 @@ class CreateMissionRequest extends FormRequest
             'photos' => ['nullable', 'array', 'max:5'],
             'photos.*' => ['string'],
             'address_id' => ['nullable', 'integer', 'exists:addresses,id'],
+            'diagnostic_media_analysis' => ['nullable', 'array'],
         ];
 
         // Les coordonnées de paiement Mobile Money sont facultatives lors de la demande de devis

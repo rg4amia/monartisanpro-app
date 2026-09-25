@@ -61,7 +61,7 @@ beforeEach(function () {
 
 test('non-driver or unverified user cannot access delivery batches', function () {
     $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
-    $unverifiedDriver = User::factory()->create(['role' => 'driver', 'kyc_status' => 'en_attente']);
+    $unverifiedDriver = User::factory()->create(['role' => 'livreur', 'kyc_status' => 'en_attente']);
 
     $this->actingAs($client)->getJson('/api/v1/deliveries/batches')
         ->assertStatus(403);
@@ -72,7 +72,7 @@ test('non-driver or unverified user cannot access delivery batches', function ()
 
 test('verified driver can view available delivery batches grouped by supplier', function () {
     $driver = User::factory()->create([
-        'role' => 'driver',
+        'role' => 'livreur',
         'kyc_status' => 'actif',
         'payment_phone' => '+2250707070707',
         'preferred_payment_provider' => 'wave',
@@ -149,7 +149,7 @@ test('verified driver can view available delivery batches grouped by supplier', 
 
 test('verified driver can atomically accept a delivery batch', function () {
     $driver = User::factory()->create([
-        'role' => 'driver',
+        'role' => 'livreur',
         'kyc_status' => 'actif',
         'payment_phone' => '+2250707070707',
         'preferred_payment_provider' => 'wave',
@@ -211,8 +211,8 @@ test('verified driver can atomically accept a delivery batch', function () {
 });
 
 test('driver cannot accept a batch if any order is already taken', function () {
-    $driver1 = User::factory()->create(['role' => 'driver', 'kyc_status' => 'actif']);
-    $driver2 = User::factory()->create(['role' => 'driver', 'kyc_status' => 'actif']);
+    $driver1 = User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif']);
+    $driver2 = User::factory()->create(['role' => 'livreur', 'kyc_status' => 'actif']);
 
     $supplier = User::factory()->create(['role' => 'fournisseur']);
     FournisseurAgree::create([
@@ -261,7 +261,7 @@ test('driver cannot accept a batch if any order is already taken', function () {
 
 test('driver can retrieve active multi-drop tour itinerary', function () {
     $driver = User::factory()->create([
-        'role' => 'driver',
+        'role' => 'livreur',
         'kyc_status' => 'actif',
         'payment_phone' => '+2250707070707',
         'preferred_payment_provider' => 'wave',

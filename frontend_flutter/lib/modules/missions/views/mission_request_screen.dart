@@ -321,10 +321,12 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
 
   Future<void> _runGeminiEstimate() async {
     final desc = _descCtrl.text.trim();
-    if (desc.length < 10) {
+    final hasMedia = _photos.isNotEmpty || _video.value != null;
+
+    if (desc.length < 10 && !hasMedia) {
       Get.snackbar(
-        'Description requise',
-        'Veuillez d\'abord décrire votre problème (au moins 10 caractères) pour lancer l\'analyse IA.',
+        'Description ou visuel requis',
+        'Veuillez décrire votre problème (au moins 10 caractères) ou joindre une photo/vidéo pour l\'analyse Gemini 3.6 Flash.',
         snackPosition: SnackPosition.TOP,
         backgroundColor: Colors.amber.shade800,
         colorText: Colors.white,
@@ -332,17 +334,38 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
       return;
     }
 
-    final result = await _missionsController.estimate(
-      desc,
-      _selectedCategory.value.isNotEmpty ? _selectedCategory.value : null,
-    );
+    if (hasMedia) {
+      final photoPaths = _photos.map((p) => p.path).toList();
+      final videoPath = _video.value?.path;
 
-    if (result != null) {
-      final detectedCategory = result['category']?.toString();
-      if (detectedCategory != null &&
-          detectedCategory.isNotEmpty &&
-          _selectedCategory.value.isEmpty) {
-        _selectedCategory.value = detectedCategory;
+      final result = await _missionsController.analyzePreDiagnostic(
+        description: desc.isNotEmpty ? desc : null,
+        category: _selectedCategory.value.isNotEmpty ? _selectedCategory.value : null,
+        photoPaths: photoPaths.isNotEmpty ? photoPaths : null,
+        videoPath: videoPath,
+      );
+
+      if (result != null) {
+        final detectedTrade = result['recommended_trade']?.toString();
+        if (detectedTrade != null &&
+            detectedTrade.isNotEmpty &&
+            _selectedCategory.value.isEmpty) {
+          _selectedCategory.value = detectedTrade;
+        }
+      }
+    } else {
+      final result = await _missionsController.estimate(
+        desc,
+        _selectedCategory.value.isNotEmpty ? _selectedCategory.value : null,
+      );
+
+      if (result != null) {
+        final detectedCategory = result['category']?.toString();
+        if (detectedCategory != null &&
+            detectedCategory.isNotEmpty &&
+            _selectedCategory.value.isEmpty) {
+          _selectedCategory.value = detectedCategory;
+        }
       }
     }
   }
@@ -428,8 +451,11 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                     const SizedBox(height: 16),
                     Obx(
                       () => GeminiEstimateCard(
-                        isLoading: _missionsController.isEstimating.value,
+                        isLoading: _missionsController.isEstimating.value ||
+                            _missionsController.isAnalyzingPreDiagnostic.value,
                         estimate: _missionsController.estimateResult.value,
+                        preDiagnostic:
+                            _missionsController.preDiagnosticResult.value,
                         onAnalyze: _runGeminiEstimate,
                       ),
                     ),
@@ -530,6 +556,8 @@ class _MissionRequestScreenState extends State<MissionRequestScreen> {
                             'nightIntervention': _nightIntervention.value,
                             'photos': _photos.toList(),
                             'video': _video.value,
+                            'diagnosticMediaAnalysis':
+                                _missionsController.preDiagnosticResult.value,
                           },
                         );
                       },
