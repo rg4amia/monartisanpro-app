@@ -78,9 +78,24 @@ class AuthenticatedSessionController extends Controller
 
         $this->throttle->ensureIsNotLimited($request, $identifier);
 
+        $normalizedIdentifier = Str::lower($identifier);
+
+        // Tolérance et alias canoniques pour les adresses administrateurs prosartisan (.com, .ci, .net)
+        $lookupEmails = [$normalizedIdentifier];
+        if (str_ends_with($normalizedIdentifier, '@prosartisan.com')) {
+            $lookupEmails[] = str_replace('@prosartisan.com', '@prosartisan.ci', $normalizedIdentifier);
+            $lookupEmails[] = str_replace('@prosartisan.com', '@prosartisan.net', $normalizedIdentifier);
+        } elseif (str_ends_with($normalizedIdentifier, '@prosartisan.ci')) {
+            $lookupEmails[] = str_replace('@prosartisan.ci', '@prosartisan.com', $normalizedIdentifier);
+            $lookupEmails[] = str_replace('@prosartisan.ci', '@prosartisan.net', $normalizedIdentifier);
+        } elseif (str_ends_with($normalizedIdentifier, '@prosartisan.net')) {
+            $lookupEmails[] = str_replace('@prosartisan.net', '@prosartisan.ci', $normalizedIdentifier);
+            $lookupEmails[] = str_replace('@prosartisan.net', '@prosartisan.com', $normalizedIdentifier);
+        }
+
         $user = User::query()
             ->where('phone', $identifier)
-            ->orWhere('email', Str::lower($identifier))
+            ->orWhereIn('email', $lookupEmails)
             ->first();
 
         if (! $user || ! $user->password || ! Hash::check($credentials['password'], $user->password)) {

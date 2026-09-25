@@ -138,7 +138,7 @@ class AdminPermissionService
         $normalizedEmail = mb_strtolower($user->email);
 
         // Protection des adresses administrateurs canoniques de la plateforme
-        if (in_array($normalizedEmail, ['admin@prosartisan.ci', 'admin@prosartisan.net'], true)) {
+        if (in_array($normalizedEmail, ['admin@prosartisan.ci', 'admin@prosartisan.net', 'admin@prosartisan.com'], true)) {
             return true;
         }
 
