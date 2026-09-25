@@ -50,6 +50,7 @@ import '../../modules/orders/views/client_catalog_screen.dart';
 import '../../modules/orders/views/client_orders_screen.dart';
 import '../../modules/orders/views/client_suppliers_list_screen.dart';
 import '../../modules/orders/views/order_checkout_screen.dart';
+import '../../modules/orders/views/supplier_cashout_screen.dart';
 import '../../modules/orders/views/supplier_orders_screen.dart';
 import '../../modules/rating/bindings/rating_binding.dart';
 import '../../modules/rating/views/rating_screen.dart';
@@ -344,6 +345,10 @@ class AppPages {
     GetPage(
       name: Routes.supplierOrders,
       page: () => const SupplierOrdersScreen(),
+    ),
+    GetPage(
+      name: Routes.supplierCashouts,
+      page: () => const SupplierCashoutScreen(),
     ),
     GetPage(
       name: Routes.wallet,

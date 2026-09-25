@@ -4,6 +4,7 @@ import 'package:frontend_flutter/core/utils/formatters.dart';
 import 'package:frontend_flutter/data/models/jcode_model.dart';
 import 'package:frontend_flutter/data/models/micro_credit_model.dart';
 import 'package:frontend_flutter/data/models/mission_model.dart';
+import 'package:frontend_flutter/data/models/supplier_cashout_model.dart';
 import 'package:frontend_flutter/data/models/user_model.dart';
 
 /// Tests unitaires simples sans dépendances natives
@@ -712,6 +713,69 @@ void main() {
       expect(app.amount, 80000);
       expect(app.repaidAmount, 25000);
       expect(app.remainingAmount, 55000);
+    });
+  });
+
+  group('SupplierCashoutModel & Stats Tests', () {
+    test('should parse SupplierCashoutStatsModel correctly', () {
+      final json = {
+        'wallet_materiaux': 150000,
+        'available_balance': 110000,
+        'pending_amount': 40000,
+        'total_withdrawn': 350000,
+        'total_requests': 6,
+      };
+
+      final stats = SupplierCashoutStatsModel.fromJson(json);
+      expect(stats.walletMateriaux, 150000);
+      expect(stats.availableBalance, 110000);
+      expect(stats.pendingAmount, 40000);
+      expect(stats.totalWithdrawn, 350000);
+      expect(stats.totalRequests, 6);
+    });
+
+    test('should parse SupplierCashoutModel and compute state flags', () {
+      final json = {
+        'id': 42,
+        'reference': 'CSH-20260925-ABCD',
+        'supplier_id': 8,
+        'beneficiary_name': 'Quincaillerie du Port',
+        'beneficiary_phone': '+2250700112233',
+        'bank_name': 'NSIA Banque',
+        'bank_account_number': 'CI0920100100234567890123',
+        'montant_brut': 100000,
+        'commission_rate': 0.025,
+        'montant_commission': 2500,
+        'montant_net': 97500,
+        'statut': 'complete',
+        'mode_retrait': 'virement_bancaire',
+        'notes': 'Virement bimensuel',
+        'batch_reference': 'BATCH-20260925-01',
+        'processed_at': '2026-09-25T14:30:00Z',
+        'created_at': '2026-09-24T10:00:00Z',
+      };
+
+      final cashout = SupplierCashoutModel.fromJson(json);
+      expect(cashout.id, 42);
+      expect(cashout.reference, 'CSH-20260925-ABCD');
+      expect(cashout.montantBrut, 100000);
+      expect(cashout.montantCommission, 2500);
+      expect(cashout.montantNet, 97500);
+      expect(cashout.modeRetrait, 'virement_bancaire');
+      expect(cashout.modeRetraitLabel, 'Virement bancaire');
+      expect(cashout.statut, 'complete');
+      expect(cashout.statutLabel, 'Complété / Décaissé');
+      expect(cashout.isCompleted, isTrue);
+      expect(cashout.isPending, isFalse);
+      expect(cashout.isApproved, isFalse);
+      expect(cashout.isRejected, isFalse);
+      expect(cashout.bankName, 'NSIA Banque');
+      expect(cashout.batchReference, 'BATCH-20260925-01');
+    });
+
+    test('should verify supplier cashout API endpoints', () {
+      expect(ApiEndpoints.supplierCashouts, '/supplier/cashouts');
+      expect(ApiEndpoints.supplierCashoutReceipt(12), '/supplier/cashouts/12/receipt');
     });
   });
 }

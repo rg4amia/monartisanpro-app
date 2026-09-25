@@ -12,11 +12,23 @@ class SupplierCashout extends Model
 
     protected $table = 'supplier_cashouts';
 
+    public const STATUT_EN_ATTENTE = 'en_attente';
+    public const STATUT_APPROUVE = 'approuve';
+    public const STATUT_COMPLETE = 'complete';
+    public const STATUT_REJETE = 'rejete';
+
+    public const MODE_ESPECES_GUICHET = 'especes_guichet';
+    public const MODE_WAVE = 'wave';
+    public const MODE_ORANGE_MONEY = 'orange_money';
+    public const MODE_VIREMENT_BANCAIRE = 'virement_bancaire';
+
     protected $fillable = [
         'reference',
         'supplier_id',
         'beneficiary_name',
         'beneficiary_phone',
+        'bank_name',
+        'bank_account_number',
         'montant_brut',
         'commission_rate',
         'montant_commission',
@@ -24,8 +36,11 @@ class SupplierCashout extends Model
         'statut',
         'mode_retrait',
         'notes',
+        'batch_reference',
         'processed_by',
         'processed_at',
+        'reconciled_by',
+        'reconciled_at',
     ];
 
     protected $casts = [
@@ -34,6 +49,7 @@ class SupplierCashout extends Model
         'montant_commission' => 'integer',
         'montant_net' => 'integer',
         'processed_at' => 'datetime',
+        'reconciled_at' => 'datetime',
     ];
 
     public function supplier(): BelongsTo
@@ -44,6 +60,11 @@ class SupplierCashout extends Model
     public function processor(): BelongsTo
     {
         return $this->belongsTo(User::class, 'processed_by');
+    }
+
+    public function reconciler(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'reconciled_by');
     }
 
     public function scopeEnAttente($query)

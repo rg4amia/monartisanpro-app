@@ -70,6 +70,7 @@ abstract class Routes {
   static const clientCatalog = '/client-catalog';
   static const clientOrders = '/client-orders';
   static const supplierOrders = '/supplier-orders';
+  static const supplierCashouts = '/supplier-cashouts';
   static const wallet = '/wallet';
 
   // Legal

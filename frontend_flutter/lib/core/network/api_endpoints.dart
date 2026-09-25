@@ -196,4 +196,9 @@ class ApiEndpoints {
       '/orders/$orderId/verify-delivery';
   static String orderLocation(int orderId) => '/orders/$orderId/location';
   static String orderTracking(int orderId) => '/orders/$orderId/tracking';
+
+  // Fournisseur & Cash-out
+  static const String supplierCashouts = '/supplier/cashouts';
+  static String supplierCashoutReceipt(int id) =>
+      '/supplier/cashouts/$id/receipt';
 }

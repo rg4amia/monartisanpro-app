@@ -86,7 +86,7 @@ class SupplierHomeScreen extends StatelessWidget {
                                 color: AppColors.accent,
                                 background: AppColors.artisanSoft,
                                 icon: Icons.payments_outlined,
-                                onTap: () => Get.toNamed(Routes.wallet),
+                                onTap: () => Get.toNamed(Routes.supplierCashouts),
                               ),
                             ),
                           ],
@@ -101,18 +101,40 @@ class SupplierHomeScreen extends StatelessWidget {
                         // Les commandes e-commerce n'apparaissaient nulle part
                         // dans l'application : le fournisseur ne pouvait ni les
                         // préparer, ni contrôler le code au comptoir.
-                        ElevatedButton.icon(
-                          onPressed: () => Get.toNamed(Routes.supplierOrders),
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: AppColors.success,
-                            foregroundColor: Colors.white,
-                            minimumSize: const Size.fromHeight(48),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(14),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => Get.toNamed(Routes.supplierOrders),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.success,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size.fromHeight(48),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.receipt_long_outlined),
+                                label: const Text('Mes commandes'),
+                              ),
                             ),
-                          ),
-                          icon: const Icon(Icons.receipt_long_outlined),
-                          label: const Text('Mes commandes'),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: ElevatedButton.icon(
+                                onPressed: () => Get.toNamed(Routes.supplierCashouts),
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: AppColors.primary,
+                                  foregroundColor: Colors.white,
+                                  minimumSize: const Size.fromHeight(48),
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(14),
+                                  ),
+                                ),
+                                icon: const Icon(Icons.account_balance_wallet_outlined),
+                                label: const Text('Mes virements'),
+                              ),
+                            ),
+                          ],
                         ),
                         const SizedBox(height: 12),
                         // Tableau de bord et litiges : deux endpoints déjà

@@ -136,6 +136,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // Finance & Cash-Out Quincaillerie
         Route::get('/transactions', [BackofficeController::class, 'transactions'])->middleware('can:admin.transactions.view')->name('transactions');
         Route::post('/cashouts', [AdminCashoutController::class, 'store'])->middleware('can:admin.transactions.manage')->name('cashouts.store');
+        Route::post('/cashouts/batch', [AdminCashoutController::class, 'createBatch'])->middleware('can:admin.transactions.manage')->name('cashouts.batch');
+        Route::post('/cashouts/reconcile-batch', [AdminCashoutController::class, 'reconcileBatch'])->middleware('can:admin.transactions.manage')->name('cashouts.reconcile-batch');
+        Route::get('/cashouts/export-batch/{batchReference}', [AdminCashoutController::class, 'exportBatchCsv'])->middleware('can:admin.transactions.view')->name('cashouts.export-batch');
         Route::post('/cashouts/{cashout}/approve', [AdminCashoutController::class, 'approve'])->middleware('can:admin.transactions.manage')->name('cashouts.approve');
         Route::post('/cashouts/{cashout}/complete', [AdminCashoutController::class, 'complete'])->middleware('can:admin.transactions.manage')->name('cashouts.complete');
         Route::post('/cashouts/{cashout}/reject', [AdminCashoutController::class, 'reject'])->middleware('can:admin.transactions.manage')->name('cashouts.reject');

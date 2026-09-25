@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\V1\SectorController;
 use App\Http\Controllers\Api\V1\SettingController;
 use App\Http\Controllers\Api\V1\SmsController;
 use App\Http\Controllers\Api\V1\SmsWebhookController;
+use App\Http\Controllers\Api\V1\Supplier\SupplierCashoutController;
 use App\Http\Controllers\Api\V1\Supplier\SupplierDashboardController;
 use App\Http\Controllers\Api\V1\SupplierCatalogController;
 use App\Http\Controllers\Api\V1\TransactionController;
@@ -205,6 +206,9 @@ Route::prefix('v1')->group(function () {
         Route::get('/supplier/dashboard', [SupplierDashboardController::class, 'dashboard'])->middleware('supplier.only');
         Route::get('/supplier/orders', [SupplierDashboardController::class, 'orders'])->middleware('supplier.only');
         Route::get('/supplier/litiges', [SupplierDashboardController::class, 'litiges'])->middleware('supplier.only');
+        Route::get('/supplier/cashouts', [SupplierCashoutController::class, 'index'])->middleware('supplier.only');
+        Route::post('/supplier/cashouts', [SupplierCashoutController::class, 'store'])->middleware(['supplier.only', 'kyc.verified']);
+        Route::get('/supplier/cashouts/{cashout}/receipt', [SupplierCashoutController::class, 'receipt'])->middleware('supplier.only');
 
         // ── Missions ──────────────────────────────────────────────────────────
         Route::get('/missions', [MissionController::class, 'index']);
