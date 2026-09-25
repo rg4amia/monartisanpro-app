@@ -114,6 +114,36 @@ describe('UsersPanel', () => {
         expect(screen.queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument();
     });
 
+    it("signale un compte validé automatiquement par l'IA", () => {
+        renderPanel({
+            users: makePage([
+                makeUser({
+                    kyc_documents: [
+                        { type: 'cni', statut: 'approuve', file_url: null, auto_verified: true, ai_confidence_score: 93 },
+                        { type: 'selfie', statut: 'approuve', file_url: null, auto_verified: true, ai_confidence_score: 90 },
+                    ],
+                }),
+            ]),
+        });
+
+        expect(screen.getByText('🤖 90 % · Auto-validé')).toBeInTheDocument();
+    });
+
+    it("n'affiche pas le badge IA pour un dossier validé par un administrateur", () => {
+        renderPanel({
+            users: makePage([
+                makeUser({
+                    kyc_documents: [
+                        { type: 'cni', statut: 'approuve', file_url: null, auto_verified: false },
+                        { type: 'selfie', statut: 'approuve', file_url: null, auto_verified: false },
+                    ],
+                }),
+            ]),
+        });
+
+        expect(screen.queryByText(/Auto-validé/)).not.toBeInTheDocument();
+    });
+
     it('affiche un état vide sans compte utilisateur', () => {
         renderPanel({ users: makePage([]) });
         expect(screen.getByText('Liste vide')).toBeInTheDocument();

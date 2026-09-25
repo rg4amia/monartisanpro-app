@@ -182,6 +182,31 @@ export const kycStatusLabels: Record<string, string> = {
     rejete: 'Rejeté',
 };
 
+// Motifs renvoyés par KycService::autoApprovalBlockers : ce qui a empêché
+// l'IA de valider seule un dossier KYC, donc ce que le modérateur doit vérifier.
+export const kycAiBlockerLabels: Record<string, string> = {
+    auto_approbation_desactivee: 'Auto-approbation désactivée',
+    statut_kyc_non_eligible: 'Statut KYC non éligible',
+    compte_inactif: 'Compte suspendu ou anonymisé',
+    role_soumis_a_revue_humaine: 'Rôle soumis à revue humaine',
+    pieces_incompletes: 'Pièce ou selfie manquant',
+    pieces_deja_examinees: 'Pièces déjà examinées',
+    analyse_piece_indisponible: 'Analyse de la pièce indisponible',
+    type_de_piece_non_reconnu: 'Type de pièce non reconnu',
+    piece_illisible: 'Pièce illisible',
+    photo_absente: 'Photo absente de la pièce',
+    suspicion_de_falsification: 'Suspicion de falsification',
+    piece_expiree: 'Pièce expirée',
+    qualite_piece_insuffisante: 'Qualité de la pièce insuffisante',
+    numero_de_piece_illisible: 'Numéro de pièce illisible',
+    piece_deja_utilisee_par_un_autre_compte: 'Pièce déjà utilisée par un autre compte',
+    analyse_biometrique_indisponible: 'Analyse biométrique indisponible',
+    comparaison_faciale_obsolete: 'Comparaison faciale à refaire',
+    visages_non_concordants: 'Visages non concordants',
+    defaut_de_vivacite: 'Défaut de vivacité (photo d’écran ou tirage)',
+    score_biometrique_insuffisant: 'Score biométrique insuffisant',
+};
+
 // Les missions sont stockées en base avec le nom technique de l'état du FSM
 // (app/States/Mission/*State.php) : ce sont ces clés-là qui arrivent au
 // backoffice. Les clés françaises historiques sont conservées pour les

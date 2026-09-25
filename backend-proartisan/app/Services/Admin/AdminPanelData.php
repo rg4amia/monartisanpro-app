@@ -29,6 +29,7 @@ use App\Services\AdminService;
 use App\Services\BankTransferSettingsService;
 use App\Services\DeliveryTrackingService;
 use App\Services\GeneratedDocumentService;
+use App\Services\KycService;
 use App\Services\UploadLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -53,6 +54,7 @@ class AdminPanelData
         private GeneratedDocumentService $documentService,
         private AdminTerritoryService $territoryService,
         private DeliveryTrackingService $deliveryTrackingService,
+        private KycService $kycService,
     ) {}
 
     /**
@@ -98,12 +100,23 @@ class AdminPanelData
     {
         $fournisseurs = $this->adminService->pendingFournisseurs(60)->items();
 
+        /** @var LengthAwarePaginator $kycUsersPage */
+        $kycUsersPage = $this->adminService->pendingKyc(
+            null,
+            25,
+            $request->query('search_kyc') ?: null,
+        )->withQueryString();
+
+        // Motifs ayant empêché l'auto-approbation IA, pour la page courante
+        // seulement (25 dossiers max) : le modérateur voit d'emblée quoi vérifier.
+        $kycUsersPage->getCollection()->transform(function (User $user) {
+            $user->kyc_ai_blockers = $this->kycService->autoApprovalBlockers($user);
+
+            return $user;
+        });
+
         return [
-            'kycUsersPage' => $this->adminService->pendingKyc(
-                null,
-                25,
-                $request->query('search_kyc') ?: null,
-            )->withQueryString(),
+            'kycUsersPage' => $kycUsersPage,
             'pendingFournisseursList' => $fournisseurs,
             'cnmciUsers' => User::where('role', 'artisan')
                 ->where('cnmci_status', 'en_attente')
@@ -111,7 +124,12 @@ class AdminPanelData
                 ->get(),
             'kycStats' => array_merge(
                 $this->adminService->kycStats(),
-                ['fournisseurs_pending' => count($fournisseurs)],
+                [
+                    'fournisseurs_pending' => count($fournisseurs),
+                    // Seuils des badges IA : lus depuis la config, jamais en dur côté front.
+                    'ai_auto_threshold' => (int) config('prosartisan.kyc.auto_approval_threshold', 85),
+                    'ai_review_threshold' => (int) config('prosartisan.kyc.review_threshold', 50),
+                ],
             ),
         ];
     }
@@ -230,6 +248,8 @@ class AdminPanelData
                 'type' => $doc->type,
                 'statut' => $doc->statut,
                 'file_url' => $doc->file_url,
+                'auto_verified' => (bool) $doc->auto_verified,
+                'ai_confidence_score' => $doc->ai_confidence_score,
             ]);
             $user->fournisseur_sector_id = $user->fournisseurAgree?->sector_id;
             $user->fournisseur_sector_name = $user->fournisseurAgree?->sector?->name;

@@ -73,6 +73,8 @@ export interface KycUser {
     role: 'client' | 'artisan' | 'fournisseur' | 'admin' | 'referent';
     created_at: string;
     kyc_documents: KycDocument[];
+    /** Motifs ayant empêché l'auto-approbation IA (KycService::autoApprovalBlockers). */
+    kyc_ai_blockers?: string[];
 }
 
 export interface LitigeActor {
@@ -242,7 +244,7 @@ export interface AdminUser {
     cgu_accepted_at?: string | null;
     anonymized_at?: string | null;
     photo_url?: string | null;
-    kyc_documents?: Array<{ type: string; statut: string; file_url: string | null }>;
+    kyc_documents?: Array<{ type: string; statut: string; file_url: string | null; auto_verified?: boolean; ai_confidence_score?: number | null }>;
     fournisseur_sector_id?: number | null;
     fournisseur_sector_name?: string | null;
     fournisseur_trade_id?: number | null;
@@ -621,6 +623,9 @@ export interface KycStats {
     fournisseurs_pending: number;
     rejected: number;
     registration_trend: Array<{ label: string; value: number }>;
+    /** Seuils des badges IA (config prosartisan.kyc). */
+    ai_auto_threshold?: number;
+    ai_review_threshold?: number;
 }
 
 // Ligne du tableau « Quotas & consommation IA par utilisateur » (onglet ai_dashboard).

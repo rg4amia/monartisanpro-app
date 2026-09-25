@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/core/network/api_client.dart';
@@ -76,7 +78,8 @@ void main() {
     });
 
     test('envoie l\'OTP et marque otpSent à true en cas de succès', () async {
-      adapter.on('POST', '/auth/send-otp', const CannedResponse(statusCode: 200));
+      adapter.on(
+          'POST', '/auth/send-otp', const CannedResponse(statusCode: 200),);
       final controller = AuthController()..phone.value = '+2250700000001';
 
       await controller.sendOtp();
@@ -97,7 +100,8 @@ void main() {
       expect(controller.isLoading.value, isFalse);
     });
 
-    test('fetchSecurityChallenge charge le défi et met à jour le token', () async {
+    test('fetchSecurityChallenge charge le défi et met à jour le token',
+        () async {
       adapter.on(
         'GET',
         '/auth/security-challenge',
@@ -122,7 +126,8 @@ void main() {
     });
 
     test('sendOtp transmet bot_token et bot_answer', () async {
-      adapter.on('POST', '/auth/send-otp', const CannedResponse(statusCode: 200));
+      adapter.on(
+          'POST', '/auth/send-otp', const CannedResponse(statusCode: 200),);
 
       final controller = AuthController()
         ..phone.value = '+2250700000001'
@@ -210,7 +215,8 @@ void main() {
   });
 
   group('AuthController.register', () {
-    test('refuse un nom vide ou un rôle absent sans appeler le réseau', () async {
+    test('refuse un nom vide ou un rôle absent sans appeler le réseau',
+        () async {
       final controller = AuthController()..phone.value = '+2250700000001';
 
       await controller.register();
@@ -288,12 +294,63 @@ void main() {
       expect(adapter.requests, isEmpty);
     });
 
-    test('uploadSelfie ignore un chemin absent sans appeler le réseau', () async {
+    test('uploadSelfie ignore un chemin absent sans appeler le réseau',
+        () async {
       final controller = AuthController();
 
       await controller.uploadSelfie();
 
       expect(adapter.requests, isEmpty);
+    });
+
+    String tempSelfie() {
+      final dir = Directory.systemTemp.createTempSync('selfie');
+      return (File('${dir.path}/selfie.jpg')
+            ..writeAsBytesSync([0xFF, 0xD8, 0xFF, 0xD9]))
+          .path;
+    }
+
+    test('uploadSelfie signale un compte validé automatiquement par l\'IA',
+        () async {
+      adapter.on(
+        'POST',
+        '/kyc/upload-selfie',
+        const CannedResponse(
+          statusCode: 200,
+          body: {
+            'success': true,
+            'data': {'auto_verified': true, 'kyc_status': 'actif'},
+          },
+        ),
+      );
+      final controller = AuthController()..selfiePath.value = tempSelfie();
+
+      await controller.uploadSelfie();
+
+      expect(controller.errorMsg.value, isNull);
+      expect(controller.kycAutoVerified.value, isTrue);
+      expect(StorageService.getKycStatus(), 'actif');
+    });
+
+    test('uploadSelfie laisse le dossier en attente sans validation IA',
+        () async {
+      adapter.on(
+        'POST',
+        '/kyc/upload-selfie',
+        const CannedResponse(
+          statusCode: 200,
+          body: {
+            'success': true,
+            'data': {'auto_verified': false, 'kyc_status': 'en_attente'},
+          },
+        ),
+      );
+      final controller = AuthController()..selfiePath.value = tempSelfie();
+
+      await controller.uploadSelfie();
+
+      expect(controller.kycAutoVerified.value, isFalse);
+      expect(StorageService.getKycStatus(), 'en_attente');
     });
   });
 
@@ -311,7 +368,8 @@ void main() {
       expect(controller.canSendResetOtp, isTrue);
     });
 
-    test('requestResetPhone refuse un formulaire incomplet sans réseau', () async {
+    test('requestResetPhone refuse un formulaire incomplet sans réseau',
+        () async {
       final controller = AuthController();
 
       await controller.requestResetPhone();
@@ -321,7 +379,8 @@ void main() {
     });
 
     test('requestResetPhone marque isResetOtpSent en cas de succès', () async {
-      adapter.on('POST', '/auth/reset-phone-request', const CannedResponse(statusCode: 200));
+      adapter.on('POST', '/auth/reset-phone-request',
+          const CannedResponse(statusCode: 200),);
       final controller = AuthController()
         ..resetOldPhone.value = '+2250700000001'
         ..resetNewPhone.value = '+2250700000002'
@@ -349,7 +408,10 @@ void main() {
         '/auth/reset-phone-confirm',
         CannedResponse(
           statusCode: 200,
-          body: {'token': 'tok_reset', 'user': _userJson(phone: '+2250700000002')},
+          body: {
+            'token': 'tok_reset',
+            'user': _userJson(phone: '+2250700000002'),
+          },
         ),
       );
       final controller = AuthController()

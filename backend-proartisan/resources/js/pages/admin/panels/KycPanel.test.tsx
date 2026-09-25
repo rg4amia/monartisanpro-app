@@ -140,10 +140,34 @@ describe('KycPanel', () => {
             ]),
         });
 
+        // Le verdict retient le plus faible des deux scores (biométrie à 30).
+        expect(screen.getByText('🤖 30 % · Risque élevé')).toBeInTheDocument();
         expect(screen.getByText(/Pièce : 91 \/ 100 · n° CI0029384756/)).toBeInTheDocument();
         expect(screen.getByText('Titulaire lu : TRAORE Awa')).toBeInTheDocument();
         expect(screen.getByText(/non concordant \(30 \/ 100\)/)).toBeInTheDocument();
         expect(screen.getByText('Anomalies : photo d un ecran')).toBeInTheDocument();
+    });
+
+    it('situe le score IA par rapport aux seuils transmis par le serveur et liste les motifs à vérifier', () => {
+        const analysed = (score: number) => [
+            { id: 1, type: 'cni' as const, file_url: 'x', ai_confidence_score: score, ai_analysis: { analysis_available: true } },
+            { id: 2, type: 'selfie' as const, file_url: 'y', ai_confidence_score: score, face_matched: true, ai_analysis: { analysis_available: true } },
+        ];
+
+        renderPanel({
+            kycStats: { ...kycStats, ai_auto_threshold: 90, ai_review_threshold: 60 },
+            kycUsersPage: makePage([
+                makeUser({ id: 1, name: 'A', kyc_documents: analysed(92), kyc_ai_blockers: ['role_soumis_a_revue_humaine'] }),
+                makeUser({ id: 2, name: 'B', kyc_documents: analysed(88) }),
+                makeUser({ id: 3, name: 'C', kyc_documents: analysed(55) }),
+            ]),
+        });
+
+        expect(screen.getByText('🤖 92 % · IA favorable')).toBeInTheDocument();
+        // 88 reste sous le seuil d'auto-approbation configuré (90).
+        expect(screen.getByText('🤖 88 % · Revue conseillée')).toBeInTheDocument();
+        expect(screen.getByText('🤖 55 % · Risque élevé')).toBeInTheDocument();
+        expect(screen.getByText('Rôle soumis à revue humaine')).toBeInTheDocument();
     });
 
     it('affiche un état vide sans dossier KYC', () => {

@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
+import 'kyc_verified_dialog.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 
@@ -67,14 +68,7 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
       );
       if (img != null) {
         _c.selfiePath.value = img.path;
-
-        // Upload selfie immediately
-        await _c.uploadSelfie();
-
-        // Navigate to main app if successful
-        if (_c.errorMsg.value == null) {
-          unawaited(Get.offAllNamed(Routes.mainTab));
-        }
+        await _uploadAndContinue();
       }
     } catch (e) {
       _c.errorMsg.value = 'Erreur lors de la capture: ${e.toString()}';
@@ -90,18 +84,32 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
       );
       if (img != null) {
         _c.selfiePath.value = img.path;
-
-        // Upload selfie immediately
-        await _c.uploadSelfie();
-
-        // Navigate to main app if successful
-        if (_c.errorMsg.value == null) {
-          unawaited(Get.offAllNamed(Routes.mainTab));
-        }
+        await _uploadAndContinue();
       }
     } catch (e) {
       _c.errorMsg.value = 'Erreur lors de la sélection: ${e.toString()}';
     }
+  }
+
+  /// Envoie le selfie (le serveur lance aussitôt la vérification IA), puis :
+  /// compte validé → dialogue de félicitations ; sinon → accueil, le dossier
+  /// restant en revue par l'équipe.
+  Future<void> _uploadAndContinue() async {
+    await _c.uploadSelfie();
+
+    if (!mounted || _c.errorMsg.value != null) return;
+
+    if (_c.kycAutoVerified.value) {
+      unawaited(
+        Get.dialog<void>(
+          KycVerifiedDialog(onContinue: () => Get.offAllNamed(Routes.mainTab)),
+          barrierDismissible: false,
+        ),
+      );
+      return;
+    }
+
+    unawaited(Get.offAllNamed(Routes.mainTab));
   }
 
   @override
@@ -143,7 +151,11 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
                 _buildSubtitle(),
                 const SizedBox(height: 40),
                 _buildFaceCircle(),
-                const SizedBox(height: 40),
+                const SizedBox(height: 24),
+                Obx(
+                  () => KycVerificationInProgress(visible: _c.isLoading.value),
+                ),
+                const SizedBox(height: 16),
                 _buildActionButtons(),
                 const SizedBox(height: 24),
 
@@ -343,6 +355,25 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
   }
 
   Widget _buildPreview() {
+    // Lu dans l'Obx de _buildFaceCircle : l'étiquette suit l'envoi en direct.
+    final selfieBadge = _c.isLoading.value
+        ? (
+            label: 'Vérification…',
+            icon: Icons.hourglass_top,
+            color: AppColors.warning
+          )
+        : _c.kycAutoVerified.value
+            ? (
+                label: 'Identité vérifiée',
+                icon: Icons.check_circle,
+                color: AppColors.success
+              )
+            : (
+                label: 'Selfie envoyé',
+                icon: Icons.cloud_done,
+                color: _Dt.primary
+              );
+
     return Container(
       width: 280,
       height: 280,
@@ -372,18 +403,20 @@ class _KycSelfieLivenessScreenState extends State<KycSelfieLivenessScreen>
                 child: Container(
                   padding:
                       const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                  // L'étiquette reflète la réponse réelle du serveur : un selfie
+                  // simplement envoyé n'est pas « vérifié » (Règle d'or 29).
                   decoration: BoxDecoration(
-                    color: const Color(0xFF10B981),
+                    color: selfieBadge.color,
                     borderRadius: BorderRadius.circular(20),
                   ),
-                  child: const Row(
+                  child: Row(
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Icon(Icons.check_circle, color: Colors.white, size: 18),
-                      SizedBox(width: 6),
+                      Icon(selfieBadge.icon, color: Colors.white, size: 18),
+                      const SizedBox(width: 6),
                       Text(
-                        'Vérifié',
-                        style: TextStyle(
+                        selfieBadge.label,
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 13,
                           fontWeight: FontWeight.w700,

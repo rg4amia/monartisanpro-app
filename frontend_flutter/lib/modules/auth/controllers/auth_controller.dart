@@ -35,6 +35,10 @@ class AuthController extends GetxController {
   final selfiePath = Rx<String?>(null);
   final kycStep = 0.obs;
 
+  /// Vrai quand le serveur a validé le dossier dès le téléversement
+  /// (vérification IA de la pièce et du selfie) : le compte est déjà actif.
+  final kycAutoVerified = false.obs;
+
   // Contrôle de sécurité anti-robot
   final challengeToken = Rx<String?>(null);
   final challengeQuestion = Rx<String?>(null);
@@ -68,7 +72,8 @@ class AuthController extends GetxController {
     isLoading.value = true;
     errorMsg.value = null;
     try {
-      final effectiveAnswer = answer ?? (botAnswer.value.isNotEmpty ? botAnswer.value : null);
+      final effectiveAnswer =
+          answer ?? (botAnswer.value.isNotEmpty ? botAnswer.value : null);
       await _repo.sendOtp(
         phone.value,
         role: role.value,
@@ -233,7 +238,9 @@ class AuthController extends GetxController {
   /// on mémorise aussitôt le statut renvoyé pour que l'app débloque les
   /// transactions sans attendre la prochaine lecture du profil.
   void _rememberKycStatus(String? status) {
-    if (status != null) StorageService.saveKycStatus(status);
+    if (status == null) return;
+    StorageService.saveKycStatus(status);
+    kycAutoVerified.value = status == 'actif';
   }
 
   bool get canSendResetOtp =>

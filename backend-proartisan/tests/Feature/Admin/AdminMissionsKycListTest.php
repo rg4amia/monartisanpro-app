@@ -161,4 +161,20 @@ class AdminMissionsKycListTest extends TestCase
                 ->has('kycUsersPage.data', 1)
                 ->where('kycUsersPage.data.0.name', 'Yao Le Plombier'));
     }
+
+    public function test_kyc_queue_exposes_ai_blockers_and_config_thresholds(): void
+    {
+        config([
+            'prosartisan.kyc.auto_approval_threshold' => 90,
+            'prosartisan.kyc.review_threshold' => 60,
+        ]);
+        $admin = $this->admin();
+        User::factory()->create(['kyc_status' => 'en_attente', 'role' => 'fournisseur']);
+
+        $this->actingAs($admin)->get('/admin/kyc')->assertInertia(fn (AssertableInertia $page) => $page
+            ->where('kycStats.ai_auto_threshold', 90)
+            ->where('kycStats.ai_review_threshold', 60)
+            // Fournisseur sans pièce : revue humaine obligatoire, pièces manquantes.
+            ->where('kycUsersPage.data.0.kyc_ai_blockers', ['role_soumis_a_revue_humaine', 'pieces_incompletes']));
+    }
 }

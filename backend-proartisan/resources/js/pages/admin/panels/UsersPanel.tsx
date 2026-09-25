@@ -13,6 +13,7 @@ import {
     DataTable,
     EmptyState,
     ExportButton,
+    KycAutoVerifiedBadge,
     KycStatusBadge,
     MetricCard,
     numberFormat,
@@ -258,7 +259,10 @@ export function UsersPanel({
                                             <RoleBadge role={user.role} />
                                         </td>
                                         <td>
-                                            <KycStatusBadge status={user.kyc_status} />
+                                            <div className="flex flex-col items-start gap-1">
+                                                <KycStatusBadge status={user.kyc_status} />
+                                                {user.kyc_status === 'actif' ? <KycAutoVerifiedBadge documents={user.kyc_documents} /> : null}
+                                            </div>
                                         </td>
                                         <td>
                                             <div className="flex flex-col gap-1">

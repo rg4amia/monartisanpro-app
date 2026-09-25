@@ -105,6 +105,9 @@ return [
         // Score biométrique global minimum (0 à 100), plafonné par le plus
         // faible des scores de similarité et de vivacité.
         'auto_approval_threshold' => (int) env('KYC_AUTO_APPROVAL_THRESHOLD', 85),
+        // Sous ce score (0 à 100), le backoffice signale un dossier à risque élevé ;
+        // entre ce seuil et auto_approval_threshold, une revue humaine est conseillée.
+        'review_threshold' => (int) env('KYC_REVIEW_THRESHOLD', 50),
         // Score de qualité OCR minimum requis pour la pièce d'identité (0 à 100).
         'ocr_min_quality' => (int) env('KYC_OCR_MIN_QUALITY', 70),
     ],

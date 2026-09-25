@@ -3,8 +3,12 @@
 
 import type { FormEvent, ReactNode } from 'react';
 
+import { cn } from '@/lib/utils';
+
 import {
     actionButtonClass,
+    kycAiBlockerLabels,
+    toneBadgeClasses,
     AvatarBubble,
     BulkActionBar,
     DataTable,
@@ -17,7 +21,7 @@ import {
     Surface,
     VolumeBarChart,
 } from '../shared';
-import type { FournisseurItem, KycDocument, KycStats, KycUser, Paginated } from '../shared';
+import type { FournisseurItem, KycDocument, KycStats, KycUser, Paginated, Tone } from '../shared';
 
 export interface CnmciUser {
     id: number;
@@ -55,15 +59,43 @@ interface KycPanelProps {
 }
 
 /**
- * Résultat de l'analyse IA d'un dossier (OCR de la pièce + biométrie du selfie).
- * Simple aide à la décision : le modérateur reste seul juge des dossiers en attente.
+ * Verdict IA d'un dossier : son score est le plus faible des scores analysés
+ * (pièce, biométrie), situé par rapport aux seuils de la config backend.
  */
-export function KycAiSummary({ documents }: { documents: KycDocument[] }) {
+export function kycAiVerdict(documents: KycDocument[], autoThreshold: number, reviewThreshold: number): { score: number; label: string; tone: Tone } | null {
+    const scores = documents.filter((doc) => doc.ai_analysis?.analysis_available).map((doc) => doc.ai_confidence_score ?? 0);
+
+    if (scores.length === 0) {
+        return null;
+    }
+
+    const score = Math.min(...scores);
+
+    if (score >= autoThreshold) {
+        return { score, label: 'IA favorable', tone: 'green' };
+    }
+
+    return score >= reviewThreshold ? { score, label: 'Revue conseillée', tone: 'amber' } : { score, label: 'Risque élevé', tone: 'rose' };
+}
+
+interface KycAiSummaryProps {
+    documents: KycDocument[];
+    blockers?: string[];
+    autoThreshold?: number;
+    reviewThreshold?: number;
+}
+
+/**
+ * Résultat de l'analyse IA d'un dossier (OCR de la pièce + biométrie du selfie) :
+ * badge de verdict et détail dépliable. Simple aide à la décision : le
+ * modérateur reste seul juge des dossiers en attente.
+ */
+export function KycAiSummary({ documents, blockers = [], autoThreshold = 85, reviewThreshold = 50 }: KycAiSummaryProps) {
     const cni = documents.find((doc) => doc.type === 'cni');
     const selfie = documents.find((doc) => doc.type === 'selfie');
-    const analysed = [cni, selfie].some((doc) => doc?.ai_analysis?.analysis_available);
+    const verdict = kycAiVerdict(documents, autoThreshold, reviewThreshold);
 
-    if (!analysed) {
+    if (!verdict) {
         return <span className="text-xs text-[var(--admin-muted)]">Non analysé</span>;
     }
 
@@ -71,20 +103,38 @@ export function KycAiSummary({ documents }: { documents: KycDocument[] }) {
     const holder = [cni?.ocr_data?.last_name, cni?.ocr_data?.first_name].filter(Boolean).join(' ');
 
     return (
-        <div className="space-y-1 text-xs text-[var(--admin-text-soft)]">
-            <p>
-                Pièce : {cni?.ai_analysis?.analysis_available ? `${cni.ai_confidence_score ?? 0} / 100` : 'non analysée'}
-                {cni?.ocr_data?.document_number ? ` · n° ${cni.ocr_data.document_number}` : ''}
-            </p>
-            {holder ? <p>Titulaire lu : {holder}</p> : null}
-            <p>
-                Visage :{' '}
-                {selfie?.ai_analysis?.analysis_available
-                    ? `${selfie.face_matched ? 'concordant' : 'non concordant'} (${selfie.ai_confidence_score ?? 0} / 100)`
-                    : 'non comparé'}
-            </p>
-            {anomalies.length > 0 ? <p className="text-[#b45309]">Anomalies : {anomalies.join(', ').replaceAll('_', ' ')}</p> : null}
-        </div>
+        <details className="group text-xs text-[var(--admin-text-soft)]">
+            <summary className="cursor-pointer list-none">
+                <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', toneBadgeClasses(verdict.tone))}>
+                    🤖 {verdict.score} % · {verdict.label}
+                </span>
+                <span className="ml-2 text-[11px] text-[var(--admin-muted)] underline group-open:hidden">Détails</span>
+            </summary>
+            <div className="mt-2 space-y-1">
+                <p>
+                    Pièce : {cni?.ai_analysis?.analysis_available ? `${cni.ai_confidence_score ?? 0} / 100` : 'non analysée'}
+                    {cni?.ocr_data?.document_number ? ` · n° ${cni.ocr_data.document_number}` : ''}
+                </p>
+                {holder ? <p>Titulaire lu : {holder}</p> : null}
+                <p>
+                    Visage :{' '}
+                    {selfie?.ai_analysis?.analysis_available
+                        ? `${selfie.face_matched ? 'concordant' : 'non concordant'} (${selfie.ai_confidence_score ?? 0} / 100)`
+                        : 'non comparé'}
+                </p>
+                {anomalies.length > 0 ? <p className="text-[#b45309]">Anomalies : {anomalies.join(', ').replaceAll('_', ' ')}</p> : null}
+                {blockers.length > 0 ? (
+                    <div>
+                        <p className="font-semibold text-[var(--admin-text)]">À vérifier :</p>
+                        <ul className="list-disc pl-4">
+                            {blockers.map((blocker) => (
+                                <li key={blocker}>{kycAiBlockerLabels[blocker] ?? blocker.replaceAll('_', ' ')}</li>
+                            ))}
+                        </ul>
+                    </div>
+                ) : null}
+            </div>
+        </details>
     );
 }
 
@@ -246,7 +296,12 @@ export function KycPanel({
                                             </div>
                                         </td>
                                         <td>
-                                            <KycAiSummary documents={user.kyc_documents} />
+                                            <KycAiSummary
+                                                documents={user.kyc_documents}
+                                                blockers={user.kyc_ai_blockers}
+                                                autoThreshold={kycStats.ai_auto_threshold}
+                                                reviewThreshold={kycStats.ai_review_threshold}
+                                            />
                                         </td>
                                         <td className="text-sm text-[var(--admin-text-soft)]">{shortDate(user.created_at)}</td>
                                         <td>

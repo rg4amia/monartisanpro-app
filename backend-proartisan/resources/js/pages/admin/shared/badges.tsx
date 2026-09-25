@@ -30,6 +30,23 @@ export function KycStatusBadge({ status }: { status: string }) {
     return <span className={cn('rounded-full border px-3 py-1 text-xs font-semibold', toneBadgeClasses(toneMap[status] ?? 'slate'))}>{kycStatusLabels[status] ?? status}</span>;
 }
 
+/**
+ * Dossier KYC validé seul par l'IA (pièce et selfie auto-approuvés) : signalé
+ * dans la liste des utilisateurs pour permettre un contrôle a posteriori.
+ */
+export function KycAutoVerifiedBadge({ documents }: { documents?: Array<{ type: string; auto_verified?: boolean; ai_confidence_score?: number | null }> }) {
+    const cni = documents?.find((doc) => doc.type === 'cni');
+    const selfie = documents?.find((doc) => doc.type === 'selfie');
+
+    if (!cni?.auto_verified || !selfie?.auto_verified) {
+        return null;
+    }
+
+    const score = Math.min(cni.ai_confidence_score ?? 0, selfie.ai_confidence_score ?? 0);
+
+    return <span className={cn('rounded-full border px-2 py-0.5 text-[11px] font-semibold', toneBadgeClasses('green'))}>🤖 {score} % · Auto-validé</span>;
+}
+
 export function AccountStatusBadge({ status }: { status?: string | null }) {
     const isActif = (status ?? 'actif') === 'actif';
     return (
