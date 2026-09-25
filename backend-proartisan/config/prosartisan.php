@@ -66,6 +66,8 @@ return [
         'excellence_threshold' => env('SCORE_EXCELLENCE_THRESHOLD', 800),
         // Score à partir duquel l'artisan est affiché avec le « marqueur doré » (artisan prioritaire).
         'golden_marker_threshold' => env('SCORE_GOLDEN_MARKER_THRESHOLD', 700),
+        // Taux de prélèvement automatique d'amortissement du micro-crédit sur les jalons libérés (20% par défaut).
+        'credit_repayment_rate' => env('SCORE_CREDIT_REPAYMENT_RATE', 0.20),
     ],
 
     'jcode' => [

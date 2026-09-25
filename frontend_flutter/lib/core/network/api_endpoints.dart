@@ -132,6 +132,9 @@ class ApiEndpoints {
   // Micro-crédit
   static const String microCreditEligibility = '/micro-credit/eligibility';
   static const String microCreditApply = '/micro-credit/apply';
+  static const String microCreditCurrent = '/micro-credit/current';
+  static const String microCreditRepay = '/micro-credit/repay';
+  static const String microCreditReport = '/micro-credit/report';
 
   // Jalons
   static String submitJalon(int id) => '/jalons/$id/submit';

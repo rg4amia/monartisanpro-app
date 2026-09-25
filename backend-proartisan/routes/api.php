@@ -293,7 +293,10 @@ Route::prefix('v1')->group(function () {
         // ── Micro-crédit ───────────────────────────────────────────────────────
         Route::prefix('micro-credit')->group(function () {
             Route::get('/eligibility', [MicroCreditController::class, 'eligibility']);
+            Route::get('/current', [MicroCreditController::class, 'current']);
             Route::post('/apply', [MicroCreditController::class, 'apply'])->middleware('kyc.verified');
+            Route::post('/repay', [MicroCreditController::class, 'repay'])->middleware('kyc.verified');
+            Route::get('/report', [MicroCreditController::class, 'report']);
         });
 
         // ── Wallet & Transactions ─────────────────────────────────────────────

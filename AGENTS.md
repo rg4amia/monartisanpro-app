@@ -445,6 +445,14 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
     - **Statut Marqueur Doré & Exposition API** : Le Marqueur Doré (`isGoldenMarker`) identifie les artisans d'élite prioritaires atteignant ou dépassant le seuil configuré (`config('prosartisan.score_prosartisan.golden_marker_threshold', 700)`). Il est exposé explicitement sur `User::isGoldenMarker()`, `User::$is_golden_marker`, `UserResource`, `ArtisanResource`, `ScoreService::isGoldenMarker()` et `ScoreService::getScoreDetail()` avec le détail des points par critère (`breakdown`, `breakdown_points`, `max_points`).
     - **Harmonisation UI Mobile** : `artisan_profile_screen.dart` affiche fidèlement les dimensions du Score ProsArtisan sur l'échelle officielle 0-1000 (Fiabilité 400 pts, Intégrité 300 pts, Qualité 200 pts, Réactivité 100 pts).
     - **Zéro Initial Absolu & Intégrité** : Tout nouveau compte démarre obligatoirement avec un score de 0 (Règle 9) et sans marqueur doré. Les auto-évaluations et évaluations sur missions non terminées sont strictement rejetées (HTTP 422).
+101. **Micro-Crédit d'Urgence Artisan, Amortissement sur Jalon & Rapprochement Comptable (Chantier 3A)** :
+    - **Score de Ledger Faisant Foi** : L'éligibilité et le plafond de crédit sont calculés impérativement et exclusivement sur le score recalculé depuis le grand livre (`ScoreService::getScoreDetail`), jamais sur la colonne stockée (`score_prosartisan`).
+    - **Formule du Plafond Dynamique** : Plafond = $50\,000 + (\text{score} - 700) \times 1\,500$ FCFA (500 000 FCFA à 1000 pts). Tout montant financier est stocké en entier `BIGINT`.
+    - **Gating Anti-Cumul & KYC** : Rejet strict si KYC non vérifié ou si un micro-crédit est déjà en cours ou non soldé (`CreditApplication::active()`).
+    - **Décaissement & Écriture Financière** : Déblocage immédiat sur le compte Mobile Money de l'artisan avec traçabilité dans la table `transactions` (`type: credit`, `statut: confirme`).
+    - **Amortissement Automatique sur Jalons (20%)** : Lors de chaque libération de jalon (`WalletService::releaseJalon`), 20 % du gain net artisan est automatiquement déduit au titre du remboursement du micro-crédit actif (`type: remboursement`), et seul le montant résiduel est viré à l'artisan via Mobile Money.
+    - **Remboursement Volontaire & Clôture** : Endpoint `POST /api/v1/micro-credit/repay` permettant à l'artisan de rembourser à tout moment ; une fois le solde soldé, le crédit passe au statut `rembourse` (`repaid_at = now()`) et l'artisan redevient immédiatement éligible.
+    - **Rapport de Solvabilité PDF** : Endpoint `GET /api/v1/micro-credit/report` générant le certificat officiel de solvabilité aux normes de notation ProsArtisan.
 
 ---
 

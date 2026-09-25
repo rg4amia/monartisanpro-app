@@ -492,33 +492,40 @@ class WalletService
                 ]
             );
 
-            // Transaction externe vers Mobile Money de l'artisan (montant net HT)
-            $transaction = Transaction::create([
-                'mission_id' => $mission->id,
-                'user_id' => $mission->artisan_id,
-                'type' => 'liberation_jalon',
-                'montant' => $gainNetArtisan,
-                'wallet_source' => 'escrow_mission_'.$mission->id,
-                'wallet_dest' => 'artisan_mobile_money_'.$mission->artisan_id,
-                'provider' => $provider,
-                'statut' => 'en_attente',
-            ]);
+            // Amortissement automatique éventuel du micro-crédit d'urgence actif
+            $microCreditService = app(MicroCreditService::class);
+            $creditDeduction = $microCreditService->repayFromJalon($jalon, $gainNetArtisan);
+            $montantVerseArtisan = max(0, $gainNetArtisan - $creditDeduction);
 
-            // Virement réel du montant net HT vers Mobile Money
-            $description = "Paiement jalon #{$jalon->ordre} mission #{$mission->id}";
+            // Transaction externe vers Mobile Money de l'artisan (montant net après déduction crédit)
+            if ($montantVerseArtisan > 0) {
+                $transaction = Transaction::create([
+                    'mission_id' => $mission->id,
+                    'user_id' => $mission->artisan_id,
+                    'type' => 'liberation_jalon',
+                    'montant' => $montantVerseArtisan,
+                    'wallet_source' => 'escrow_mission_'.$mission->id,
+                    'wallet_dest' => 'artisan_mobile_money_'.$mission->artisan_id,
+                    'provider' => $provider,
+                    'statut' => 'en_attente',
+                ]);
 
-            try {
-                $result = $this->transferToMobileMoney($provider, $artisan->payment_phone ?? $artisan->phone, $gainNetArtisan, $description);
-                $transaction->update([
-                    'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
-                    'statut' => 'confirme',
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Erreur lors du virement automatique artisan', [
-                    'jalon_id' => $jalon->id,
-                    'artisan_id' => $artisan->id,
-                    'error' => $e->getMessage(),
-                ]);
+                // Virement réel du montant net vers Mobile Money
+                $description = "Paiement jalon #{$jalon->ordre} mission #{$mission->id}".($creditDeduction > 0 ? " (amortissement crédit: {$creditDeduction} FCFA déduits)" : '');
+
+                try {
+                    $result = $this->transferToMobileMoney($provider, $artisan->payment_phone ?? $artisan->phone, $montantVerseArtisan, $description);
+                    $transaction->update([
+                        'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
+                        'statut' => 'confirme',
+                    ]);
+                } catch (\Exception $e) {
+                    Log::error('Erreur lors du virement automatique artisan', [
+                        'jalon_id' => $jalon->id,
+                        'artisan_id' => $artisan->id,
+                        'error' => $e->getMessage(),
+                    ]);
+                }
             }
 
             Log::info('Jalon libéré', [

@@ -2,6 +2,7 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/core/network/api_endpoints.dart';
 import 'package:frontend_flutter/core/utils/formatters.dart';
 import 'package:frontend_flutter/data/models/jcode_model.dart';
+import 'package:frontend_flutter/data/models/micro_credit_model.dart';
 import 'package:frontend_flutter/data/models/mission_model.dart';
 import 'package:frontend_flutter/data/models/user_model.dart';
 
@@ -41,6 +42,14 @@ void main() {
       expect(ApiEndpoints.jcodesActive, '/jcodes/active');
       expect(ApiEndpoints.jcode(1), '/jcodes/1');
       expect(ApiEndpoints.scanJcode(1), '/jcodes/1/scan');
+    });
+
+    test('should have correct micro-credit endpoints', () {
+      expect(ApiEndpoints.microCreditEligibility, '/micro-credit/eligibility');
+      expect(ApiEndpoints.microCreditApply, '/micro-credit/apply');
+      expect(ApiEndpoints.microCreditCurrent, '/micro-credit/current');
+      expect(ApiEndpoints.microCreditRepay, '/micro-credit/repay');
+      expect(ApiEndpoints.microCreditReport, '/micro-credit/report');
     });
   });
 
@@ -640,6 +649,69 @@ void main() {
       expect(missionAssigned.artisanRejected, isFalse);
       expect(missionAssigned.hasArtisan, isTrue);
       expect(missionAssigned.artisanId, 5);
+    });
+  });
+
+  group('MicroCreditModel Tests', () {
+    test('should parse MicroCreditEligibilityModel without active credit', () {
+      final json = {
+        'eligible': true,
+        'score_prosartisan': 850,
+        'required_score': 700,
+        'max_amount': 275000,
+        'total_evaluations': 12,
+        'has_active_credit': false,
+      };
+
+      final model = MicroCreditEligibilityModel.fromJson(json);
+      expect(model.eligible, isTrue);
+      expect(model.currentScore, 850);
+      expect(model.requiredScore, 700);
+      expect(model.maxAmount, 275000);
+      expect(model.hasActiveCredit, isFalse);
+      expect(model.activeCredit, isNull);
+    });
+
+    test('should parse MicroCreditEligibilityModel with active credit', () {
+      final json = {
+        'eligible': false,
+        'score_prosartisan': 850,
+        'required_score': 700,
+        'has_active_credit': true,
+        'active_credit': {
+          'id': 14,
+          'amount': 100000,
+          'repaid_amount': 30000,
+          'remaining_amount': 70000,
+          'status': 'debourse',
+          'score_prosartisan_at_application': 850,
+        },
+      };
+
+      final model = MicroCreditEligibilityModel.fromJson(json);
+      expect(model.eligible, isFalse);
+      expect(model.hasActiveCredit, isTrue);
+      expect(model.activeCredit, isNotNull);
+      expect(model.activeCredit!.id, 14);
+      expect(model.activeCredit!.amount, 100000);
+      expect(model.activeCredit!.repaidAmount, 30000);
+      expect(model.activeCredit!.remainingAmount, 70000);
+      expect(model.activeCredit!.status, 'debourse');
+    });
+
+    test('should compute remainingAmount automatically when omitted in JSON', () {
+      final json = {
+        'id': 15,
+        'amount': 80000,
+        'repaid_amount': 25000,
+        'status': 'debourse',
+        'score_prosartisan_at_application': 800,
+      };
+
+      final app = MicroCreditApplicationModel.fromJson(json);
+      expect(app.amount, 80000);
+      expect(app.repaidAmount, 25000);
+      expect(app.remainingAmount, 55000);
     });
   });
 }

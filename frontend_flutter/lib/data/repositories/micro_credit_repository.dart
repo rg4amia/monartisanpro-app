@@ -40,6 +40,13 @@ class MicroCreditRepository {
     return MicroCreditEligibilityModel.fromJson(raw);
   }
 
+  Future<MicroCreditApplicationModel?> getCurrentCredit() async {
+    final res = await _client.get(ApiEndpoints.microCreditCurrent);
+    final data = (res.data as Map<String, dynamic>)['data'];
+    if (data == null || data is! Map) return null;
+    return MicroCreditApplicationModel.fromJson(Map<String, dynamic>.from(data));
+  }
+
   Future<MicroCreditApplicationModel> apply(int amount) async {
     final res = await _client.post(
       ApiEndpoints.microCreditApply,
@@ -49,5 +56,18 @@ class MicroCreditRepository {
     return MicroCreditApplicationModel.fromJson(
       (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
     );
+  }
+
+  Future<Map<String, dynamic>> repay(int amount, {String provider = 'wave'}) async {
+    final res = await _client.post(
+      ApiEndpoints.microCreditRepay,
+      data: {
+        'amount': amount,
+        'provider': provider,
+      },
+    );
+    await _store.invalidate(_eligibilityKey);
+    final data = (res.data as Map<String, dynamic>)['data'];
+    return data is Map ? Map<String, dynamic>.from(data) : {};
   }
 }
