@@ -440,7 +440,6 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
     - **Mutateur d'attribut modèle User** : `User::role()` normalise automatiquement et de manière transparente la valeur `'driver'` en `'livreur'` lors de l'assignation de l'attribut avant persistance.
     - **Alignement Services & Tests** : Toutes les requêtes SQL/Eloquent (`AdminService::commissionsByDriver`, `DeliveryTrackingService::getFleetOverview`, `OrderService`, `DeliveryBatchService`) et l'ensemble des suites de tests utilisent le rôle canonique `'livreur'`, tout en maintenant la rétrocompatibilité d'alias en lecture mémoire `in_array($role, ['driver', 'livreur'])`.
 
-
 ---
 
 ## 🧠 Comment m'aider efficacement
