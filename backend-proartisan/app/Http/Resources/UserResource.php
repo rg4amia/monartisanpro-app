@@ -21,6 +21,7 @@ class UserResource extends JsonResource
             'accountStatus' => $this->account_status ?? 'actif',
             'accountStatusReason' => $this->account_status_reason,
             'scoreProsArtisan' => $this->score_prosartisan,
+            'isGoldenMarker' => (bool) $this->isGoldenMarker(),
             'walletMateriaux' => $this->wallet_materiaux,
             'walletMo' => $this->wallet_mo,
             'cguAcceptedAt' => $this->cgu_accepted_at?->toIso8601String(),

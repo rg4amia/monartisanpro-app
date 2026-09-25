@@ -407,4 +407,14 @@ class User extends Authenticatable
     {
         return $this->hasMany(FraudAlert::class, 'user_id');
     }
+
+    public function isGoldenMarker(): bool
+    {
+        return (int) $this->score_prosartisan >= (int) config('prosartisan.score_prosartisan.golden_marker_threshold', 700);
+    }
+
+    public function getIsGoldenMarkerAttribute(): bool
+    {
+        return $this->isGoldenMarker();
+    }
 }

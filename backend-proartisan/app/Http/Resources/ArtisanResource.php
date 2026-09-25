@@ -52,7 +52,16 @@ class ArtisanResource extends JsonResource
                 ? $this->formatDistance($this->distanceMetres)
                 : null,
             'distanceMetres' => $this->distanceMetres,
-            'isGoldenMarker' => $this->score_prosartisan >= config('prosartisan.score_prosartisan.golden_marker_threshold', 700),
+            'isGoldenMarker' => (bool) $this->isGoldenMarker(),
+            'scoreBreakdown' => $this->relationLoaded('evaluationsRecues') ? [
+                'fiabilite' => round((float) ($this->evaluationsRecues->avg('fiabilite') ?? 0), 1),
+                'integrite' => round((float) ($this->evaluationsRecues->avg('integrite') ?? 0), 1),
+                'qualite' => round((float) ($this->evaluationsRecues->avg('qualite') ?? 0), 1),
+                'reactivite' => round((float) ($this->evaluationsRecues->avg('reactivite') ?? 0), 1),
+            ] : null,
+            'totalEvaluations' => $this->relationLoaded('evaluationsRecues')
+                ? $this->evaluationsRecues->count()
+                : null,
             'kycStatus' => $this->kyc_status,
             'commune' => $this->commune?->name,
             'locationLabel' => $this->commune?->name ?? $profile?->sector?->name,

@@ -443,11 +443,14 @@ class ScoreService
         ', [$artisan->id]);
 
         $threshold = config('prosartisan.score_prosartisan.credit_threshold', 700);
+        $goldenThreshold = (int) config('prosartisan.score_prosartisan.golden_marker_threshold', 700);
         $totalEvals = (int) ($row?->total_evaluations ?? 0);
 
         return [
             'score_prosartisan' => $calculatedScore,
             'micro_credit_eligible' => $calculatedScore >= $threshold,
+            'is_golden_marker' => $calculatedScore >= $goldenThreshold,
+            'golden_marker_threshold' => $goldenThreshold,
             'total_evaluations' => $totalEvals,
             'maturity_missions_target' => 10,
             'maturity_missions_count' => min(10, $totalEvals),
@@ -458,7 +461,27 @@ class ScoreService
                 'qualite' => round((float) ($row?->avg_qualite ?? 0), 1),
                 'reactivite' => round((float) ($row?->avg_reactivite ?? 0), 1),
             ],
+            'breakdown_points' => [
+                'fiabilite' => round(((float) ($row?->avg_fiabilite ?? 0) / 5.0) * 400),
+                'integrite' => round(((float) ($row?->avg_integrite ?? 0) / 5.0) * 300),
+                'qualite' => round(((float) ($row?->avg_qualite ?? 0) / 5.0) * 200),
+                'reactivite' => round(((float) ($row?->avg_reactivite ?? 0) / 5.0) * 100),
+            ],
+            'max_points' => [
+                'fiabilite' => 400,
+                'integrite' => 300,
+                'qualite' => 200,
+                'reactivite' => 100,
+            ],
             'average_rating' => round((float) ($row?->avg_note ?? 0), 1),
         ];
+    }
+
+    /**
+     * Détermine si l'artisan bénéficie du statut Marqueur Doré (artisan prioritaire).
+     */
+    public function isGoldenMarker(User $artisan): bool
+    {
+        return (int) $artisan->score_prosartisan >= (int) config('prosartisan.score_prosartisan.golden_marker_threshold', 700);
     }
 }

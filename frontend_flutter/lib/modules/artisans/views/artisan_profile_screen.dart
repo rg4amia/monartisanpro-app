@@ -345,37 +345,37 @@ class ArtisanProfileScreen extends StatelessWidget {
         const SizedBox(height: 12),
         _ScoreDimension(
           label: 'Fiabilité',
-          pct: 40,
+          pct: 400,
           value: _weightedBreakdownValue(
             breakdown['fiabilite'],
-            40,
+            400,
           ),
           color: AppColors.primary,
         ),
         _ScoreDimension(
           label: 'Intégrité',
-          pct: 30,
+          pct: 300,
           value: _weightedBreakdownValue(
             breakdown['integrite'],
-            30,
+            300,
           ),
           color: AppColors.accent,
         ),
         _ScoreDimension(
           label: 'Qualité',
-          pct: 20,
+          pct: 200,
           value: _weightedBreakdownValue(
             breakdown['qualite'],
-            20,
+            200,
           ),
           color: AppColors.success,
         ),
         _ScoreDimension(
           label: 'Réactivité',
-          pct: 10,
+          pct: 100,
           value: _weightedBreakdownValue(
             breakdown['reactivite'],
-            10,
+            100,
           ),
           color: AppColors.warning,
         ),
