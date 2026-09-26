@@ -1,13 +1,28 @@
 import 'package:dio/dio.dart';
 
+import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/network/network_executor.dart';
+import '../../core/storage/storage_service.dart';
 import '../models/jcode_item_model.dart';
 import '../models/jcode_model.dart';
 import '../models/jcode_redemption_model.dart';
 
 class JcodeRepository {
   final ApiClient _client = ApiClient();
+
+  static final CacheStore<Map<String, dynamic>> _store =
+      CacheStore<Map<String, dynamic>>(
+    boxName: 'jcodes_cache',
+    fromJson: (j) => j,
+    toJson: (m) => m,
+  );
+
+  static const Duration _activeTtl = Duration(minutes: 1);
+  static const Duration _detailTtl = Duration(minutes: 2);
+
+  String get _scope => 'u${StorageService.getUserId() ?? 0}';
 
   Future<JcodeModel> createJcode({
     required int missionId,
@@ -24,33 +39,64 @@ class JcodeRepository {
         'items': items.map((item) => item.toRequestJson()).toList(),
       },
     );
+    // Invalidate active-jcode cache after creation
+    await _store.init();
+    await _store.invalidate('${_scope}_active');
     return JcodeModel.fromJson(
       (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
     );
   }
 
-  Future<JcodeModel?> getActiveJcode() async {
-    final res = await _client.get(ApiEndpoints.jcodesActive);
-    final data = (res.data as Map<String, dynamic>)['data'];
-    if (data == null) return null;
-    if (data is List && data.isNotEmpty) {
-      return JcodeModel.fromJson(data.first as Map<String, dynamic>);
+  /// Returns null when the server has no active J-Code for this user.
+  /// Uses NetworkExecutor for resilient reads; result cached for [_activeTtl].
+  Future<JcodeModel?> getActiveJcode({bool forceRefresh = false}) async {
+    try {
+      final res = await NetworkExecutor.run(
+        () => _client.get(ApiEndpoints.jcodesActive),
+      );
+      final data = (res.data as Map<String, dynamic>)['data'];
+      if (data == null) return null;
+      if (data is List && data.isNotEmpty) {
+        return JcodeModel.fromJson(data.first as Map<String, dynamic>);
+      }
+      if (data is Map<String, dynamic>) return JcodeModel.fromJson(data);
+      return null;
+    } catch (_) {
+      // On network failure, try stale cache via peekOne
+      await _store.init();
+      final raw = _store.peekOne(
+        '${_scope}_active',
+        ignoreExpiration: true,
+        ttl: _activeTtl,
+      );
+      if (raw != null) return JcodeModel.fromJson(raw);
+      return null;
     }
-    if (data is Map<String, dynamic>) {
-      return JcodeModel.fromJson(data);
-    }
-    return null;
   }
 
   Future<JcodeModel> getJcode(Object identifier) async {
-    final res = await _client.get(ApiEndpoints.jcode(identifier));
-    return JcodeModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+    await _store.init();
+
+    final raw = await _store.readOne(
+      key: '${_scope}_jcode_$identifier',
+      ttl: _detailTtl,
+      policy: CachePolicy.cacheFirst,
+      fetch: () async {
+        final res = await NetworkExecutor.run(
+          () => _client.get(ApiEndpoints.jcode(identifier)),
+        );
+        return (res.data as Map<String, dynamic>)['data']
+            as Map<String, dynamic>;
+      },
     );
+
+    return JcodeModel.fromJson(raw);
   }
 
   Future<List<JcodeRedemptionModel>> getRedemptions(Object identifier) async {
-    final res = await _client.get(ApiEndpoints.jcodeRedemptions(identifier));
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.jcodeRedemptions(identifier)),
+    );
     final data = (res.data as Map<String, dynamic>)['data'];
     if (data is List) {
       return data
@@ -69,6 +115,11 @@ class JcodeRepository {
     List<Map<String, dynamic>>? servedItems,
     String? recuPhotoPath,
   }) async {
+    // Invalidate cached jcode detail after a scan
+    await _store.init();
+    await _store.invalidate('${_scope}_jcode_$identifier');
+    await _store.invalidate('${_scope}_active');
+
     if (recuPhotoPath != null && recuPhotoPath.isNotEmpty) {
       final formDataMap = <String, dynamic>{
         'lat': lat,
@@ -126,5 +177,10 @@ class JcodeRepository {
       formData,
     );
     return res.data as Map<String, dynamic>;
+  }
+
+  static Future<void> clearCache() async {
+    await _store.init();
+    await _store.clear();
   }
 }

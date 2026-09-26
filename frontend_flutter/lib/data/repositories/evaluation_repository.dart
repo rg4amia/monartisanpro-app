@@ -1,5 +1,6 @@
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/network/network_executor.dart';
 
 class EvaluationRepository {
   final ApiClient _client = ApiClient();
@@ -37,8 +38,9 @@ class EvaluationRepository {
 
   Future<Map<String, dynamic>?> getMissionActors(int missionId) async {
     try {
-      final res =
-          await _client.get(ApiEndpoints.missionEvaluationsStatus(missionId));
+      final res = await NetworkExecutor.run(
+        () => _client.get(ApiEndpoints.missionEvaluationsStatus(missionId)),
+      );
       if (res.data is Map &&
           (res.data as Map<String, dynamic>)['data'] is Map) {
         return Map<String, dynamic>.from(
@@ -51,8 +53,9 @@ class EvaluationRepository {
 
   Future<Map<String, dynamic>?> getOrderActors(int orderId) async {
     try {
-      final res =
-          await _client.get(ApiEndpoints.orderEvaluationsStatus(orderId));
+      final res = await NetworkExecutor.run(
+        () => _client.get(ApiEndpoints.orderEvaluationsStatus(orderId)),
+      );
       if (res.data is Map &&
           (res.data as Map<String, dynamic>)['data'] is Map) {
         return Map<String, dynamic>.from(
@@ -65,7 +68,9 @@ class EvaluationRepository {
 
   Future<Map<String, dynamic>?> getMyEvaluations() async {
     try {
-      final res = await _client.get(ApiEndpoints.myEvaluations);
+      final res = await NetworkExecutor.run(
+        () => _client.get(ApiEndpoints.myEvaluations),
+      );
       if (res.data is Map &&
           (res.data as Map<String, dynamic>)['data'] is Map) {
         return Map<String, dynamic>.from(

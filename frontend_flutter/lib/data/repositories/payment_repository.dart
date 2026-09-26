@@ -1,5 +1,6 @@
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/network/network_executor.dart';
 import '../../core/utils/json_readers.dart';
 import '../models/payment_model.dart';
 
@@ -88,8 +89,8 @@ class PaymentRepository {
 
   /// Lien signé (15 min) vers le reçu PDF d'une transaction confirmée.
   Future<String> receiptLink(int transactionId) async {
-    final res = await _client.get(
-      ApiEndpoints.transactionReceiptLink(transactionId),
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.transactionReceiptLink(transactionId)),
     );
     final url = readString(readMap(readMap(res.data)?['data'])?['url']);
     if (url == null || url.isEmpty) {
@@ -100,7 +101,9 @@ class PaymentRepository {
   }
 
   Future<PaymentStatusModel> checkStatus(int transactionId) async {
-    final res = await _client.get(ApiEndpoints.paymentStatus(transactionId));
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.paymentStatus(transactionId)),
+    );
     return PaymentStatusModel.fromJson(
       (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
     );

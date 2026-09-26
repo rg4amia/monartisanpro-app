@@ -1,5 +1,8 @@
+import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/network/network_executor.dart';
+import '../../core/storage/storage_service.dart';
 import '../../core/utils/json_readers.dart';
 import '../models/payout_model.dart';
 
@@ -10,16 +13,42 @@ class PayoutRepository {
 
   final ApiClient _client;
 
-  Future<List<PayoutModel>> getPayouts() async {
-    final res = await _client.get(ApiEndpoints.payouts);
+  static final CacheStore<Map<String, dynamic>> _store =
+      CacheStore<Map<String, dynamic>>(
+    boxName: 'payouts_cache',
+    fromJson: (j) => j,
+    toJson: (m) => m,
+  );
 
-    return readDataList(res.data).map(PayoutModel.fromJson).toList();
+  static const Duration _payoutsTtl = Duration(minutes: 2);
+  static const Duration _cashoutsTtl = Duration(minutes: 2);
+
+  String get _scope => 'u${StorageService.getUserId() ?? 0}';
+
+  Future<List<PayoutModel>> getPayouts({bool forceRefresh = false}) async {
+    await _store.init();
+    final rows = await _store.readList(
+      key: '${_scope}_payouts',
+      ttl: _payoutsTtl,
+      policy: forceRefresh ? CachePolicy.networkFirst : CachePolicy.cacheFirst,
+      fetch: () async {
+        final res = await NetworkExecutor.run(
+          () => _client.get(ApiEndpoints.payouts),
+        );
+        return readDataList(res.data)
+            .map((e) => Map<String, dynamic>.from(e))
+            .toList();
+      },
+    );
+    return rows.map(PayoutModel.fromJson).toList();
   }
 
   /// Relance d'un virement échoué par son bénéficiaire. Renvoie le versement
   /// à jour et le message du serveur (succès ou nouvel échec).
   Future<({PayoutModel payout, String message})> retryPayout(int id) async {
     final res = await _client.post(ApiEndpoints.payoutRetry(id));
+    // Invalidate payout list after a retry
+    await _store.invalidate('${_scope}_payouts');
     final body = readMap(res.data) ?? const {};
 
     return (
@@ -29,13 +58,23 @@ class PayoutRepository {
   }
 
   Future<({DriverCashoutStats stats, List<DriverCashoutModel> cashouts})>
-      getDriverCashouts() async {
-    final res = await _client.get(ApiEndpoints.driverCashouts);
-    final data = readMap(readMap(res.data)?['data']) ?? const {};
+      getDriverCashouts({bool forceRefresh = false}) async {
+    await _store.init();
+    final raw = await _store.readOne(
+      key: '${_scope}_driver_cashouts',
+      ttl: _cashoutsTtl,
+      policy: forceRefresh ? CachePolicy.networkFirst : CachePolicy.cacheFirst,
+      fetch: () async {
+        final res = await NetworkExecutor.run(
+          () => _client.get(ApiEndpoints.driverCashouts),
+        );
+        return readMap(readMap(res.data)?['data']) ?? const {};
+      },
+    );
 
     return (
-      stats: DriverCashoutStats.fromJson(readMap(data['stats']) ?? const {}),
-      cashouts: readMapList(data['cashouts'])
+      stats: DriverCashoutStats.fromJson(readMap(raw['stats']) ?? const {}),
+      cashouts: readMapList(raw['cashouts'])
           .map(DriverCashoutModel.fromJson)
           .toList(),
     );
@@ -60,11 +99,18 @@ class PayoutRepository {
           'bank_account_number': bankAccountNumber,
       },
     );
+    // Invalidate driver cashouts list after a withdrawal request
+    await _store.invalidate('${_scope}_driver_cashouts');
     final body = readMap(res.data) ?? const {};
 
     return (
       cashout: DriverCashoutModel.fromJson(readMap(body['data']) ?? const {}),
       message: readApiMessage(body) ?? 'Demande de retrait enregistrée.',
     );
+  }
+
+  static Future<void> clearCache() async {
+    await _store.init();
+    await _store.clear();
   }
 }

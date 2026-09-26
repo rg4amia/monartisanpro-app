@@ -15,7 +15,7 @@ class _FakePayoutRepository extends PayoutRepository {
 
   @override
   Future<({DriverCashoutStats stats, List<DriverCashoutModel> cashouts})>
-      getDriverCashouts() async => (
+      getDriverCashouts({bool forceRefresh = false}) async => (
             stats: DriverCashoutStats(
               availableBalance: 20000 - requested,
               commissionRate: 0.02,

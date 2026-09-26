@@ -1,6 +1,8 @@
 import 'package:dio/dio.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/network/network_executor.dart';
+import '../../core/utils/json_readers.dart';
 
 class UserRepository {
   final ApiClient _client = ApiClient();
@@ -94,12 +96,14 @@ class UserRepository {
   }
 
   Future<Map<String, dynamic>> getDashboardStats() async {
-    final response = await _client.get(ApiEndpoints.dashboard);
+    final response = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.dashboard),
+    );
     return response.data as Map<String, dynamic>;
   }
 
   Future<Map<String, dynamic>> deleteAccount({required int userId}) async {
     final response = await _client.delete(ApiEndpoints.updateUser(userId));
-    return response.data as Map<String, dynamic>;
+    return readMap(response.data) ?? const {};
   }
 }

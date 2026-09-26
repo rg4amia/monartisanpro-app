@@ -25,6 +25,7 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 | 1 | `SyncService.flush()` après login + purge cache au logout | ✅ Fait | `bb947ba2` |
 | 1 | Bandeau hors-ligne global (`OfflineBanner` dans `main_tab`) | ✅ Fait | `bb947ba2` |
 | 1 | Migration `devis_repository` + `notification_repository` | ✅ Fait | `8cdf3ccd` |
+| 1 | Migration `address_repository` + `jcode_repository` + `payout_repository` + `supplier_cashout_repository` + `user_repository` + `payment_repository` + `evaluation_repository` | ✅ Fait | local |
 | 3 | `core/errors/` (`AppException` + mapper) + tests | ✅ Fait | `a9678eac` |
 | 3 | Lint `directives_ordering` (`dart fix`, 44 fichiers) | ✅ Fait | `a9678eac` |
 | 3 | Lint `prefer_single_quotes` (`dart fix`, 13 fichiers) | ✅ Fait | `a154304e` |
