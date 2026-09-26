@@ -1,8 +1,21 @@
 import 'package:flutter/material.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../client_home/section_empty_note.dart';
 
-Widget buildDriverRatingEvolutionCard() {
+/// Carte des notes reçues par le livreur, lue depuis `GET /dashboard`.
+///
+/// Un livreur jamais évalué (`rating == null`) voit une mention explicite
+/// plutôt qu'une note inventée : la carte affichait auparavant en dur
+/// « 4.9/5 — Basé sur 48 courses » et « +0.2 ce mois » pour tous les comptes
+/// (Règle d'or 29).
+Widget buildDriverRatingEvolutionCard({
+  required double? rating,
+  required int ratingsCount,
+  required Map<int, double> distribution,
+}) {
+  final hasRating = rating != null && ratingsCount > 0;
+
   return Container(
     padding: const EdgeInsets.all(20),
     decoration: BoxDecoration(
@@ -20,107 +33,92 @@ Widget buildDriverRatingEvolutionCard() {
     child: Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Row(
-          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-          children: [
-            const Text(
-              'Évolution des Notations',
-              style: TextStyle(
-                fontSize: 15,
-                fontWeight: FontWeight.w800,
-                color: AppColors.textPrimary,
-              ),
-            ),
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-              decoration: BoxDecoration(
-                color: AppColors.success.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: const Row(
-                children: [
-                  Icon(Icons.trending_up, color: AppColors.success, size: 14),
-                  SizedBox(width: 4),
-                  Text(
-                    '+0.2 ce mois',
-                    style: TextStyle(
-                      color: AppColors.success,
-                      fontSize: 11,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
+        const Text(
+          'Mes notations',
+          style: TextStyle(
+            fontSize: 15,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
         ),
         const SizedBox(height: 16),
-        Row(
-          crossAxisAlignment: CrossAxisAlignment.center,
-          children: [
-            Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                const Row(
-                  crossAxisAlignment: CrossAxisAlignment.baseline,
-                  textBaseline: TextBaseline.alphabetic,
-                  children: [
-                    Text(
-                      '4.9',
-                      style: TextStyle(
-                        fontSize: 36,
-                        fontWeight: FontWeight.w900,
-                        color: AppColors.textPrimary,
-                      ),
-                    ),
-                    Text(
-                      '/5',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                        color: AppColors.textSecondary,
-                      ),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 4),
-                Row(
-                  children: List.generate(5, (index) {
-                    return Icon(
-                      index < 4 ? Icons.star_rounded : Icons.star_half_rounded,
-                      color: Colors.amber,
-                      size: 18,
-                    );
-                  }),
-                ),
-                const SizedBox(height: 6),
-                const Text(
-                  'Basé sur 48 courses',
-                  style: TextStyle(
-                    fontSize: 11,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ],
-            ),
-            const SizedBox(width: 24),
-            Expanded(
-              child: Column(
+        if (!hasRating)
+          const SectionEmptyNote(
+            icon: Icons.star_outline_rounded,
+            message:
+                "Non évalué — votre note apparaîtra ici dès qu'un client aura évalué une de vos livraisons.",
+          )
+        else
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  _buildRatingDistributionRow(5, 0.85),
+                  Row(
+                    crossAxisAlignment: CrossAxisAlignment.baseline,
+                    textBaseline: TextBaseline.alphabetic,
+                    children: [
+                      Text(
+                        rating.toStringAsFixed(1),
+                        style: const TextStyle(
+                          fontSize: 36,
+                          fontWeight: FontWeight.w900,
+                          color: AppColors.textPrimary,
+                        ),
+                      ),
+                      const Text(
+                        '/5',
+                        style: TextStyle(
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
                   const SizedBox(height: 4),
-                  _buildRatingDistributionRow(4, 0.10),
-                  const SizedBox(height: 4),
-                  _buildRatingDistributionRow(3, 0.05),
-                  const SizedBox(height: 4),
-                  _buildRatingDistributionRow(2, 0.00),
-                  const SizedBox(height: 4),
-                  _buildRatingDistributionRow(1, 0.00),
+                  Row(
+                    children: List.generate(5, (index) {
+                      final IconData icon;
+                      if (rating >= index + 1) {
+                        icon = Icons.star_rounded;
+                      } else if (rating >= index + 0.5) {
+                        icon = Icons.star_half_rounded;
+                      } else {
+                        icon = Icons.star_outline_rounded;
+                      }
+                      return Icon(icon, color: Colors.amber, size: 18);
+                    }),
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    ratingsCount > 1
+                        ? 'Basé sur $ratingsCount évaluations'
+                        : 'Basé sur 1 évaluation',
+                    style: const TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
                 ],
               ),
-            ),
-          ],
-        ),
+              const SizedBox(width: 24),
+              Expanded(
+                child: Column(
+                  children: [
+                    for (final stars in const [5, 4, 3, 2, 1]) ...[
+                      _buildRatingDistributionRow(
+                        stars,
+                        (distribution[stars] ?? 0).clamp(0, 1).toDouble(),
+                      ),
+                      if (stars > 1) const SizedBox(height: 4),
+                    ],
+                  ],
+                ),
+              ),
+            ],
+          ),
       ],
     ),
   );

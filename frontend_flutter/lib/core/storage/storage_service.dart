@@ -78,8 +78,12 @@ class StorageService {
   static void saveDriverAddress(String a) => _box.write('drv_addr', a);
   static String? getDriverAddress() => _box.read<String>('drv_addr');
 
-  static void saveDriverWalletBalance(int val) => _box.write('drv_wallet', val);
-  static int? getDriverWalletBalance() => _box.read<int>('drv_wallet');
+  /// Le solde du livreur n'est plus conservé localement : il se lit toujours
+  /// sur le ledger serveur (Règle d'or 9). L'ancienne clé `drv_wallet`, amorcée
+  /// à 25 000 FCFA fictifs, écrasait le solde réel à chaque ouverture de
+  /// l'accueil ; on la purge sur les appareils qui la portent encore.
+  static Future<void> purgeLegacyDriverWalletBalance() =>
+      _box.remove('drv_wallet');
 
   // ── Notifications Preferences ───────────────────────────────────────────────
   static const String _notificationsEnabledKey = 'notifications_enabled';
@@ -102,7 +106,8 @@ class StorageService {
   static void setDataSaverEnabled(bool value) =>
       _box.write(_dataSaverKey, value);
   static bool isDataSaverEnabled() =>
-      _box.read<bool>(_dataSaverKey) ?? true; // Actif par défaut en Côte d'Ivoire
+      _box.read<bool>(_dataSaverKey) ??
+      true; // Actif par défaut en Côte d'Ivoire
 
   // ── Clear all ───────────────────────────────────────────────────────────────
   static Future<void> clearAll() async {

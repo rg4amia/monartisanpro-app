@@ -94,7 +94,7 @@ class OrderValidationIdempotencyTest extends TestCase
         $this->assertSame($payoutsAfterFirst, $this->supplierPayouts($order));
     }
 
-    public function test_a_replayed_delivery_does_not_pay_the_driver_twice(): void
+    public function test_a_replayed_delivery_does_not_bill_the_fare_twice(): void
     {
         $order = $this->order('driver_picked_up');
 
@@ -102,18 +102,20 @@ class OrderValidationIdempotencyTest extends TestCase
             ->postJson("/api/v1/orders/{$order->id}/deliver", ['reception_code' => 'RECEPTION-7390'])
             ->assertOk();
 
-        $payouts = Transaction::where('wallet_dest', 'driver_wallet_'.$this->driver->id)->count();
-        $this->assertGreaterThan(0, $payouts);
+        // Modèle « à la Yango » : la livraison révèle le montant de la course
+        // et le demande au client ; le livreur est crédité à son paiement.
+        $billed = $order->fresh();
+        $this->assertSame('a_payer', $billed->delivery_fare_status);
+        $this->assertGreaterThan(46000, (int) $billed->total_amount);
 
         $this->actingAs($this->driver)
             ->postJson("/api/v1/orders/{$order->id}/deliver", ['reception_code' => 'RECEPTION-7390'])
             ->assertOk();
 
-        $this->assertSame('delivered', $order->fresh()->status);
-        $this->assertSame(
-            $payouts,
-            Transaction::where('wallet_dest', 'driver_wallet_'.$this->driver->id)->count()
-        );
+        $replayed = $order->fresh();
+        $this->assertSame('delivered', $replayed->status);
+        $this->assertSame((int) $billed->total_amount, (int) $replayed->total_amount, 'Le rejeu ne doit pas facturer la course une seconde fois.');
+        $this->assertSame(0, Transaction::where('wallet_dest', 'driver_wallet_'.$this->driver->id)->count());
     }
 
     public function test_a_replay_after_the_counterparty_validated_is_accepted(): void

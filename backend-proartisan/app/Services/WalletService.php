@@ -8,6 +8,7 @@ use App\Models\Devis;
 use App\Models\Jalon;
 use App\Models\Litige;
 use App\Models\Mission;
+use App\Models\MobileMoneyPayout;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
@@ -258,7 +259,7 @@ class WalletService
 
             // Chantier 9A : Écriture au Grand Livre en Partie Double (BCEAO)
             try {
-                app(\App\Services\DoubleEntryLedgerService::class)->recordEscrowFunding(
+                app(DoubleEntryLedgerService::class)->recordEscrowFunding(
                     $mission,
                     $montantMo,
                     $montantMat,
@@ -341,7 +342,7 @@ class WalletService
 
             // Chantier 9A : Écriture au Grand Livre en Partie Double pour l'avenant (BCEAO)
             try {
-                app(\App\Services\DoubleEntryLedgerService::class)->recordEscrowFunding(
+                app(DoubleEntryLedgerService::class)->recordEscrowFunding(
                     $mission,
                     $montantMo,
                     $montantMat,
@@ -493,18 +494,31 @@ class WalletService
             $commission = (int) round($jalon->montant * ($commissionService / (1 + $commissionService)));
             $gainNetArtisan = $jalon->montant - $commission;
 
-            // Débit du wallet_mo de l'artisan du montant total TTC
-            $this->debit(
-                $artisan,
-                WalletType::WALLET_MO,
-                $jalon->montant,
-                "Libération jalon #{$jalon->ordre} - Mission #{$mission->id}",
-                [
-                    'mission_id' => $mission->id,
-                    'jalon_id' => $jalon->id,
-                    'type' => 'liberation_jalon',
-                ]
-            );
+            // Amortissement automatique éventuel du micro-crédit d'urgence actif
+            $microCreditService = app(MicroCreditService::class);
+            $creditDeduction = $microCreditService->repayFromJalon($jalon, $gainNetArtisan);
+            $montantVerseArtisan = max(0, $gainNetArtisan - $creditDeduction);
+
+            $ledgerMetadata = [
+                'mission_id' => $mission->id,
+                'jalon_id' => $jalon->id,
+                'type' => 'liberation_jalon',
+            ];
+
+            // Débit immédiat de la part qui ne part pas vers l'artisan
+            // (commission, amortissement du micro-crédit). La part versée
+            // n'est débitée qu'au virement réussi (MobileMoneyPayoutService) :
+            // un virement échoué laisse les fonds sur le portefeuille, relançables.
+            $immediateDebit = $jalon->montant - $montantVerseArtisan;
+            if ($immediateDebit > 0) {
+                $this->debit(
+                    $artisan,
+                    WalletType::WALLET_MO,
+                    $immediateDebit,
+                    "Libération jalon #{$jalon->ordre} - Mission #{$mission->id} (commission et retenues)",
+                    $ledgerMetadata
+                );
+            }
 
             // Créditer le compte financier de prosartisan (l'admin) de la commission MO
             $this->creditPlatformFinancialAccount(
@@ -516,45 +530,30 @@ class WalletService
                 ]
             );
 
-            // Amortissement automatique éventuel du micro-crédit d'urgence actif
-            $microCreditService = app(MicroCreditService::class);
-            $creditDeduction = $microCreditService->repayFromJalon($jalon, $gainNetArtisan);
-            $montantVerseArtisan = max(0, $gainNetArtisan - $creditDeduction);
-
-            // Transaction externe vers Mobile Money de l'artisan (montant net après déduction crédit)
+            // Virement du montant net vers le Mobile Money de l'artisan
             if ($montantVerseArtisan > 0) {
-                $transaction = Transaction::create([
-                    'mission_id' => $mission->id,
-                    'user_id' => $mission->artisan_id,
-                    'type' => 'liberation_jalon',
-                    'montant' => $montantVerseArtisan,
-                    'wallet_source' => 'escrow_mission_'.$mission->id,
-                    'wallet_dest' => 'artisan_mobile_money_'.$mission->artisan_id,
-                    'provider' => $provider,
-                    'statut' => 'en_attente',
-                ]);
-
-                // Virement réel du montant net vers Mobile Money
                 $description = "Paiement jalon #{$jalon->ordre} mission #{$mission->id}".($creditDeduction > 0 ? " (amortissement crédit: {$creditDeduction} FCFA déduits)" : '');
 
-                try {
-                    $result = $this->transferToMobileMoney($provider, $artisan->payment_phone ?? $artisan->phone, $montantVerseArtisan, $description);
-                    $transaction->update([
-                        'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
-                        'statut' => 'confirme',
-                    ]);
-                } catch (\Exception $e) {
-                    Log::error('Erreur lors du virement automatique artisan', [
-                        'jalon_id' => $jalon->id,
-                        'artisan_id' => $artisan->id,
-                        'error' => $e->getMessage(),
-                    ]);
-                }
+                $this->payouts()->dispatch(
+                    $artisan,
+                    WalletType::WALLET_MO,
+                    $montantVerseArtisan,
+                    MobileMoneyPayout::CONTEXT_JALON,
+                    $provider,
+                    $description,
+                    [
+                        'mission_id' => $mission->id,
+                        'type' => 'liberation_jalon',
+                        'wallet_source' => 'escrow_mission_'.$mission->id,
+                        'wallet_dest' => 'artisan_mobile_money_'.$mission->artisan_id,
+                    ],
+                    $ledgerMetadata
+                );
             }
 
             // Chantier 9A : Écriture au Grand Livre en Partie Double pour la libération (BCEAO)
             try {
-                app(\App\Services\DoubleEntryLedgerService::class)->recordMilestoneRelease(
+                app(DoubleEntryLedgerService::class)->recordMilestoneRelease(
                     $jalon,
                     $jalon->montant
                 );
@@ -659,7 +658,17 @@ class WalletService
             ->whereIn('operation', [WalletOperation::DEBIT->value, WalletOperation::BLOCAGE->value])
             ->sum('montant');
 
-        return max(0, (int) $credits - (int) $debits);
+        // Les versements non aboutis (virement échoué, en attente de relance)
+        // n'ont pas encore été débités mais sont déjà dus à l'artisan : ils ne
+        // doivent financer ni un autre jalon, ni un arbitrage de litige.
+        $reserved = $this->payouts()->reservedForMission($mission->id, $walletType);
+
+        return max(0, (int) $credits - (int) $debits - $reserved);
+    }
+
+    private function payouts(): MobileMoneyPayoutService
+    {
+        return app(MobileMoneyPayoutService::class);
     }
 
     public function refundClientFromDispute(
@@ -758,46 +767,31 @@ class WalletService
         $provider = $this->resolveMissionProvider($mission, $artisan);
 
         return DB::transaction(function () use ($mission, $artisan, $amount, $litige, $provider) {
-            $this->debit(
+            // Débit du portefeuille au seul virement réussi (MobileMoneyPayoutService).
+            $payout = $this->payouts()->dispatch(
                 $artisan,
                 WalletType::WALLET_MO,
                 $amount,
-                "Paiement force suite au litige mission #{$mission->id}",
+                MobileMoneyPayout::CONTEXT_LITIGE_MO,
+                $provider,
+                "Règlement litige mission #{$mission->id}",
+                [
+                    'mission_id' => $mission->id,
+                    'type' => 'liberation_jalon',
+                    'wallet_source' => 'escrow_mission_'.$mission->id,
+                    'wallet_dest' => 'artisan_mobile_money_'.$artisan->id,
+                    'metadata' => [
+                        'litige_id' => $litige?->id,
+                        'forced_release' => true,
+                    ],
+                ],
                 [
                     'mission_id' => $mission->id,
                     'litige_id' => $litige?->id,
                     'type' => 'litige_release_mo',
                 ]
             );
-
-            $transaction = Transaction::create([
-                'mission_id' => $mission->id,
-                'user_id' => $artisan->id,
-                'type' => 'liberation_jalon',
-                'montant' => $amount,
-                'wallet_source' => 'escrow_mission_'.$mission->id,
-                'wallet_dest' => 'artisan_mobile_money_'.$artisan->id,
-                'provider' => $provider,
-                'statut' => 'en_attente',
-                'metadata' => [
-                    'litige_id' => $litige?->id,
-                    'forced_release' => true,
-                ],
-            ]);
-
-            try {
-                $result = $this->transferToMobileMoney($provider, $artisan->payment_phone ?? $artisan->phone, $amount, "Reglement litige mission #{$mission->id}");
-                $transaction->update([
-                    'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
-                    'statut' => 'confirme',
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Erreur lors du paiement force artisan', [
-                    'mission_id' => $mission->id,
-                    'artisan_id' => $artisan->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+            $transaction = $payout->transaction;
 
             $mission->jalons()
                 ->whereIn('statut', ['en_attente', 'soumis', 'valide'])
@@ -823,11 +817,24 @@ class WalletService
         $provider = $this->resolveMissionProvider($mission, $artisan);
 
         return DB::transaction(function () use ($mission, $artisan, $amount, $litige, $provider) {
-            $this->debit(
+            // Débit du portefeuille au seul virement réussi (MobileMoneyPayoutService).
+            $payout = $this->payouts()->dispatch(
                 $artisan,
                 WalletType::WALLET_MATERIAUX,
                 $amount,
-                "Liberation materiaux suite au litige mission #{$mission->id}",
+                MobileMoneyPayout::CONTEXT_LITIGE_MATERIAUX,
+                $provider,
+                "Libération matériaux mission #{$mission->id}",
+                [
+                    'mission_id' => $mission->id,
+                    'type' => 'credit',
+                    'wallet_source' => 'escrow_mission_'.$mission->id,
+                    'wallet_dest' => 'artisan_mobile_money_'.$artisan->id,
+                    'metadata' => [
+                        'litige_id' => $litige?->id,
+                        'wallet_type' => WalletType::WALLET_MATERIAUX->value,
+                    ],
+                ],
                 [
                     'mission_id' => $mission->id,
                     'litige_id' => $litige?->id,
@@ -835,36 +842,7 @@ class WalletService
                 ]
             );
 
-            $transaction = Transaction::create([
-                'mission_id' => $mission->id,
-                'user_id' => $artisan->id,
-                'type' => 'credit',
-                'montant' => $amount,
-                'wallet_source' => 'escrow_mission_'.$mission->id,
-                'wallet_dest' => 'artisan_mobile_money_'.$artisan->id,
-                'provider' => $provider,
-                'statut' => 'en_attente',
-                'metadata' => [
-                    'litige_id' => $litige?->id,
-                    'wallet_type' => WalletType::WALLET_MATERIAUX->value,
-                ],
-            ]);
-
-            try {
-                $result = $this->transferToMobileMoney($provider, $artisan->payment_phone ?? $artisan->phone, $amount, "Liberation materiaux mission #{$mission->id}");
-                $transaction->update([
-                    'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
-                    'statut' => 'confirme',
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Erreur lors de la liberation materiaux artisan', [
-                    'mission_id' => $mission->id,
-                    'artisan_id' => $artisan->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
-
-            return $transaction->fresh();
+            return $payout->transaction->fresh();
         });
     }
 

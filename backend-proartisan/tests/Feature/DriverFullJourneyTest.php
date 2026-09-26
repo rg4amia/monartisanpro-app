@@ -6,6 +6,7 @@ use App\Models\Evaluation;
 use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
 use Tests\TestCase;
@@ -125,7 +126,16 @@ class DriverFullJourneyTest extends TestCase
         $this->assertSame('delivered', $order->status);
         $this->assertNotNull($order->delivered_at);
 
-        // ── 6. Libération de la part course au livreur ──
+        // ── 6. Montant révélé, payé par le client, puis crédité au livreur ──
+        $this->assertSame('a_payer', $order->delivery_fare_status);
+
+        $this->actingAs($this->client)
+            ->postJson("/api/v1/payments/orders/{$order->id}/delivery-fare", ['provider' => 'wave', 'phone' => '+2250700000010'])
+            ->assertOk();
+        app(PaymentService::class)->confirmSimulatedPayment(
+            Transaction::where('type', 'paiement_livraison')->latest('id')->firstOrFail()
+        );
+
         $payout = Transaction::where('user_id', $this->driver->id)
             ->where('wallet_dest', 'driver_wallet_'.$this->driver->id)
             ->first();

@@ -316,11 +316,13 @@ class OrderController extends Controller
 
         try {
             $this->orderService->verifyDelivery($order, $request->code, $request->input('photo_url'));
+            $order = $order->fresh();
 
             return response()->json([
                 'success' => true,
-                'message' => 'Livraison finalisée avec succès. Fonds de livraison libérés au livreur.',
-                'data' => $order->fresh(),
+                'message' => $this->orderService->deliveryFareMessage($order),
+                'delivery_fare' => $order->delivery_fare,
+                'data' => $order,
             ]);
         } catch (\Exception $e) {
             return response()->json([

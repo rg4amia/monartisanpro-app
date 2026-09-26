@@ -1,5 +1,7 @@
 // Props Inertia partagées par tous les onglets de la console d'administration.
 
+import type { DriverCashoutsOverview, PayoutsOverview } from '../panels/PayoutsSection';
+
 import type {
     AdminEvaluation,
     AdminMission,
@@ -115,6 +117,8 @@ export interface AdminPageProps {
     transactionStats?: TransactionStats;
     documentsPage?: Paginated<GeneratedDocumentItem>;
     documentStats?: DocumentStats;
+    payoutsOverview?: PayoutsOverview | null;
+    driverCashoutsOverview?: DriverCashoutsOverview | null;
     litigesPage?: Paginated<LitigeItem>;
     litigeStats?: LitigeStats;
     evaluationsPage?: Paginated<AdminEvaluation>;

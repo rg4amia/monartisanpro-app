@@ -13,6 +13,7 @@ use App\Http\Controllers\Api\V1\DeliveryBatchController;
 use App\Http\Controllers\Api\V1\DeliveryController;
 use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\DevisController;
+use App\Http\Controllers\Api\V1\Driver\DriverCashoutController;
 use App\Http\Controllers\Api\V1\EvaluationController;
 use App\Http\Controllers\Api\V1\FaqController;
 use App\Http\Controllers\Api\V1\InterventionTypeController;
@@ -30,6 +31,7 @@ use App\Http\Controllers\Api\V1\OrderController;
 use App\Http\Controllers\Api\V1\ParrainageClientController;
 use App\Http\Controllers\Api\V1\ParrainageController;
 use App\Http\Controllers\Api\V1\PaymentController;
+use App\Http\Controllers\Api\V1\PayoutController;
 use App\Http\Controllers\Api\V1\PromoCodeController;
 use App\Http\Controllers\Api\V1\RecruitmentController;
 use App\Http\Controllers\Api\V1\RecruitmentEngagementController;
@@ -218,6 +220,12 @@ Route::prefix('v1')->group(function () {
         Route::post('/supplier/cashouts', [SupplierCashoutController::class, 'store'])->middleware(['supplier.only', 'kyc.verified']);
         Route::get('/supplier/cashouts/{cashout}/receipt', [SupplierCashoutController::class, 'receipt'])->middleware('supplier.only');
 
+        // ── Retrait des gains livreur & versements Mobile Money (Chantier 10) ──
+        Route::get('/driver/cashouts', [DriverCashoutController::class, 'index']);
+        Route::post('/driver/cashouts', [DriverCashoutController::class, 'store'])->middleware(['kyc.verified', 'throttle:10,1']);
+        Route::get('/payouts', [PayoutController::class, 'index']);
+        Route::post('/payouts/{payout}/retry', [PayoutController::class, 'retry'])->middleware('throttle:10,1');
+
         // ── Missions ──────────────────────────────────────────────────────────
         Route::get('/missions', [MissionController::class, 'index']);
         Route::post('/missions', [MissionController::class, 'store'])->middleware(['can:mission.create', 'kyc.verified']);
@@ -299,6 +307,7 @@ Route::prefix('v1')->group(function () {
         Route::prefix('payments')->group(function () {
             Route::post('/initiate', [PaymentController::class, 'initiatePayment'])->middleware('kyc.verified');
             Route::post('/jalons/{jalon}/pay', [PaymentController::class, 'initiateJalonPayment'])->middleware('kyc.verified');
+            Route::post('/orders/{order}/delivery-fare', [PaymentController::class, 'initiateDeliveryFarePayment']);
             Route::get('/{transaction}/status', [PaymentController::class, 'checkStatus']);
             Route::get('/history', [PaymentController::class, 'history']);
         });

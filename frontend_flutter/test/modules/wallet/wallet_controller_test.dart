@@ -132,6 +132,40 @@ void main() {
       },
     );
 
+    test(
+      "un séquestre livreur décimal n'emporte pas le chargement du portefeuille",
+      () async {
+        // `as int?` levait sur 4500.0 : le solde et l'historique n'étaient
+        // alors jamais affichés (Règle d'or 28).
+        adapter
+          ..on(
+            'GET',
+            '/wallets/balance',
+            const CannedResponse(
+              statusCode: 200,
+              body: {
+                'data': {
+                  'wallet_materiaux': 0,
+                  'wallet_mo': 9000,
+                  'wallet_escrow_livreur': 4500.0,
+                },
+              },
+            ),
+          )
+          ..on(
+            'GET',
+            '/transactions',
+            const CannedResponse(statusCode: 200, body: {'data': []}),
+          );
+
+        final controller = WalletController();
+        await controller.fetchData();
+
+        expect(controller.walletMo.value, 9000);
+        expect(controller.walletEscrowLivreur.value, 4500);
+      },
+    );
+
     testWidgets(
       'une panne réseau laisse isLoading à false et alerte sans lever d\'exception',
       (tester) async {

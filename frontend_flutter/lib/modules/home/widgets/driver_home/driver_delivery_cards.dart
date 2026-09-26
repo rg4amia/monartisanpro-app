@@ -53,11 +53,10 @@ Widget buildActiveDeliveryCard(
   MissionModel mission,
 ) {
   final rawStatus = mission.rawStatus;
-  final deliveryFee = mission.montantMo > 0
-      ? mission.montantMo
-      : (mission.montantTotal > 0
-          ? (mission.montantTotal * 0.15).toInt()
-          : 1500);
+  // Estimation de la course (tarif + bonus d'attente déjà cumulé) : le
+  // montant final n'est révélé qu'à la livraison (modèle « à la Yango »).
+  // Plus de repli inventé (1 500 FCFA, 15 % du panier) : Règle d'or 29.
+  final deliveryFee = mission.montantMo;
 
   return Container(
     margin: const EdgeInsets.only(bottom: 12),
@@ -89,7 +88,9 @@ Widget buildActiveDeliveryCard(
               ),
             ),
             Text(
-              '+ ${Formatters.fcfa(deliveryFee)}',
+              deliveryFee > 0
+                  ? '≈ ${Formatters.fcfa(deliveryFee)}'
+                  : 'Tarif à venir',
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,
@@ -263,11 +264,10 @@ Widget buildAvailableDeliveryCard(
   HomeController controller,
   MissionModel mission,
 ) {
-  final deliveryFee = mission.montantMo > 0
-      ? mission.montantMo
-      : (mission.montantTotal > 0
-          ? (mission.montantTotal * 0.15).toInt()
-          : 1500);
+  // Estimation de la course (tarif + bonus d'attente déjà cumulé) : le
+  // montant final n'est révélé qu'à la livraison (modèle « à la Yango »).
+  // Plus de repli inventé (1 500 FCFA, 15 % du panier) : Règle d'or 29.
+  final deliveryFee = mission.montantMo;
 
   return Container(
     margin: const EdgeInsets.only(bottom: 12),
@@ -318,7 +318,9 @@ Widget buildAvailableDeliveryCard(
           crossAxisAlignment: CrossAxisAlignment.end,
           children: [
             Text(
-              Formatters.fcfa(deliveryFee),
+              deliveryFee > 0
+                  ? 'Estimation ${Formatters.fcfa(deliveryFee)}'
+                  : 'Tarif calculé à l\'acceptation',
               style: const TextStyle(
                 fontSize: 14,
                 fontWeight: FontWeight.w800,

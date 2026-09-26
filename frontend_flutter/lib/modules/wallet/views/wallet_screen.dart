@@ -7,6 +7,8 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/transaction_model.dart';
 import '../controllers/wallet_controller.dart';
+import '../widgets/pending_payouts_section.dart';
+import 'driver_cashout_screen.dart';
 
 class WalletScreen extends StatelessWidget {
   const WalletScreen({super.key});
@@ -43,7 +45,21 @@ class WalletScreen extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
                       _BalanceCards(controller: controller),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      PendingPayoutsSection(
+                        payouts: controller.pendingPayouts.toList(),
+                        retryingPayoutId: controller.retryingPayoutId.value,
+                        onRetry: (payout) async {
+                          final message =
+                              await controller.retryPayout(payout.id);
+                          Get.snackbar(
+                            'Virement',
+                            message,
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 8),
                       const Text(
                         'Historique des transactions',
                         style: TextStyle(
@@ -94,7 +110,11 @@ class _BalanceCards extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final String role = StorageService.getRole() ?? 'driver';
+    // Le rôle canonique est `livreur` (Règle d'or 63) ; `driver` subsiste
+    // sur d'anciennes sessions. Ne tester que `driver` privait le livreur de
+    // son libellé et de sa carte « Gains de livraison en attente ».
+    final String role = StorageService.getRole() ?? '';
+    final bool isDriver = role == 'livreur' || role == 'driver';
 
     return Column(
       children: [
@@ -138,7 +158,7 @@ class _BalanceCards extends StatelessWidget {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        role == 'driver'
+                        isDriver
                             ? 'Gains disponibles (Courses livrées)'
                             : 'Gains disponibles (Main-d\'œuvre)',
                         style: const TextStyle(
@@ -189,25 +209,46 @@ class _BalanceCards extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: 10),
-              const Text(
-                'Fonds disponibles pour transfert Mobile Money immédiat.',
-                style: TextStyle(
+              Text(
+                isDriver
+                    ? 'Retirable vers Mobile Money ou votre banque.'
+                    : 'Versé sur votre Mobile Money à chaque étape validée.',
+                style: const TextStyle(
                   color: Colors.white60,
                   fontSize: 12,
                 ),
               ),
+              if (isDriver) ...[
+                const SizedBox(height: 16),
+                SizedBox(
+                  width: double.infinity,
+                  child: FilledButton.icon(
+                    onPressed: () async {
+                      await Get.to(() => const DriverCashoutScreen());
+                      await controller.fetchData();
+                    },
+                    icon: const Icon(Icons.payments_outlined, size: 18),
+                    label: const Text('Retirer mes gains'),
+                    style: FilledButton.styleFrom(
+                      backgroundColor: Colors.white,
+                      foregroundColor: AppColors.primary,
+                    ),
+                  ),
+                ),
+              ],
             ],
           ),
         ),
         const SizedBox(height: 16),
-        if (role == 'driver')
+        if (isDriver)
           _buildEscrowCard(
             title: 'Gains de livraison en attente',
             value: controller.walletEscrowLivreur.value,
             icon: Icons.local_shipping_outlined,
             color: AppColors.driver,
             bgColor: AppColors.driverSoft,
-            tooltip: 'Débloqué dès que le client valide la réception du matériel',
+            tooltip:
+                'Courses en cours et courses livrées en attente du paiement du client, nets de commission.',
           )
         else if (role == 'artisan')
           _buildEscrowCard(
@@ -216,7 +257,8 @@ class _BalanceCards extends StatelessWidget {
             icon: Icons.lock_outline_rounded,
             color: Colors.amber.shade700,
             bgColor: Colors.amber.shade50,
-            tooltip: 'Fonds débloqués dès que le client valide chaque étape (code SMS)',
+            tooltip:
+                'Fonds débloqués dès que le client valide chaque étape (code SMS)',
           ),
       ],
     );
@@ -303,10 +345,16 @@ class _TransactionTile extends StatelessWidget {
   Widget build(BuildContext context) {
     final String type = transaction.type;
     final String statut = transaction.statut.toLowerCase();
-    final bool isCredit =
-        type == 'liberation_jalon' || type == 'acompte' || type == 'credit';
-    final Color color = isCredit ? AppColors.success : const Color(0xFFE11D48);
-    final String sign = isCredit ? '+' : '-';
+    // Le sens est jugé par le serveur pour l'utilisateur connecté : l'acompte
+    // payé par un client est une sortie pour lui, des fonds sécurisés (ni
+    // gain ni dépense) pour l'artisan de la mission.
+    final String direction = transaction.direction;
+    final bool isIncoming = direction == TransactionModel.entrant;
+    final bool isEscrow = direction == TransactionModel.sequestre;
+    final Color color = isEscrow
+        ? AppColors.primary
+        : (isIncoming ? AppColors.success : const Color(0xFFE11D48));
+    final String sign = isEscrow ? '' : (isIncoming ? '+' : '-');
 
     DateTime? date;
     try {
@@ -346,9 +394,11 @@ class _TransactionTile extends StatelessWidget {
                   borderRadius: BorderRadius.circular(12),
                 ),
                 child: Icon(
-                  isCredit
-                      ? Icons.arrow_downward_rounded
-                      : Icons.arrow_upward_rounded,
+                  isEscrow
+                      ? Icons.lock_outline_rounded
+                      : (isIncoming
+                          ? Icons.arrow_downward_rounded
+                          : Icons.arrow_upward_rounded),
                   color: color,
                   size: 20,
                 ),
@@ -362,7 +412,7 @@ class _TransactionTile extends StatelessWidget {
                       children: [
                         Expanded(
                           child: Text(
-                            _formatType(type),
+                            transaction.libelle ?? _formatType(type),
                             style: const TextStyle(
                               fontWeight: FontWeight.w700,
                               fontSize: 14,
@@ -495,21 +545,15 @@ class _TransactionTile extends StatelessWidget {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: statut == 'confirme' || statut == 'paid'
-                      ? AppColors.success.withValues(alpha: 0.1)
-                      : Colors.orange.withValues(alpha: 0.1),
+                  color: _statusColor(statut).withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(6),
                 ),
                 child: Text(
-                  statut == 'confirme' || statut == 'paid'
-                      ? 'Confirmé / Reversé'
-                      : 'En traitement',
+                  transaction.statutLibelle ?? _statusLabel(statut),
                   style: TextStyle(
                     fontSize: 10.5,
                     fontWeight: FontWeight.w700,
-                    color: statut == 'confirme' || statut == 'paid'
-                        ? AppColors.success
-                        : Colors.orange.shade800,
+                    color: _statusColor(statut),
                   ),
                 ),
               ),
@@ -538,6 +582,30 @@ class _TransactionTile extends StatelessWidget {
         return 'Séquestre accès candidatures';
       default:
         return type.replaceAll('_', ' ').capitalizeFirst ?? type;
+    }
+  }
+
+  String _statusLabel(String statut) {
+    switch (statut) {
+      case 'confirme':
+      case 'paid':
+        return 'Confirmé';
+      case 'echoue':
+        return 'Échoué';
+      default:
+        return 'En attente';
+    }
+  }
+
+  Color _statusColor(String statut) {
+    switch (statut) {
+      case 'confirme':
+      case 'paid':
+        return AppColors.success;
+      case 'echoue':
+        return AppColors.danger;
+      default:
+        return Colors.orange.shade800;
     }
   }
 

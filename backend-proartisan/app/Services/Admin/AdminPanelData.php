@@ -28,8 +28,10 @@ use App\Models\WhatsappClickLog;
 use App\Services\AdminService;
 use App\Services\BankTransferSettingsService;
 use App\Services\DeliveryTrackingService;
+use App\Services\DriverCashoutService;
 use App\Services\GeneratedDocumentService;
 use App\Services\KycService;
+use App\Services\MobileMoneyPayoutService;
 use App\Services\UploadLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -55,6 +57,8 @@ class AdminPanelData
         private AdminTerritoryService $territoryService,
         private DeliveryTrackingService $deliveryTrackingService,
         private KycService $kycService,
+        private MobileMoneyPayoutService $payouts,
+        private DriverCashoutService $driverCashouts,
     ) {}
 
     /**
@@ -321,6 +325,9 @@ class AdminPanelData
                 'type' => $request->query('type_doc') ?: null,
             ], 30)->withQueryString(),
             'documentStats' => $this->documentService->getStats(),
+            // Chantier 10 : versements Mobile Money à traiter et retraits livreur.
+            'payoutsOverview' => Schema::hasTable('mobile_money_payouts') ? $this->payouts->adminOverview() : null,
+            'driverCashoutsOverview' => Schema::hasTable('driver_cashouts') ? $this->driverCashouts->adminOverview() : null,
         ];
     }
 

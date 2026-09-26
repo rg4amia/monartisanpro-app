@@ -9,6 +9,10 @@ import '../../../data/repositories/artisan_repository.dart';
 /// côté backend. Utilisé uniquement en repli : l'API renvoie `micro_credit_eligible`.
 const int kMicroCreditScoreThreshold = 700;
 
+/// Seuil d'excellence du Score ProsArtisan (échelle 0–1000), aligné avec
+/// `prosartisan.score_prosartisan.excellence_threshold` côté backend.
+const int kExcellenceScoreThreshold = 800;
+
 class ScoreController extends GetxController {
   final ArtisanRepository _repo = ArtisanRepository();
 

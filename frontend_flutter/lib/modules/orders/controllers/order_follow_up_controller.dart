@@ -1,7 +1,11 @@
 import 'package:get/get.dart';
+import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/error_handler.dart';
+import '../../../data/models/delivery_fare_model.dart';
 import '../../../data/repositories/order_repository.dart';
+import '../../../data/repositories/payment_repository.dart';
 
 /// Suivi des commandes e-commerce, côté fournisseur comme côté client.
 ///
@@ -9,10 +13,21 @@ import '../../../data/repositories/order_repository.dart';
 /// fournisseur la prépare puis la remet, le client la suit puis la réceptionne.
 /// Un seul contrôleur, deux sources de liste.
 class OrderFollowUpController extends GetxController {
-  OrderFollowUpController({OrderRepository? repository})
-      : _repo = repository ?? OrderRepository();
+  OrderFollowUpController({
+    OrderRepository? repository,
+    PaymentRepository? paymentRepository,
+    Future<bool> Function(Uri uri)? openPaymentUrl,
+  })  : _repo = repository ?? OrderRepository(),
+        _paymentRepo = paymentRepository ?? PaymentRepository(),
+        _openPaymentUrl = openPaymentUrl ??
+            ((uri) => launchUrl(uri, mode: LaunchMode.externalApplication));
 
   final OrderRepository _repo;
+  final PaymentRepository _paymentRepo;
+  final Future<bool> Function(Uri uri) _openPaymentUrl;
+
+  /// Commande dont le paiement de la course est en cours.
+  final payingOrderId = RxnInt();
 
   final orders = <Map<String, dynamic>>[].obs;
   final isLoading = false.obs;
@@ -76,8 +91,10 @@ class OrderFollowUpController extends GetxController {
   /// d'attente ; celle-ci, faite depuis un appareil connecté, fait avancer la
   /// commande immédiatement. Le rejeu tardif du livreur sera alors sans effet,
   /// le backend étant idempotent.
-  Future<bool> confirmFromCounterparty(int orderId,
-      {required bool isPickup,}) async {
+  Future<bool> confirmFromCounterparty(
+    int orderId, {
+    required bool isPickup,
+  }) async {
     confirmingOrderId.value = orderId;
     errorMsg.value = null;
 
@@ -144,13 +161,76 @@ class OrderFollowUpController extends GetxController {
     }
   }
 
-  /// Commandes encore en cours, celles sur lesquelles l'utilisateur peut agir.
-  List<Map<String, dynamic>> get activeOrders => orders
-      .where((o) => !const ['delivered', 'cancelled'].contains(o['status']))
-      .toList();
+  /// Règlement de la course d'une commande livrée (modèle « à la Yango »).
+  ///
+  /// Ouvre la page de paiement de l'opérateur puis interroge le statut ; le
+  /// serveur crédite le livreur à la confirmation. Renvoie `true` si le
+  /// paiement est confirmé pendant l'attente.
+  Future<bool> payDeliveryFare(int orderId, {required String provider}) async {
+    payingOrderId.value = orderId;
+    errorMsg.value = null;
+
+    try {
+      final phone = StorageService.getPhone() ?? '';
+      if (provider != 'virement_bancaire' && phone.trim().isEmpty) {
+        errorMsg.value =
+            'Numéro Mobile Money introuvable. Renseignez-le dans vos paramètres.';
+
+        return false;
+      }
+
+      final payment = await _paymentRepo.initiateDeliveryFarePayment(
+        orderId: orderId,
+        provider: provider,
+        phone: phone,
+      );
+
+      final url = payment.launchUrl;
+      if (url != null && url.isNotEmpty) {
+        final uri = Uri.tryParse(url);
+        if (uri != null) await _openPaymentUrl(uri);
+      }
+
+      for (var attempt = 0; attempt < 6; attempt++) {
+        final status = await _paymentRepo.checkStatus(payment.transactionId);
+        if (status.isConfirmed) {
+          await load(silent: true);
+
+          return true;
+        }
+        if (status.isFailed) {
+          errorMsg.value = 'Le paiement a échoué ou a été annulé.';
+
+          return false;
+        }
+        await Future<void>.delayed(const Duration(seconds: 2));
+      }
+
+      errorMsg.value =
+          'Paiement en attente de confirmation. Tirez pour actualiser dans un instant.';
+
+      return false;
+    } catch (e) {
+      errorMsg.value = ErrorHandler.getErrorMessage(e);
+
+      return false;
+    } finally {
+      payingOrderId.value = null;
+    }
+  }
+
+  static bool _awaitsFarePayment(Map<String, dynamic> order) =>
+      DeliveryFare.tryParse(order['delivery_fare'])?.isAwaitingPayment ?? false;
+
+  static bool _isClosed(Map<String, dynamic> order) =>
+      const ['delivered', 'cancelled'].contains(order['status']) &&
+      !_awaitsFarePayment(order);
+
+  /// Commandes encore en cours, celles sur lesquelles l'utilisateur peut agir
+  /// — y compris une commande livrée dont la course reste à régler.
+  List<Map<String, dynamic>> get activeOrders =>
+      orders.where((o) => !_isClosed(o)).toList();
 
   /// Commandes closes, conservées pour l'historique.
-  List<Map<String, dynamic>> get pastOrders => orders
-      .where((o) => const ['delivered', 'cancelled'].contains(o['status']))
-      .toList();
+  List<Map<String, dynamic>> get pastOrders => orders.where(_isClosed).toList();
 }

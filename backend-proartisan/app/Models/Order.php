@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -58,6 +59,10 @@ class Order extends Model
         'order_group_id',
         'is_parent_group',
         'waiting_time_minutes',
+        'waiting_fee',
+        'delivery_fare_prepaid',
+        'delivery_fare_status',
+        'delivery_fare_settled_at',
         'dispute_reason',
         'dispute_opened_at',
     ];
@@ -81,6 +86,8 @@ class Order extends Model
         'reception_code',
     ];
 
+    protected $appends = ['delivery_fare'];
+
     protected function casts(): array
     {
         return [
@@ -90,6 +97,9 @@ class Order extends Model
             'total_amount' => 'integer',
             'surge_multiplier' => 'float',
             'waiting_time_minutes' => 'integer',
+            'waiting_fee' => 'integer',
+            'delivery_fare_prepaid' => 'integer',
+            'delivery_fare_settled_at' => 'datetime',
             'driver_reassignment_count' => 'integer',
             'delivered_at' => 'datetime',
             'driver_assigned_at' => 'datetime',
@@ -98,6 +108,58 @@ class Order extends Model
             'dispute_opened_at' => 'datetime',
             'is_parent_group' => 'boolean',
         ];
+    }
+
+    /**
+     * Montant total de la course : tarif + bonus d'attente (modèle « à la
+     * Yango »). Avant la livraison, c'est une estimation.
+     */
+    public function deliveryFareTotal(): int
+    {
+        return (int) $this->delivery_cost + (int) $this->waiting_fee;
+    }
+
+    /**
+     * Reste à payer par le client pour la course (0 hors `a_payer`).
+     */
+    public function deliveryFareDue(): int
+    {
+        if ($this->delivery_fare_status !== 'a_payer') {
+            return 0;
+        }
+
+        return max(0, $this->deliveryFareTotal() - (int) $this->delivery_fare_prepaid);
+    }
+
+    /**
+     * Résumé de la course exposé au livreur et au client.
+     */
+    protected function deliveryFare(): Attribute
+    {
+        return Attribute::get(function () {
+            if ($this->delivery_mode !== 'delivery') {
+                return null;
+            }
+
+            $status = $this->delivery_fare_status;
+
+            return [
+                'base' => (int) $this->delivery_cost,
+                'waiting_bonus' => (int) $this->waiting_fee,
+                'waiting_minutes' => (int) $this->waiting_time_minutes,
+                'total' => $this->deliveryFareTotal(),
+                'is_estimate' => $status === null,
+                'prepaid' => (int) $this->delivery_fare_prepaid,
+                'due' => $this->deliveryFareDue(),
+                'status' => $status ?? 'estimation',
+                'status_label' => match ($status) {
+                    'a_payer' => 'Course à régler',
+                    'paye' => 'Course réglée',
+                    default => 'Estimation',
+                },
+                'settled_at' => $this->delivery_fare_settled_at?->toIso8601String(),
+            ];
+        });
     }
 
     /**

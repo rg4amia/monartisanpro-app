@@ -3,6 +3,7 @@
 use App\Http\Controllers\Admin\AdminCashoutController;
 use App\Http\Controllers\Admin\AdminDocumentController;
 use App\Http\Controllers\Admin\AdminFraudController;
+use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminTerritoryController;
 use App\Http\Controllers\Admin\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\BackofficeController;
@@ -144,6 +145,12 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/cashouts/{cashout}/approve', [AdminCashoutController::class, 'approve'])->middleware('can:admin.transactions.manage')->name('cashouts.approve');
         Route::post('/cashouts/{cashout}/complete', [AdminCashoutController::class, 'complete'])->middleware('can:admin.transactions.manage')->name('cashouts.complete');
         Route::post('/cashouts/{cashout}/reject', [AdminCashoutController::class, 'reject'])->middleware('can:admin.transactions.manage')->name('cashouts.reject');
+        // Versements Mobile Money & retraits livreur (Chantier 10)
+        Route::post('/payouts/{payout}/retry', [AdminPayoutController::class, 'retry'])->middleware('can:admin.transactions.manage')->name('payouts.retry');
+        Route::post('/payouts/{payout}/mark-paid', [AdminPayoutController::class, 'markPaid'])->middleware('can:admin.transactions.manage')->name('payouts.mark-paid');
+        Route::post('/driver-cashouts/{cashout}/approve', [AdminPayoutController::class, 'approveCashout'])->middleware('can:admin.transactions.manage')->name('driver-cashouts.approve');
+        Route::post('/driver-cashouts/{cashout}/pay', [AdminPayoutController::class, 'payCashout'])->middleware('can:admin.transactions.manage')->name('driver-cashouts.pay');
+        Route::post('/driver-cashouts/{cashout}/reject', [AdminPayoutController::class, 'rejectCashout'])->middleware('can:admin.transactions.manage')->name('driver-cashouts.reject');
         Route::get('/exports/{resource}', [BackofficeController::class, 'exportCsv'])->middleware('can:admin.exports')->name('exports');
 
         // Documents & Reçus de Décaissement

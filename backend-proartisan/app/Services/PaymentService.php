@@ -8,6 +8,7 @@ use App\Exceptions\PaymentException;
 use App\Models\Devis;
 use App\Models\Jalon;
 use App\Models\Mission;
+use App\Models\Order;
 use App\Models\PromoCode;
 use App\Models\RecruitmentEngagement;
 use App\Models\RecruitmentOffer;
@@ -158,6 +159,74 @@ class PaymentService
     }
 
     /**
+     * Initie le paiement de la course livrée (modèle « à la Yango ») : le
+     * montant est celui révélé à la livraison (course + bonus d'attente),
+     * jamais un montant posté par le client (Règle d'or 36). Seul le client de
+     * la commande peut le régler.
+     */
+    public function initiateDeliveryFarePayment(User $client, Order $order, PaymentProvider $provider, ?string $phone): array
+    {
+        if ((int) $order->client_id !== (int) $client->id) {
+            throw new PaymentException("Vous n'êtes pas autorisé à régler cette course.", 403);
+        }
+
+        if ($order->delivery_fare_status !== 'a_payer') {
+            throw new PaymentException("Aucune course n'est à régler pour cette commande.", 422);
+        }
+
+        $montant = $order->deliveryFareDue();
+        $this->assertPaymentAllowed($montant, $provider);
+
+        $phone = (string) ($phone ?? $client->payment_phone ?? $client->phone ?? '');
+        $metadataMatch = ['order_id' => $order->id, 'payment_type' => 'delivery_fare'];
+
+        $existing = Transaction::where('user_id', $client->id)
+            ->where('type', 'paiement_livraison')
+            ->where('montant', $montant)
+            ->where('provider', $provider)
+            ->where('statut', PaymentStatus::EN_ATTENTE)
+            ->whereJsonContains('metadata->order_id', $order->id)
+            ->orderByDesc('id')
+            ->first();
+
+        if ($existing && ($reused = $this->reusePendingTransaction($existing, $provider, 'Paiement de la course', ['order_id' => $order->id]))) {
+            return $reused;
+        }
+
+        $label = "Course de livraison commande #{$order->id}";
+
+        $transaction = Transaction::create([
+            'user_id' => $client->id,
+            'type' => 'paiement_livraison',
+            'montant' => $montant,
+            'wallet_source' => $provider === PaymentProvider::VIREMENT_BANCAIRE ? 'client_bank_'.$client->id : 'client_mobile_money_'.$client->id,
+            'wallet_dest' => 'escrow_order_'.$order->id,
+            'provider' => $provider,
+            'statut' => PaymentStatus::EN_ATTENTE,
+            'client_phone' => $phone,
+            'metadata' => [
+                'order_id' => $order->id,
+                'payment_type' => 'delivery_fare',
+                'fare_total' => $order->deliveryFareTotal(),
+                'waiting_bonus' => (int) $order->waiting_fee,
+                'description' => $label,
+            ],
+        ]);
+
+        return $this->startCheckout(
+            $transaction,
+            $provider,
+            $phone,
+            $label,
+            $metadataMatch,
+            'REF-LIV-'.$order->id.'-'.str_pad((string) random_int(0, 999), 3, '0', STR_PAD_LEFT),
+            'Instructions de virement bancaire pour la course de livraison',
+            'Paiement de la course',
+            ['order_id' => $order->id],
+        );
+    }
+
+    /**
      * Initie le paiement du séquestre d'un engagement de recrutement : les
      * journées en attente de paiement (lot initial ou prolongation). Leurs
      * identifiants sont figés sur la transaction, qui ne pourra débloquer
@@ -284,6 +353,7 @@ class PaymentService
             'provider' => $transaction->provider->value,
             'mission_id' => $transaction->mission_id,
             'devis_id' => $transaction->metadata['devis_id'] ?? null,
+            'order_id' => $transaction->metadata['order_id'] ?? null,
             'paid_at' => $transaction->paid_at?->toIso8601String(),
             'failed_at' => $transaction->failed_at?->toIso8601String(),
         ];
@@ -339,6 +409,16 @@ class PaymentService
 
         // Séquestres de recrutement (engagement journalier, accès aux candidatures).
         app(RecruitmentEngagementService::class)->applyConfirmedPayment($transaction);
+
+        // Course de livraison réglée par le client : crédit du livreur.
+        if (($transaction->metadata['payment_type'] ?? '') === 'delivery_fare') {
+            $order = Order::find($transaction->metadata['order_id'] ?? null);
+            if ($order) {
+                app(OrderService::class)->settleDeliveryFare($order, $transaction);
+            }
+
+            return;
+        }
 
         if (($transaction->metadata['payment_type'] ?? '') !== 'jalon') {
             return;

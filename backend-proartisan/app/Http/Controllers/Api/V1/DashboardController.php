@@ -10,6 +10,7 @@ use App\Models\Mission;
 use App\Models\Order;
 use App\Models\SupplierProduct;
 use App\Models\User;
+use App\Services\OrderService;
 use App\Services\ScoreService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -236,18 +237,23 @@ class DashboardController extends Controller
             ->where('status', 'delivered')
             ->count();
 
-        $pendingDeliveries = Order::where('driver_id', $user->id)
-            ->whereIn('status', ['driver_assigned', 'shipping'])
-            ->count();
-
-        $totalEarnings = Order::where('driver_id', $user->id)
-            ->where('status', 'delivered')
-            ->sum('delivery_cost');
+        $earnings = app(OrderService::class)->driverEarningsSummary($user);
+        $ratings = app(ScoreService::class)->ratingsSummary($user);
+        $calculatedScore = app(ScoreService::class)->recalculateFromLedger($user);
 
         return [
             'completed_deliveries' => $completedDeliveries,
-            'pending_deliveries' => $pendingDeliveries,
-            'total_earnings' => (int) $totalEarnings,
+            'pending_deliveries' => $earnings['pending_count'],
+            'total_earnings' => $earnings['earned'],
+            'pending_earnings' => $earnings['pending'],
+            // Courses livrées dont le client n'a pas encore réglé le montant.
+            'awaiting_payment_earnings' => $earnings['awaiting_payment'],
+            'awaiting_payment_count' => $earnings['awaiting_payment_count'],
+            'wallet_mo' => $user->wallet_mo,
+            'rating' => $ratings['rating'],
+            'ratings_count' => $ratings['ratings_count'],
+            'ratings_distribution' => $ratings['distribution'],
+            'score_prosartisan' => $calculatedScore,
         ];
     }
 

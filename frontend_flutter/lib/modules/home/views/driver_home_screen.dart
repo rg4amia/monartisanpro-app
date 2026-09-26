@@ -280,7 +280,11 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             ],
           ),
           const SizedBox(height: 20),
-          buildDriverRatingEvolutionCard(),
+          buildDriverRatingEvolutionCard(
+            rating: controller.driverRating.value,
+            ratingsCount: controller.driverRatingsCount.value,
+            distribution: controller.driverRatingsDistribution,
+          ),
           const SizedBox(height: 20),
           buildDriverTipCard(),
         ],

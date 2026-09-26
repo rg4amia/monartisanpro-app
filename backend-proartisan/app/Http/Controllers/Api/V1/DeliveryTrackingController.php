@@ -189,12 +189,15 @@ class DeliveryTrackingController extends Controller
         }
 
         try {
-            $updatedOrder = $this->orderService->verifyDelivery($order, (string) $code, $photoUrl);
+            $updatedOrder = $this->orderService->verifyDelivery($order, (string) $code, $photoUrl)->fresh();
 
+            // Modèle « à la Yango » : le montant final de la course est révélé
+            // au livreur à la livraison (course + bonus d'attente).
             return response()->json([
                 'success' => true,
                 'status' => $updatedOrder->status,
-                'message' => 'Livraison confirmée et fonds débloqués.',
+                'message' => $this->orderService->deliveryFareMessage($updatedOrder),
+                'delivery_fare' => $updatedOrder->delivery_fare,
                 'order' => $updatedOrder,
             ]);
         } catch (\Throwable $e) {

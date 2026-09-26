@@ -5,6 +5,7 @@ use App\Console\Commands\AutoReleaseJalonsCommand;
 use App\Console\Commands\DecayScoreCommand;
 use App\Console\Commands\DriverWatchdogCommand;
 use App\Console\Commands\ExpireRecruitmentOffersCommand;
+use App\Console\Commands\RetryFailedPayoutsCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -43,6 +44,13 @@ Schedule::command(AdminHealthCheckCommand::class)
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/admin-health-check.log'));
+
+// Chantier 10 — relance des virements Mobile Money échoués (artisans, livreurs)
+Schedule::command(RetryFailedPayoutsCommand::class)
+    ->everyFifteenMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/retry-failed-payouts.log'));
 
 // Module Recrutement — clôture automatique des offres expirées
 Schedule::command(ExpireRecruitmentOffersCommand::class)

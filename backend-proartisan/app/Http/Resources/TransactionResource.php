@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\TransactionPresenter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -11,7 +12,16 @@ class TransactionResource extends JsonResource
     {
         $mission = $this->relationLoaded('mission') ? $this->mission : null;
 
+        // Sens et libellé calculés pour l'utilisateur qui consulte.
+        $view = app(TransactionPresenter::class)->describe($this->resource, $request->user());
+
         return [
+            'direction' => $view['direction'],
+            'libelle' => $view['libelle'],
+            'statutLibelle' => $view['statut_libelle'],
+            'montantSigne' => $view['montant_signe'],
+            'orderId' => $this->metadata['order_id'] ?? null,
+            'payoutId' => $this->metadata['payout_id'] ?? null,
             'id' => $this->id,
             'type' => $this->type,
             'montant' => $this->montant,

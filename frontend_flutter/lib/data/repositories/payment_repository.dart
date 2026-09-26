@@ -48,6 +48,26 @@ class PaymentRepository {
     );
   }
 
+  /// Règlement de la course livrée (modèle « à la Yango ») : le montant est
+  /// fixé par le serveur à la livraison, jamais transmis par l'application.
+  Future<PaymentInitiationModel> initiateDeliveryFarePayment({
+    required int orderId,
+    required String provider,
+    required String phone,
+  }) async {
+    final res = await _client.post(
+      ApiEndpoints.deliveryFarePayment(orderId),
+      data: {
+        'provider': provider,
+        'phone': phone,
+      },
+    );
+
+    return PaymentInitiationModel.fromJson(
+      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+    );
+  }
+
   Future<PaymentStatusModel> checkStatus(int transactionId) async {
     final res = await _client.get(ApiEndpoints.paymentStatus(transactionId));
     return PaymentStatusModel.fromJson(

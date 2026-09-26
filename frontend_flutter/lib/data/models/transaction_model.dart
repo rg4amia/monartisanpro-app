@@ -14,6 +14,15 @@ class TransactionModel {
   final String? clientName;
   final String createdAt;
 
+  /// Sens calculé par le serveur pour l'utilisateur connecté : `entrant`,
+  /// `sortant` ou `sequestre` (fonds consignés par un tiers). Absent des
+  /// réponses antérieures au Chantier 10 : voir [direction].
+  final String? serverDirection;
+
+  /// Libellé et statut en français fournis par le serveur.
+  final String? libelle;
+  final String? statutLibelle;
+
   const TransactionModel({
     required this.id,
     required this.type,
@@ -27,7 +36,34 @@ class TransactionModel {
     this.missionId,
     this.missionDescription,
     this.clientName,
+    this.serverDirection,
+    this.libelle,
+    this.statutLibelle,
   });
+
+  static const String entrant = 'entrant';
+  static const String sortant = 'sortant';
+  static const String sequestre = 'sequestre';
+
+  /// Sens de l'opération pour l'utilisateur connecté. Le repli sur le type ne
+  /// sert qu'aux réponses en cache d'avant le Chantier 10 — il affichait
+  /// l'acompte versé par un client comme une rentrée d'argent.
+  String get direction {
+    if (serverDirection == entrant ||
+        serverDirection == sortant ||
+        serverDirection == sequestre) {
+      return serverDirection!;
+    }
+
+    switch (type) {
+      case 'liberation_jalon':
+      case 'paiement_fournisseur':
+      case 'credit':
+        return entrant;
+      default:
+        return sortant;
+    }
+  }
 
   factory TransactionModel.fromJson(Map<String, dynamic> json) =>
       TransactionModel(
@@ -55,6 +91,10 @@ class TransactionModel {
           json['missionDescription'] ?? json['mission_description'],
         ),
         clientName: readString(json['clientName'] ?? json['client_name']),
+        serverDirection: readString(json['direction']),
+        libelle: readString(json['libelle']),
+        statutLibelle:
+            readString(json['statutLibelle'] ?? json['statut_libelle']),
       );
 
   Map<String, dynamic> toJson() => {
@@ -70,6 +110,9 @@ class TransactionModel {
         'missionId': missionId,
         'missionDescription': missionDescription,
         'clientName': clientName,
+        'direction': serverDirection,
+        'libelle': libelle,
+        'statutLibelle': statutLibelle,
       };
 
   static int _parseInt(dynamic value) {

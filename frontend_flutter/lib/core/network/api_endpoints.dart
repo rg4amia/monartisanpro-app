@@ -157,6 +157,13 @@ class ApiEndpoints {
   static const String transactions = '/transactions';
   static const String walletBalance = '/wallets/balance';
 
+  // Versements Mobile Money reçus & retraits livreur (Chantier 10)
+  static const String payouts = '/payouts';
+  static String payoutRetry(int id) => '/payouts/$id/retry';
+  static const String driverCashouts = '/driver/cashouts';
+  static String deliveryFarePayment(int orderId) =>
+      '/payments/orders/$orderId/delivery-fare';
+
   // Litiges
   static const String litiges = '/litiges';
   static String litige(int id) => '/litiges/$id';

@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Services\GoogleMapsService;
 use App\Services\OrderService;
+use App\Services\PaymentService;
 use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
@@ -249,6 +250,18 @@ test('full delivery order validation workflow', function () {
 
     $order->refresh();
     expect($order->status)->toBe('delivered');
+
+    // Modèle « à la Yango » : le montant de la course est révélé à la
+    // livraison et le livreur n'est crédité qu'au paiement du client.
+    expect($order->delivery_fare_status)->toBe('a_payer');
+    expect(app(WalletService::class)->getBalance($driver->fresh(), WalletType::WALLET_MO))->toBe(0);
+
+    $this->actingAs($client)
+        ->postJson("/api/v1/payments/orders/{$order->id}/delivery-fare", ['provider' => 'wave', 'phone' => '+2250700000009'])
+        ->assertStatus(200);
+    app(PaymentService::class)->confirmSimulatedPayment(
+        Transaction::where('type', 'paiement_livraison')->latest('id')->firstOrFail()
+    );
 
     // Le livreur reçoit son gain de livraison (1250 FCFA - 10% com = 1125 FCFA)
     $driver->refresh();

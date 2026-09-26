@@ -685,17 +685,16 @@ class _DeliveryRoutePlannerScreenState
 
   @override
   Widget build(BuildContext context) {
-    final deliveryFee = widget.mission.montantMo > 0
-        ? widget.mission.montantMo
-        : (widget.mission.montantTotal > 0
-            ? (widget.mission.montantTotal * 0.15).toInt()
-            : 1500);
+    // Estimation : le montant final est révélé à la livraison.
+    final deliveryFee = widget.mission.montantMo;
 
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          'Course #${widget.mission.id} • ${Formatters.fcfa(deliveryFee)}',
+          deliveryFee > 0
+              ? 'Course #${widget.mission.id} • ≈ ${Formatters.fcfa(deliveryFee)}'
+              : 'Course #${widget.mission.id}',
           style: const TextStyle(
             color: Color(0xFF1E293B),
             fontWeight: FontWeight.w800,

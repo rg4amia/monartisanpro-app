@@ -419,6 +419,39 @@ class ScoreService
         return 0.1;
     }
 
+    /**
+     * Moyenne et répartition des notes reçues (1 à 5 étoiles).
+     *
+     * Sans aucune évaluation, `rating` vaut `null` (« Non évalué ») et non 0
+     * ni une note par défaut (Règle d'or 29). `distribution` donne, pour
+     * chaque nombre d'étoiles, la part des évaluations entre 0 et 1.
+     *
+     * @return array{rating: float|null, ratings_count: int, distribution: array<int, float>}
+     */
+    public function ratingsSummary(User $user): array
+    {
+        $counts = Evaluation::where('evalue_id', $user->id)
+            ->selectRaw('note, COUNT(*) as total')
+            ->groupBy('note')
+            ->pluck('total', 'note');
+
+        $ratingsCount = (int) $counts->sum();
+        $sum = $counts->reduce(fn (int $carry, $total, $note) => $carry + (int) $note * (int) $total, 0);
+
+        $distribution = [];
+        foreach ([5, 4, 3, 2, 1] as $star) {
+            $distribution[$star] = $ratingsCount > 0
+                ? round((int) ($counts[$star] ?? 0) / $ratingsCount, 2)
+                : 0.0;
+        }
+
+        return [
+            'rating' => $ratingsCount > 0 ? round($sum / $ratingsCount, 1) : null,
+            'ratings_count' => $ratingsCount,
+            'distribution' => $distribution,
+        ];
+    }
+
     // ──────────────────────────────────────────────
     //  Détail & éligibilité
     // ──────────────────────────────────────────────

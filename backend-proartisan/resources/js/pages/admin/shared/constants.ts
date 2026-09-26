@@ -237,6 +237,8 @@ export const transactionTypeLabels: Record<string, string> = {
     credit: 'Crédit',
     liberation_jalon: 'Libération jalon',
     paiement_fournisseur: 'Paiement fournisseur',
+    paiement_livraison: 'Paiement de course',
+    paiement_livreur: 'Retrait livreur',
     remboursement: 'Remboursement',
 };
 

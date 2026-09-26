@@ -8,6 +8,7 @@ use App\Http\Controllers\Controller;
 use App\Models\Devis;
 use App\Models\Jalon;
 use App\Models\Mission;
+use App\Models\Order;
 use App\Models\Transaction;
 use App\Services\PaymentService;
 use Illuminate\Http\JsonResponse;
@@ -165,6 +166,44 @@ class PaymentController extends Controller
             $result = $this->paymentService->initiateJalonPayment(
                 $request->user(),
                 $jalon,
+                PaymentProvider::from($request->provider),
+                $request->phone,
+            );
+
+            return response()->json(['success' => true] + $result);
+        } catch (PaymentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getStatus());
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
+     * Régler la course d'une commande livrée (modèle « à la Yango ») :
+     * le montant est celui révélé à la livraison, calculé par le serveur.
+     * POST /api/v1/payments/orders/{order}/delivery-fare
+     */
+    public function initiateDeliveryFarePayment(Request $request, Order $order): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'provider' => 'required|in:wave,orange_money,virement_bancaire',
+            'phone' => 'required_if:provider,wave,orange_money|nullable|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationError($validator);
+        }
+
+        try {
+            $result = $this->paymentService->initiateDeliveryFarePayment(
+                $request->user(),
+                $order,
                 PaymentProvider::from($request->provider),
                 $request->phone,
             );

@@ -1,3 +1,5 @@
+import 'dart:async';
+
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
@@ -5,9 +7,10 @@ import 'package:get/get.dart';
 
 import '../../../core/storage/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
-import '../../../core/utils/formatters.dart';
+import '../../../core/utils/json_readers.dart';
 import '../../../data/models/artisan_model.dart';
 import '../../../data/models/communication_model.dart';
+import '../../../data/models/delivery_fare_model.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../data/repositories/artisan_repository.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -16,6 +19,8 @@ import '../../../data/repositories/mission_repository.dart';
 import '../../../data/repositories/order_repository.dart';
 import '../../../data/repositories/user_repository.dart';
 import '../../../data/repositories/wallet_repository.dart';
+import '../../score/controllers/score_controller.dart';
+import '../widgets/driver_home/delivery_fare_dialog.dart';
 
 class HomeController extends GetxController {
   final AuthRepository _authRepo = AuthRepository();
@@ -56,15 +61,23 @@ class HomeController extends GetxController {
   final selectedCategory = Rx<String?>(null);
   final searchDistant = false.obs;
   final fluidityScore = 0.obs;
-  final scoreFiabilite = 0.94.obs;
-  final scoreIntegrite = 0.98.obs;
-  final scoreQualite = 0.88.obs;
-  final scoreReactivite = 0.92.obs;
+  final scoreFiabilite = 0.0.obs;
+  final scoreIntegrite = 0.0.obs;
+  final scoreQualite = 0.0.obs;
+  final scoreReactivite = 0.0.obs;
 
+  // Driver Ratings & Statistics
+  final driverRating = Rxn<double>();
+  final driverRatingsCount = 0.obs;
+  final driverRatingsDistribution = <int, double>{}.obs;
+
+  /// Statut sur l'échelle 0–1000 du Score ProsArtisan (Règle d'or 15) : les
+  /// anciens paliers 50 / 150 dataient de l'échelle 0–100 et classaient
+  /// « Premium » un livreur à 151 points sur 1000.
   String get fluidityStatus {
-    if (fluidityScore.value < 50) return 'Novice';
-    if (fluidityScore.value <= 150) return 'Confirmé';
-    return 'Premium';
+    if (fluidityScore.value >= kExcellenceScoreThreshold) return 'Excellence';
+    if (fluidityScore.value >= kMicroCreditScoreThreshold) return 'Confirmé';
+    return 'Novice';
   }
 
   void toggleSearchDistant() {
@@ -256,6 +269,23 @@ class HomeController extends GetxController {
           dashboardData['score_prosartisan'] != null) {
         fluidityScore.value = _asInt(dashboardData['score_prosartisan']);
       }
+
+      // Note absente = « Non évalué » (null), jamais 0 ni une note par défaut.
+      if (dashboardData.containsKey('rating')) {
+        driverRating.value = readDouble(dashboardData['rating']);
+      }
+      if (dashboardData.containsKey('ratings_count')) {
+        driverRatingsCount.value = _asInt(dashboardData['ratings_count']);
+      }
+      if (dashboardData.containsKey('ratings_distribution')) {
+        final dist = _asMap(dashboardData['ratings_distribution']) ?? const {};
+        driverRatingsDistribution.value = dist.map(
+          (k, v) => MapEntry(
+            int.tryParse(k.toString()) ?? 0,
+            readDouble(v) ?? 0.0,
+          ),
+        );
+      }
     } catch (e) {
       debugPrint('Error fetching dashboard stats: $e');
     }
@@ -263,16 +293,16 @@ class HomeController extends GetxController {
     if (role.value == 'driver' || role.value == 'livreur') {
       // Load driver configurations
       driverVehicle.value = StorageService.getDriverVehicle() ?? 'Moto';
-      driverPlate.value = StorageService.getDriverPlate() ?? 'AB-123-CD';
+      driverPlate.value = StorageService.getDriverPlate() ?? '';
       driverBasePrice.value = StorageService.getDriverBasePrice() ?? 1000;
       driverPriceKm.value = StorageService.getDriverPriceKm() ?? 200;
       driverGpsCoords.value =
           StorageService.getDriverGps() ?? '5.3484, -4.0125';
-      driverAddress.value =
-          StorageService.getDriverAddress() ?? 'Abidjan, Cocody';
+      driverAddress.value = StorageService.getDriverAddress() ?? 'Abidjan';
 
-      // Load persist wallet balance for driver
-      walletMo.value = StorageService.getDriverWalletBalance() ?? 25000;
+      // Le solde vient du ledger serveur (`_walletRepo.getBalance()` plus
+      // haut) : aucune valeur locale ne doit plus s'y substituer.
+      await StorageService.purgeLegacyDriverWalletBalance();
 
       await _loadDriverMissions();
     }
@@ -539,8 +569,12 @@ class HomeController extends GetxController {
           );
           final (cliLat, cliLng) =
               _coordsFrom(_asMap(_asMap(order['client'])?['coordinates']));
+          // Estimation de la course (tarif + bonus d'attente cumulé), jamais
+          // un forfait inventé quand le tarif manque (Règle d'or 29).
           final deliveryCost =
-              (order['delivery_cost'] as num?)?.toInt() ?? 1500;
+              DeliveryFare.tryParse(order['delivery_fare'])?.total ??
+                  readInt(order['delivery_cost']) ??
+                  0;
           final totalAmount = (order['total_amount'] as num?)?.toInt() ?? 0;
 
           return MissionModel(
@@ -600,8 +634,12 @@ class HomeController extends GetxController {
           );
           final (cliLat, cliLng) =
               _coordsFrom(_asMap(_asMap(order['client'])?['coordinates']));
+          // Estimation de la course (tarif + bonus d'attente cumulé), jamais
+          // un forfait inventé quand le tarif manque (Règle d'or 29).
           final deliveryCost =
-              (order['delivery_cost'] as num?)?.toInt() ?? 1500;
+              DeliveryFare.tryParse(order['delivery_fare'])?.total ??
+                  readInt(order['delivery_cost']) ??
+                  0;
           final totalAmount = (order['total_amount'] as num?)?.toInt() ?? 0;
 
           return MissionModel(
@@ -770,19 +808,31 @@ class HomeController extends GetxController {
           return true;
         }
 
-        final deliveryFee = mission.montantMo > 0 ? mission.montantMo : 1500;
-        walletMo.value += deliveryFee;
-        StorageService.saveDriverWalletBalance(walletMo.value);
+        // Solde relu sur le ledger serveur : le livreur n'est crédité qu'au
+        // paiement de la course par le client (modèle « à la Yango »).
+        try {
+          await _walletRepo.invalidateBalance();
+          final b = await _walletRepo.getBalance(forceRefresh: true);
+          walletMo.value = b['walletMo'] ?? walletMo.value;
+        } catch (_) {
+          // Solde illisible : le prochain rafraîchissement le corrigera.
+        }
 
         driverActiveMissions.removeWhere((m) => m.id == mission.id);
 
-        Get.snackbar(
-          'Livraison validée & Terminée',
-          'Votre portefeuille a été crédité de ${Formatters.fcfa(deliveryFee)}.',
-          snackPosition: SnackPosition.BOTTOM,
-          backgroundColor: AppColors.success,
-          colorText: Colors.white,
-        );
+        // Révélation du montant final de la course (tarif + bonus d'attente).
+        final fare = DeliveryFare.tryParse(res['delivery_fare']);
+        if (fare != null) {
+          unawaited(Get.dialog(DeliveryFareDialog(fare: fare)));
+        } else {
+          Get.snackbar(
+            'Livraison validée',
+            readString(res['message']) ?? 'Livraison confirmée.',
+            snackPosition: SnackPosition.BOTTOM,
+            backgroundColor: AppColors.success,
+            colorText: Colors.white,
+          );
+        }
         await _loadDriverMissions();
         return true;
       }
@@ -825,8 +875,7 @@ class HomeController extends GetxController {
       if (res['success'] == true) {
         Get.snackbar(
           'Frais d\'attente appliqués',
-          res['message'] as String? ??
-              'Frais d\'attente majorés appliqués.',
+          res['message'] as String? ?? 'Frais d\'attente majorés appliqués.',
           snackPosition: SnackPosition.BOTTOM,
           backgroundColor: AppColors.success,
           colorText: Colors.white,

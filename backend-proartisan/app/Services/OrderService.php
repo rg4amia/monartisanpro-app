@@ -20,6 +20,9 @@ use Illuminate\Support\Str;
 
 class OrderService
 {
+    /** Courses acceptées par un livreur et pas encore livrées. */
+    public const DRIVER_IN_PROGRESS_STATUSES = ['driver_assigned', 'driver_picked_up', 'shipping'];
+
     private DeliveryPricingService $pricingService;
 
     public function __construct(
@@ -249,7 +252,11 @@ class OrderService
                     $pkgDeliveryCost = (int) ($fare['delivery_cost'] ?? 0);
                 }
 
-                $pkgTotal = max(0, $pkgSubtotal + $pkgDeliveryCost + $pkgPlatformFee);
+                // Modèle « à la Yango » : la course n'est qu'estimée ici et payée
+                // par le client à la livraison, une fois son montant final connu
+                // (course + bonus d'attente). Elle n'entre donc pas dans le paiement
+                // groupé, qui la comptait auparavant une seconde fois à l'acceptation.
+                $pkgTotal = max(0, $pkgSubtotal + $pkgPlatformFee);
 
                 $codeSuffix = str_pad(random_int(0, 9999), 4, '0', STR_PAD_LEFT);
                 $pickupPrefix = $deliveryMode === 'delivery' ? 'LIVREUR' : 'RETRAIT';
@@ -361,6 +368,7 @@ class OrderService
                 'orders' => $createdOrders,
                 'total_subtotal' => $totalSubtotal,
                 'total_delivery_cost' => $totalDeliveryCost,
+                'delivery_cost_is_estimate' => true,
                 'total_platform_fee' => $totalPlatformFee,
                 'total_amount' => $grandTotal,
                 'packages_count' => count($createdOrders),
@@ -425,31 +433,19 @@ class OrderService
 
         // Peut réévaluer et relever order->vehicle_class si les articles sont
         // plus lourds que la classe initialement choisie (voir Règle d'Or logistique).
-        $deliveryCost = $this->pricingService->calculateOrderDeliveryCost($order);
+        // Modèle « à la Yango » : à l'acceptation, la course n'est qu'estimée.
+        // Aucun paiement n'est enregistré — l'ancienne transaction Wave
+        // « confirmée » créée ici ne correspondait à aucun débit du client.
+        // Le montant final (course + bonus d'attente) est révélé à la
+        // livraison et payé par le client à ce moment-là (revealDeliveryFare).
+        $estimatedCost = $this->pricingService->calculateOrderDeliveryCost($order);
 
         $order->update([
             'driver_id' => $driver->id,
             'status' => 'driver_assigned',
             'driver_assigned_at' => now(),
-            'delivery_cost' => $deliveryCost,
-            'total_amount' => $order->subtotal + $order->platform_fee + $deliveryCost,
+            'delivery_cost' => $estimatedCost,
             'vehicle_class' => $order->vehicle_class,
-        ]);
-
-        // Créer la transaction Mobile Money pour le montant de la course
-        Transaction::create([
-            'user_id' => $order->client_id,
-            'type' => 'acompte',
-            'montant' => $deliveryCost,
-            'wallet_source' => 'client_mobile_money_'.$order->client_id,
-            'wallet_dest' => 'escrow_order_'.$order->id,
-            'provider' => PaymentProvider::WAVE,
-            'statut' => PaymentStatus::CONFIRME,
-            'paid_at' => now(),
-            'metadata' => [
-                'order_id' => $order->id,
-                'description' => "Paiement de la course de livraison #{$order->id} (ajouté après acceptation du livreur)",
-            ],
         ]);
 
         $supplierAddress = $supplierProfile ? $supplierProfile->nom_boutique : 'le fournisseur';
@@ -759,24 +755,10 @@ class OrderService
 
             $order->update($updateData);
 
-            // Libération des fonds au livreur
-            $this->releaseDriverFunds($order);
-
-            // Notification Client
-            app(NotificationService::class)->send(
-                $order->client,
-                'payment',
-                'Livraison effectuée',
-                "Votre commande #{$order->id} a été livrée avec succès par {$order->driver->name}."
-            );
-
-            // Notification Livreur
-            app(NotificationService::class)->send(
-                $order->driver,
-                'payment',
-                'Course terminée',
-                "Livraison confirmée. Les fonds de livraison de la commande #{$order->id} ont été libérés."
-            );
+            // Révélation du montant final de la course (modèle « à la Yango »)
+            // et demande de paiement au client, ou règlement immédiat si la
+            // course était déjà couverte (ancien modèle prépayé).
+            $this->revealDeliveryFare($order);
 
             return $order;
         });
@@ -844,38 +826,22 @@ class OrderService
             throw new \Exception("Le temps d'attente cumulé déclaré pour cette commande dépasse le plafond autorisé ({$cumulativeCapMinutes} minutes).");
         }
 
+        if (! in_array($order->status, self::DRIVER_IN_PROGRESS_STATUSES, true)) {
+            throw new \Exception("Le temps d'attente ne peut être déclaré que pendant la course.");
+        }
+
         $extraFee = (int) round(($waitingMinutes / 5) * 100); // 100 FCFA par tranche de 5 min d'attente
-        $newDeliveryCost = $order->delivery_cost + $extraFee;
 
-        return DB::transaction(function () use ($order, $waitingMinutes, $extraFee, $newDeliveryCost) {
-            $order->update([
-                'waiting_time_minutes' => $order->waiting_time_minutes + $waitingMinutes,
-                'delivery_cost' => $newDeliveryCost,
-                'total_amount' => $order->subtotal + $order->platform_fee + $newDeliveryCost,
-            ]);
+        // Bonus d'attente cumulé à part du tarif de la course : il s'ajoute au
+        // montant révélé à la livraison et payé alors par le client. Aucune
+        // transaction n'est créée ici — l'ancien « acompte » Wave confirmé ne
+        // correspondait à aucun débit réel du client.
+        $order->update([
+            'waiting_time_minutes' => $order->waiting_time_minutes + $waitingMinutes,
+            'waiting_fee' => (int) $order->waiting_fee + $extraFee,
+        ]);
 
-            // Trace le surcoût dans le séquestre de la commande : sans cette
-            // écriture, le montant reversé au livreur à la livraison
-            // (`releaseDriverFunds`, calculé sur `delivery_cost`) n'avait
-            // aucune contrepartie dans le ledger financier.
-            Transaction::create([
-                'user_id' => $order->client_id,
-                'type' => 'acompte',
-                'montant' => $extraFee,
-                'wallet_source' => 'client_mobile_money_'.$order->client_id,
-                'wallet_dest' => 'escrow_order_'.$order->id,
-                'provider' => PaymentProvider::WAVE,
-                'statut' => PaymentStatus::CONFIRME,
-                'paid_at' => now(),
-                'metadata' => [
-                    'order_id' => $order->id,
-                    'waiting_minutes' => $waitingMinutes,
-                    'description' => "Majoration frais d'attente livreur - commande #{$order->id}",
-                ],
-            ]);
-
-            return $order;
-        });
+        return $order;
     }
 
     /**
@@ -933,6 +899,174 @@ class OrderService
     }
 
     /**
+     * Répartition d'un coût de course entre le livreur et la plateforme
+     * (commission paramétrable `commission_livreur`, 10 % par défaut).
+     *
+     * @return array{commission: int, net: int}
+     */
+    private function driverShare(int $deliveryCost): array
+    {
+        $ratio = (float) Setting::getValueByKey('commission_livreur', 0.10);
+        $commission = (int) round($deliveryCost * $ratio);
+
+        return ['commission' => $commission, 'net' => $deliveryCost - $commission];
+    }
+
+    /**
+     * Révèle le montant final de la course à la livraison : tarif recalculé
+     * au moment de l'arrivée, plus le bonus d'attente cumulé. La part déjà
+     * encaissée sous l'ancien modèle (`delivery_fare_prepaid`) est déduite ;
+     * le reste est demandé au client (Wave / Orange Money) et le livreur est
+     * crédité à la confirmation de ce paiement (`settleDeliveryFare`).
+     */
+    public function revealDeliveryFare(Order $order): Order
+    {
+        $prepaid = (int) $order->delivery_fare_prepaid;
+        $waitingFee = (int) $order->waiting_fee;
+        $base = $this->pricingService->calculateOrderDeliveryCost($order);
+
+        // Course prépayée sous l'ancien modèle : le client ne paie jamais moins
+        // que ce qu'il a déjà réglé, et le livreur ne touche pas moins.
+        $total = max($base + $waitingFee, $prepaid);
+        $due = $total - $prepaid;
+
+        $order->update([
+            'delivery_cost' => $total - $waitingFee,
+            'total_amount' => (int) $order->total_amount + $due,
+            'delivery_fare_status' => $due > 0 ? 'a_payer' : 'paye',
+            'delivery_fare_settled_at' => $due > 0 ? null : now(),
+        ]);
+
+        $notifications = app(NotificationService::class);
+        $fmt = fn (int $amount) => number_format($amount, 0, ',', ' ').' FCFA';
+        $bonus = $waitingFee > 0 ? " (dont bonus d'attente {$fmt($waitingFee)})" : '';
+
+        if ($due === 0) {
+            $this->releaseDriverFunds($order);
+
+            $notifications->send($order->client, 'payment', 'Livraison effectuée',
+                "Votre commande #{$order->id} a été livrée par {$order->driver->name}.");
+            $notifications->send($order->driver, 'payment', 'Course terminée',
+                "Montant de la course #{$order->id} : {$fmt($total)}{$bonus}. Vos gains ont été crédités.");
+
+            return $order;
+        }
+
+        $notifications->send($order->client, 'payment', 'Livraison effectuée — course à régler',
+            "Votre commande #{$order->id} a été livrée. Montant de la course : {$fmt($due)}{$bonus}. Réglez-la depuis l'application (Wave ou Orange Money).",
+            ['order_id' => $order->id, 'action' => 'pay_delivery_fare']);
+        $notifications->send($order->driver, 'payment', 'Course terminée',
+            "Montant de la course #{$order->id} : {$fmt($total)}{$bonus}. Vos gains seront crédités dès le paiement du client.");
+
+        return $order;
+    }
+
+    /**
+     * Message de fin de livraison annonçant le montant de la course.
+     */
+    public function deliveryFareMessage(Order $order): string
+    {
+        $fare = $order->delivery_fare;
+        if (! $fare) {
+            return 'Livraison confirmée.';
+        }
+
+        $amount = number_format($fare['total'], 0, ',', ' ').' FCFA';
+        $bonus = $fare['waiting_bonus'] > 0 ? " (dont bonus d'attente ".number_format($fare['waiting_bonus'], 0, ',', ' ').' FCFA)' : '';
+
+        return $fare['status'] === 'a_payer'
+            ? "Livraison confirmée. Montant de la course : {$amount}{$bonus}. Vos gains seront crédités dès le paiement du client."
+            : "Livraison confirmée. Montant de la course : {$amount}{$bonus}. Vos gains ont été crédités.";
+    }
+
+    /**
+     * Règle la course après confirmation du paiement du client et crédite le
+     * livreur. Idempotent : webhook, interrogation de statut et simulateur
+     * peuvent confirmer le même paiement (Règle d'or 36).
+     *
+     * @return bool vrai si ce paiement vient de régler la course
+     */
+    public function settleDeliveryFare(Order $order, Transaction $payment): bool
+    {
+        return DB::transaction(function () use ($order, $payment) {
+            $order = Order::lockForUpdate()->find($order->id);
+
+            if (! $order || $order->delivery_fare_status !== 'a_payer') {
+                return false;
+            }
+
+            // Le montant est celui établi par le serveur à la livraison, jamais
+            // un montant posté par le client (Règle d'or 36).
+            if ((int) $payment->montant !== $order->deliveryFareDue() || (int) $payment->user_id !== (int) $order->client_id) {
+                Log::warning("[Course] Paiement #{$payment->id} non conforme pour la commande #{$order->id}", [
+                    'attendu' => $order->deliveryFareDue(),
+                    'recu' => $payment->montant,
+                ]);
+
+                return false;
+            }
+
+            $order->update([
+                'delivery_fare_status' => 'paye',
+                'delivery_fare_settled_at' => now(),
+            ]);
+
+            $this->releaseDriverFunds($order);
+
+            if ($order->driver) {
+                ['net' => $net] = $this->driverShare($order->deliveryFareTotal());
+                app(NotificationService::class)->send($order->driver, 'payment', 'Course réglée',
+                    "Le client a réglé la course #{$order->id}. ".number_format($net, 0, ',', ' ').' FCFA ont été crédités sur votre portefeuille.');
+            }
+
+            return true;
+        });
+    }
+
+    /**
+     * Synthèse des gains d'un livreur, en montants nets de commission.
+     *
+     * - `earned` : parts de course effectivement libérées (ledger des
+     *   transactions vers `driver_wallet_{id}`), et non la somme brute des
+     *   `delivery_cost`, qui incluait la commission plateforme ;
+     * - `pending` : gain net attendu des courses acceptées et pas encore
+     *   livrées — y compris `driver_picked_up`, le statut réel du transit
+     *   après retrait, qu'omettait l'ancien calcul — estimé sur le tarif et
+     *   le bonus d'attente déjà cumulé ;
+     * - `pending_count` : nombre de ces courses ;
+     * - `awaiting_payment` / `awaiting_payment_count` : courses livrées dont
+     *   le client n'a pas encore réglé le montant.
+     *
+     * @return array{earned: int, pending: int, pending_count: int, awaiting_payment: int, awaiting_payment_count: int}
+     */
+    public function driverEarningsSummary(User $driver): array
+    {
+        $earned = (int) Transaction::where('user_id', $driver->id)
+            ->where('wallet_dest', 'driver_wallet_'.$driver->id)
+            ->where('statut', PaymentStatus::CONFIRME)
+            ->sum('montant');
+
+        $net = fn ($order) => $this->driverShare((int) $order->delivery_cost + (int) $order->waiting_fee)['net'];
+
+        $inProgress = Order::where('driver_id', $driver->id)
+            ->whereIn('status', self::DRIVER_IN_PROGRESS_STATUSES)
+            ->get(['delivery_cost', 'waiting_fee']);
+
+        $awaiting = Order::where('driver_id', $driver->id)
+            ->where('status', 'delivered')
+            ->where('delivery_fare_status', 'a_payer')
+            ->get(['delivery_cost', 'waiting_fee']);
+
+        return [
+            'earned' => $earned,
+            'pending' => (int) $inProgress->sum($net),
+            'pending_count' => $inProgress->count(),
+            'awaiting_payment' => (int) $awaiting->sum($net),
+            'awaiting_payment_count' => $awaiting->count(),
+        ];
+    }
+
+    /**
      * Libère les frais de livraison au profit du livreur.
      */
     private function releaseDriverFunds(Order $order): void
@@ -942,10 +1076,7 @@ class OrderService
             return;
         }
 
-        // Calcul de la commission livreur dynamique (depuis settings, default 10%)
-        $driverCommissionRatio = Setting::getValueByKey('commission_livreur', 0.10);
-        $driverCommission = (int) round($order->delivery_cost * $driverCommissionRatio);
-        $gainNetDriver = $order->delivery_cost - $driverCommission;
+        ['commission' => $driverCommission, 'net' => $gainNetDriver] = $this->driverShare($order->deliveryFareTotal());
 
         // Débiter le compte séquestre de la part livraison
         Transaction::create([

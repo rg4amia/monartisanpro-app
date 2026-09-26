@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../data/models/delivery_fare_model.dart';
 import '../../../shared/widgets/code_verification_card.dart';
 import '../controllers/order_follow_up_controller.dart';
+import '../widgets/delivery_fare_payment_card.dart';
 import '../widgets/order_status_badge.dart';
 import 'order_tracking_screen.dart';
 
@@ -139,6 +141,12 @@ class _ClientOrderCard extends StatelessWidget {
   /// message d'erreur exact est affiché si la demande est hors délai.
   bool get _canDispute => _status == 'delivered';
 
+  /// Course livrée dont le montant (révélé à la livraison) reste à régler.
+  DeliveryFare? get _fareToPay {
+    final fare = DeliveryFare.tryParse(order['delivery_fare']);
+    return fare != null && fare.isAwaitingPayment ? fare : null;
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -208,6 +216,27 @@ class _ClientOrderCard extends StatelessWidget {
               ),
             ],
           ),
+          if (_fareToPay != null) ...[
+            const SizedBox(height: 14),
+            Obx(
+              () => DeliveryFarePaymentCard(
+                fare: _fareToPay!,
+                busy: controller.payingOrderId.value == _id,
+                onPay: (provider) async {
+                  final paid =
+                      await controller.payDeliveryFare(_id, provider: provider);
+                  Get.snackbar(
+                    paid ? 'Course réglée' : 'Paiement de la course',
+                    paid
+                        ? 'Merci ! Le livreur a été payé.'
+                        : controller.errorMsg.value ??
+                            'Paiement non confirmé pour le moment.',
+                    snackPosition: SnackPosition.BOTTOM,
+                  );
+                },
+              ),
+            ),
+          ],
           if (_showCode) ...[
             const SizedBox(height: 14),
             CodeVerificationCard(
@@ -416,7 +445,10 @@ class _ClientOrderCard extends StatelessWidget {
                 );
               }
             },
-            child: const Text('Envoyer', style: TextStyle(fontWeight: FontWeight.bold)),
+            child: const Text(
+              'Envoyer',
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),

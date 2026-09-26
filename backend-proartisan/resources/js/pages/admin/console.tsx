@@ -121,6 +121,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         transactionsPage = undefined,
         transactionStats = { pending: 0, failed: 0, confirmed: 0, volume_24h: 0, escrow: 0, released: 0 },
         documentsPage = undefined,
+        payoutsOverview = null,
+        driverCashoutsOverview = null,
         documentStats = { total_documents: 0, total_montant_certifie: 0, recus_jalons_mo: 0, recus_quincaillerie: 0, rapports_et_litiges: 0 },
         litigesPage = undefined,
         litigeStats = { open: 0, resolved: 0, high_risk: 0, missions_disputed: 0 },
@@ -853,6 +855,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     settingsList={settingsList}
                                     documentsPage={documentsPage}
                                     documentStats={documentStats}
+                                    payoutsOverview={payoutsOverview}
+                                    driverCashoutsOverview={driverCashoutsOverview}
                                 />
                             ) : null}
 
