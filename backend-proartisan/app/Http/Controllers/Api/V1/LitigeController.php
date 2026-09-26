@@ -84,9 +84,10 @@ class LitigeController extends Controller
         $user = $request->user();
         $mission = $litige->mission;
 
-        $isJuror = $litige->juryReviews()->where('jure_id', $user->id)->exists();
-
-        if ($user->role !== 'admin' && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! $isJuror) {
+        // Fiche réservée aux parties et à l'admin : elle expose noms et
+        // téléphones. Un juré instruit le dossier anonymisé de son espace
+        // (`/jury/dossiers`, Chantier 12 — anonymisation bilatérale).
+        if ($user->role !== 'admin' && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acces refuse.',

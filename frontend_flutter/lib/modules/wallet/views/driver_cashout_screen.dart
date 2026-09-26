@@ -218,7 +218,21 @@ class _DriverCashoutScreenState extends State<DriverCashoutScreen> {
                 )
               else
                 for (final cashout in controller.cashouts)
-                  _CashoutTile(cashout: cashout),
+                  _CashoutTile(
+                    cashout: cashout,
+                    openingReceipt:
+                        controller.openingReceiptId.value == cashout.id,
+                    onReceipt: () async {
+                      final error = await controller.openReceipt(cashout);
+                      if (error != null) {
+                        Get.snackbar(
+                          'Reçu',
+                          error,
+                          snackPosition: SnackPosition.BOTTOM,
+                        );
+                      }
+                    },
+                  ),
             ],
           ),
         );
@@ -278,9 +292,15 @@ class _BalanceHeader extends StatelessWidget {
 }
 
 class _CashoutTile extends StatelessWidget {
-  const _CashoutTile({required this.cashout});
+  const _CashoutTile({
+    required this.cashout,
+    required this.onReceipt,
+    this.openingReceipt = false,
+  });
 
   final DriverCashoutModel cashout;
+  final VoidCallback onReceipt;
+  final bool openingReceipt;
 
   Color get _color {
     if (cashout.payout?.isFailed ?? false) return AppColors.danger;
@@ -341,6 +361,22 @@ class _CashoutTile extends StatelessWidget {
                       fontSize: 11.5,
                       color: AppColors.textSecondary,
                     ),
+                  ),
+                if (cashout.receiptAvailable && cashout.transactionId != null)
+                  TextButton.icon(
+                    onPressed: openingReceipt ? null : onReceipt,
+                    style: TextButton.styleFrom(
+                      padding: EdgeInsets.zero,
+                      visualDensity: VisualDensity.compact,
+                    ),
+                    icon: openingReceipt
+                        ? const SizedBox(
+                            width: 14,
+                            height: 14,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                    label: const Text('Reçu PDF'),
                   ),
               ],
             ),

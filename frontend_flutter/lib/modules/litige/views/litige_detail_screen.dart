@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
+import '../../../shared/widgets/refund_destination_dialog.dart';
 import '../controllers/litige_detail_controller.dart';
 
 class LitigeDetailScreen extends GetView<LitigeDetailController> {
@@ -35,13 +36,29 @@ class LitigeDetailScreen extends GetView<LitigeDetailController> {
                 statut: (data['statut'] ?? '').toString(),
                 workflowStep: (data['workflowStep'] ?? '').toString(),
               ),
-              if (controller.isJuror) ...[
+              if (controller.isClient) ...[
                 const SizedBox(height: 16),
-                _JurySection(
-                  litige: data,
-                  review: controller.myJuryReview!,
-                  isVoting: controller.isVoting.value,
-                  onVote: controller.castJuryVote,
+                _RefundDestinationCard(
+                  destination: controller.refundDestination,
+                  saving: controller.isSavingRefundDestination.value,
+                  onEdit: () async {
+                    final current = controller.refundDestination;
+                    final choice = await showRefundDestinationDialog(
+                      context,
+                      initialProvider: current?['provider']?.toString(),
+                      initialPhone: current?['phone']?.toString(),
+                    );
+                    if (choice == null) return;
+                    final message = await controller.saveRefundDestination(
+                      provider: choice.provider,
+                      phone: choice.phone,
+                    );
+                    Get.snackbar(
+                      'Remboursement',
+                      message,
+                      snackPosition: SnackPosition.BOTTOM,
+                    );
+                  },
                 ),
               ],
               const SizedBox(height: 16),
@@ -244,178 +261,65 @@ class _ProofTile extends StatelessWidget {
   }
 }
 
-class _JurySection extends StatelessWidget {
-  final Map<String, dynamic> litige;
-  final Map<String, dynamic> review;
-  final bool isVoting;
-  final ValueChanged<String> onVote;
+/// Moyen de remboursement du client (Chantier 11) : si l'arbitrage lui
+/// donne raison, le virement part vers ce compte, et un virement déjà en
+/// échec y est redirigé.
+class _RefundDestinationCard extends StatelessWidget {
+  final Map<String, dynamic>? destination;
+  final bool saving;
+  final VoidCallback onEdit;
 
-  const _JurySection({
-    required this.litige,
-    required this.review,
-    required this.isVoting,
-    required this.onVote,
+  const _RefundDestinationCard({
+    required this.destination,
+    required this.saving,
+    required this.onEdit,
   });
 
   @override
   Widget build(BuildContext context) {
-    final verdict = review['verdict']?.toString();
-    final compensation = review['compensation'];
-    final parties = litige['parties'] as Map<String, dynamic>? ?? const {};
-    final client = parties['client'] as Map<String, dynamic>?;
-    final artisan = parties['artisan'] as Map<String, dynamic>?;
-    final motif = (litige['motif'] ?? '').toString();
-    final description = (litige['description'] ?? '').toString();
-    final evidenceCounts =
-        litige['evidenceCounts'] as Map<String, dynamic>? ?? const {};
-    final proofs = (litige['preuves'] as List<dynamic>? ?? const []);
+    final provider = destination?['provider']?.toString();
+    final phone = destination?['phone']?.toString();
+    final chosen = provider != null && phone != null;
 
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: AppColors.primary.withValues(alpha: 0.06),
+        color: Colors.white,
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppColors.primary, width: 1.5),
+        border: Border.all(color: AppColors.border),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Row(
-            children: [
-              Icon(Icons.balance_outlined, color: AppColors.primary),
-              SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  'Vous êtes juré sur ce dossier',
-                  style: TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 16,
-                    color: AppColors.primary,
-                  ),
-                ),
-              ),
-            ],
+          const Text(
+            'Moyen de remboursement',
+            style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
           ),
-          const SizedBox(height: 12),
-          if (motif.isNotEmpty) ...[
-            Text(
-              'Motif : $motif',
-              style: const TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 6),
-          ],
-          Text('Client : ${client?['name'] ?? 'Inconnu'}'),
-          Text('Artisan : ${artisan?['name'] ?? 'Inconnu'}'),
-          const SizedBox(height: 8),
-          if (description.isNotEmpty) Text(description),
-          const SizedBox(height: 8),
+          const SizedBox(height: 6),
           Text(
-            'Preuves — Client : ${evidenceCounts['client'] ?? 0}/${evidenceCounts['clientRequired'] ?? 2}  |  Artisan : ${evidenceCounts['artisan'] ?? 0}/${evidenceCounts['artisanRequired'] ?? 1}',
-            style:
-                const TextStyle(fontSize: 12, color: AppColors.textSecondary),
+            chosen
+                ? '${kRefundProviders[provider] ?? provider} · $phone'
+                : 'Si une somme vous est remboursée, elle sera versée sur votre numéro Mobile Money habituel. Vous pouvez en indiquer un autre.',
+            style: const TextStyle(fontSize: 13),
           ),
-          if (proofs.isEmpty) ...[
-            const SizedBox(height: 6),
-            const Text(
-              'Aucune preuve deposee pour le moment.',
-              style: TextStyle(
-                fontSize: 12,
-                fontStyle: FontStyle.italic,
-                color: AppColors.textSecondary,
-              ),
+          const SizedBox(height: 8),
+          TextButton.icon(
+            onPressed: saving ? null : onEdit,
+            style: TextButton.styleFrom(padding: EdgeInsets.zero),
+            icon: saving
+                ? const SizedBox(
+                    width: 16,
+                    height: 16,
+                    child: CircularProgressIndicator(strokeWidth: 2),
+                  )
+                : const Icon(Icons.edit_outlined, size: 18),
+            label: Text(
+              chosen
+                  ? 'Modifier le moyen de remboursement'
+                  : 'Choisir le moyen de remboursement',
             ),
-          ],
-          const SizedBox(height: 16),
-          if (verdict == null) ...[
-            const Text(
-              'L\'artisan a-t-il rempli ses obligations ?',
-              style: TextStyle(fontWeight: FontWeight.w600),
-            ),
-            const SizedBox(height: 12),
-            Row(
-              children: [
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed:
-                        isVoting ? null : () => onVote('CONFORME'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.success,
-                    ),
-                    child: isVoting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('CONFORME'),
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: ElevatedButton(
-                    onPressed:
-                        isVoting ? null : () => onVote('NON_CONFORME'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppColors.danger,
-                    ),
-                    child: isVoting
-                        ? const SizedBox(
-                            width: 16,
-                            height: 16,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.white,
-                            ),
-                          )
-                        : const Text('NON CONFORME'),
-                  ),
-                ),
-              ],
-            ),
-          ] else ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: verdict == 'CONFORME'
-                    ? AppColors.success.withValues(alpha: 0.1)
-                    : AppColors.danger.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(8),
-              ),
-              child: Row(
-                children: [
-                  Icon(
-                    verdict == 'CONFORME'
-                        ? Icons.check_circle
-                        : Icons.cancel,
-                    color: verdict == 'CONFORME'
-                        ? AppColors.success
-                        : AppColors.danger,
-                  ),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      'Vous avez voté : ${verdict == 'CONFORME' ? 'CONFORME' : 'NON CONFORME'}',
-                      style: const TextStyle(fontWeight: FontWeight.w600),
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (compensation is num) ...[
-              const SizedBox(height: 8),
-              Text(
-                'Compensation retenue : ${compensation.toInt()} FCFA',
-                style: const TextStyle(
-                  fontSize: 12,
-                  color: AppColors.textSecondary,
-                ),
-              ),
-            ],
-          ],
+          ),
         ],
       ),
     );

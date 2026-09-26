@@ -17,11 +17,18 @@ class PendingPayoutsSection extends StatelessWidget {
     required this.payouts,
     required this.onRetry,
     this.retryingPayoutId,
+    this.onChangeDestination,
+    this.updatingDestinationPayoutId,
   });
 
   final List<PayoutModel> payouts;
   final Future<void> Function(PayoutModel payout) onRetry;
   final int? retryingPayoutId;
+
+  /// Choix de l'opérateur et du numéro d'un remboursement après litige
+  /// (Chantier 11). Sans ce rappel, le bouton n'est pas proposé.
+  final Future<void> Function(PayoutModel payout)? onChangeDestination;
+  final int? updatingDestinationPayoutId;
 
   @override
   Widget build(BuildContext context) {
@@ -53,6 +60,11 @@ class PendingPayoutsSection extends StatelessWidget {
             payout: payout,
             busy: retryingPayoutId == payout.id,
             onRetry: () => onRetry(payout),
+            updatingDestination: updatingDestinationPayoutId == payout.id,
+            onChangeDestination:
+                onChangeDestination != null && payout.canChangeDestination
+                    ? () => onChangeDestination!(payout)
+                    : null,
           ),
       ],
     );
@@ -64,11 +76,20 @@ class _PayoutCard extends StatelessWidget {
     required this.payout,
     required this.busy,
     required this.onRetry,
+    this.updatingDestination = false,
+    this.onChangeDestination,
   });
 
   final PayoutModel payout;
   final bool busy;
   final VoidCallback onRetry;
+  final bool updatingDestination;
+  final VoidCallback? onChangeDestination;
+
+  static const Map<String, String> _providers = {
+    'wave': 'Wave',
+    'orange_money': 'Orange Money',
+  };
 
   String _date(DateTime? value) {
     if (value == null) return '';
@@ -149,7 +170,9 @@ class _PayoutCard extends StatelessWidget {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: Text(
-                    'Numéro de réception : ${payout.phone}',
+                    'Numéro de réception : '
+                    '${payout.isClientRefund ? '${_providers[payout.provider] ?? payout.provider} · ' : ''}'
+                    '${payout.phone}',
                     style: const TextStyle(
                       fontSize: 12,
                       color: AppColors.textSecondary,
@@ -216,10 +239,31 @@ class _PayoutCard extends StatelessWidget {
                   ),
                 ),
                 const SizedBox(height: 4),
-                const Text(
-                  'Numéro erroné ? Corrigez-le dans Paramètres › Reversement Mobile Money avant de relancer.',
-                  style:
-                      TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                Text(
+                  payout.isClientRefund
+                      ? 'Numéro erroné ? Modifiez le moyen de remboursement ci-dessous avant de relancer.'
+                      : 'Numéro erroné ? Corrigez-le dans Paramètres › Reversement Mobile Money avant de relancer.',
+                  style: const TextStyle(
+                    fontSize: 11,
+                    color: AppColors.textSecondary,
+                  ),
+                ),
+              ],
+              if (onChangeDestination != null) ...[
+                const SizedBox(height: 8),
+                SizedBox(
+                  width: double.infinity,
+                  child: TextButton.icon(
+                    onPressed: updatingDestination ? null : onChangeDestination,
+                    icon: updatingDestination
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.edit_outlined, size: 18),
+                    label: const Text('Modifier le moyen de remboursement'),
+                  ),
                 ),
               ],
             ],

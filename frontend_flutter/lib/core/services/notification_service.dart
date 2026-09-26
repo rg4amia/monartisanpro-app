@@ -110,8 +110,20 @@ class NotificationService extends GetxService {
           Get.toNamed(Routes.jcode);
         }
       }
-      // 5. Redirection pour les litiges (y compris l'assignation comme juré)
-      else if (type.contains('litige') || type.contains('jury')) {
+      // 5a. Assignation comme juré : dossier anonymisé de l'espace juré,
+      // jamais la fiche litige des parties (noms et téléphones, Chantier 12).
+      else if (type.contains('jury')) {
+        if (litigeId != null) {
+          Get.toNamed(
+            Routes.juryDossierDetail,
+            arguments: {'litigeId': litigeId},
+          );
+        } else {
+          Get.toNamed(Routes.juryDossiers);
+        }
+      }
+      // 5b. Redirection pour les litiges
+      else if (type.contains('litige')) {
         if (litigeId != null) {
           Get.toNamed(
             Routes.litigeDetail,

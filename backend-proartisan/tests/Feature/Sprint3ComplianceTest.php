@@ -18,6 +18,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
 use Tests\Support\Geo;
+use Tests\Support\Scores;
 use Tests\TestCase;
 
 class Sprint3ComplianceTest extends TestCase
@@ -135,6 +136,7 @@ class Sprint3ComplianceTest extends TestCase
         /** @var User $jure3 */
         $jure3 = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'actif', 'score_prosartisan' => 850]);
         $jure3->artisanProfile()->create(['experience_years' => 3]);
+        Scores::backWithLedger($jure1, $jure2, $jure3);
 
         $mission = Mission::create([
             'client_id' => $client->id,

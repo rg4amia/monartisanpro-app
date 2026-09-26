@@ -6,6 +6,7 @@ import '../../../core/storage/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/transaction_model.dart';
+import '../../../shared/widgets/refund_destination_dialog.dart';
 import '../controllers/wallet_controller.dart';
 import '../widgets/pending_payouts_section.dart';
 import 'driver_cashout_screen.dart';
@@ -49,6 +50,28 @@ class WalletScreen extends StatelessWidget {
                       PendingPayoutsSection(
                         payouts: controller.pendingPayouts.toList(),
                         retryingPayoutId: controller.retryingPayoutId.value,
+                        updatingDestinationPayoutId:
+                            controller.updatingDestinationPayoutId.value,
+                        onChangeDestination: (payout) async {
+                          final destination =
+                              await showRefundDestinationDialog(
+                            context,
+                            initialProvider: payout.provider,
+                            initialPhone: payout.phone,
+                          );
+                          if (destination == null) return;
+                          final message =
+                              await controller.changePayoutDestination(
+                            payout,
+                            provider: destination.provider,
+                            phone: destination.phone,
+                          );
+                          Get.snackbar(
+                            'Remboursement',
+                            message,
+                            snackPosition: SnackPosition.BOTTOM,
+                          );
+                        },
                         onRetry: (payout) async {
                           final message =
                               await controller.retryPayout(payout.id);
@@ -88,7 +111,27 @@ class WalletScreen extends StatelessWidget {
                         delegate: SliverChildBuilderDelegate(
                           (context, index) {
                             final transaction = controller.transactions[index];
-                            return _TransactionTile(transaction: transaction);
+                            // Obx propre à la ligne : le constructeur de la
+                            // liste s'exécute hors du Obx de l'écran.
+                            return Obx(
+                              () => _TransactionTile(
+                                transaction: transaction,
+                                openingReceipt:
+                                    controller.openingReceiptId.value ==
+                                        transaction.id,
+                                onReceipt: () async {
+                                  final error = await controller
+                                      .openReceipt(transaction.id);
+                                  if (error != null) {
+                                    Get.snackbar(
+                                      'Reçu',
+                                      error,
+                                      snackPosition: SnackPosition.BOTTOM,
+                                    );
+                                  }
+                                },
+                              ),
+                            );
                           },
                           childCount: controller.transactions.length,
                         ),
@@ -338,8 +381,14 @@ class _BalanceCards extends StatelessWidget {
 
 class _TransactionTile extends StatelessWidget {
   final TransactionModel transaction;
+  final bool openingReceipt;
+  final VoidCallback onReceipt;
 
-  const _TransactionTile({required this.transaction});
+  const _TransactionTile({
+    required this.transaction,
+    required this.onReceipt,
+    this.openingReceipt = false,
+  });
 
   @override
   Widget build(BuildContext context) {
@@ -559,6 +608,21 @@ class _TransactionTile extends StatelessWidget {
               ),
             ],
           ),
+          if (transaction.receiptAvailable)
+            Align(
+              alignment: Alignment.centerRight,
+              child: TextButton.icon(
+                onPressed: openingReceipt ? null : onReceipt,
+                icon: openingReceipt
+                    ? const SizedBox(
+                        width: 14,
+                        height: 14,
+                        child: CircularProgressIndicator(strokeWidth: 2),
+                      )
+                    : const Icon(Icons.picture_as_pdf_outlined, size: 18),
+                label: const Text('Reçu PDF'),
+              ),
+            ),
         ],
       ),
     );

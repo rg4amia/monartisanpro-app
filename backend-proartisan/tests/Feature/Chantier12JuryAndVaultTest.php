@@ -18,6 +18,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
+use Tests\Support\Scores;
 use Tests\TestCase;
 
 class Chantier12JuryAndVaultTest extends TestCase
@@ -157,6 +158,7 @@ class Chantier12JuryAndVaultTest extends TestCase
             'kyc_status' => 'actif',
             'score_prosartisan' => 820,
         ]);
+        Scores::backWithLedger(...$jurors);
 
         $litigeService = app(LitigeService::class);
         $litigeService->assignJury($this->litige);
@@ -228,6 +230,7 @@ class Chantier12JuryAndVaultTest extends TestCase
             'kyc_status' => 'actif',
             'score_prosartisan' => 850,
         ]);
+        Scores::backWithLedger(...$jurors);
 
         $litigeService = app(LitigeService::class);
         $litigeService->assignJury($this->litige);
@@ -272,6 +275,7 @@ class Chantier12JuryAndVaultTest extends TestCase
             'kyc_status' => 'actif',
             'score_prosartisan' => 830,
         ]);
+        Scores::backWithLedger($replacementCandidate);
 
         // Review expirée (> 48h)
         $expiredReview = JuryReview::create([

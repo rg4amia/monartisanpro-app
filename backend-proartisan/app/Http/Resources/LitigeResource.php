@@ -76,19 +76,6 @@ class LitigeResource extends JsonResource
             ]),
             'preuves' => $this->whenLoaded('preuves', fn () => LitigeEvidenceResource::collection($this->preuves)),
             'nextAction' => $this->computeNextAction($clientProofCount, $artisanProofCount),
-            'myJuryReview' => $this->when(
-                $request->user() !== null,
-                function () use ($request) {
-                    $review = $this->juryReviews()->where('jure_id', $request->user()->id)->first();
-
-                    return $review ? [
-                        'id' => $review->id,
-                        'verdict' => $review->verdict,
-                        'votedAt' => $review->voted_at?->toIso8601String(),
-                        'compensation' => $review->compensation,
-                    ] : null;
-                }
-            ),
         ];
     }
 

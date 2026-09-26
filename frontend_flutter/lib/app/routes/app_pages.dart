@@ -24,6 +24,9 @@ import '../../modules/jcode/views/jcode_serve_screen.dart';
 import '../../modules/jcode/views/scanner_screen.dart';
 import '../../modules/jcode/views/supplier_catalog_screen.dart';
 import '../../modules/jcode/views/transaction_confirm_screen.dart';
+import '../../modules/jury/bindings/jury_binding.dart';
+import '../../modules/jury/views/jury_dossier_detail_screen.dart';
+import '../../modules/jury/views/jury_dossiers_screen.dart';
 import '../../modules/litige/bindings/litige_binding.dart';
 import '../../modules/litige/bindings/litige_detail_binding.dart';
 import '../../modules/litige/views/litige_detail_screen.dart';
@@ -262,6 +265,18 @@ class AppPages {
       name: Routes.litigeDetail,
       page: () => const LitigeDetailScreen(),
       binding: LitigeDetailBinding(),
+    ),
+
+    // Espace juré (Chantier 12) — dossiers anonymisés
+    GetPage(
+      name: Routes.juryDossiers,
+      page: () => const JuryDossiersScreen(),
+      binding: JuryDossiersBinding(),
+    ),
+    GetPage(
+      name: Routes.juryDossierDetail,
+      page: () => const JuryDossierDetailScreen(),
+      binding: JuryDossierDetailBinding(),
     ),
 
     // Carte artisans

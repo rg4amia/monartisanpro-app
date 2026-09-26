@@ -6,6 +6,9 @@ import 'package:permission_handler/permission_handler.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/error_handler.dart';
+import '../../../core/utils/json_readers.dart';
 
 class LitigeDetailController extends GetxController {
   final ApiClient _client = ApiClient();
@@ -13,7 +16,7 @@ class LitigeDetailController extends GetxController {
 
   final isLoading = false.obs;
   final isUploadingEvidence = false.obs;
-  final isVoting = false.obs;
+  final isSavingRefundDestination = false.obs;
   final litige = Rx<Map<String, dynamic>?>(null);
 
   late int litigeId;
@@ -41,14 +44,42 @@ class LitigeDetailController extends GetxController {
     return data['statut'] != 'resolu' && data['workflowStep'] == 'preuves';
   }
 
-  /// Non nul lorsque l'utilisateur connecte est un des 3 jures anonymes
-  /// assignes a ce litige. `verdict` reste null tant qu'il n'a pas vote.
-  Map<String, dynamic>? get myJuryReview =>
-      litige.value?['myJuryReview'] as Map<String, dynamic>?;
+  /// Client de la mission : lui seul choisit le moyen de remboursement.
+  bool get isClient {
+    final parties = readMap(litige.value?['parties']);
+    final clientId = readInt(readMap(parties?['client'])?['id']);
+    final userId = StorageService.getUserId();
 
-  bool get isJuror => myJuryReview != null;
+    return clientId != null && userId != null && clientId == userId;
+  }
 
-  bool get hasVoted => myJuryReview?['verdict'] != null;
+  /// Moyen de remboursement déjà choisi (`{provider, phone}`), exposé par le
+  /// serveur au seul client.
+  Map<String, dynamic>? get refundDestination =>
+      readMap(litige.value?['refundDestination']);
+
+  /// Enregistre l'opérateur et le numéro qui recevront un éventuel
+  /// remboursement (Chantier 11) ; un remboursement déjà en échec est
+  /// redirigé par le serveur. Renvoie le message à afficher.
+  Future<String> saveRefundDestination({
+    required String provider,
+    required String phone,
+  }) async {
+    isSavingRefundDestination.value = true;
+    try {
+      final res = await _client.put(
+        ApiEndpoints.litigeRefundDestination(litigeId),
+        data: {'provider': provider, 'phone': phone},
+      );
+      await loadLitige();
+
+      return readApiMessage(res.data) ?? 'Moyen de remboursement enregistré.';
+    } catch (e) {
+      return ErrorHandler.getErrorMessage(e);
+    } finally {
+      isSavingRefundDestination.value = false;
+    }
+  }
 
   Future<void> loadLitige() async {
     isLoading.value = true;
@@ -122,46 +153,6 @@ class LitigeDetailController extends GetxController {
       );
     } finally {
       isUploadingEvidence.value = false;
-    }
-  }
-
-  /// Vote du jure ('CONFORME' ou 'NON_CONFORME'). Le vote est definitif :
-  /// une fois accepte par le backend, le litige est recharge pour afficher
-  /// le verdict enregistre a la place des boutons.
-  Future<void> castJuryVote(String verdict) async {
-    if (isVoting.value || hasVoted) return;
-    isVoting.value = true;
-    try {
-      await _client.post(
-        ApiEndpoints.litigeJuryVote(litigeId),
-        data: {'verdict': verdict},
-      );
-      await loadLitige();
-
-      final compensation = myJuryReview?['compensation'];
-      final compensationText = compensation is num
-          ? ' Compensation retenue : ${compensation.toInt()} FCFA.'
-          : '';
-      Get.snackbar(
-        'Vote enregistre',
-        'Votre vote a bien ete pris en compte.$compensationText',
-        snackPosition: SnackPosition.TOP,
-      );
-    } on DioException catch (e) {
-      final responseData = e.response?.data;
-      final message = (responseData is Map
-              ? responseData['message'] as String?
-              : null) ??
-          'Impossible d\'enregistrer votre vote. Verifiez votre connexion et reessayez.';
-      Get.snackbar('Erreur', message, snackPosition: SnackPosition.TOP);
-    } catch (_) {
-      Get.snackbar(
-        'Erreur',
-        'Une erreur inattendue est survenue. Veuillez reessayer.',
-        snackPosition: SnackPosition.TOP,
-      );
-    } finally {
-      isVoting.value = false;
     }
   }
 }

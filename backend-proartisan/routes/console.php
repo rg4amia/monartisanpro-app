@@ -4,6 +4,7 @@ use App\Console\Commands\AdminHealthCheckCommand;
 use App\Console\Commands\AutoReleaseJalonsCommand;
 use App\Console\Commands\DecayScoreCommand;
 use App\Console\Commands\DriverWatchdogCommand;
+use App\Console\Commands\ExpireJuryReviewsCommand;
 use App\Console\Commands\ExpireRecruitmentOffersCommand;
 use App\Console\Commands\ExpireUnpaidOrdersCommand;
 use App\Console\Commands\RemindUnpaidDeliveryFaresCommand;
@@ -67,6 +68,13 @@ Schedule::command(RemindUnpaidDeliveryFaresCommand::class)
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/remind-unpaid-delivery-fares.log'));
+
+// Chantier 12 — remplacement des jurés n'ayant pas voté sous 48 h
+Schedule::command(ExpireJuryReviewsCommand::class)
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/jury-expire-overdue.log'));
 
 // Module Recrutement — clôture automatique des offres expirées
 Schedule::command(ExpireRecruitmentOffersCommand::class)

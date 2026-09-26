@@ -57,6 +57,28 @@ class PayoutRepository {
     );
   }
 
+  /// Moyen de remboursement choisi par le client pour un remboursement après
+  /// litige non abouti (opérateur + numéro `+225…`). Renvoie le versement à
+  /// jour et le message du serveur.
+  Future<({PayoutModel payout, String message})> updateDestination(
+    int id, {
+    required String provider,
+    required String phone,
+  }) async {
+    final res = await _client.put(
+      ApiEndpoints.payoutDestination(id),
+      data: {'provider': provider, 'phone': phone},
+    );
+    await _store.init();
+    await _store.invalidate('${_scope}_payouts');
+    final body = readMap(res.data) ?? const {};
+
+    return (
+      payout: PayoutModel.fromJson(readMap(body['data']) ?? const {}),
+      message: readApiMessage(body) ?? 'Moyen de remboursement enregistré.',
+    );
+  }
+
   Future<({DriverCashoutStats stats, List<DriverCashoutModel> cashouts})>
       getDriverCashouts({bool forceRefresh = false}) async {
     await _store.init();

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/payments/receipt_opener.dart';
 import '../../../core/utils/error_handler.dart';
 import '../../../core/utils/json_readers.dart';
 import '../../../data/models/payout_model.dart';
@@ -9,11 +10,15 @@ import '../../../data/models/transaction_model.dart';
 import '../../../data/repositories/payout_repository.dart';
 
 class WalletController extends GetxController {
-  WalletController({PayoutRepository? payoutRepository})
-      : _payoutRepo = payoutRepository ?? PayoutRepository();
+  WalletController({
+    PayoutRepository? payoutRepository,
+    ReceiptOpener? receiptOpener,
+  })  : _payoutRepo = payoutRepository ?? PayoutRepository(),
+        _receiptOpener = receiptOpener ?? ReceiptOpener();
 
   final ApiClient _apiClient = ApiClient();
   final PayoutRepository _payoutRepo;
+  final ReceiptOpener _receiptOpener;
 
   final isLoading = true.obs;
   final walletMateriaux = 0.obs;
@@ -27,6 +32,12 @@ class WalletController extends GetxController {
 
   /// Versement dont la relance est en cours, pour ne bloquer que sa ligne.
   final retryingPayoutId = RxnInt();
+
+  /// Remboursement dont le moyen de réception est en cours d'enregistrement.
+  final updatingDestinationPayoutId = RxnInt();
+
+  /// Transaction dont le reçu PDF est en cours d'ouverture.
+  final openingReceiptId = RxnInt();
 
   @override
   void onInit() {
@@ -92,6 +103,41 @@ class WalletController extends GetxController {
       return ErrorHandler.getErrorMessage(e);
     } finally {
       retryingPayoutId.value = null;
+    }
+  }
+
+  /// Moyen de réception d'un remboursement après litige non abouti, choisi
+  /// par le client ; renvoie le message du serveur.
+  Future<String> changePayoutDestination(
+    PayoutModel payout, {
+    required String provider,
+    required String phone,
+  }) async {
+    updatingDestinationPayoutId.value = payout.id;
+    try {
+      final result = await _payoutRepo.updateDestination(
+        payout.id,
+        provider: provider,
+        phone: phone,
+      );
+      await loadPayouts();
+
+      return result.message;
+    } catch (e) {
+      return ErrorHandler.getErrorMessage(e);
+    } finally {
+      updatingDestinationPayoutId.value = null;
+    }
+  }
+
+  /// Ouvre le reçu PDF d'une transaction ; renvoie le message d'erreur à
+  /// afficher, `null` si le reçu s'est ouvert.
+  Future<String?> openReceipt(int transactionId) async {
+    openingReceiptId.value = transactionId;
+    try {
+      return await _receiptOpener.open(transactionId);
+    } finally {
+      openingReceiptId.value = null;
     }
   }
 

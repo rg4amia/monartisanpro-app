@@ -39,6 +39,7 @@ class PayoutEventModel {
 class PayoutModel {
   final int id;
   final String reference;
+  final String context;
   final String contextLabel;
   final int montant;
   final String provider;
@@ -55,6 +56,7 @@ class PayoutModel {
     required this.id,
     required this.reference,
     required this.contextLabel,
+    this.context = '',
     required this.montant,
     required this.provider,
     required this.statut,
@@ -71,12 +73,20 @@ class PayoutModel {
   bool get isFailed => statut == 'echoue';
   bool get isPending => statut == 'echoue' || statut == 'en_cours';
 
+  static const String contextRemboursementClient = 'remboursement_client';
+
+  /// Remboursement après litige : le client choisit l'opérateur et le numéro
+  /// qui le reçoivent (`PUT /payouts/{id}/destination`, Chantier 11).
+  bool get isClientRefund => context == contextRemboursementClient;
+  bool get canChangeDestination => isClientRefund && isPending;
+
   factory PayoutModel.fromJson(Map<String, dynamic> json) {
     final statut = readString(json['statut']) ?? 'en_cours';
 
     return PayoutModel(
       id: readInt(json['id']) ?? 0,
       reference: readString(json['reference']) ?? '',
+      context: readString(json['context']) ?? '',
       contextLabel: readString(json['context_label']) ?? 'Versement',
       // Montant réellement viré (net des frais éventuels de retrait).
       montant:
@@ -110,6 +120,11 @@ class DriverCashoutModel {
   final PayoutModel? payout;
   final DateTime? createdAt;
 
+  /// Transaction du versement et disponibilité de son reçu PDF (retrait
+  /// versé), jugées par le serveur.
+  final int? transactionId;
+  final bool receiptAvailable;
+
   const DriverCashoutModel({
     required this.id,
     required this.reference,
@@ -122,6 +137,8 @@ class DriverCashoutModel {
     this.notes,
     this.payout,
     this.createdAt,
+    this.transactionId,
+    this.receiptAvailable = false,
   });
 
   factory DriverCashoutModel.fromJson(Map<String, dynamic> json) {
@@ -140,6 +157,8 @@ class DriverCashoutModel {
       notes: readString(json['notes']),
       payout: payout != null ? PayoutModel.fromJson(payout) : null,
       createdAt: DateTime.tryParse(readString(json['created_at']) ?? ''),
+      transactionId: readInt(json['transaction_id']),
+      receiptAvailable: readBool(json['receipt_available']) ?? false,
     );
   }
 }

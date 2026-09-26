@@ -182,6 +182,13 @@ class ApiEndpoints {
   static String litigeEvidence(int id) => '/litiges/$id/preuves';
   static String litigeEvaluateSla(int id) => '/litiges/$id/evaluate-sla';
   static String litigeJuryVote(int id) => '/litiges/$id/jury/vote';
+  static String litigeRefundDestination(int id) =>
+      '/litiges/$id/refund-destination';
+
+  // ── Espace juré (Chantier 12) ──
+  static const String juryDossiers = '/jury/dossiers';
+  static String juryDossier(int id) => '/jury/dossiers/$id';
+  static String juryDossierVote(int id) => '/jury/dossiers/$id/vote';
 
   // Evaluations
   static const String evaluations = '/evaluations';

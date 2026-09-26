@@ -342,6 +342,17 @@ class SettingsMenuList extends StatelessWidget {
                     onTap: () => Get.toNamed(Routes.recruitmentOffers),
                   ),
                   const SizedBox(height: 12),
+                  // Jury ProsArtisan (Chantier 12) : dossiers d'arbitrage
+                  // confiés aux artisans les mieux notés de leur métier.
+                  SettingsMenuItem(
+                    icon: Icons.balance_outlined,
+                    iconBg: const Color(0xFFEEF2FF),
+                    iconColor: const Color(0xFF4F46E5),
+                    title: 'Espace juré',
+                    subtitle: 'Litiges de votre métier soumis à votre avis',
+                    onTap: () => Get.toNamed(Routes.juryDossiers),
+                  ),
+                  const SizedBox(height: 12),
                 ],
               );
             }

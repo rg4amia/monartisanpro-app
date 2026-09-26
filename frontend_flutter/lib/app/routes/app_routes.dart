@@ -60,6 +60,8 @@ abstract class Routes {
   static const rating = '/rating';
   static const litige = '/litige';
   static const litigeDetail = '/litige-detail';
+  static const juryDossiers = '/jury-dossiers';
+  static const juryDossierDetail = '/jury-dossier-detail';
   static const referentValidation = '/referent-validation';
   static const parrainage = '/parrainage';
   static const parrainageClient = '/parrainage-client';

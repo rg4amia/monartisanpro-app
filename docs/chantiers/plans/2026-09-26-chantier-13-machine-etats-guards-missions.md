@@ -1,7 +1,7 @@
 # Chantier 13 — Machine à États Formelle & Guards d'Intégrité des Missions
 
 > **Date** : 2026-09-26  
-> **Statut** : en cours  
+> **Statut** : livré (`faf6fd8f`, `141b0546`)  
 > **Auteur** : Codex / Antigravity  
 > **Contexte** : Option 2 approuvée par l'utilisateur (« Option 1 puis option 2 »)  
 > **Dépendances** : Spatie ModelStates, MariaDB 11.8 / MySQL 8.4 / SQLite, Règles d'Or 4, 5, 12, 27.

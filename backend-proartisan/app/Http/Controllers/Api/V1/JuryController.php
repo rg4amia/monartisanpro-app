@@ -43,7 +43,8 @@ class JuryController extends Controller
                 'dossier' => [
                     'intervention_type' => $litige->mission?->interventionType?->name ?? 'Non spécifié',
                     'montant_mission' => $litige->mission?->montant_total ?? 0,
-                    'motif_litige' => $litige->type,
+                    'motif' => $litige->motif,
+                    'ouvert_par' => $litige->type,
                     'created_at' => $litige->created_at->toIso8601String(),
                     'preuves_count' => $litige->preuves->count(),
                 ],
@@ -112,7 +113,11 @@ class JuryController extends Controller
                     'id' => $litige->id,
                     'intervention_type' => $litige->mission?->interventionType?->name ?? 'Standard',
                     'montant_mission' => $litige->mission?->montant_total ?? 0,
-                    'motif' => $litige->type,
+                    'motif' => $litige->motif,
+                    'description' => $litige->description,
+                    // Partie qui a ouvert le litige (`client` / `artisan`),
+                    // jamais son identité.
+                    'ouvert_par' => $litige->type,
                     'created_at' => $litige->created_at->toIso8601String(),
                     'preuves' => $preuves,
                     'jalons_summary' => $litige->mission?->jalons->map(fn ($j) => [

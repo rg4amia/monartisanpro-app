@@ -2,12 +2,12 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | en cours |
+| Statut | livré |
 | Créé le | 2026-09-26 |
 | Mis à jour le | 2026-09-26 |
 | Auteur | Claude Code (session du 26/09/2026) |
 | Analyses liées | [Chantier 10](2026-09-26-chantier-10-portefeuilles-versements.md) (reliquats) |
-| Commits | — |
+| Commits | `346e3ddc`, `7b87755b` |
 
 ## Objectif
 
@@ -61,3 +61,11 @@ Solder les reliquats du Chantier 10, à la demande du porteur de projet (26/09/2
 ## Vérification
 
 Pest (tests en échec avant correctif pour chaque défaut), Vitest (sous-onglet), Flutter (modèles, contrôleurs), suite MariaDB en CI.
+
+## Écarts constatés (26/09/2026)
+
+Serveur, backoffice et paiement mobile des commandes livrés (`346e3ddc`). Les écrans mobiles suivants manquaient, les routes serveur existant déjà ; ils sont livrés depuis :
+- bouton « Reçu PDF » sur l'historique des transactions et les retraits livreur (`ReceiptOpener`, lien signé de `GET /transactions/{id}/receipt-link` ouvert dans le navigateur) ;
+- « Modifier le moyen de remboursement » sur la carte d'un remboursement non abouti (`PUT /payouts/{payout}/destination`) et choix anticipé depuis la fiche litige, réservé au client (`PUT /litiges/{litige}/refund-destination`) — dialogue partagé `RefundDestinationDialog` (Wave, Orange Money, numéro ramené au format `+225`).
+
+Tests : `receipts_and_refund_destination_test.dart`.

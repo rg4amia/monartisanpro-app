@@ -23,6 +23,10 @@ class TransactionModel {
   final String? libelle;
   final String? statutLibelle;
 
+  /// Reçu PDF téléchargeable : transaction confirmée dont l'utilisateur
+  /// connecté est le titulaire, jugé par le serveur (Chantier 11).
+  final bool receiptAvailable;
+
   const TransactionModel({
     required this.id,
     required this.type,
@@ -39,6 +43,7 @@ class TransactionModel {
     this.serverDirection,
     this.libelle,
     this.statutLibelle,
+    this.receiptAvailable = false,
   });
 
   static const String entrant = 'entrant';
@@ -95,6 +100,10 @@ class TransactionModel {
         libelle: readString(json['libelle']),
         statutLibelle:
             readString(json['statutLibelle'] ?? json['statut_libelle']),
+        receiptAvailable: readBool(
+              json['receiptAvailable'] ?? json['receipt_available'],
+            ) ??
+            false,
       );
 
   Map<String, dynamic> toJson() => {
@@ -113,6 +122,7 @@ class TransactionModel {
         'direction': serverDirection,
         'libelle': libelle,
         'statutLibelle': statutLibelle,
+        'receiptAvailable': receiptAvailable,
       };
 
   static int _parseInt(dynamic value) {

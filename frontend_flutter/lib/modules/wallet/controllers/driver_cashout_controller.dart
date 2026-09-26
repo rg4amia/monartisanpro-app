@@ -1,5 +1,6 @@
 import 'package:get/get.dart';
 
+import '../../../core/payments/receipt_opener.dart';
 import '../../../core/utils/error_handler.dart';
 import '../../../data/models/payout_model.dart';
 import '../../../data/repositories/payout_repository.dart';
@@ -7,10 +8,17 @@ import '../../../data/repositories/payout_repository.dart';
 /// Retrait des gains du livreur (Chantier 10), sur le modèle du cash-out
 /// quincaillerie : le livreur demande, ProsArtisan valide puis verse.
 class DriverCashoutController extends GetxController {
-  DriverCashoutController({PayoutRepository? repository})
-      : _repo = repository ?? PayoutRepository();
+  DriverCashoutController({
+    PayoutRepository? repository,
+    ReceiptOpener? receiptOpener,
+  })  : _repo = repository ?? PayoutRepository(),
+        _receiptOpener = receiptOpener ?? ReceiptOpener();
 
   final PayoutRepository _repo;
+  final ReceiptOpener _receiptOpener;
+
+  /// Retrait dont le reçu PDF est en cours d'ouverture.
+  final openingReceiptId = RxnInt();
 
   final isLoading = true.obs;
   final isSubmitting = false.obs;
@@ -38,6 +46,22 @@ class DriverCashoutController extends GetxController {
       errorMsg.value = ErrorHandler.getErrorMessage(e);
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Ouvre le reçu PDF d'un retrait versé ; renvoie le message d'erreur à
+  /// afficher, `null` si le reçu s'est ouvert.
+  Future<String?> openReceipt(DriverCashoutModel cashout) async {
+    final transactionId = cashout.transactionId;
+    if (!cashout.receiptAvailable || transactionId == null) {
+      return 'Le reçu est disponible une fois le retrait versé.';
+    }
+
+    openingReceiptId.value = cashout.id;
+    try {
+      return await _receiptOpener.open(transactionId);
+    } finally {
+      openingReceiptId.value = null;
     }
   }
 

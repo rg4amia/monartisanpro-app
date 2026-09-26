@@ -33,7 +33,11 @@ class LitigeJuryController extends Controller
             ], 422);
         }
 
-        $this->litigeService->assignJury($litige);
+        try {
+            $this->litigeService->assignJury($litige);
+        } catch (\DomainException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         return response()->json([
             'success' => true,

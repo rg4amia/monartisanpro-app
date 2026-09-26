@@ -12,6 +12,7 @@ use App\Models\Mission;
 use App\Models\MobileMoneyPayout;
 use App\Models\Parrainage;
 use App\Models\ScoreLedgerEntry;
+use App\Models\Setting;
 use App\Models\User;
 use App\States\Mission\CancelledState;
 use App\States\Mission\CompletedState;
@@ -717,45 +718,56 @@ class LitigeService
         );
     }
 
+    /** Taille du collège de jurés (consensus 2/3). */
+    public const JURY_SIZE = 3;
+
+    /**
+     * Score ProsArtisan minimal d'un juré par défaut, recalculé depuis le
+     * ledger ; réglable par l'administrateur (`settings.jury_min_score`).
+     */
+    public const JUROR_MIN_SCORE_DEFAULT = 800;
+
+    /** Seuil en vigueur, borné à l'échelle 0–1000 du Score ProsArtisan. */
+    public function jurorMinScore(): int
+    {
+        $value = (int) Setting::getValueByKey('jury_min_score', self::JUROR_MIN_SCORE_DEFAULT);
+
+        return max(0, min(1000, $value));
+    }
+
+    /**
+     * Convoque un collège de 3 jurés éligibles (Chantier 12) : artisans au
+     * KYC actif, du même métier que l'artisan de la mission, étrangers aux
+     * deux parties, au score recalculé depuis le ledger ≥ `jurorMinScore()` (800 par défaut,
+     * réglable dans le backoffice ; Règle d'or 15).
+     *
+     * Aucun repli sur des jurés non éligibles : faute de trois candidats,
+     * aucun juré n'est convoqué, le litige passe en `jury_indisponible`, les
+     * administrateurs sont alertés et l'arbitrage leur revient.
+     *
+     * @throws \DomainException quand le collège ne peut être réuni
+     */
     public function assignJury(Litige $litige): void
     {
         $litige->loadMissing(['mission.artisan.artisanProfile']);
 
-        $artisanTradeId = $litige->mission->artisan->artisanProfile?->trade_id;
+        $jurors = $this->eligibleJurors($litige, [], self::JURY_SIZE);
+        $minScore = $this->jurorMinScore();
 
-        $jurorsQuery = User::query()
-            ->where('role', 'artisan')
-            ->where('kyc_status', 'actif')
-            ->where('id', '!=', $litige->mission->artisan_id)
-            ->where('score_prosartisan', '>=', 800);
+        if ($jurors->count() < self::JURY_SIZE) {
+            $litige->update(['jury_status' => 'jury_indisponible']);
 
-        if ($artisanTradeId) {
-            $jurorsQuery->whereHas('artisanProfile', function ($q) use ($artisanTradeId) {
-                $q->where('trade_id', $artisanTradeId);
-            });
-        }
+            $this->alertAdminsJuryUnavailable(
+                $litige,
+                'Jury ProsArtisan impossible à réunir',
+                "Le litige #{$litige->id} ne compte que {$jurors->count()} juré(s) éligible(s) sur ".self::JURY_SIZE
+                .' (même métier, score ≥ '.$minScore.', KYC actif) : aucun jury n\'a été convoqué, l\'arbitrage revient à l\'administrateur.'
+            );
 
-        $jurors = $jurorsQuery->inRandomOrder()->limit(3)->get();
-
-        if ($jurors->count() < 3) {
-            $jurors = User::query()
-                ->where('role', 'artisan')
-                ->where('kyc_status', 'actif')
-                ->where('id', '!=', $litige->mission->artisan_id)
-                ->where('score_prosartisan', '>=', 800)
-                ->inRandomOrder()
-                ->limit(3)
-                ->get();
-        }
-
-        if ($jurors->count() < 3) {
-            $jurors = User::query()
-                ->where('role', 'artisan')
-                ->where('kyc_status', 'actif')
-                ->where('id', '!=', $litige->mission->artisan_id)
-                ->inRandomOrder()
-                ->limit(3)
-                ->get();
+            throw new \DomainException(
+                'Jury impossible à réunir : '.$jurors->count().' juré(s) éligible(s) sur '.self::JURY_SIZE
+                .'. Les administrateurs ont été alertés ; l\'arbitrage revient à l\'administrateur.'
+            );
         }
 
         foreach ($jurors as $juror) {
@@ -782,6 +794,66 @@ class LitigeService
             'statut' => 'en_cours',
             'jury_status' => 'pending_jury',
         ]);
+    }
+
+    /**
+     * Jurés éligibles pour un litige, hors `$excludedIds`, au plus `$needed`.
+     *
+     * Présélection sur la colonne stockée (≥ seuil), puis confirmation par le
+     * score recalculé depuis le ledger : une colonne obsolète ne suffit
+     * jamais à siéger (Règle d'or 36 — décision sur la valeur établie par le
+     * serveur au moment de la décision).
+     *
+     * @param  list<int>  $excludedIds
+     * @return \Illuminate\Support\Collection<int, User>
+     */
+    private function eligibleJurors(Litige $litige, array $excludedIds, int $needed): \Illuminate\Support\Collection
+    {
+        $mission = $litige->mission;
+        $tradeId = $mission->artisan?->artisanProfile?->trade_id;
+        $minScore = $this->jurorMinScore();
+
+        $excluded = array_values(array_filter(array_merge(
+            $excludedIds,
+            [$mission->artisan_id, $mission->client_id],
+        )));
+
+        $candidates = User::query()
+            ->where('role', 'artisan')
+            ->where('kyc_status', 'actif')
+            ->whereNotIn('id', $excluded)
+            ->where('score_prosartisan', '>=', $minScore)
+            ->when($tradeId, fn ($q) => $q->whereHas(
+                'artisanProfile',
+                fn ($p) => $p->where('trade_id', $tradeId)
+            ))
+            ->inRandomOrder()
+            ->get();
+
+        $scores = app(ScoreService::class);
+        $eligible = collect();
+        foreach ($candidates as $candidate) {
+            if ($scores->recalculateFromLedger($candidate) >= $minScore) {
+                $eligible->push($candidate);
+                if ($eligible->count() === $needed) {
+                    break;
+                }
+            }
+        }
+
+        return $eligible;
+    }
+
+    private function alertAdminsJuryUnavailable(Litige $litige, string $title, string $body): void
+    {
+        try {
+            $this->notificationService->sendAdmin('litige', $title, $body, [
+                'litige_id' => $litige->id,
+                'mission_id' => $litige->mission_id,
+            ]);
+        } catch (\Throwable $e) {
+            \Illuminate\Support\Facades\Log::warning('[Jury] Alerte admin non envoyée : '.$e->getMessage());
+        }
     }
 
     public function submitJuryVote(
@@ -935,6 +1007,12 @@ class LitigeService
         return $count;
     }
 
+    /**
+     * Remplace un juré n'ayant pas voté à temps par un juré éligible (mêmes
+     * règles que `assignJury`, jamais un juré déjà convoqué sur ce litige).
+     * Sans candidat, le collège reste incomplet et les administrateurs sont
+     * alertés.
+     */
     public function replaceExpiredJuror(JuryReview $expiredReview): ?JuryReview
     {
         $litige = $expiredReview->litige;
@@ -942,30 +1020,24 @@ class LitigeService
             return null;
         }
 
-        // Trouver les IDs des jurés déjà assignés (actifs ou expirés) pour ne pas les re-sélectionner
-        $existingJurorIds = JuryReview::where('litige_id', $litige->id)
+        $litige->loadMissing(['mission.artisan.artisanProfile']);
+
+        $alreadyConvened = JuryReview::where('litige_id', $litige->id)
             ->pluck('jure_id')
-            ->toArray();
-        $existingJurorIds[] = $litige->mission->artisan_id;
+            ->map(fn ($id) => (int) $id)
+            ->all();
 
-        $newJuror = User::query()
-            ->where('role', 'artisan')
-            ->where('kyc_status', 'actif')
-            ->whereNotIn('id', $existingJurorIds)
-            ->where('score_prosartisan', '>=', 800)
-            ->inRandomOrder()
-            ->first();
+        $newJuror = $this->eligibleJurors($litige, $alreadyConvened, 1)->first();
+        $minScore = $this->jurorMinScore();
 
         if (! $newJuror) {
-            $newJuror = User::query()
-                ->where('role', 'artisan')
-                ->where('kyc_status', 'actif')
-                ->whereNotIn('id', $existingJurorIds)
-                ->inRandomOrder()
-                ->first();
-        }
+            $this->alertAdminsJuryUnavailable(
+                $litige,
+                'Juré non remplacé',
+                "Un juré du litige #{$litige->id} n'a pas voté dans les 48 h et aucun artisan éligible (même métier, score ≥ "
+                .$minScore.', KYC actif) ne peut le remplacer : le collège reste incomplet, arbitrage administrateur à prévoir si le consensus n\'est pas atteint.'
+            );
 
-        if (! $newJuror) {
             return null;
         }
 
