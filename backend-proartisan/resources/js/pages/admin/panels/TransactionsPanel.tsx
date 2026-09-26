@@ -4,6 +4,7 @@
 
 import { useState   } from 'react';
 import type {FormEvent, ReactNode} from 'react';
+import { router } from '@inertiajs/react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -71,7 +72,7 @@ export function TransactionsPanel({
     documentStats,
 }: TransactionsPanelProps) {
     const rows = transactionsPage?.data ?? [];
-    const [subTab, setSubTab] = useState<'treasury' | 'commissions' | 'journal' | 'documents'>('treasury');
+    const [subTab, setSubTab] = useState<'treasury' | 'commissions' | 'journal' | 'documents' | 'ledger'>('treasury');
 
     return (
         <section className="mt-5 space-y-6">
@@ -137,6 +138,19 @@ export function TransactionsPanel({
                                 {numberFormat.format(documentStats.total_documents)}
                             </span>
                         ) : null}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setSubTab('ledger')}
+                        className={cn(
+                            'inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition',
+                            subTab === 'ledger'
+                                ? 'bg-[#ebb95e] text-[#241b16] shadow-sm'
+                                : 'bg-[var(--admin-panel-strong)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)] hover:text-[var(--admin-text)]'
+                        )}
+                    >
+                        <span>⚖️</span>
+                        <span>Grand Livre (Partie Double)</span>
                     </button>
                 </div>
             </div>
@@ -441,6 +455,65 @@ export function TransactionsPanel({
                     documentsPage={documentsPage}
                     documentStats={documentStats}
                 />
+            )}
+
+            {/* VUE 5 : GRAND LIVRE EN PARTIE DOUBLE & AUDIT D'INTÉGRITÉ */}
+            {subTab === 'ledger' && (
+                <Surface className="rounded-[32px] p-6 space-y-6">
+                    <div className="flex flex-wrap items-center justify-between gap-4">
+                        <div>
+                            <div className="flex items-center gap-2">
+                                <span className="text-xl">⚖️</span>
+                                <h3 className="text-lg font-bold text-[var(--admin-text)]">
+                                    Grand Livre en Partie Double (Double-Entry Ledger)
+                                </h3>
+                                <span className="rounded-full bg-emerald-500/10 px-3 py-1 text-xs font-semibold text-emerald-400">
+                                    Norme BCEAO & Audit Bancaire
+                                </span>
+                            </div>
+                            <p className="mt-1 text-sm text-[var(--admin-muted)]">
+                                Chaque mouvement financier génère une écriture strictement équilibrée à somme nulle (Débit = Crédit).
+                            </p>
+                        </div>
+
+                        <button
+                            type="button"
+                            onClick={() => {
+                                router.post('/admin/ledger/verify-integrity', {}, {
+                                    preserveScroll: true,
+                                });
+                            }}
+                            className="inline-flex items-center gap-2 rounded-xl bg-[#ebb95e] px-4 py-2.5 text-xs font-bold text-[#241b16] transition hover:bg-[#dca850] shadow-sm"
+                        >
+                            <span>🔍</span>
+                            <span>Lancer l'Audit d'Intégrité Comptable</span>
+                        </button>
+                    </div>
+
+                    <div className="grid gap-4 md:grid-cols-3">
+                        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
+                            <span className="text-xs font-bold text-[var(--admin-muted)] uppercase tracking-wider">Séquestre Client</span>
+                            <p className="mt-1 text-base font-bold text-[var(--admin-text)]">Compte Séquestre Consigné</p>
+                            <p className="mt-1 text-xs text-[var(--admin-text-soft)]">
+                                Fonds bloqués dès paiement de l'acompte (Wave / Orange Money).
+                            </p>
+                        </div>
+                        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
+                            <span className="text-xs font-bold text-[var(--admin-muted)] uppercase tracking-wider">Dettes Artisans & Quincailleries</span>
+                            <p className="mt-1 text-base font-bold text-[var(--admin-text)]">Comptes Fournisseurs & MO</p>
+                            <p className="mt-1 text-xs text-[var(--admin-text-soft)]">
+                                Déblocage jalon par jalon via OTP et J-Code multi-comptoirs.
+                            </p>
+                        </div>
+                        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4">
+                            <span className="text-xs font-bold text-[var(--admin-muted)] uppercase tracking-wider">Contrôle Mathématique</span>
+                            <p className="mt-1 text-base font-bold text-emerald-400">Équilibre Absolu Garanti</p>
+                            <p className="mt-1 text-xs text-[var(--admin-text-soft)]">
+                                Débit source = Crédit destination sans fuite de trésorerie.
+                            </p>
+                        </div>
+                    </div>
+                </Surface>
             )}
         </section>
     );

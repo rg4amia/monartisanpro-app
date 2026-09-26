@@ -1,6 +1,13 @@
 import { fireEvent, render, screen } from '@testing-library/react';
 import { describe, expect, it, vi } from 'vitest';
 
+vi.mock('@inertiajs/react', () => ({
+    router: {
+        post: vi.fn(),
+        get: vi.fn(),
+    },
+}));
+
 import type { LitigeItem, LitigeStats, Paginated } from '../shared';
 import { LitigesPanel } from './LitigesPanel';
 

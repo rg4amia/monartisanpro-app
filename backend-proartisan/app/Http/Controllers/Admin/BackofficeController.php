@@ -43,6 +43,8 @@ use App\Services\Admin\AdminPromoCodeService;
 use App\Services\Admin\AdminSettingsService;
 use App\Services\Admin\AdminTaxonomyService;
 use App\Services\Admin\AdminUserService;
+use App\Services\DoubleEntryLedgerService;
+use App\Services\LitigeService;
 use App\Services\AdminService;
 use App\Services\CommunicationService;
 use Illuminate\Http\JsonResponse;
@@ -297,6 +299,30 @@ class BackofficeController extends Controller
         );
 
         return back()->with('success', 'Litige arbitré avec succès.');
+    }
+
+    public function teleExpertiseLitige(Litige $litige, LitigeService $litigeService): RedirectResponse
+    {
+        try {
+            $analysis = $litigeService->requestTeleExpertise($litige);
+            $completion = $analysis['completion_rate_percent'] ?? 0;
+
+            return back()->with('success', "Télé-expertise IA Gemini 3.6 Flash générée avec succès (Achèvement estimé : {$completion}%).");
+        } catch (\Throwable $e) {
+            return back()->with('error', 'Échec de la télé-expertise IA : '.$e->getMessage());
+        }
+    }
+
+    public function verifyLedgerIntegrity(DoubleEntryLedgerService $ledgerService): RedirectResponse
+    {
+        $audit = $ledgerService->verifyIntegrity();
+        if ($audit['is_balanced']) {
+            $vol = number_format($audit['total_volume_fcfa'], 0, ',', ' ');
+
+            return back()->with('success', "Grand Livre certifié conforme et équilibré à 100% ({$vol} FCFA audités, 0 écart).");
+        }
+
+        return back()->with('error', "Anomalie comptable détectée : écart de {$audit['discrepancy_amount']} FCFA !");
     }
 
     public function reviewFournisseur(ReviewFournisseurRequest $request, FournisseurAgree $fournisseur): RedirectResponse

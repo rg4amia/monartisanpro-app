@@ -92,15 +92,17 @@ class SimulateFullLifecycleCommand extends Command
 
             // `position` est un POINT NOT NULL sous MariaDB (production) : il doit
             // être fourni dès l'insertion, pas fixé après coup par setPosition().
-            $fournisseurAgree = FournisseurAgree::create([
-                'user_id' => $fournisseur->id,
-                'nom_boutique' => 'Quincaillerie Centrale du Plateau SARL',
-                'statut' => 'agree',
-                'approuve_at' => now(),
-                'position' => config('database.default') === 'sqlite'
-                    ? '5.3380,-4.0260'
-                    : DB::raw('POINT(-4.0260, 5.3380)'),
-            ]);
+            $fournisseurAgree = FournisseurAgree::updateOrCreate(
+                ['user_id' => $fournisseur->id],
+                [
+                    'nom_boutique' => 'Quincaillerie Centrale du Plateau SARL',
+                    'statut' => 'agree',
+                    'approuve_at' => now(),
+                    'position' => config('database.default') === 'sqlite'
+                        ? '5.3380,-4.0260'
+                        : DB::raw('POINT(-4.0260, 5.3380)'),
+                ]
+            );
 
             $ciment = SupplierProduct::create([
                 'supplier_id' => $fournisseur->id,

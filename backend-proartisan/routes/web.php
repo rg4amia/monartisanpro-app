@@ -117,6 +117,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/litiges', [BackofficeController::class, 'litiges'])->middleware('can:admin.litiges.view')->name('litiges');
         Route::get('/litiges/{litige}/invoice', [BackofficeController::class, 'downloadInvoice'])->middleware('can:admin.litiges.view')->name('litiges.invoice');
         Route::post('/litiges/{litige}/resolve', [BackofficeController::class, 'resolveLitige'])->middleware('can:admin.litiges.arbitrate')->name('litiges.resolve');
+        Route::post('/litiges/{litige}/tele-expertise', [BackofficeController::class, 'teleExpertiseLitige'])->middleware('can:admin.litiges.arbitrate')->name('litiges.tele-expertise');
 
         // Utilisateurs
         Route::get('/users', [BackofficeController::class, 'users'])->middleware('can:admin.users.view')->name('users');
@@ -135,6 +136,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Finance & Cash-Out Quincaillerie
         Route::get('/transactions', [BackofficeController::class, 'transactions'])->middleware('can:admin.transactions.view')->name('transactions');
+        Route::post('/ledger/verify-integrity', [BackofficeController::class, 'verifyLedgerIntegrity'])->middleware('can:admin.transactions.view')->name('ledger.verify-integrity');
         Route::post('/cashouts', [AdminCashoutController::class, 'store'])->middleware('can:admin.transactions.manage')->name('cashouts.store');
         Route::post('/cashouts/batch', [AdminCashoutController::class, 'createBatch'])->middleware('can:admin.transactions.manage')->name('cashouts.batch');
         Route::post('/cashouts/reconcile-batch', [AdminCashoutController::class, 'reconcileBatch'])->middleware('can:admin.transactions.manage')->name('cashouts.reconcile-batch');

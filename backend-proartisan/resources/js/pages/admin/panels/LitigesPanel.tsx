@@ -2,6 +2,7 @@
 // Chantier C2 : découpe de console.tsx. Chantier C4 (P1-6) : liste paginée + filtres serveur.
 
 import type { FormEvent, ReactNode } from 'react';
+import { router } from '@inertiajs/react';
 
 import {
     actionButtonClass,
@@ -140,6 +141,51 @@ export function LitigesPanel({
                                 <InfoPill label="Artisan" value={litige.mission.artisan?.name ?? 'N/A'} />
                                 <InfoPill label="Montant" value={money(litige.mission.montant_total ?? 0)} />
                             </div>
+
+                            {/* Télé-Expertise IA Multimodale Gemini 3.6 Flash (Chantier 9B) */}
+                            {litige.resolution_payload?.tele_expertise_analysis ? (
+                                <div className="mt-4 rounded-2xl border border-indigo-500/30 bg-indigo-950/20 p-4 text-xs">
+                                    <div className="flex flex-wrap items-center justify-between gap-2 font-bold text-indigo-400">
+                                        <span className="flex items-center gap-1.5">
+                                            <span>🤖</span>
+                                            <span>Télé-Expertise Vision IA (Gemini 3.6 Flash)</span>
+                                        </span>
+                                        <span className="rounded-full bg-indigo-500/20 px-2.5 py-0.5 text-indigo-300 font-semibold">
+                                            Avancement estimé : {litige.resolution_payload.tele_expertise_analysis.completion_rate_percent}%
+                                        </span>
+                                    </div>
+                                    <p className="mt-2 text-xs leading-5 text-[var(--admin-text-soft)]">
+                                        {litige.resolution_payload.tele_expertise_analysis.rationale}
+                                    </p>
+                                    {litige.resolution_payload.tele_expertise_analysis.recommended_split ? (
+                                        <div className="mt-3 flex flex-wrap items-center gap-2 pt-2 border-t border-indigo-500/20 text-[11px]">
+                                            <span className="font-semibold text-indigo-300">Répartition conseillée :</span>
+                                            <span className="rounded-lg bg-emerald-500/10 px-2 py-0.5 font-medium text-emerald-400">
+                                                Artisan {litige.resolution_payload.tele_expertise_analysis.recommended_split.artisan_percent}% ({money(litige.resolution_payload.tele_expertise_analysis.recommended_split.artisan_amount_fcfa)})
+                                            </span>
+                                            <span className="rounded-lg bg-rose-500/10 px-2 py-0.5 font-medium text-rose-400">
+                                                Remboursement Client {litige.resolution_payload.tele_expertise_analysis.recommended_split.client_percent}% ({money(litige.resolution_payload.tele_expertise_analysis.recommended_split.client_refund_fcfa)})
+                                            </span>
+                                        </div>
+                                    ) : null}
+                                </div>
+                            ) : litige.statut !== 'resolu' && canArbitrate ? (
+                                <div className="mt-4">
+                                    <button
+                                        type="button"
+                                        disabled={actionLoading}
+                                        onClick={() => {
+                                            router.post(`/admin/litiges/${litige.id}/tele-expertise`, {}, {
+                                                preserveScroll: true,
+                                            });
+                                        }}
+                                        className="inline-flex items-center gap-1.5 rounded-xl border border-indigo-500/30 bg-indigo-500/10 px-3 py-1.5 text-xs font-semibold text-indigo-300 transition hover:bg-indigo-500/20"
+                                    >
+                                        <span>🤖</span>
+                                        <span>Lancer Télé-Expertise IA (Vision Gemini)</span>
+                                    </button>
+                                </div>
+                            ) : null}
 
                             {litige.statut !== 'resolu' && !canArbitrate ? (
                                 <p className="mt-5 text-xs text-[var(--admin-muted)]">Lecture seule — arbitrage non autorisé.</p>

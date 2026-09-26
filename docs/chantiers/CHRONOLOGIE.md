@@ -8,7 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
-| 2026-09-26 | Plan | [Feuille de route — Chantiers 6 à 9 (Innovations & Améliorations)](plans/2026-09-26-feuille-de-route-chantiers-innovations.md) | proposé | — |
+| 2026-09-26 | Plan | [Feuille de route — Chantiers 6 à 9 (Innovations & Améliorations)](plans/2026-09-26-feuille-de-route-chantiers-innovations.md) | livré | `30880554`, `63e6e08e` |
 | 2026-09-25 | Audit | [Réalisation du Chantier 5 — KYC Gemini](audits/2026-09-25-audit-chantier-5-kyc-gemini.md) | — | `25a97550` et suivant |
 | 2026-09-25 | Plan | [Chantier 5 — KYC automatisé avec Gemini Vision](plans/2026-09-25-chantier-5-kyc-gemini.md) | livré | `25a97550` et suivant |
 
