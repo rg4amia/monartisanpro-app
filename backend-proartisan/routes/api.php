@@ -38,6 +38,7 @@ use App\Http\Controllers\Api\V1\SectorController;
 use App\Http\Controllers\Api\V1\SettingController;
 use App\Http\Controllers\Api\V1\SmsController;
 use App\Http\Controllers\Api\V1\SmsWebhookController;
+use App\Http\Controllers\Api\V1\SolvencyPassportController;
 use App\Http\Controllers\Api\V1\Supplier\SupplierCashoutController;
 use App\Http\Controllers\Api\V1\Supplier\SupplierDashboardController;
 use App\Http\Controllers\Api\V1\SupplierCatalogController;
@@ -127,6 +128,10 @@ Route::prefix('v1')->group(function () {
         Route::post('/ussd', [UssdController::class, 'handle']);
         Route::post('/sms/incoming', [UssdController::class, 'incomingSms']);
     });
+
+    // ── Passeport de Solvabilité & Assurance Chantier (Chantier 9C) ───────────
+    Route::get('/solvency-passports/verify', [SolvencyPassportController::class, 'verify']);
+    Route::get('/solvency-passports/insurance-quote', [SolvencyPassportController::class, 'calculateInsurance']);
 
     // ─────────────────────────────────────────────────────────────────────────
     // ROUTES PROTÉGÉES (Sanctum token)
@@ -317,10 +322,14 @@ Route::prefix('v1')->group(function () {
         Route::get('/litiges/{litige}', [LitigeController::class, 'show']);
         Route::post('/litiges/{litige}/preuves', [LitigeController::class, 'storeEvidence']);
         Route::post('/litiges/{litige}/evaluate-sla', [LitigeController::class, 'evaluateSla']);
+        Route::post('/litiges/{litige}/tele-expertise', [LitigeController::class, 'requestTeleExpertise']);
         Route::put('/litiges/{litige}/arbitrage', [LitigeController::class, 'arbitrage']);
         Route::post('/litiges/{litige}/jury/assign', [LitigeJuryController::class, 'assign']);
         Route::post('/litiges/{litige}/jury/vote', [LitigeJuryController::class, 'vote']);
         Route::post('/litiges/{litige}/llm-mediation', [LlmAdminController::class, 'llmMediation']);
+
+        // ── Passeport de Solvabilité (Chantier 9C) ───────────────────────────
+        Route::get('/solvency-passports/{artisan}', [SolvencyPassportController::class, 'show']);
 
         // ── Évaluations ───────────────────────────────────────────────────────
         Route::post('/evaluations', [EvaluationController::class, 'store']);

@@ -256,6 +256,18 @@ class WalletService
                 );
             }
 
+            // Chantier 9A : Écriture au Grand Livre en Partie Double (BCEAO)
+            try {
+                app(\App\Services\DoubleEntryLedgerService::class)->recordEscrowFunding(
+                    $mission,
+                    $montantMo,
+                    $montantMat,
+                    $paiementTransaction->id
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Échec enregistrement double entry ledger fragmentEscrow: '.$e->getMessage());
+            }
+
             Log::info('Séquestre fragmenté', [
                 'mission_id' => $mission->id,
                 'montant_total' => $montantTotal,
@@ -325,6 +337,18 @@ class WalletService
                         'type' => 'escrow_mo_avenant',
                     ]
                 );
+            }
+
+            // Chantier 9A : Écriture au Grand Livre en Partie Double pour l'avenant (BCEAO)
+            try {
+                app(\App\Services\DoubleEntryLedgerService::class)->recordEscrowFunding(
+                    $mission,
+                    $montantMo,
+                    $montantMat,
+                    $paiementTransaction->id
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Échec enregistrement double entry ledger applyAvenantEscrow: '.$e->getMessage());
             }
 
             Log::info('Séquestre avenant appliqué', [
@@ -526,6 +550,16 @@ class WalletService
                         'error' => $e->getMessage(),
                     ]);
                 }
+            }
+
+            // Chantier 9A : Écriture au Grand Livre en Partie Double pour la libération (BCEAO)
+            try {
+                app(\App\Services\DoubleEntryLedgerService::class)->recordMilestoneRelease(
+                    $jalon,
+                    $jalon->montant
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Échec enregistrement double entry ledger releaseJalon: '.$e->getMessage());
             }
 
             Log::info('Jalon libéré', [

@@ -111,4 +111,28 @@ class LitigeController extends Controller
             'data' => new LitigeResource($litige),
         ]);
     }
+
+    /**
+     * Déclenche la télé-expertise IA pour un litige (Chantier 9B).
+     */
+    public function requestTeleExpertise(Request $request, Litige $litige): JsonResponse
+    {
+        $user = $request->user();
+        $mission = $litige->mission;
+
+        if ($user->role !== 'admin' && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès refusé.',
+            ], 403);
+        }
+
+        $analysis = $this->litigeService->requestTeleExpertise($litige);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Analyse de télé-expertise générée avec succès.',
+            'data' => $analysis,
+        ]);
+    }
 }

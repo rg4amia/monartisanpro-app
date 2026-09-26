@@ -301,6 +301,24 @@ class LitigeService
             ->each(fn (Litige $litige) => $this->evaluateSla($litige));
     }
 
+    /**
+     * Déclenche une télé-expertise assistée par vision IA pour un litige (Chantier 9B).
+     */
+    public function requestTeleExpertise(Litige $litige): array
+    {
+        $gemini = app(GeminiService::class);
+        $analysis = $gemini->analyzeDisputeTeleExpertise($litige);
+
+        $payload = $litige->resolution_payload ?? [];
+        $payload['tele_expertise_analysis'] = $analysis;
+
+        $litige->update([
+            'resolution_payload' => $payload,
+        ]);
+
+        return $analysis;
+    }
+
     public function arbitrate(?User $admin, Litige $litige, array $payload): Litige
     {
         $litige->loadMissing(['mission.client', 'mission.artisan', 'mission.jcodes', 'declencheur', 'preuves.user']);
