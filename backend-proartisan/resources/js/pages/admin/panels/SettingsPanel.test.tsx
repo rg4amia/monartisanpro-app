@@ -127,6 +127,22 @@ describe('SettingsPanel', () => {
         );
     });
 
+    it('met à jour la passerelle SMS via le select dédié', () => {
+        renderPanel({
+            settingsList: [
+                makeSetting({ id: 3, key: 'sms_provider', value: 'smspro', label: 'Passerelle API SMS active' }),
+            ],
+        });
+
+        fireEvent.change(screen.getByDisplayValue('SMS Pro Africa'), { target: { value: 'orange' } });
+
+        expect(routerPut).toHaveBeenCalledWith(
+            '/admin/settings/3',
+            { value: 'orange' },
+            expect.objectContaining({ preserveScroll: true }),
+        );
+    });
+
     it('affiche un message si aucun paramètre n\'est configuré', () => {
         renderPanel({ settingsList: [] });
         expect(screen.getByText('Aucun paramètre trouvé.')).toBeInTheDocument();

@@ -77,10 +77,24 @@ return [
     */
 
     'sms' => [
-        'provider' => env('SMS_PROVIDER', 'smspro'), // 'log' or 'smspro'
+        'provider' => env('SMS_PROVIDER', 'smspro'), // 'log', 'smspro', or 'orange'
         'api_token' => env('SMS_API_TOKEN'),
         'base_url' => env('SMS_BASE_URL', 'https://app.smspro.africa/api/v3'),
         'sender_id' => env('SMS_SENDER_ID', 'ProsArtisan'),
+    ],
+
+    /*
+    |--------------------------------------------------------------------------
+    | Orange SMS API (Paddock / GSMA OneAPI RESTful NetAPI)
+    |--------------------------------------------------------------------------
+    */
+    'orange_sms' => [
+        'base_url' => env('ORANGE_SMS_BASE_URL', 'https://api.orange.com'),
+        'api_token' => env('ORANGE_SMS_API_TOKEN'),
+        'client_id' => env('ORANGE_SMS_CLIENT_ID'),
+        'client_secret' => env('ORANGE_SMS_CLIENT_SECRET'),
+        'sender_address' => env('ORANGE_SMS_SENDER_ADDRESS', 'tel:+2250000'),
+        'sender_name' => env('ORANGE_SMS_SENDER_NAME', 'ProsArtisan'),
     ],
 
     'whatsapp' => [

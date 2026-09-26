@@ -7,13 +7,50 @@ This document describes the SMS Pro Africa API integration for ProsArtisan.
 Add the following to your `.env` file:
 
 ```env
-SMS_PROVIDER=smspro # Use 'log' for development, 'smspro' for production
+# Active provider: 'smspro', 'orange', or 'log'
+SMS_PROVIDER=smspro
+
+# SMS Pro Africa
 SMS_API_TOKEN=votre_token_smspro_ici
 SMS_BASE_URL=https://app.smspro.africa/api/v3
 SMS_SENDER_ID=ProsArtisan          # Max 11 characters
+
+# Orange SMS API (Paddock / GSMA OneAPI RESTful NetAPI)
+ORANGE_SMS_BASE_URL=https://api.orange.com
+ORANGE_SMS_SENDER_ADDRESS=tel:+2250000
+ORANGE_SMS_SENDER_NAME=ProsArtisan
+ORANGE_SMS_API_TOKEN=votre_token_bearer_direct # Option 1: Bearer direct
+# OU Option 2: OAuth 2.0 Client Credentials
+ORANGE_SMS_CLIENT_ID=votre_client_id
+ORANGE_SMS_CLIENT_SECRET=votre_client_secret
 ```
 
-## Usage
+## Basculer entre les Passerelles SMS (Backoffice & CLI)
+
+Vous pouvez changer de passerelle d'envoi à chaud sans redémarrer le serveur ni modifier le fichier `.env` :
+
+### 1. En Ligne de Commande (Artisan CLI)
+
+```bash
+# Afficher la passerelle active
+php artisan sms:switch-provider --status
+
+# Basculer sur Orange SMS
+php artisan sms:switch-provider orange
+
+# Basculer sur SMS Pro Africa
+php artisan sms:switch-provider smspro
+
+# Basculer sur le mode Simulation (Log)
+php artisan sms:switch-provider log
+
+# Tester un envoi avec un fournisseur spécifique
+php artisan sms:test 0700000001 --provider=orange
+```
+
+### 2. Depuis le Panneau d'Administration Web
+
+Rendez-vous dans `/admin/settings` (Paramètres de la plateforme) : le champ déroulant **Passerelle API SMS active** vous permet de sélectionner instantanément le fournisseur souhaité (`SMS Pro Africa`, `Orange SMS API`, ou `Mode Simulation (Log)`).
 
 ### Send SMS via Service
 

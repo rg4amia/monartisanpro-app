@@ -12,13 +12,46 @@ class SmsService
 
     private string $baseUrl;
 
-    private string $provider;
+    private ?string $providerOverride = null;
 
-    public function __construct()
+    private OrangeSmsService $orangeSms;
+
+    public function __construct(?OrangeSmsService $orangeSms = null)
     {
         $this->apiToken = trim(config('services.sms.api_token') ?? '');
         $this->baseUrl = rtrim(trim(config('services.sms.base_url') ?? ''), '/');
-        $this->provider = config('services.sms.provider', 'log');
+        $this->orangeSms = $orangeSms ?? app(OrangeSmsService::class);
+    }
+
+    /**
+     * Retourne le fournisseur SMS actif (surcharge runtime > Setting en base de données > config)
+     */
+    public function getProvider(): string
+    {
+        if ($this->providerOverride !== null) {
+            return $this->providerOverride;
+        }
+
+        try {
+            $setting = \App\Models\Setting::getValueByKey('sms_provider');
+            if ($setting) {
+                return (string) $setting;
+            }
+        } catch (\Throwable) {
+            // Repli silencieux si la base de données n'est pas encore initialisée
+        }
+
+        return (string) config('services.sms.provider', 'smspro');
+    }
+
+    /**
+     * Permet de forcer un fournisseur SMS spécifique (tests, commandes CLI)
+     */
+    public function setProvider(?string $provider): self
+    {
+        $this->providerOverride = $provider;
+
+        return $this;
     }
 
     /**
@@ -126,8 +159,10 @@ class SmsService
         // Normaliser le(s) numéro(s) au format international
         $recipient = $this->normalizeRecipients($recipient);
 
-        // Log mode for development
-        if ($this->provider === 'log') {
+        $activeProvider = $this->getProvider();
+
+        // 1. Log mode for development
+        if ($activeProvider === 'log') {
             Log::info('SMS (log mode)', [
                 'recipient' => $recipient,
                 'sender_id' => $senderId,
@@ -138,12 +173,36 @@ class SmsService
 
             return [
                 'status' => 'success',
+                'provider' => 'log',
                 'data' => [
                     'mode' => 'log',
                     'recipient' => $recipient,
                     'message' => $message,
                 ],
             ];
+        }
+
+        // 2. Orange SMS API (Paddock)
+        if ($activeProvider === 'orange') {
+            if (is_array($recipient)) {
+                $results = [];
+                $allOk = true;
+                foreach ($recipient as $single) {
+                    $res = $this->orangeSms->send($single, $message, $senderId);
+                    $results[] = $res;
+                    if (($res['status'] ?? '') !== 'success') {
+                        $allOk = false;
+                    }
+                }
+
+                return [
+                    'status' => $allOk ? 'success' : 'error',
+                    'provider' => 'orange',
+                    'data' => $results,
+                ];
+            }
+
+            return $this->orangeSms->send($recipient, $message, $senderId);
         }
 
         // Prepare recipient string
@@ -313,6 +372,11 @@ class SmsService
      */
     public function sendOtp(string $phone, string $code): array
     {
+        $activeProvider = $this->getProvider();
+        if ($activeProvider === 'orange') {
+            return $this->orangeSms->sendOtp($phone, $code);
+        }
+
         // La durée est lue dans la config : le message annonçait 10 minutes
         // alors que le code expire au bout de 5.
         $ttl = (int) config('prosartisan.otp.ttl', 5);
@@ -321,6 +385,10 @@ class SmsService
         // où un faux support réclame le code reçu.
         $message = "Votre code de vérification ProsArtisan est: {$code}. "
             ."Valide {$ttl} minutes. Ne le communiquez jamais : ProsArtisan ne vous le demandera pas.";
+
+        if ($activeProvider === 'log') {
+            return $this->send($phone, $message, config('services.sms.sender_id', 'ProsArtisan'), null, 'otp');
+        }
 
         // `type: otp` — route transactionnelle dédiée de SMSpro. Si le forfait de l'opérateur
         // ne dispose pas de serveur OTP dédié (HTTP 403), on replie automatiquement sur 'plain'.

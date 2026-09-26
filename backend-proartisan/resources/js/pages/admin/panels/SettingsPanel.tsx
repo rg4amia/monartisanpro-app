@@ -142,6 +142,20 @@ export function SettingsPanel({
                                             <option value="whatsapp">WhatsApp uniquement</option>
                                             <option value="both">SMS & WhatsApp</option>
                                         </select>
+                                    ) : setting.key === 'sms_provider' ? (
+                                        <select
+                                            defaultValue={setting.value}
+                                            onChange={(e) => {
+                                                router.put(`/admin/settings/${setting.id}`, {
+                                                    value: e.target.value,
+                                                }, { preserveScroll: true });
+                                            }}
+                                            className="admin-input w-48 rounded-xl px-3 py-2 text-sm text-center outline-none border border-[var(--admin-border)] font-medium"
+                                        >
+                                            <option value="smspro">SMS Pro Africa</option>
+                                            <option value="orange">Orange SMS API</option>
+                                            <option value="log">Mode Simulation (Log)</option>
+                                        </select>
                                     ) : setting.key.startsWith('block_') ? (
                                         <select
                                             defaultValue={setting.value}

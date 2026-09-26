@@ -7,23 +7,27 @@ use Illuminate\Console\Command;
 
 class SmsTestCommand extends Command
 {
-    protected $signature = 'sms:test {phone : Numéro de téléphone destinataire} {--message= : Message personnalisé}';
+    protected $signature = 'sms:test {phone : Numéro de téléphone destinataire} {--provider= : Forcer un fournisseur (smspro, orange, log)} {--message= : Message personnalisé}';
 
-    protected $description = 'Tester l\'envoi de SMS via SmsPro Africa';
+    protected $description = 'Tester l\'envoi de SMS via la passerelle active (SmsPro Africa ou Orange SMS)';
 
     public function handle(SmsService $smsService): int
     {
         $phone = $this->argument('phone');
-        $message = $this->option('message') ?? 'Test ProsArtisan — SMS envoyé avec succès via SmsPro Africa ! 🎉';
+        $forcedProvider = $this->option('provider');
+        if ($forcedProvider) {
+            $smsService->setProvider(strtolower(trim($forcedProvider)));
+        }
 
-        $this->info('📱 Envoi SMS via SmsPro Africa...');
+        $activeProvider = $smsService->getProvider();
+        $message = $this->option('message') ?? "Test ProsArtisan — SMS envoyé avec succès via [{$activeProvider}] ! 🎉";
+
+        $this->info("📱 Envoi SMS de test via [{$activeProvider}]...");
         $this->table(
             ['Paramètre', 'Valeur'],
             [
-                ['Provider', config('services.sms.provider')],
-                ['Base URL', config('services.sms.base_url')],
-                ['Token', substr(config('services.sms.api_token'), 0, 15).'***'],
-                ['Sender ID', config('services.sms.sender_id', 'ProsArtisan')],
+                ['Passerelle', strtoupper($activeProvider)],
+                ['Expéditeur', config('services.sms.sender_id', 'ProsArtisan')],
                 ['Destinataire', $phone],
                 ['Message', $message],
             ]
