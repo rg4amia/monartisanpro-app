@@ -7,8 +7,9 @@ import '../../../data/models/payout_model.dart';
 
 /// Virements Mobile Money non aboutis de l'utilisateur (Chantier 10).
 ///
-/// Un virement échoué ne débite pas le portefeuille : les fonds restent
-/// disponibles, le virement est relancé automatiquement, et l'utilisateur
+/// Un virement échoué ne débite pas le portefeuille prélevé (celui de
+/// l'utilisateur, ou de l'artisan pour un remboursement client après
+/// litige) : le virement est relancé automatiquement, et l'utilisateur
 /// peut le relancer lui-même après avoir corrigé son numéro de paiement.
 class PendingPayoutsSection extends StatelessWidget {
   const PendingPayoutsSection({
@@ -39,8 +40,11 @@ class PendingPayoutsSection extends StatelessWidget {
         ),
         const SizedBox(height: 4),
         const Text(
+          // Formulation valable aussi pour un client remboursé après litige,
+          // qui n'a pas de portefeuille : la somme reste réservée chez
+          // l'artisan jusqu'au virement réussi.
           'Ces montants n\'ont pas encore été reçus sur votre Mobile Money. '
-          'Ils restent sur votre portefeuille et sont relancés automatiquement.',
+          'Ils vous restent dus et sont relancés automatiquement.',
           style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
         ),
         const SizedBox(height: 12),

@@ -7,11 +7,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 /**
- * Versement Mobile Money sortant vers un artisan ou un livreur.
+ * Versement Mobile Money sortant vers un artisan, un livreur ou un client.
  *
- * Le portefeuille du bénéficiaire n'est débité qu'au virement réussi : tant
- * que le versement est `en_cours` ou `echoue`, les fonds restent sur son
- * portefeuille (et, pour une mission, réservés dans son séquestre).
+ * Le portefeuille débité (celui du bénéficiaire, ou de `source_user_id` pour
+ * un remboursement client prélevé chez l'artisan) ne l'est qu'au virement
+ * réussi : tant que le versement est `en_cours` ou `echoue`, les fonds restent
+ * sur ce portefeuille (et, pour une mission, réservés dans son séquestre).
  */
 class MobileMoneyPayout extends Model
 {
@@ -34,6 +35,8 @@ class MobileMoneyPayout extends Model
 
     public const CONTEXT_RETRAIT_LIVREUR = 'retrait_livreur';
 
+    public const CONTEXT_REMBOURSEMENT_CLIENT = 'remboursement_client';
+
     public const STATUT_LABELS = [
         self::STATUT_EN_COURS => 'Virement en cours',
         self::STATUT_ECHOUE => 'Virement échoué',
@@ -46,6 +49,7 @@ class MobileMoneyPayout extends Model
         self::CONTEXT_LITIGE_MO => 'Règlement de litige (main-d\'œuvre)',
         self::CONTEXT_LITIGE_MATERIAUX => 'Règlement de litige (matériaux)',
         self::CONTEXT_RETRAIT_LIVREUR => 'Retrait des gains livreur',
+        self::CONTEXT_REMBOURSEMENT_CLIENT => 'Remboursement après litige',
     ];
 
     protected $fillable = [
@@ -69,6 +73,8 @@ class MobileMoneyPayout extends Model
         'transaction_id',
         'description',
         'ledger_metadata',
+        'source_user_id',
+        'debits',
     ];
 
     protected $casts = [
@@ -79,11 +85,47 @@ class MobileMoneyPayout extends Model
         'next_retry_at' => 'datetime',
         'paid_at' => 'datetime',
         'ledger_metadata' => 'array',
+        'debits' => 'array',
     ];
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    /** Titulaire du portefeuille prélevé, quand ce n'est pas le bénéficiaire. */
+    public function sourceUser(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'source_user_id');
+    }
+
+    /** Utilisateur dont le portefeuille est débité au virement réussi. */
+    public function debitedUser(): User
+    {
+        return $this->source_user_id ? $this->sourceUser : $this->user;
+    }
+
+    /**
+     * Débits à passer au virement réussi : la ventilation enregistrée, sinon
+     * un débit unique du montant sur `wallet_type`.
+     *
+     * @return list<array{wallet_type: string, montant: int, metadata?: array}>
+     */
+    public function ledgerDebits(): array
+    {
+        if (! empty($this->debits)) {
+            return array_values($this->debits);
+        }
+
+        return [['wallet_type' => $this->wallet_type, 'montant' => (int) $this->montant]];
+    }
+
+    /** Part de ce versement prélevée sur un portefeuille donné. */
+    public function debitOn(string $walletType): int
+    {
+        return (int) collect($this->ledgerDebits())
+            ->where('wallet_type', $walletType)
+            ->sum('montant');
     }
 
     public function mission(): BelongsTo

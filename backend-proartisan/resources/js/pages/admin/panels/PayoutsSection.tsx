@@ -38,6 +38,8 @@ export interface PayoutItem {
     mission_id: number | null;
     description: string | null;
     beneficiary: { id: number; name: string | null; phone: string | null; role: string } | null;
+    /** Remboursement client : artisan dont le séquestre est prélevé au virement réussi. */
+    debited_from?: { id: number; name: string | null } | null;
     can_retry: boolean;
     created_at: string | null;
     events?: PayoutEvent[];
@@ -250,6 +252,9 @@ export function PayoutsSection({ payoutsOverview, driverCashoutsOverview }: Payo
                                             <td className="text-xs text-[var(--admin-text-soft)]">
                                                 {payout.context_label}
                                                 {payout.mission_id ? ` · mission #${payout.mission_id}` : ''}
+                                                {payout.debited_from && (
+                                                    <div className="text-[var(--admin-muted)]">Prélevé chez {payout.debited_from.name ?? `l'utilisateur #${payout.debited_from.id}`}</div>
+                                                )}
                                             </td>
                                             <td className="text-sm font-bold text-[var(--admin-text)]">{money(payout.montant_transfere)}</td>
                                             <td>

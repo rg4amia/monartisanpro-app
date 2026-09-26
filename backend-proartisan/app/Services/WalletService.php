@@ -635,13 +635,19 @@ class WalletService
         // l'artisan, c'est-à-dire le séquestre de ses AUTRES missions.
         $isHybridLabor = $walletType === WalletType::WALLET_MO && $mission->payment_type === 'hybrid';
 
+        // Les versements non aboutis (virement échoué, en attente de relance)
+        // n'ont pas encore été débités mais sont déjà dus (à l'artisan, ou au
+        // client pour un remboursement) : ils ne doivent financer ni un autre
+        // jalon, ni un arbitrage de litige — repli historique compris.
+        $reserved = $this->payouts()->reservedForMission($mission->id, $walletType);
+
         if (! $hasMissionTransactions && ! $isHybridLabor) {
             $userBalance = $mission->artisan?->{$walletType->columnName()} ?? 0;
             $missionAmount = $walletType === WalletType::WALLET_MATERIAUX
                 ? (int) $mission->montant_materiaux
                 : (int) $mission->montant_mo;
 
-            return max(0, min((int) $userBalance, $missionAmount));
+            return max(0, min((int) $userBalance, $missionAmount) - $reserved);
         }
 
         $credits = WalletTransaction::query()
@@ -658,11 +664,6 @@ class WalletService
             ->whereIn('operation', [WalletOperation::DEBIT->value, WalletOperation::BLOCAGE->value])
             ->sum('montant');
 
-        // Les versements non aboutis (virement échoué, en attente de relance)
-        // n'ont pas encore été débités mais sont déjà dus à l'artisan : ils ne
-        // doivent financer ni un autre jalon, ni un arbitrage de litige.
-        $reserved = $this->payouts()->reservedForMission($mission->id, $walletType);
-
         return max(0, (int) $credits - (int) $debits - $reserved);
     }
 
@@ -671,81 +672,73 @@ class WalletService
         return app(MobileMoneyPayoutService::class);
     }
 
+    /**
+     * Rembourse le client après litige, par un seul virement Mobile Money
+     * prélevé sur le séquestre de la mission (portefeuilles de l'artisan).
+     *
+     * Les portefeuilles de l'artisan ne sont débités qu'au virement réussi
+     * (MobileMoneyPayoutService) : un échec laisse les fonds réservés dans le
+     * séquestre de la mission, relançables par l'admin, le client ou la
+     * relance automatique — auparavant ils étaient débités d'abord et
+     * perdus si le virement échouait.
+     */
     public function refundClientFromDispute(
         Mission $mission,
         int $refundMateriaux,
         int $refundMo,
         ?Litige $litige = null
     ): ?Transaction {
-        $client = $mission->client;
-        $artisan = $mission->artisan;
+        $refundMateriaux = max(0, $refundMateriaux);
+        $refundMo = max(0, $refundMo);
         $total = $refundMateriaux + $refundMo;
 
-        return DB::transaction(function () use ($mission, $client, $artisan, $refundMateriaux, $refundMo, $total, $litige) {
-            if ($refundMateriaux > 0) {
-                $this->debit(
-                    $artisan,
-                    WalletType::WALLET_MATERIAUX,
-                    $refundMateriaux,
-                    "Remboursement litige mission #{$mission->id}",
-                    [
-                        'mission_id' => $mission->id,
-                        'litige_id' => $litige?->id,
-                        'type' => 'litige_refund_materiaux',
-                    ]
-                );
-            }
+        if ($total <= 0) {
+            return null;
+        }
 
-            if ($refundMo > 0) {
-                $this->debit(
-                    $artisan,
-                    WalletType::WALLET_MO,
-                    $refundMo,
-                    "Remboursement litige mission #{$mission->id}",
-                    [
-                        'mission_id' => $mission->id,
-                        'litige_id' => $litige?->id,
-                        'type' => 'litige_refund_mo',
-                    ]
-                );
-            }
+        $client = $mission->client;
+        $artisan = $mission->artisan;
+        $provider = $this->resolveMissionProvider($mission, $client);
 
-            if ($total <= 0) {
-                return null;
-            }
-
-            $provider = $this->resolveMissionProvider($mission, $client);
-            $transaction = Transaction::create([
-                'mission_id' => $mission->id,
-                'user_id' => $client->id,
-                'type' => 'remboursement',
-                'montant' => $total,
-                'wallet_source' => 'escrow_mission_'.$mission->id,
-                'wallet_dest' => 'client_mobile_money_'.$client->id,
-                'provider' => $provider,
-                'statut' => 'en_attente',
-                'metadata' => [
-                    'litige_id' => $litige?->id,
-                    'refund_materiaux' => $refundMateriaux,
-                    'refund_mo' => $refundMo,
-                ],
-            ]);
-
-            try {
-                $result = $this->transferToMobileMoney($provider, $client->payment_phone ?? $client->phone, $total, "Remboursement mission #{$mission->id}");
-                $transaction->update([
-                    'reference_externe' => $result['id'] ?? $result['txnid'] ?? null,
-                    'statut' => 'confirme',
-                ]);
-            } catch (\Exception $e) {
-                Log::error('Erreur lors du remboursement automatique client', [
+        return DB::transaction(function () use ($mission, $client, $artisan, $refundMateriaux, $refundMo, $total, $litige, $provider) {
+            $payout = $this->payouts()->dispatch(
+                $client,
+                $refundMo > 0 ? WalletType::WALLET_MO : WalletType::WALLET_MATERIAUX,
+                $total,
+                MobileMoneyPayout::CONTEXT_REMBOURSEMENT_CLIENT,
+                $provider,
+                "Remboursement litige mission #{$mission->id}",
+                [
                     'mission_id' => $mission->id,
-                    'client_id' => $client->id,
-                    'error' => $e->getMessage(),
-                ]);
-            }
+                    'type' => 'remboursement',
+                    'wallet_source' => 'escrow_mission_'.$mission->id,
+                    'wallet_dest' => 'client_mobile_money_'.$client->id,
+                    'metadata' => [
+                        'litige_id' => $litige?->id,
+                        'refund_materiaux' => $refundMateriaux,
+                        'refund_mo' => $refundMo,
+                    ],
+                ],
+                [
+                    'mission_id' => $mission->id,
+                    'litige_id' => $litige?->id,
+                ],
+                source: $artisan,
+                debits: [
+                    [
+                        'wallet_type' => WalletType::WALLET_MATERIAUX,
+                        'montant' => $refundMateriaux,
+                        'metadata' => ['type' => 'litige_refund_materiaux'],
+                    ],
+                    [
+                        'wallet_type' => WalletType::WALLET_MO,
+                        'montant' => $refundMo,
+                        'metadata' => ['type' => 'litige_refund_mo'],
+                    ],
+                ],
+            );
 
-            return $transaction->fresh();
+            return $payout->transaction->fresh();
         });
     }
 

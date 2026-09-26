@@ -14,9 +14,11 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
 /**
- * Versements Mobile Money sortants (artisan, livreur) avec reprise sur échec.
+ * Versements Mobile Money sortants (artisan, livreur, remboursement client)
+ * avec reprise sur échec.
  *
- * Invariant : le portefeuille du bénéficiaire n'est débité qu'une fois le
+ * Invariant : le portefeuille prélevé (celui du bénéficiaire, ou celui de
+ * l'artisan pour un remboursement client) n'est débité qu'une fois le
  * virement confirmé par l'opérateur. Auparavant, `releaseJalon` débitait
  * d'abord puis tentait le virement : un échec laissait la transaction « en
  * attente » pour toujours, sans relance, et les fonds ne figuraient plus nulle
@@ -49,6 +51,8 @@ class MobileMoneyPayoutService
      * @param  int|null  $transferAmount  montant viré s'il diffère du montant débité (frais de retrait)
      * @param  string|null  $phone  numéro imposé (retrait livreur) ; sinon numéro de paiement courant
      * @param  bool  $attempt  faux pour un versement soldé ensuite manuellement (virement bancaire)
+     * @param  User|null  $source  titulaire du portefeuille prélevé s'il n'est pas le bénéficiaire
+     * @param  list<array{wallet_type: string|WalletType, montant: int, metadata?: array}>|null  $debits  ventilation du débit par portefeuille
      */
     public function dispatch(
         User $beneficiary,
@@ -63,9 +67,15 @@ class MobileMoneyPayoutService
         ?string $phone = null,
         bool $attempt = true,
         ?User $actor = null,
+        ?User $source = null,
+        ?array $debits = null,
     ): MobileMoneyPayout {
         if ($montant <= 0 || ($transferAmount !== null && ($transferAmount <= 0 || $transferAmount > $montant))) {
             throw new \InvalidArgumentException('Le montant du versement doit être supérieur à 0.');
+        }
+
+        if ($debits !== null) {
+            $debits = $this->normalizeDebits($debits, $montant);
         }
 
         $transaction = Transaction::create(array_merge([
@@ -91,6 +101,8 @@ class MobileMoneyPayoutService
             'transaction_id' => $transaction->id,
             'description' => mb_substr($description, 0, 255),
             'ledger_metadata' => $ledgerMetadata,
+            'source_user_id' => $source && $source->id !== $beneficiary->id ? $source->id : null,
+            'debits' => $debits,
         ]);
 
         $transaction->update([
@@ -214,12 +226,13 @@ class MobileMoneyPayoutService
     /**
      * Annule un versement non abouti : les fonds restent sur le portefeuille.
      * Réservé aux retraits livreur (demande rejetée) — un paiement d'étape de
-     * chantier ou de litige est dû à l'artisan et ne s'annule pas.
+     * chantier, un règlement de litige ou un remboursement client est dû à son
+     * bénéficiaire et ne s'annule pas.
      */
     public function cancel(MobileMoneyPayout $payout, ?User $actor, string $reason): MobileMoneyPayout
     {
         if ($payout->context !== MobileMoneyPayout::CONTEXT_RETRAIT_LIVREUR) {
-            throw new \InvalidArgumentException('Un versement dû à l\'artisan ne peut pas être annulé : relancez-le ou soldez-le manuellement.');
+            throw new \InvalidArgumentException('Un versement dû à son bénéficiaire ne peut pas être annulé : relancez-le ou soldez-le manuellement.');
         }
 
         return DB::transaction(function () use ($payout, $actor, $reason) {
@@ -249,10 +262,13 @@ class MobileMoneyPayoutService
      */
     public function reservedForMission(int $missionId, WalletType $walletType): int
     {
+        // Sommé en PHP : un remboursement client ventile son débit sur les
+        // deux portefeuilles (colonne JSON `debits`), hors de portée d'un SUM
+        // portable entre MariaDB et SQLite. Une mission n'en compte que peu.
         return (int) MobileMoneyPayout::where('mission_id', $missionId)
-            ->where('wallet_type', $walletType->value)
             ->whereIn('statut', MobileMoneyPayout::STATUTS_NON_ABOUTIS)
-            ->sum('montant');
+            ->get()
+            ->sum(fn (MobileMoneyPayout $payout) => $payout->debitOn($walletType->value));
     }
 
     /**
@@ -327,6 +343,10 @@ class MobileMoneyPayoutService
             'external_reference' => $payout->external_reference,
             'mission_id' => $payout->mission_id,
             'description' => $payout->description,
+            'debited_from' => $payout->source_user_id ? [
+                'id' => $payout->source_user_id,
+                'name' => $payout->sourceUser?->name,
+            ] : null,
             'beneficiary' => $payout->relationLoaded('user') && $payout->user ? [
                 'id' => $payout->user->id,
                 'name' => $payout->user->name,
@@ -418,22 +438,25 @@ class MobileMoneyPayoutService
     }
 
     /**
-     * Débite le portefeuille et clôt le versement et sa transaction.
+     * Débite le ou les portefeuilles prélevés et clôt le versement et sa
+     * transaction.
      */
     private function settle(MobileMoneyPayout $payout, ?string $externalReference): void
     {
-        $metadata = array_merge($payout->ledger_metadata ?? [], [
-            'payout_id' => $payout->id,
-            'payout_reference' => $payout->reference,
-        ]);
+        $debited = $payout->debitedUser();
 
-        $this->walletService->debit(
-            $payout->user,
-            WalletType::from($payout->wallet_type),
-            $payout->montant,
-            (string) $payout->description,
-            $metadata
-        );
+        foreach ($payout->ledgerDebits() as $debit) {
+            $this->walletService->debit(
+                $debited,
+                WalletType::from($debit['wallet_type']),
+                (int) $debit['montant'],
+                (string) $payout->description,
+                array_merge($payout->ledger_metadata ?? [], $debit['metadata'] ?? [], [
+                    'payout_id' => $payout->id,
+                    'payout_reference' => $payout->reference,
+                ])
+            );
+        }
 
         $payout->update([
             'statut' => MobileMoneyPayout::STATUT_VERSE,
@@ -485,12 +508,19 @@ class MobileMoneyPayoutService
         ]);
 
         if ($firstFailure) {
+            $amount = number_format($payout->transferAmount(), 0, ',', ' ');
+            // Un client remboursé n'a pas de portefeuille ProsArtisan : les
+            // fonds restent réservés chez l'artisan, pas « sur son portefeuille ».
+            $message = $payout->source_user_id
+                ? "Le virement de {$amount} FCFA ({$payout->contextLabel()}) n'a pas abouti. La somme vous reste due et le virement sera relancé automatiquement. Vérifiez votre numéro de paiement."
+                : "Le virement de {$amount} FCFA ({$payout->contextLabel()}) n'a pas abouti. Les fonds restent sur votre portefeuille et le virement sera relancé automatiquement. Vérifiez votre numéro de paiement.";
+
             try {
                 $this->notifications->send(
                     $payout->user,
                     'payment',
                     'Virement Mobile Money en attente',
-                    'Le virement de '.number_format($payout->transferAmount(), 0, ',', ' ')." FCFA ({$payout->contextLabel()}) n'a pas abouti. Les fonds restent sur votre portefeuille et le virement sera relancé automatiquement. Vérifiez votre numéro de paiement."
+                    $message
                 );
             } catch (\Throwable $e) {
                 Log::warning('[Versements] Notification d\'échec non envoyée : '.$e->getMessage());
@@ -509,11 +539,49 @@ class MobileMoneyPayoutService
 
     private function assertWalletCovers(MobileMoneyPayout $payout): void
     {
-        $balance = $payout->user->getWalletBalance(WalletType::from($payout->wallet_type));
+        $debited = $payout->debitedUser();
 
-        if ($balance < $payout->montant) {
-            throw new \RuntimeException("Solde du portefeuille insuffisant pour ce versement ({$balance} FCFA disponibles).");
+        foreach ($payout->ledgerDebits() as $debit) {
+            $balance = $debited->getWalletBalance(WalletType::from($debit['wallet_type']));
+
+            if ($balance < (int) $debit['montant']) {
+                throw new \RuntimeException("Solde du portefeuille insuffisant pour ce versement ({$balance} FCFA disponibles).");
+            }
         }
+    }
+
+    /**
+     * Valide la ventilation d'un débit : portefeuilles connus, parts
+     * positives, somme égale au montant du versement.
+     *
+     * @return list<array{wallet_type: string, montant: int, metadata?: array}>
+     */
+    private function normalizeDebits(array $debits, int $montant): array
+    {
+        $normalized = [];
+
+        foreach ($debits as $debit) {
+            $amount = (int) ($debit['montant'] ?? 0);
+            if ($amount <= 0) {
+                continue;
+            }
+
+            $walletType = $debit['wallet_type'] instanceof WalletType
+                ? $debit['wallet_type']
+                : WalletType::from((string) $debit['wallet_type']);
+
+            $entry = ['wallet_type' => $walletType->value, 'montant' => $amount];
+            if (! empty($debit['metadata'])) {
+                $entry['metadata'] = $debit['metadata'];
+            }
+            $normalized[] = $entry;
+        }
+
+        if ($normalized === [] || array_sum(array_column($normalized, 'montant')) !== $montant) {
+            throw new \InvalidArgumentException('La ventilation du débit ne correspond pas au montant du versement.');
+        }
+
+        return $normalized;
     }
 
     private function beneficiaryPhone(User $user): ?string

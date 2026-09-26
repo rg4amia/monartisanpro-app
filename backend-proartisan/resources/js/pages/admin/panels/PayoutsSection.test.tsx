@@ -87,6 +87,22 @@ describe('PayoutsSection', () => {
         expect(screen.getByText(/^Relance \d/)).toBeInTheDocument();
     });
 
+    it("indique l'artisan prélevé pour un remboursement client", () => {
+        renderSection({
+            pending: [
+                makePayout({
+                    context: 'remboursement_client',
+                    context_label: 'Remboursement après litige',
+                    beneficiary: { id: 7, name: 'Awa Koné', phone: '+2250700000007', role: 'client' },
+                    debited_from: { id: 3, name: 'Yao Électricité' },
+                }),
+            ],
+        });
+
+        expect(screen.getByText('Awa Koné')).toBeInTheDocument();
+        expect(screen.getByText('Prélevé chez Yao Électricité')).toBeInTheDocument();
+    });
+
     it("déplie l'historique des actions du versement", () => {
         renderSection();
 
