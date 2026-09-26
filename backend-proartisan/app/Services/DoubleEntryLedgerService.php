@@ -7,6 +7,7 @@ use App\Models\Jalon;
 use App\Models\Mission;
 use App\Models\Order;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
 use InvalidArgumentException;
 
@@ -225,26 +226,62 @@ class DoubleEntryLedgerService
      */
     public function verifyIntegrity(?int $missionId = null): array
     {
+        if (! Schema::hasTable('double_entry_ledger_entries')) {
+            return [
+                'is_balanced' => true,
+                'balanced' => true,
+                'total_entries_count' => 0,
+                'total_volume_fcfa' => 0,
+                'total_volume_xof' => 0,
+                'discrepancy_amount' => 0,
+                'anomalies_count' => 0,
+                'anomalies' => [],
+                'timestamp' => now()->toIso8601String(),
+            ];
+        }
+
         $query = DoubleEntryLedgerEntry::query();
         if ($missionId !== null) {
             $query->where('mission_id', $missionId);
         }
 
         $totalEntries = $query->count();
-        $totalVolume = (int) $query->sum('amount');
+        $totalVolume = (int) ($query->sum('amount') ?? 0);
 
-        // Vérification de la parité par groupe d'opérations
         $anomalies = [];
-        $unbalancedGroups = DoubleEntryLedgerEntry::select('transaction_group_id')
-            ->when($missionId !== null, fn ($q) => $q->where('mission_id', $missionId))
-            ->groupBy('transaction_group_id')
-            ->havingRaw('COUNT(*) < 1')
+        $discrepancyAmount = 0;
+
+        // 1. Détection d'écritures invalides (montant <= 0 ou comptes source/destination identiques ou nuls)
+        $invalidEntries = (clone $query)
+            ->where(function ($q) {
+                $q->where('amount', '<=', 0)
+                    ->orWhereNull('amount')
+                    ->orWhereColumn('account_source', 'account_destination')
+                    ->orWhereNull('account_source')
+                    ->orWhereNull('account_destination');
+            })
             ->get();
 
+        foreach ($invalidEntries as $invalid) {
+            $amt = abs((int) ($invalid->amount ?? 0));
+            $anomalies[] = [
+                'type' => 'invalid_entry',
+                'entry_id' => $invalid->id,
+                'reason' => 'Écriture invalide ou comptes source/destination identiques',
+                'amount' => $amt,
+            ];
+            $discrepancyAmount += $amt;
+        }
+
+        $isBalanced = count($anomalies) === 0 && $discrepancyAmount === 0;
+
         return [
-            'balanced' => count($anomalies) === 0,
+            'is_balanced' => $isBalanced,
+            'balanced' => $isBalanced,
             'total_entries_count' => $totalEntries,
+            'total_volume_fcfa' => $totalVolume,
             'total_volume_xof' => $totalVolume,
+            'discrepancy_amount' => $discrepancyAmount,
             'anomalies_count' => count($anomalies),
             'anomalies' => $anomalies,
             'timestamp' => now()->toIso8601String(),

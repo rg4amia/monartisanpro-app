@@ -117,4 +117,54 @@ class DoubleEntryLedgerTest extends TestCase
             ->assertExitCode(0)
             ->expectsOutputToContain('PARFAIT (0 écart)');
     }
+
+    public function test_admin_can_trigger_ledger_integrity_audit_endpoint_successfully(): void
+    {
+        config(['prosartisan.super_admins' => ['admin@prosartisan.ci']]);
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'email' => 'admin@prosartisan.ci',
+            'kyc_status' => 'actif',
+        ]);
+
+        $ledgerService = app(DoubleEntryLedgerService::class);
+        $ledgerService->recordEscrowFunding($this->mission, 50000, 50000);
+
+        $response = $this->actingAs($admin)
+            ->from('/admin/transactions')
+            ->post('/admin/ledger/verify-integrity');
+
+        $response->assertRedirect('/admin/transactions');
+        $response->assertSessionHas('success');
+        $this->assertStringContainsString('Grand Livre certifié conforme et équilibré à 100%', session('success'));
+    }
+
+    public function test_admin_ledger_integrity_audit_handles_anomaly_gracefully(): void
+    {
+        config(['prosartisan.super_admins' => ['admin@prosartisan.ci']]);
+        $admin = User::factory()->create([
+            'role' => 'admin',
+            'email' => 'admin@prosartisan.ci',
+            'kyc_status' => 'actif',
+        ]);
+
+        // Insérer une écriture volontairement déséquilibrée (source == destination)
+        DoubleEntryLedgerEntry::create([
+            'transaction_group_id' => (string) \Illuminate\Support\Str::uuid(),
+            'account_source' => DoubleEntryLedgerService::ACCOUNT_CLIENT_ESCROW,
+            'account_destination' => DoubleEntryLedgerService::ACCOUNT_CLIENT_ESCROW,
+            'amount' => 15000,
+            'currency' => 'XOF',
+            'entry_type' => 'corrupted_test_entry',
+            'created_at' => now(),
+        ]);
+
+        $response = $this->actingAs($admin)
+            ->from('/admin/transactions')
+            ->post('/admin/ledger/verify-integrity');
+
+        $response->assertRedirect('/admin/transactions');
+        $response->assertSessionHas('error');
+        $this->assertStringContainsString('Anomalie comptable détectée', session('error'));
+    }
 }

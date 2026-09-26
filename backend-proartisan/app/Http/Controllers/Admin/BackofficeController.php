@@ -51,6 +51,7 @@ use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Artisan;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -326,14 +327,27 @@ class BackofficeController extends Controller
 
     public function verifyLedgerIntegrity(DoubleEntryLedgerService $ledgerService): RedirectResponse
     {
-        $audit = $ledgerService->verifyIntegrity();
-        if ($audit['is_balanced']) {
-            $vol = number_format($audit['total_volume_fcfa'], 0, ',', ' ');
+        try {
+            $audit = $ledgerService->verifyIntegrity();
+            $isBalanced = (bool) ($audit['is_balanced'] ?? $audit['balanced'] ?? false);
+            $totalVolume = (int) ($audit['total_volume_fcfa'] ?? $audit['total_volume_xof'] ?? 0);
+            $discrepancy = (int) ($audit['discrepancy_amount'] ?? 0);
 
-            return back()->with('success', "Grand Livre certifié conforme et équilibré à 100% ({$vol} FCFA audités, 0 écart).");
+            if ($isBalanced) {
+                $vol = number_format($totalVolume, 0, ',', ' ');
+
+                return back()->with('success', "Grand Livre certifié conforme et équilibré à 100% ({$vol} FCFA audités, 0 écart).");
+            }
+
+            return back()->with('error', "Anomalie comptable détectée : écart de {$discrepancy} FCFA !");
+        } catch (\Throwable $e) {
+            Log::error('Erreur lors de l\'audit d\'intégrité du Grand Livre', [
+                'error' => $e->getMessage(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', "Échec de l'audit d'intégrité : ".$e->getMessage());
         }
-
-        return back()->with('error', "Anomalie comptable détectée : écart de {$audit['discrepancy_amount']} FCFA !");
     }
 
     public function reviewFournisseur(ReviewFournisseurRequest $request, FournisseurAgree $fournisseur): RedirectResponse
