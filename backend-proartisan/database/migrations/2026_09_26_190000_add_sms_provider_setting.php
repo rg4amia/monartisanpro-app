@@ -11,11 +11,17 @@ return new class extends Migration
      */
     public function up(): void
     {
+        if (app()->runningUnitTests()) {
+            return;
+        }
+
         if (Schema::hasTable('settings')) {
+            $defaultProvider = (string) config('services.sms.provider', 'smspro');
+
             DB::table('settings')->updateOrInsert(
                 ['key' => 'sms_provider'],
                 [
-                    'value' => 'smspro',
+                    'value' => $defaultProvider,
                     'type' => 'string',
                     'group' => 'communication',
                     'label' => 'Passerelle API SMS active',
