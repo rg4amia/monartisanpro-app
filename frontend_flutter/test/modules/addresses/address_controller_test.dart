@@ -2,6 +2,7 @@ import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/core/network/api_client.dart';
 import 'package:frontend_flutter/data/models/address_model.dart';
+import 'package:frontend_flutter/data/repositories/address_repository.dart';
 import 'package:frontend_flutter/modules/addresses/controllers/address_controller.dart';
 
 import '../../helpers/fake_http_adapter.dart';
@@ -29,6 +30,7 @@ void main() {
   });
 
   tearDown(() async {
+    await AddressRepository.clearCache();
     await TestHelpers.cleanupTestData();
   });
 

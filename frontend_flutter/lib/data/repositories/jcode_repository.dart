@@ -55,14 +55,27 @@ class JcodeRepository {
         () => _client.get(ApiEndpoints.jcodesActive),
       );
       final data = (res.data as Map<String, dynamic>)['data'];
-      if (data == null) return null;
-      if (data is List && data.isNotEmpty) {
-        return JcodeModel.fromJson(data.first as Map<String, dynamic>);
+      final json = data is List && data.isNotEmpty
+          ? data.first as Map<String, dynamic>
+          : data is Map<String, dynamic>
+              ? data
+              : null;
+
+      await _store.init();
+      if (json == null) {
+        // Plus de J-Code actif : un repli ultérieur ne doit pas ressusciter
+        // l'ancien.
+        await _store.invalidate('${_scope}_active');
+        return null;
       }
-      if (data is Map<String, dynamic>) return JcodeModel.fromJson(data);
-      return null;
+
+      // Alimente le repli hors ligne ci-dessous.
+      await _store.writeOne('${_scope}_active', json);
+      return JcodeModel.fromJson(json);
     } catch (_) {
-      // On network failure, try stale cache via peekOne
+      // Panne réseau : dernier J-Code actif connu, sinon l'erreur remonte.
+      // Renvoyer `null` ferait passer une panne pour « aucun J-Code actif »
+      // (Règle d'or 29).
       await _store.init();
       final raw = _store.peekOne(
         '${_scope}_active',
@@ -70,7 +83,7 @@ class JcodeRepository {
         ttl: _activeTtl,
       );
       if (raw != null) return JcodeModel.fromJson(raw);
-      return null;
+      rethrow;
     }
   }
 
