@@ -79,140 +79,147 @@ class _PayoutCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final color = payout.isFailed ? AppColors.danger : Colors.orange.shade800;
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 12),
-      decoration: BoxDecoration(
+    // Material plutôt qu'un fond de Container : l'ExpansionTile peint son
+    // fond et ses effets d'encre sur l'ancêtre Material le plus proche.
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 12),
+      child: Material(
         color: Colors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: color.withValues(alpha: 0.35)),
-      ),
-      child: Theme(
-        data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
-        child: ExpansionTile(
-          tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-          childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
-          title: Text(
-            payout.contextLabel,
-            style: const TextStyle(
-              fontSize: 14,
-              fontWeight: FontWeight.w700,
-              color: AppColors.textPrimary,
-            ),
-          ),
-          subtitle: Padding(
-            padding: const EdgeInsets.only(top: 4),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  '${Formatters.fcfa(payout.montant)} · ${payout.statutLabel}',
-                  style: TextStyle(
-                    fontSize: 12.5,
-                    fontWeight: FontWeight.w700,
-                    color: color,
-                  ),
-                ),
-                if (payout.lastError != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    payout.lastError!,
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-                if (payout.nextRetryAt != null) ...[
-                  const SizedBox(height: 2),
-                  Text(
-                    'Prochaine relance automatique : ${_date(payout.nextRetryAt)}',
-                    style: const TextStyle(
-                      fontSize: 11.5,
-                      color: AppColors.textSecondary,
-                    ),
-                  ),
-                ],
-              ],
-            ),
-          ),
-          children: [
-            if (payout.phone != null)
-              Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  'Numéro de réception : ${payout.phone}',
-                  style: const TextStyle(
-                    fontSize: 12,
-                    color: AppColors.textSecondary,
-                  ),
-                ),
-              ),
-            const SizedBox(height: 8),
-            const Align(
-              alignment: Alignment.centerLeft,
-              child: Text(
-                'Historique',
-                style: TextStyle(
-                  fontSize: 12.5,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.textPrimary,
-                ),
+        clipBehavior: Clip.antiAlias,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(16),
+          side: BorderSide(color: color.withValues(alpha: 0.35)),
+        ),
+        child: Theme(
+          data: Theme.of(context).copyWith(dividerColor: Colors.transparent),
+          child: ExpansionTile(
+            tilePadding:
+                const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+            childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 14),
+            title: Text(
+              payout.contextLabel,
+              style: const TextStyle(
+                fontSize: 14,
+                fontWeight: FontWeight.w700,
+                color: AppColors.textPrimary,
               ),
             ),
-            const SizedBox(height: 6),
-            for (final event in payout.events)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 4),
-                child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    SizedBox(
-                      width: 92,
-                      child: Text(
-                        _date(event.createdAt),
-                        style: const TextStyle(
-                          fontSize: 11,
-                          color: AppColors.textSecondary,
-                        ),
-                      ),
+            subtitle: Padding(
+              padding: const EdgeInsets.only(top: 4),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    '${Formatters.fcfa(payout.montant)} · ${payout.statutLabel}',
+                    style: TextStyle(
+                      fontSize: 12.5,
+                      fontWeight: FontWeight.w700,
+                      color: color,
                     ),
-                    Expanded(
-                      child: Text(
-                        event.message != null
-                            ? '${event.actionLabel} — ${event.message}'
-                            : event.actionLabel,
-                        style: const TextStyle(
-                          fontSize: 11.5,
-                          color: AppColors.textPrimary,
-                        ),
+                  ),
+                  if (payout.lastError != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      payout.lastError!,
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textSecondary,
                       ),
                     ),
                   ],
+                  if (payout.nextRetryAt != null) ...[
+                    const SizedBox(height: 2),
+                    Text(
+                      'Prochaine relance automatique : ${_date(payout.nextRetryAt)}',
+                      style: const TextStyle(
+                        fontSize: 11.5,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            ),
+            children: [
+              if (payout.phone != null)
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: Text(
+                    'Numéro de réception : ${payout.phone}',
+                    style: const TextStyle(
+                      fontSize: 12,
+                      color: AppColors.textSecondary,
+                    ),
+                  ),
+                ),
+              const SizedBox(height: 8),
+              const Align(
+                alignment: Alignment.centerLeft,
+                child: Text(
+                  'Historique',
+                  style: TextStyle(
+                    fontSize: 12.5,
+                    fontWeight: FontWeight.w800,
+                    color: AppColors.textPrimary,
+                  ),
                 ),
               ),
-            if (payout.canRetry) ...[
-              const SizedBox(height: 10),
-              SizedBox(
-                width: double.infinity,
-                child: OutlinedButton.icon(
-                  onPressed: busy ? null : onRetry,
-                  icon: busy
-                      ? const SizedBox(
-                          width: 16,
-                          height: 16,
-                          child: CircularProgressIndicator(strokeWidth: 2),
-                        )
-                      : const Icon(Icons.refresh_rounded, size: 18),
-                  label: Text(busy ? 'Relance…' : 'Relancer le virement'),
+              const SizedBox(height: 6),
+              for (final event in payout.events)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 4),
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      SizedBox(
+                        width: 92,
+                        child: Text(
+                          _date(event.createdAt),
+                          style: const TextStyle(
+                            fontSize: 11,
+                            color: AppColors.textSecondary,
+                          ),
+                        ),
+                      ),
+                      Expanded(
+                        child: Text(
+                          event.message != null
+                              ? '${event.actionLabel} — ${event.message}'
+                              : event.actionLabel,
+                          style: const TextStyle(
+                            fontSize: 11.5,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 4),
-              const Text(
-                'Numéro erroné ? Corrigez-le dans Paramètres › Reversement Mobile Money avant de relancer.',
-                style: TextStyle(fontSize: 11, color: AppColors.textSecondary),
-              ),
+              if (payout.canRetry) ...[
+                const SizedBox(height: 10),
+                SizedBox(
+                  width: double.infinity,
+                  child: OutlinedButton.icon(
+                    onPressed: busy ? null : onRetry,
+                    icon: busy
+                        ? const SizedBox(
+                            width: 16,
+                            height: 16,
+                            child: CircularProgressIndicator(strokeWidth: 2),
+                          )
+                        : const Icon(Icons.refresh_rounded, size: 18),
+                    label: Text(busy ? 'Relance…' : 'Relancer le virement'),
+                  ),
+                ),
+                const SizedBox(height: 4),
+                const Text(
+                  'Numéro erroné ? Corrigez-le dans Paramètres › Reversement Mobile Money avant de relancer.',
+                  style:
+                      TextStyle(fontSize: 11, color: AppColors.textSecondary),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
       ),
     );
