@@ -10,7 +10,7 @@ return new class extends Migration
     {
         Schema::create('evidence_vault', function (Blueprint $table) {
             $table->id();
-            $table->foreignId('litige_id')->constrained('litiges')->onDelete('cascade');
+            $table->foreignId('litige_id')->nullable()->constrained('litiges')->onDelete('cascade');
             $table->foreignId('uploaded_by')->constrained('users');
             $table->string('file_url');
             $table->string('sha256_hash', 64);

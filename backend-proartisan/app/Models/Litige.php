@@ -31,11 +31,15 @@ class Litige extends Model
         'resolution_reason',
         'resolution_payload',
         'sanctions_json',
+        'jury_status',
+        'jury_consensus',
+        'jury_recommended_split',
     ];
 
     protected function casts(): array
     {
         return [
+            'jury_recommended_split' => 'integer',
             'funds_locked_at' => 'datetime',
             'evidence_deadline_at' => 'datetime',
             'arbitration_started_at' => 'datetime',

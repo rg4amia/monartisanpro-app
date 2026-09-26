@@ -43,21 +43,23 @@ abstract class MissionState extends State
             ->allowTransition(DraftState::class, PendingArtisanAcceptanceState::class)
             ->allowTransition(PendingArtisanAcceptanceState::class, DraftState::class)
             ->allowTransition(PendingArtisanAcceptanceState::class, CancelledState::class)
-            ->allowTransition(PendingFundingState::class, FundedLockedState::class)
-            ->allowTransition(FundedLockedState::class, InProgressState::class)
+            ->allowTransition(PendingFundingState::class, FundedLockedState::class, \App\States\Mission\Transitions\ToFundedLockedTransition::class)
+            ->allowTransition(FundedLockedState::class, InProgressState::class, \App\States\Mission\Transitions\ToInProgressTransition::class)
             ->allowTransition(InProgressState::class, PendingApprovalState::class)
-            ->allowTransition(PendingApprovalState::class, InProgressState::class)   // Nouveau jalon
-            ->allowTransition(PendingApprovalState::class, CompletedState::class)
+            ->allowTransition(PendingApprovalState::class, InProgressState::class, \App\States\Mission\Transitions\ToInProgressTransition::class)   // Nouveau jalon
+            ->allowTransition(PendingApprovalState::class, CompletedState::class, \App\States\Mission\Transitions\ToCompletedTransition::class)
+            ->allowTransition(InProgressState::class, CompletedState::class, \App\States\Mission\Transitions\ToCompletedTransition::class)
 
             // Transition d'urgence : tout état → DISPUTED
-            ->allowTransition(PendingFundingState::class, DisputedState::class)
-            ->allowTransition(FundedLockedState::class, DisputedState::class)
-            ->allowTransition(InProgressState::class, DisputedState::class)
-            ->allowTransition(PendingApprovalState::class, DisputedState::class)
+            ->allowTransition(PendingFundingState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
+            ->allowTransition(FundedLockedState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
+            ->allowTransition(InProgressState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
+            ->allowTransition(PendingApprovalState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
+            ->allowTransition(CompletedState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
 
             // Reprise après litige résolu
-            ->allowTransition(DisputedState::class, InProgressState::class)
-            ->allowTransition(DisputedState::class, CompletedState::class)
+            ->allowTransition(DisputedState::class, InProgressState::class, \App\States\Mission\Transitions\ToInProgressTransition::class)
+            ->allowTransition(DisputedState::class, CompletedState::class, \App\States\Mission\Transitions\ToCompletedTransition::class)
             ->allowTransition(DisputedState::class, CancelledState::class)
 
             // Transitions d'idempotence (soi-même)

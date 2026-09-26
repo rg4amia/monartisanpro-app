@@ -47,7 +47,9 @@ class LitigeJuryController extends Controller
     public function vote(Request $request, Litige $litige): JsonResponse
     {
         $request->validate([
-            'verdict' => ['required', 'string', 'in:CONFORME,NON_CONFORME'],
+            'verdict' => ['required', 'string', 'in:CONFORME,NON_CONFORME,RESPONSABILITE_PARTAGEE'],
+            'split_artisan_percentage' => ['nullable', 'integer', 'min:0', 'max:100'],
+            'technical_comment' => ['nullable', 'string', 'max:1000'],
         ]);
 
         if ($litige->isResolved()) {
@@ -57,11 +59,17 @@ class LitigeJuryController extends Controller
             ], 422);
         }
 
-        $this->litigeService->submitJuryVote($litige, $request->user(), $request->input('verdict'));
+        $this->litigeService->submitJuryVote(
+            $litige,
+            $request->user(),
+            $request->input('verdict'),
+            $request->input('split_artisan_percentage'),
+            $request->input('technical_comment')
+        );
 
         return response()->json([
             'success' => true,
-            'message' => 'Votre vote a été enregistré avec succès.',
+            'message' => 'Votre avis d\'arbitrage a été enregistré avec succès. Une indemnité de 5 000 FCFA a été créditée.',
         ]);
     }
 }

@@ -22,6 +22,32 @@ class DoubleEntryLedgerService
     public const ACCOUNT_CLIENT_REFUND = 'client_refund';
 
     /**
+     * Enregistre l'indemnisation d'un juré (5 000 FCFA) prélevée sur les commissions ou charges de plateforme.
+     */
+    public function recordJurorCompensation(
+        int $amount,
+        \App\Models\User $juror,
+        \App\Models\Litige $litige,
+        \App\Models\JuryReview $review
+    ): DoubleEntryLedgerEntry {
+        return $this->recordDoubleEntry(
+            self::ACCOUNT_PLATFORM_COMMISSION,
+            self::ACCOUNT_ARTISAN_CASHABLE,
+            $amount,
+            'juror_compensation',
+            [
+                'mission_id' => $litige->mission_id,
+                'user_id' => $juror->id,
+                'description' => "Indemnité de juré pour le litige #{$litige->id} (JuryReview #{$review->id})",
+                'metadata' => [
+                    'litige_id' => $litige->id,
+                    'jury_review_id' => $review->id,
+                ],
+            ]
+        );
+    }
+
+    /**
      * Enregistre une écriture élémentaire en partie double garantie équilibrée.
      */
     public function recordDoubleEntry(

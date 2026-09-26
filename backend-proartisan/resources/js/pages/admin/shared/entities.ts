@@ -95,6 +95,17 @@ export interface LitigeItem {
     decision: 'client' | 'artisan' | 'gel' | null;
     created_at: string;
     mission: LitigeMission;
+    jury_status?: 'none' | 'pending_jury' | 'jury_decided' | 'escalated_admin' | null;
+    jury_consensus?: 'CONFORME' | 'NON_CONFORME' | 'RESPONSABILITE_PARTAGEE' | 'AUCUN' | null;
+    jury_recommended_split?: number | null;
+    jury_reviews?: Array<{
+        id: number;
+        jure_id: number;
+        status: string;
+        verdict?: string | null;
+        technical_comment?: string | null;
+        split_artisan_percentage?: number | null;
+    }>;
     resolution_payload?: {
         invoice_path?: string;
         [key: string]: any;

@@ -127,6 +127,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/litiges/{litige}/invoice', [BackofficeController::class, 'downloadInvoice'])->middleware('can:admin.litiges.view')->name('litiges.invoice');
         Route::post('/litiges/{litige}/resolve', [BackofficeController::class, 'resolveLitige'])->middleware('can:admin.litiges.arbitrate')->name('litiges.resolve');
         Route::post('/litiges/{litige}/tele-expertise', [BackofficeController::class, 'teleExpertiseLitige'])->middleware('can:admin.litiges.arbitrate')->name('litiges.tele-expertise');
+        Route::post('/litiges/{litige}/assign-jury', [BackofficeController::class, 'assignJuryLitige'])->middleware('can:admin.litiges.arbitrate')->name('litiges.assign-jury');
 
         // Utilisateurs
         Route::get('/users', [BackofficeController::class, 'users'])->middleware('can:admin.users.view')->name('users');

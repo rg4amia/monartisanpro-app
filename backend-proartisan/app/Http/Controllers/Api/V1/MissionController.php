@@ -609,4 +609,51 @@ class MissionController extends Controller
             'data' => new MissionResource($mission),
         ]);
     }
+
+    /**
+     * Historique chronologique et inaltérable des transitions d'états de la mission (Chantier 13).
+     */
+    public function stateHistory(Request $request, Mission $mission): JsonResponse
+    {
+        $user = $request->user();
+
+        // Seuls le client, l'artisan assigné ou un administrateur peuvent consulter l'historique
+        if ($user->role !== 'admin' && (int) $mission->client_id !== (int) $user->id && (int) $mission->artisan_id !== (int) $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Accès non autorisé à l\'historique de cette mission.',
+            ], 403);
+        }
+
+        $transitions = $mission->stateTransitions()
+            ->with('user:id,name,phone,role')
+            ->get()
+            ->map(function ($t) {
+                return [
+                    'id' => $t->id,
+                    'from_state' => $t->from_state,
+                    'from_state_label' => \App\States\Mission\MissionState::labelFor($t->from_state),
+                    'to_state' => $t->to_state,
+                    'to_state_label' => \App\States\Mission\MissionState::labelFor($t->to_state),
+                    'user' => $t->user ? [
+                        'id' => $t->user->id,
+                        'name' => $t->user->name,
+                        'role' => $t->user->role,
+                    ] : null,
+                    'reason' => $t->reason,
+                    'metadata' => $t->metadata_json,
+                    'transitioned_at' => $t->created_at->toIso8601String(),
+                ];
+            });
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'mission_id' => $mission->id,
+                'current_state' => $mission->status->getValue(),
+                'current_state_label' => \App\States\Mission\MissionState::labelFor($mission->status->getValue()),
+                'transitions' => $transitions,
+            ],
+        ]);
+    }
 }

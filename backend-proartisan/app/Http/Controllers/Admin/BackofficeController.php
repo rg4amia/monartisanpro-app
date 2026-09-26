@@ -313,6 +313,17 @@ class BackofficeController extends Controller
         }
     }
 
+    public function assignJuryLitige(Litige $litige, LitigeService $litigeService): RedirectResponse
+    {
+        try {
+            $litigeService->assignJury($litige);
+
+            return back()->with('success', 'Jury ProsArtisan (3 pairs certifiés) convoqué avec succès.');
+        } catch (\Throwable $e) {
+            return back()->with('error', "Échec de l'assignation du jury : ".$e->getMessage());
+        }
+    }
+
     public function verifyLedgerIntegrity(DoubleEntryLedgerService $ledgerService): RedirectResponse
     {
         $audit = $ledgerService->verifyIntegrity();

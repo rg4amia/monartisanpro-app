@@ -15,10 +15,12 @@ use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\DevisController;
 use App\Http\Controllers\Api\V1\Driver\DriverCashoutController;
 use App\Http\Controllers\Api\V1\EvaluationController;
+use App\Http\Controllers\Api\V1\EvidenceVaultController;
 use App\Http\Controllers\Api\V1\FaqController;
 use App\Http\Controllers\Api\V1\InterventionTypeController;
 use App\Http\Controllers\Api\V1\JalonController;
 use App\Http\Controllers\Api\V1\JCodeController;
+use App\Http\Controllers\Api\V1\JuryController;
 use App\Http\Controllers\Api\V1\KycController;
 use App\Http\Controllers\Api\V1\LitigeController;
 use App\Http\Controllers\Api\V1\LitigeJuryController;
@@ -231,6 +233,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/missions', [MissionController::class, 'index']);
         Route::post('/missions', [MissionController::class, 'store'])->middleware(['can:mission.create', 'kyc.verified', 'payment.unrestricted']);
         Route::get('/missions/{mission}', [MissionController::class, 'show']);
+        Route::get('/missions/{mission}/state-history', [MissionController::class, 'stateHistory']);
         Route::get('/missions/{mission}/site-map', [MissionController::class, 'siteMap']);
         Route::post('/missions/estimate', [MissionController::class, 'estimate'])->middleware('can:mission.estimate');
         Route::post('/missions/pre-diagnostic', [MissionController::class, 'preDiagnostic'])->middleware('kyc.verified');
@@ -340,6 +343,15 @@ Route::prefix('v1')->group(function () {
         Route::post('/litiges/{litige}/jury/assign', [LitigeJuryController::class, 'assign']);
         Route::post('/litiges/{litige}/jury/vote', [LitigeJuryController::class, 'vote']);
         Route::post('/litiges/{litige}/llm-mediation', [LlmAdminController::class, 'llmMediation']);
+
+        // ── Jury ProsArtisan (Arbitrage par les Pairs - Chantier 12) ───────────
+        Route::get('/jury/dossiers', [JuryController::class, 'index']);
+        Route::get('/jury/dossiers/{id}', [JuryController::class, 'show']);
+        Route::post('/jury/dossiers/{id}/vote', [JuryController::class, 'vote']);
+
+        // ── Evidence Vault (Coffre-Fort des Preuves SHA-256 - Chantier 12) ────
+        Route::get('/evidence-vault/{id}/certificate', [EvidenceVaultController::class, 'certificate']);
+        Route::get('/evidence-vault/{id}/verify', [EvidenceVaultController::class, 'verify']);
 
         // ── Passeport de Solvabilité (Chantier 9C) ───────────────────────────
         Route::get('/solvency-passports/{artisan}', [SolvencyPassportController::class, 'show']);

@@ -172,6 +172,11 @@ class Mission extends Model
         return $this->hasMany(Evaluation::class);
     }
 
+    public function stateTransitions()
+    {
+        return $this->hasMany(MissionStateTransition::class)->orderByDesc('created_at');
+    }
+
     public function devisAccepte()
     {
         return $this->hasOne(Devis::class)->where('statut', 'accepte')->where('is_avenant', false);

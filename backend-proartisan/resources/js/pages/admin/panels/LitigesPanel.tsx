@@ -170,7 +170,7 @@ export function LitigesPanel({
                                     ) : null}
                                 </div>
                             ) : litige.statut !== 'resolu' && canArbitrate ? (
-                                <div className="mt-4">
+                                <div className="mt-4 flex flex-wrap gap-2">
                                     <button
                                         type="button"
                                         disabled={actionLoading}
@@ -184,6 +184,58 @@ export function LitigesPanel({
                                         <span>🤖</span>
                                         <span>Lancer Télé-Expertise IA (Vision Gemini)</span>
                                     </button>
+
+                                    {(!litige.jury_status || litige.jury_status === 'none') ? (
+                                        <button
+                                            type="button"
+                                            disabled={actionLoading}
+                                            onClick={() => {
+                                                router.post(`/admin/litiges/${litige.id}/assign-jury`, {}, {
+                                                    preserveScroll: true,
+                                                });
+                                            }}
+                                            className="inline-flex items-center gap-1.5 rounded-xl border border-purple-500/30 bg-purple-500/10 px-3 py-1.5 text-xs font-semibold text-purple-300 transition hover:bg-purple-500/20"
+                                        >
+                                            <span>⚖️</span>
+                                            <span>Convoquer Jury ProsArtisan (3 pairs)</span>
+                                        </button>
+                                    ) : null}
+                                </div>
+                            ) : null}
+
+                            {/* Section Jury ProsArtisan (Chantier 12) */}
+                            {litige.jury_status === 'pending_jury' ? (
+                                <div className="mt-3 rounded-2xl border border-purple-500/30 bg-purple-950/20 p-3 text-xs text-purple-300 flex items-center justify-between">
+                                    <div className="flex items-center gap-2">
+                                        <span className="text-base">⚖️</span>
+                                        <div>
+                                            <p className="font-bold">Jury ProsArtisan en cours (48h max)</p>
+                                            <p className="text-[11px] text-purple-200/70">3 artisans pairs certifiés délibèrent de manière anonyme.</p>
+                                        </div>
+                                    </div>
+                                    <span className="rounded-full bg-purple-500/20 px-2.5 py-0.5 text-[11px] font-semibold text-purple-300">
+                                        Indemnités : 5 000 FCFA / juré
+                                    </span>
+                                </div>
+                            ) : litige.jury_status === 'jury_decided' ? (
+                                <div className="mt-3 rounded-2xl border border-emerald-500/30 bg-emerald-950/20 p-3 text-xs text-emerald-300">
+                                    <div className="flex items-center justify-between font-bold">
+                                        <span className="flex items-center gap-1.5">
+                                            <span>⚖️</span>
+                                            <span>Consensus Jury ProsArtisan (≥ 2/3) : {litige.jury_consensus}</span>
+                                        </span>
+                                        <span className="rounded-full bg-emerald-500/20 px-2.5 py-0.5 text-[11px] font-semibold">
+                                            Recommandation : {litige.jury_recommended_split}% artisan
+                                        </span>
+                                    </div>
+                                </div>
+                            ) : litige.jury_status === 'escalated_admin' ? (
+                                <div className="mt-3 rounded-2xl border border-amber-500/30 bg-amber-950/20 p-3 text-xs text-amber-300 flex items-center gap-2">
+                                    <span className="text-base">⚠️</span>
+                                    <div>
+                                        <p className="font-bold">Jury sans majorité qualifiée 2/3</p>
+                                        <p className="text-[11px] text-amber-200/70">Avis contradictoires des jurés — arbitrage administratif requis.</p>
+                                    </div>
                                 </div>
                             ) : null}
 

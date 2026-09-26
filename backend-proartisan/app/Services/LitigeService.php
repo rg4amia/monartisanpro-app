@@ -28,7 +28,12 @@ class LitigeService
         private PhotoService $photoService,
         private JCodeService $jCodeService,
         private PdfService $pdfService,
-    ) {}
+        private ?EvidenceVaultService $evidenceVaultService = null,
+        private ?DoubleEntryLedgerService $doubleEntryLedgerService = null,
+    ) {
+        $this->evidenceVaultService = $evidenceVaultService ?? app(EvidenceVaultService::class);
+        $this->doubleEntryLedgerService = $doubleEntryLedgerService ?? app(DoubleEntryLedgerService::class);
+    }
 
     public function paginateForUser(User $user, ?string $statut = null, int $perPage = 20): LengthAwarePaginator
     {
@@ -168,14 +173,22 @@ class LitigeService
                     ]);
                 }
 
-                EvidenceVault::create([
-                    'litige_id' => $litige->id,
-                    'uploaded_by' => $user->id,
-                    'file_url' => $uploaded['url'],
-                    'sha256_hash' => $fileHash,
-                    'ip_address' => request()?->ip(),
-                    'uploaded_at' => now(),
-                ]);
+                $this->evidenceVaultService->seal(
+                    $photoInput['photo'],
+                    $user,
+                    [
+                        'evidence_type' => 'litige',
+                        'mission_id' => $litige->mission_id,
+                        'litige_id' => $litige->id,
+                        'jalon_id' => null,
+                        'gps_lat' => (float) $photoInput['latitude'],
+                        'gps_lng' => (float) $photoInput['longitude'],
+                        'device_fingerprint' => request()?->header('X-Device-Fingerprint') ?? $photoInput['device_fingerprint'] ?? null,
+                        'ip_address' => request()?->ip(),
+                        'file_url' => $uploaded['url'],
+                        'file_path' => $uploaded['path'] ?? null,
+                    ]
+                );
 
                 LitigeEvidence::create([
                     'litige_id' => $litige->id,
@@ -714,7 +727,7 @@ class LitigeService
             ->where('role', 'artisan')
             ->where('kyc_status', 'actif')
             ->where('id', '!=', $litige->mission->artisan_id)
-            ->where('score_prosartisan', '>', 800);
+            ->where('score_prosartisan', '>=', 800);
 
         if ($artisanTradeId) {
             $jurorsQuery->whereHas('artisanProfile', function ($q) use ($artisanTradeId) {
@@ -729,7 +742,7 @@ class LitigeService
                 ->where('role', 'artisan')
                 ->where('kyc_status', 'actif')
                 ->where('id', '!=', $litige->mission->artisan_id)
-                ->where('score_prosartisan', '>', 800)
+                ->where('score_prosartisan', '>=', 800)
                 ->inRandomOrder()
                 ->limit(3)
                 ->get();
@@ -749,7 +762,10 @@ class LitigeService
             JuryReview::create([
                 'litige_id' => $litige->id,
                 'jure_id' => $juror->id,
-                'compensation' => 1500,
+                'compensation' => 5000,
+                'status' => 'assigned',
+                'assigned_at' => now(),
+                'expires_at' => now()->addHours(48),
             ]);
 
             $this->notificationService->send(
@@ -764,11 +780,24 @@ class LitigeService
         $litige->update([
             'workflow_step' => 'jury',
             'statut' => 'en_cours',
+            'jury_status' => 'pending_jury',
         ]);
     }
 
-    public function submitJuryVote(Litige $litige, User $jure, string $verdict): void
-    {
+    public function submitJuryVote(
+        Litige $litige,
+        User $jure,
+        string $verdict,
+        ?int $splitPercentage = null,
+        ?string $technicalComment = null
+    ): JuryReview {
+        $allowedVerdicts = ['CONFORME', 'NON_CONFORME', 'RESPONSABILITE_PARTAGEE'];
+        if (! in_array($verdict, $allowedVerdicts, true)) {
+            throw ValidationException::withMessages([
+                'verdict' => ['Verdict invalide. Choix possibles : '.implode(', ', $allowedVerdicts)],
+            ]);
+        }
+
         $review = JuryReview::where('litige_id', $litige->id)
             ->where('jure_id', $jure->id)
             ->first();
@@ -779,41 +808,185 @@ class LitigeService
             ]);
         }
 
-        if ($review->voted_at !== null) {
+        if ($review->status === 'voted' || $review->voted_at !== null) {
             throw ValidationException::withMessages([
                 'jury' => ['Vous avez déjà voté pour ce litige.'],
             ]);
         }
 
+        if ($review->status === 'expired' || ($review->expires_at && now()->isAfter($review->expires_at))) {
+            $review->update(['status' => 'expired']);
+            throw ValidationException::withMessages([
+                'jury' => ['Votre délai imparti de 48h pour voter sur ce litige a expiré.'],
+            ]);
+        }
+
         $review->update([
             'verdict' => $verdict,
+            'status' => 'voted',
+            'split_artisan_percentage' => $splitPercentage,
+            'technical_comment' => $technicalComment,
             'voted_at' => now(),
+            'compensation_paid' => true,
+            'compensation_paid_at' => now(),
         ]);
 
+        // Crédit du portefeuille MO de l'artisan juré (5 000 FCFA)
         $this->walletService->credit(
             $jure,
             WalletType::WALLET_MO,
-            $review->compensation,
+            (int) $review->compensation,
             "Indemnité de juré pour le litige #{$litige->id}",
             ['litige_id' => $litige->id, 'jury_review_id' => $review->id]
         );
 
+        // Écriture équilibrée dans le grand livre comptable en partie double
+        $this->doubleEntryLedgerService->recordJurorCompensation((int) $review->compensation, $jure, $litige, $review);
+
+        // Évaluation du consensus du jury (majorité qualifiée 2/3)
         $votes = JuryReview::where('litige_id', $litige->id)
-            ->whereNotNull('verdict')
+            ->where('status', 'voted')
             ->get();
 
-        if ($votes->count() === 3) {
-            $conformeCount = $votes->where('verdict', 'CONFORME')->count();
-            $nonConformeCount = $votes->where('verdict', 'NON_CONFORME')->count();
+        $conformeCount = $votes->where('verdict', 'CONFORME')->count();
+        $nonConformeCount = $votes->where('verdict', 'NON_CONFORME')->count();
+        $partageCount = $votes->where('verdict', 'RESPONSABILITE_PARTAGEE')->count();
+        $totalVoted = $votes->count();
 
-            $decision = $conformeCount >= 2 ? 'artisan' : 'client';
-
-            $this->arbitrate(null, $litige, [
-                'decision' => $decision,
-                'notes' => 'Résolution automatique par consensus du Jury ProsArtisan (Votes: '.$conformeCount.' CONFORME, '.$nonConformeCount.' NON_CONFORME).',
-                'resolution_reason' => $decision === 'artisan' ? 'jury_consensual_conforme' : 'jury_consensual_non_conforme',
+        if ($conformeCount >= 2) {
+            $litige->update([
+                'jury_status' => 'jury_decided',
+                'jury_consensus' => 'CONFORME',
+                'jury_recommended_split' => 100,
             ]);
+
+            if ($totalVoted === 3) {
+                $this->arbitrate(null, $litige, [
+                    'decision' => 'artisan',
+                    'notes' => 'Résolution automatique par consensus du Jury ProsArtisan ('.$conformeCount.'/3 CONFORME).',
+                    'resolution_reason' => 'jury_consensual_conforme',
+                ]);
+            }
+        } elseif ($nonConformeCount >= 2) {
+            $litige->update([
+                'jury_status' => 'jury_decided',
+                'jury_consensus' => 'NON_CONFORME',
+                'jury_recommended_split' => 0,
+            ]);
+
+            if ($totalVoted === 3) {
+                $this->arbitrate(null, $litige, [
+                    'decision' => 'client',
+                    'notes' => 'Résolution automatique par consensus du Jury ProsArtisan ('.$nonConformeCount.'/3 NON_CONFORME).',
+                    'resolution_reason' => 'jury_consensual_non_conforme',
+                ]);
+            }
+        } elseif ($partageCount >= 2) {
+            $avgSplit = (int) round($votes->where('verdict', 'RESPONSABILITE_PARTAGEE')->avg('split_artisan_percentage') ?? 50);
+            $litige->update([
+                'jury_status' => 'jury_decided',
+                'jury_consensus' => 'RESPONSABILITE_PARTAGEE',
+                'jury_recommended_split' => $avgSplit,
+            ]);
+
+            if ($totalVoted === 3) {
+                $this->arbitrate(null, $litige, [
+                    'decision' => 'mixte',
+                    'split_artisan_percentage' => $avgSplit,
+                    'notes' => "Résolution par consensus du Jury ProsArtisan : Responsabilité partagée ({$avgSplit}% artisan / ".(100 - $avgSplit)."% client).",
+                    'resolution_reason' => 'jury_consensual_partage',
+                ]);
+            }
+        } elseif ($totalVoted === 3) {
+            // Désaccord complet 1/1/1 -> Escalade à l'administrateur
+            $litige->update([
+                'jury_status' => 'escalated_admin',
+                'jury_consensus' => 'AUCUN',
+                'workflow_step' => 'arbitrage',
+            ]);
+
+            $this->notificationService->sendAdmin(
+                'litige',
+                'Arbitrage Jury sans consensus',
+                "Le jury du litige #{$litige->id} n'a pas atteint de majorité qualifiée 2/3. Dossier escaladé à l'administrateur.",
+                ['litige_id' => $litige->id]
+            );
         }
+
+        return $review;
+    }
+
+    public function expireOverdueJuryReviews(): int
+    {
+        $overdueReviews = JuryReview::query()
+            ->where('status', 'assigned')
+            ->whereNotNull('expires_at')
+            ->where('expires_at', '<', now())
+            ->with(['litige.mission'])
+            ->get();
+
+        $count = 0;
+        foreach ($overdueReviews as $review) {
+            $review->update(['status' => 'expired']);
+            $this->replaceExpiredJuror($review);
+            $count++;
+        }
+
+        return $count;
+    }
+
+    public function replaceExpiredJuror(JuryReview $expiredReview): ?JuryReview
+    {
+        $litige = $expiredReview->litige;
+        if (! $litige || $litige->statut === 'resolu' || $litige->jury_status === 'jury_decided') {
+            return null;
+        }
+
+        // Trouver les IDs des jurés déjà assignés (actifs ou expirés) pour ne pas les re-sélectionner
+        $existingJurorIds = JuryReview::where('litige_id', $litige->id)
+            ->pluck('jure_id')
+            ->toArray();
+        $existingJurorIds[] = $litige->mission->artisan_id;
+
+        $newJuror = User::query()
+            ->where('role', 'artisan')
+            ->where('kyc_status', 'actif')
+            ->whereNotIn('id', $existingJurorIds)
+            ->where('score_prosartisan', '>=', 800)
+            ->inRandomOrder()
+            ->first();
+
+        if (! $newJuror) {
+            $newJuror = User::query()
+                ->where('role', 'artisan')
+                ->where('kyc_status', 'actif')
+                ->whereNotIn('id', $existingJurorIds)
+                ->inRandomOrder()
+                ->first();
+        }
+
+        if (! $newJuror) {
+            return null;
+        }
+
+        $newReview = JuryReview::create([
+            'litige_id' => $litige->id,
+            'jure_id' => $newJuror->id,
+            'compensation' => 5000,
+            'status' => 'assigned',
+            'assigned_at' => now(),
+            'expires_at' => now()->addHours(48),
+        ]);
+
+        $this->notificationService->send(
+            $newJuror,
+            'jury_assignment',
+            'Arbitrage ProsArtisan requis (Remplacement)',
+            "Vous avez été sélectionné en remplacement comme juré pour évaluer de manière anonyme le litige #{$litige->id}.",
+            ['litige_id' => $litige->id]
+        );
+
+        return $newReview;
     }
 
     private function notifyReferents(Litige $litige): void

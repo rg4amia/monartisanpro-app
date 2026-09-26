@@ -10,16 +10,28 @@ class JuryReview extends Model
     protected $fillable = [
         'litige_id',
         'jure_id',
+        'status',
         'verdict',
-        'voted_at',
+        'split_artisan_percentage',
+        'technical_comment',
         'compensation',
+        'compensation_paid',
+        'compensation_paid_at',
+        'assigned_at',
+        'voted_at',
+        'expires_at',
     ];
 
     protected function casts(): array
     {
         return [
-            'voted_at' => 'datetime',
+            'split_artisan_percentage' => 'integer',
             'compensation' => 'integer',
+            'compensation_paid' => 'boolean',
+            'compensation_paid_at' => 'datetime',
+            'assigned_at' => 'datetime',
+            'voted_at' => 'datetime',
+            'expires_at' => 'datetime',
         ];
     }
 
