@@ -48,14 +48,12 @@ abstract class MissionState extends State
             ->allowTransition(InProgressState::class, PendingApprovalState::class)
             ->allowTransition(PendingApprovalState::class, InProgressState::class, \App\States\Mission\Transitions\ToInProgressTransition::class)   // Nouveau jalon
             ->allowTransition(PendingApprovalState::class, CompletedState::class, \App\States\Mission\Transitions\ToCompletedTransition::class)
-            ->allowTransition(InProgressState::class, CompletedState::class, \App\States\Mission\Transitions\ToCompletedTransition::class)
 
-            // Transition d'urgence : tout état → DISPUTED
+            // Transition d'urgence : tout état actif → DISPUTED
             ->allowTransition(PendingFundingState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
             ->allowTransition(FundedLockedState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
             ->allowTransition(InProgressState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
             ->allowTransition(PendingApprovalState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
-            ->allowTransition(CompletedState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
 
             // Reprise après litige résolu
             ->allowTransition(DisputedState::class, InProgressState::class, \App\States\Mission\Transitions\ToInProgressTransition::class)

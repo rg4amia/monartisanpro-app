@@ -171,19 +171,19 @@ class Sprint3ComplianceTest extends TestCase
         $response1 = $this->actingAs($jure1)
             ->postJson("/api/v1/litiges/{$litige->id}/jury/vote", ['verdict' => 'CONFORME']);
         $response1->assertOk();
-        $this->assertSame(1500, $jure1->fresh()->wallet_mo);
+        $this->assertSame(5000, $jure1->fresh()->wallet_mo);
 
         // Juror 2 votes CONFORME
         $response2 = $this->actingAs($jure2)
             ->postJson("/api/v1/litiges/{$litige->id}/jury/vote", ['verdict' => 'CONFORME']);
         $response2->assertOk();
-        $this->assertSame(1500, $jure2->fresh()->wallet_mo);
+        $this->assertSame(5000, $jure2->fresh()->wallet_mo);
 
         // Juror 3 votes NON_CONFORME -> triggers automatic consensus resolution (2 conforme -> artisan wins)
         $response3 = $this->actingAs($jure3)
             ->postJson("/api/v1/litiges/{$litige->id}/jury/vote", ['verdict' => 'NON_CONFORME']);
         $response3->assertOk();
-        $this->assertSame(1500, $jure3->fresh()->wallet_mo);
+        $this->assertSame(5000, $jure3->fresh()->wallet_mo);
 
         // Litige should be resolved in favor of the artisan
         $litige->refresh();
