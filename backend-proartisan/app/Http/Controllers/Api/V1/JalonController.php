@@ -153,7 +153,17 @@ class JalonController extends Controller
             ], 422);
         }
 
-        $success = $this->jalonService->validateOtp($jalon, $request->otp);
+        $lat = $request->input('lat');
+        $lng = $request->input('lng');
+        $deviceFingerprint = $request->header('X-Device-Fingerprint', $request->input('device_fingerprint'));
+
+        $success = $this->jalonService->validateOtp(
+            $jalon,
+            $request->otp,
+            $lat !== null ? (float) $lat : null,
+            $lng !== null ? (float) $lng : null,
+            $deviceFingerprint
+        );
 
         if (! $success) {
             return response()->json([
@@ -178,9 +188,13 @@ class JalonController extends Controller
         } catch (\Throwable $e) {
         }
 
-        $message = $jalon->mission->referent_required
-            ? 'Jalon validé. Un référent de zone doit confirmer avant le paiement (mission > 2 000 000 FCFA).'
-            : 'Jalon validé et paiement libéré vers l\'artisan.';
+        if ($jalon->statut === 'valide_suspendu') {
+            $message = 'Jalon validé. Un contrôle de sécurité est en cours avant la libération des fonds.';
+        } elseif ($jalon->mission->referent_required) {
+            $message = 'Jalon validé. Un référent de zone doit confirmer avant le paiement (mission > 2 000 000 FCFA).';
+        } else {
+            $message = 'Jalon validé et paiement libéré vers l\'artisan.';
+        }
 
         return response()->json([
             'success' => true,

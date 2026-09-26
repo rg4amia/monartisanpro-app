@@ -5,6 +5,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../../app/routes/app_routes.dart';
+import '../services/device_fingerprint_service.dart';
 import '../storage/storage_service.dart';
 import '../utils/error_handler.dart';
 import 'api_endpoints.dart';
@@ -28,6 +29,7 @@ class ApiClient {
 
     _dio.interceptors.addAll([
       _DynamicBaseUrlInterceptor(),
+      _DeviceFingerprintInterceptor(),
       _AuthInterceptor(),
       _ErrorLoggerInterceptor(),
     ]);
@@ -148,3 +150,19 @@ class _DynamicBaseUrlInterceptor extends Interceptor {
     handler.next(options);
   }
 }
+
+/// Interceptor injectant l'empreinte matérielle et les métadonnées de l'appareil
+/// pour la télémétrie et la détection d'anti-collusion (Chantier 8).
+class _DeviceFingerprintInterceptor extends Interceptor {
+  @override
+  void onRequest(RequestOptions options, RequestInterceptorHandler handler) {
+    try {
+      final fpHeaders = DeviceFingerprintService().getHeaders();
+      options.headers.addAll(fpHeaders);
+    } catch (_) {
+      // Ignorer silencieusement si indisponible
+    }
+    handler.next(options);
+  }
+}
+

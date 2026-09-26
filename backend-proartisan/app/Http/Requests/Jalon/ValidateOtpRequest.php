@@ -15,6 +15,9 @@ class ValidateOtpRequest extends FormRequest
     {
         return [
             'otp' => ['required', 'string', 'digits:4'],
+            'lat' => ['nullable', 'numeric', 'between:-90,90'],
+            'lng' => ['nullable', 'numeric', 'between:-180,180'],
+            'device_fingerprint' => ['nullable', 'string', 'max:255'],
         ];
     }
 

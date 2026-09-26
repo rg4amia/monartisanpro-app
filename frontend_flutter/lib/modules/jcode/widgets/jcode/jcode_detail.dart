@@ -65,8 +65,11 @@ class JcodeDetail extends StatelessWidget {
                     color: AppColors.secondary.withValues(alpha: 0.12),
                     borderRadius: BorderRadius.circular(12),
                   ),
-                  child: const Icon(Icons.alt_route_rounded,
-                      color: AppColors.secondary, size: 28),
+                  child: const Icon(
+                    Icons.alt_route_rounded,
+                    color: AppColors.secondary,
+                    size: 28,
+                  ),
                 ),
                 const SizedBox(width: 14),
                 const Expanded(
@@ -218,8 +221,11 @@ class JcodeDetail extends StatelessWidget {
               children: [
                 Row(
                   children: [
-                    const Icon(Icons.receipt_long,
-                        color: AppColors.primary, size: 20),
+                    const Icon(
+                      Icons.receipt_long,
+                      color: AppColors.primary,
+                      size: 20,
+                    ),
                     const SizedBox(width: 8),
                     Text(
                       'Historique des retraits (${jcode.redemptions.length})',

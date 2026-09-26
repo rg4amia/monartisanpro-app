@@ -157,7 +157,7 @@ class _ComposerViewState extends State<JcodeComposerView> {
                     child: SwitchListTile(
                       contentPadding: EdgeInsets.zero,
                       value: isMulti,
-                      activeColor: AppColors.secondary,
+                      activeThumbColor: AppColors.secondary,
                       title: const Text(
                         'J-Code Multi-Comptoirs',
                         style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),

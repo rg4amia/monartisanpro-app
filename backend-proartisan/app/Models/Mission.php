@@ -26,6 +26,8 @@ class Mission extends Model
         'referent_validated_at', 'referent_validated_by',
         'client_latitude', 'client_longitude', 'client_address',
         'payment_type',
+        'client_device_fingerprint', 'artisan_device_fingerprint',
+        'client_ip', 'artisan_ip',
     ];
 
     protected $appends = [

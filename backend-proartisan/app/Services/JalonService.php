@@ -96,8 +96,13 @@ class JalonService
      * Valide l'OTP du client et libère les fonds du jalon.
      * RÈGLE CRITIQUE : libération impossible sans OTP valide.
      */
-    public function validateOtp(Jalon $jalon, string $otp): bool
-    {
+    public function validateOtp(
+        Jalon $jalon,
+        string $otp,
+        ?float $clientLat = null,
+        ?float $clientLng = null,
+        ?string $clientFingerprint = null
+    ): bool {
         $client = $jalon->mission->client;
 
         if ($jalon->mission->isFundsFrozen()) {
@@ -117,11 +122,29 @@ class JalonService
         $submittedAt = $jalon->updated_at;
         $jalon->update(['statut' => 'valide', 'valide_at' => now(), 'otp_code' => null]);
 
+        $validationSeconds = $submittedAt ? now()->diffInSeconds($submittedAt) : null;
+        $clientCoords = ($clientLat !== null && $clientLng !== null) ? ['lat' => $clientLat, 'lng' => $clientLng] : null;
+
         // Détection de fraude / collusion (ex: validation ultra-rapide < 120s)
         $fraudAlert = $this->fraudService->analyzeMilestoneValidation($jalon, $client, $submittedAt);
-        if ($fraudAlert && $fraudAlert->action_taken === 'payment_hold') {
+
+        // Détection proximité GPS & même appareil lors de la validation
+        $proximityAlert = $this->fraudService->analyzeMilestoneValidationProximity(
+            $jalon,
+            $clientCoords,
+            null,
+            $clientFingerprint,
+            null,
+            $validationSeconds
+        );
+
+        $effectiveAlert = ($proximityAlert && $proximityAlert->action_taken === 'payment_hold')
+            ? $proximityAlert
+            : $fraudAlert;
+
+        if ($effectiveAlert && $effectiveAlert->action_taken === 'payment_hold') {
             $jalon->update(['statut' => 'valide_suspendu']);
-            Log::warning("[FRAUD PAYMENT HOLD] Jalon #{$jalon->id} suspendu suite à l'alerte #{$fraudAlert->reference}");
+            Log::warning("[FRAUD PAYMENT HOLD] Jalon #{$jalon->id} suspendu suite à l'alerte #{$effectiveAlert->reference}");
 
             $this->notificationService->send(
                 $jalon->mission->artisan,

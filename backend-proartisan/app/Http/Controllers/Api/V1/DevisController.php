@@ -64,6 +64,19 @@ class DevisController extends Controller
 
         try {
             $devis = $this->devisService->create($mission, $user, $request->validated());
+
+            try {
+                $fingerprintService = app(\App\Services\DeviceFingerprintService::class);
+                $fingerprintService->recordFromRequest($request, $user);
+                $artisanFp = $fingerprintService->extractFingerprint($request);
+                $mission->update([
+                    'artisan_device_fingerprint' => $artisanFp,
+                    'artisan_ip' => $request->ip(),
+                ]);
+                app(\App\Services\FraudDetectionService::class)->analyzeDeviceCollusion($mission);
+            } catch (\Throwable $e) {
+                Log::warning('Échec audit empreinte artisan devis: '.$e->getMessage());
+            }
         } catch (\InvalidArgumentException $e) {
             return response()->json([
                 'success' => false,
@@ -195,6 +208,22 @@ class DevisController extends Controller
         }
 
         $this->devisService->accept($devis, $transaction);
+
+        try {
+            $fingerprintService = app(\App\Services\DeviceFingerprintService::class);
+            $fingerprintService->recordFromRequest($request, $user);
+            $clientFp = $fingerprintService->extractFingerprint($request);
+            $mission = $devis->mission;
+            if ($mission) {
+                $mission->update([
+                    'client_device_fingerprint' => $clientFp,
+                    'client_ip' => $request->ip(),
+                ]);
+                app(\App\Services\FraudDetectionService::class)->analyzeDeviceCollusion($mission);
+            }
+        } catch (\Throwable $e) {
+            Log::warning('Échec audit empreinte client acceptation devis: '.$e->getMessage());
+        }
 
         try {
             app(RealtimeEventService::class)->broadcast(

@@ -246,6 +246,157 @@ class FraudDetectionService
     }
 
     /**
+     * Analyse la collusion par partage d'appareil ou d'adresse IP entre client et artisan.
+     */
+    public function analyzeDeviceCollusion(
+        Mission $mission,
+        ?string $clientFingerprint = null,
+        ?string $artisanFingerprint = null,
+        ?string $clientIp = null,
+        ?string $artisanIp = null
+    ): ?FraudAlert {
+        $clientFingerprint = $clientFingerprint ?? $mission->client_device_fingerprint;
+        $artisanFingerprint = $artisanFingerprint ?? $mission->artisan_device_fingerprint;
+        $clientIp = $clientIp ?? $mission->client_ip;
+        $artisanIp = $artisanIp ?? $mission->artisan_ip;
+
+        $reasons = [];
+        $riskScore = 0;
+        $severity = 'medium';
+        $type = 'collusion_artisan_client';
+
+        // 1. Détection même appareil (Alerte ROUGE / Critical, score 95)
+        if (! empty($clientFingerprint) && ! empty($artisanFingerprint) && $clientFingerprint === $artisanFingerprint) {
+            $reasons[] = "Client et artisan partagent le même identifiant d'appareil physique ({$clientFingerprint}) sur la mission #{$mission->id}.";
+            $reasons[] = "Suspicion critique de mission fictive ou de collusion pour détournement de fonds.";
+            $riskScore = 95;
+            $severity = 'critical';
+            $type = 'collusion_same_device';
+        }
+
+        // 2. Détection même adresse IP publique (hors réseau local/bouclage)
+        $isLocalIp = in_array($clientIp, ['127.0.0.1', '::1', null], true);
+        if (! $isLocalIp && ! empty($clientIp) && ! empty($artisanIp) && $clientIp === $artisanIp) {
+            if ($riskScore < 95) {
+                $reasons[] = "Client et artisan effectuent leurs actions depuis la même adresse IP publique ({$clientIp}).";
+                $riskScore = max($riskScore, 80);
+                $severity = ($severity === 'critical') ? 'critical' : 'high';
+                $type = ($type === 'collusion_same_device') ? 'collusion_same_device' : 'collusion_ip_coincidence';
+            }
+        }
+
+        if (empty($reasons)) {
+            return null;
+        }
+
+        return $this->createAlert([
+            'mission_id' => $mission->id,
+            'user_id' => $mission->client_id,
+            'target_user_id' => $mission->artisan_id,
+            'type' => $type,
+            'severity' => $severity,
+            'risk_score' => $riskScore,
+            'reasons_json' => $reasons,
+            'metadata_json' => [
+                'mission_id' => $mission->id,
+                'client_fingerprint' => $clientFingerprint,
+                'artisan_fingerprint' => $artisanFingerprint,
+                'client_ip' => $clientIp,
+                'artisan_ip' => $artisanIp,
+            ],
+        ]);
+    }
+
+    /**
+     * Analyse la proximité GPS et les appareils lors de la validation d'un jalon.
+     */
+    public function analyzeMilestoneValidationProximity(
+        Jalon $jalon,
+        ?array $clientCoords = null,
+        ?array $artisanCoords = null,
+        ?string $clientFingerprint = null,
+        ?string $artisanFingerprint = null,
+        ?int $validationSeconds = null
+    ): ?FraudAlert {
+        $mission = $jalon->mission;
+        if (! $mission) {
+            return null;
+        }
+
+        $clientFingerprint = $clientFingerprint ?? $mission->client_device_fingerprint;
+        $artisanFingerprint = $artisanFingerprint ?? $mission->artisan_device_fingerprint;
+
+        if ($artisanCoords === null && ! empty($jalon->photos_json)) {
+            $photos = is_array($jalon->photos_json) ? $jalon->photos_json : json_decode($jalon->photos_json, true);
+            if (is_array($photos) && count($photos) > 0) {
+                $lastPhoto = end($photos);
+                if (isset($lastPhoto['lat'], $lastPhoto['lng'])) {
+                    $artisanCoords = [
+                        'lat' => (float) $lastPhoto['lat'],
+                        'lng' => (float) $lastPhoto['lng'],
+                    ];
+                }
+            }
+        }
+
+        $reasons = [];
+        $riskScore = 0;
+        $severity = 'medium';
+        $type = 'collusion_validation_proximity';
+
+        // 1. Même appareil lors de la validation
+        if (! empty($clientFingerprint) && ! empty($artisanFingerprint) && $clientFingerprint === $artisanFingerprint) {
+            $reasons[] = "La validation du jalon #{$jalon->ordre} a été effectuée depuis le même appareil ({$clientFingerprint}) que la soumission artisan.";
+            $riskScore = 95;
+            $severity = 'critical';
+            $type = 'collusion_same_device_validation';
+        }
+
+        // 2. Coïncidence GPS instantanée (< 15 mètres et < 60s)
+        if ($clientCoords && $artisanCoords && isset($clientCoords['lat'], $clientCoords['lng'], $artisanCoords['lat'], $artisanCoords['lng'])) {
+            $dist = $this->haversineDistance(
+                (float) $clientCoords['lat'],
+                (float) $clientCoords['lng'],
+                (float) $artisanCoords['lat'],
+                (float) $artisanCoords['lng']
+            );
+
+            if ($dist < 15 && ($validationSeconds !== null && $validationSeconds < 60)) {
+                $reasons[] = sprintf(
+                    'Position GPS de validation client identique à celle de l\'artisan (distance : %.1f m) validée en seulement %d secondes.',
+                    $dist,
+                    $validationSeconds
+                );
+                $riskScore = max($riskScore, 85);
+                $severity = ($severity === 'critical') ? 'critical' : 'high';
+            }
+        }
+
+        if (empty($reasons)) {
+            return null;
+        }
+
+        return $this->createAlert([
+            'mission_id' => $mission->id,
+            'user_id' => $mission->client_id,
+            'target_user_id' => $mission->artisan_id,
+            'type' => $type,
+            'severity' => $severity,
+            'risk_score' => $riskScore,
+            'reasons_json' => $reasons,
+            'metadata_json' => [
+                'jalon_id' => $jalon->id,
+                'jalon_ordre' => $jalon->ordre,
+                'client_fingerprint' => $clientFingerprint,
+                'artisan_fingerprint' => $artisanFingerprint,
+                'client_coords' => $clientCoords,
+                'artisan_coords' => $artisanCoords,
+                'validation_seconds' => $validationSeconds,
+            ],
+        ]);
+    }
+
+    /**
      * Enregistre l'alerte de fraude et déclenche le gel préventif si risque critique.
      */
     public function createAlert(array $params): FraudAlert

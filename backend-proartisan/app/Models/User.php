@@ -408,6 +408,11 @@ class User extends Authenticatable
         return $this->hasMany(FraudAlert::class, 'user_id');
     }
 
+    public function deviceFingerprints(): HasMany
+    {
+        return $this->hasMany(DeviceFingerprint::class, 'user_id');
+    }
+
     public function isGoldenMarker(): bool
     {
         return (int) $this->score_prosartisan >= (int) config('prosartisan.score_prosartisan.golden_marker_threshold', 700);

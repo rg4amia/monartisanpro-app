@@ -105,7 +105,7 @@ void main() {
         latitude: 5.340,
         longitude: -4.010,
         items: const [
-          {'name': 'Fers à béton', 'quantity': 5, 'subtotal': 25000}
+          {'name': 'Fers à béton', 'quantity': 5, 'subtotal': 25000},
         ],
         scannedAt: '2026-09-26T11:00:00Z',
       );
