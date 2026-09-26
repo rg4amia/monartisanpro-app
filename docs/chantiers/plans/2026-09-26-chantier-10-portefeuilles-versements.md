@@ -2,12 +2,12 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | livré (non commité) |
+| Statut | livré |
 | Créé le | 2026-09-26 |
 | Mis à jour le | 2026-09-26 |
 | Auteur | Claude Code (session du 26/09/2026) |
 | Analyses liées | — |
-| Commits | — |
+| Commits | `e06db5d9` |
 
 ## Objectif
 
@@ -50,7 +50,7 @@ Un audit du parcours portefeuille livreur (solde fictif de 25 000 FCFA affiché 
 
 ## Écarts
 
-Livré le 26/09/2026, non encore commité. Vérifications : Pest 816 tests (SQLite), Vitest 314, Flutter 370 + `flutter analyze` sans remarque. **La suite MariaDB n'a pas été rejouée localement** : le job CI `tests-mariadb` fera foi.
+Livré le 26/09/2026 (commit `e06db5d9`). Vérifications : Pest 816 tests (SQLite), Vitest 314, Flutter 370 + `flutter analyze` sans remarque. **La suite MariaDB n'a pas été rejouée localement** : le job CI `tests-mariadb` fera foi.
 
 Écarts et reliquats par rapport au plan :
 
