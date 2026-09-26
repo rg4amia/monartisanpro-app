@@ -85,7 +85,9 @@ class MobileMoneyValidationTest extends TestCase
             'client_id' => $client->id,
             'artisan_id' => $artisan->id,
             'description' => 'Maconnerie generale et construction de cloture.',
-            'status' => 'pending_artisan_acceptance',
+            // Demande déjà acceptée par l'artisan (accept-request) : seul le
+            // numéro Mobile Money est éprouvé ici (Règle d'or 43).
+            'status' => 'draft',
             'montant_total' => 100000,
             'montant_materiaux' => 60000,
             'montant_mo' => 40000,

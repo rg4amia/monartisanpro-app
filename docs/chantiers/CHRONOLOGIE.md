@@ -8,6 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-09-26 | Audit | [Simulation de bout en bout de l'écosystème ProsArtisan](audits/2026-09-26-audit-simulation-ecosysteme.md) | — | commit « test(ecosysteme) » du 26/09/2026 |
 | 2026-09-26 | Plan | [Chantier 13 — Machine à États Formelle & Guards d'Intégrité des Missions](plans/2026-09-26-chantier-13-machine-etats-guards-missions.md) | livré | `faf6fd8f`, `141b0546` |
 | 2026-09-26 | Plan | [Chantier 12 — Jury ProsArtisan (Arbitrage par les Pairs) & Evidence Vault (Coffre-fort SHA-256)](plans/2026-09-26-chantier-12-jury-prosartisan-evidence-vault.md) | livré | `faf6fd8f`, `141b0546`, `930d2d0c` |
 | 2026-09-26 | Plan | [Chantier 11 — Encaissement réel des commandes, relances de course, course au trajet GPS, reçus PDF](plans/2026-09-26-chantier-11-encaissements-relances-recus.md) | livré | `346e3ddc`, `7b87755b` |

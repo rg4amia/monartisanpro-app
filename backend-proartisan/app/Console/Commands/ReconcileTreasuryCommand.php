@@ -98,10 +98,23 @@ class ReconcileTreasuryCommand extends Command
         return $anomalies;
     }
 
-    /** Dépôts confirmés comparés au total de la commande (ou du groupe multi-fournisseurs). */
+    /**
+     * Dépôts confirmés comparés au total de la commande (ou du groupe
+     * multi-fournisseurs).
+     *
+     * Depuis la course « à la Yango » (Chantier 10), une commande livrée est
+     * encaissée en deux fois : le panier au paiement de la commande
+     * (`acompte`, vers le séquestre de la commande ou du groupe), puis la
+     * course à la livraison (`paiement_livraison`, toujours vers le séquestre
+     * de la commande). `revealDeliveryFare` ajoute cette course au
+     * `total_amount` dès la livraison : tant que le client ne l'a pas réglée,
+     * elle n'est pas attendue dans le séquestre. Ne compter que les acomptes
+     * signalait à tort chaque commande livrée.
+     */
     private function auditOrders(): int
     {
-        $this->info("\n2. Vérification du séquestre des commandes...");
+        $this->info('
+2. Vérification du séquestre des commandes...');
         $anomalies = 0;
         $checkedGroups = [];
 
@@ -112,12 +125,14 @@ class ReconcileTreasuryCommand extends Command
                 }
                 $checkedGroups[$order->order_group_id] = true;
 
-                $expected = (int) Order::where('order_group_id', $order->order_group_id)->sum('total_amount');
-                $deposited = $this->confirmedDeposits('escrow_group_'.$order->order_group_id);
+                $orders = Order::where('order_group_id', $order->order_group_id)->get();
+                $expected = (int) $orders->sum(fn (Order $o) => $this->expectedOrderDeposit($o));
+                $deposited = $this->confirmedDeposits('escrow_group_'.$order->order_group_id)
+                    + $this->confirmedDeposits($orders->map(fn (Order $o) => 'escrow_order_'.$o->id)->all(), ['paiement_livraison']);
                 $label = "groupe {$order->order_group_id}";
             } else {
-                $expected = (int) $order->total_amount;
-                $deposited = $this->confirmedDeposits('escrow_order_'.$order->id);
+                $expected = $this->expectedOrderDeposit($order);
+                $deposited = $this->confirmedDeposits('escrow_order_'.$order->id, ['acompte', 'paiement_livraison']);
                 $label = "commande #{$order->id} (".Order::statusLabel((string) $order->status).')';
             }
 
@@ -128,6 +143,12 @@ class ReconcileTreasuryCommand extends Command
         });
 
         return $anomalies;
+    }
+
+    /** Montant encaissé attendu : le total, moins la course révélée et pas encore réglée. */
+    private function expectedOrderDeposit(Order $order): int
+    {
+        return (int) $order->total_amount - $order->deliveryFareDue();
     }
 
     /**
@@ -183,12 +204,16 @@ class ReconcileTreasuryCommand extends Command
         return $anomalies;
     }
 
-    private function confirmedDeposits(string $walletDest): int
+    /**
+     * @param  string|list<string>  $walletDest
+     * @param  list<string>  $types
+     */
+    private function confirmedDeposits(string|array $walletDest, array $types = ['acompte']): int
     {
         return (int) Transaction::query()
-            ->where('type', 'acompte')
+            ->whereIn('type', $types)
             ->where('statut', PaymentStatus::CONFIRME)
-            ->where('wallet_dest', $walletDest)
+            ->whereIn('wallet_dest', (array) $walletDest)
             ->sum('montant');
     }
 

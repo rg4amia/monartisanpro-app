@@ -94,6 +94,40 @@ class DevisGestionRulesTest extends TestCase
         $response3->assertCreated();
     }
 
+    public function test_designated_artisan_must_accept_the_request_before_submitting_a_devis(): void
+    {
+        $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);
+        $artisan = $this->user(['role' => 'artisan', 'kyc_status' => 'actif']);
+
+        $mission = Mission::create([
+            'client_id' => $client->id,
+            'artisan_id' => $artisan->id,
+            'description' => 'Demande de devis adressée directement à un artisan',
+            'status' => 'pending_artisan_acceptance',
+        ]);
+
+        $payload = [
+            'materials_required' => false,
+            'intervention_type_id' => 1,
+            'lignes' => [['type' => 'mo', 'description' => 'Main d\'oeuvre', 'montant' => 50000]],
+            'jalons' => [['ordre' => 1, 'description' => 'Jalon 1', 'montant' => 50000, 'date_cible' => now()->addDays(5)->toDateString()]],
+        ];
+
+        // Règle d'or 43 : sans accept-request, le devis est refusé côté serveur.
+        $this->actingAs($artisan)
+            ->postJson("/api/v1/missions/{$mission->id}/devis", $payload)
+            ->assertStatus(422)
+            ->assertJsonPath('message', 'Acceptez d\'abord la demande de devis du client avant de rédiger votre devis.');
+        $this->assertSame(0, Devis::where('mission_id', $mission->id)->count());
+        $this->assertSame('pending_artisan_acceptance', (string) $mission->fresh()->status);
+
+        $this->actingAs($artisan)->postJson("/api/v1/missions/{$mission->id}/accept-request")->assertOk();
+
+        $this->actingAs($artisan)
+            ->postJson("/api/v1/missions/{$mission->id}/devis", $payload)
+            ->assertCreated();
+    }
+
     public function test_jalon_date_cible_must_be_in_the_future_for_a_standard_mission(): void
     {
         $client = $this->user(['role' => 'client', 'kyc_status' => 'actif']);

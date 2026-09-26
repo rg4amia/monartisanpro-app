@@ -82,6 +82,13 @@ class DevisService
                 throw new \InvalidArgumentException('Cette mission est réservée à un autre artisan.');
             }
 
+            // Règle d'or 43 : l'artisan désigné accepte d'abord la demande de
+            // devis (`accept-request`). Le masquage du bouton côté mobile ne
+            // suffit pas — un appel direct à l'API sautait l'étape.
+            if ($mission->status instanceof PendingArtisanAcceptanceState) {
+                throw new \InvalidArgumentException('Acceptez d\'abord la demande de devis du client avant de rédiger votre devis.');
+            }
+
             // RÈGLE INITIALE : Un artisan ne peut pas soumettre plusieurs devis tant que le précédent n'est pas refusé
             $existingArtisanDevis = Devis::where('mission_id', $mission->id)
                 ->where('artisan_id', $artisan->id)

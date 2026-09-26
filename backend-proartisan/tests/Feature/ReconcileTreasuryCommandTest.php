@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Enums\PaymentStatus;
 use App\Enums\WalletType;
 use App\Models\Mission;
+use App\Models\Order;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\WalletService;
@@ -118,5 +119,89 @@ class ReconcileTreasuryCommandTest extends TestCase
         $this->artisan('prosartisan:reconcile-treasury')
             ->expectsOutputToContain('Trésorerie intègre')
             ->assertSuccessful();
+    }
+
+    /**
+     * Commande livrée « à la Yango » : le panier est payé à la commande, la
+     * course au moment de la livraison, par un second paiement
+     * (`paiement_livraison`) vers le même séquestre. `revealDeliveryFare`
+     * ajoute la course au `total_amount`.
+     */
+    private function deliveredOrder(int $checkout, int $fare, string $fareStatus, ?string $groupId = null): Order
+    {
+        $supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
+
+        return Order::create([
+            'client_id' => $this->client->id,
+            'supplier_id' => $supplier->id,
+            'order_group_id' => $groupId,
+            'status' => 'delivered',
+            'delivery_mode' => 'delivery',
+            'subtotal' => $checkout - 600,
+            'delivery_cost' => $fare,
+            'platform_fee' => 600,
+            'total_amount' => $checkout + $fare,
+            'delivery_fare_status' => $fareStatus,
+            'delivery_fare_prepaid' => 0,
+            'pickup_code' => 'RET-0001',
+            'reception_code' => 'REC-0001',
+        ]);
+    }
+
+    private function orderPayment(string $type, int $montant, string $walletDest): Transaction
+    {
+        return Transaction::create([
+            'user_id' => $this->client->id,
+            'type' => $type,
+            'montant' => $montant,
+            'wallet_source' => 'client_mobile_money_'.$this->client->id,
+            'wallet_dest' => $walletDest,
+            'provider' => 'wave',
+            'statut' => PaymentStatus::CONFIRME,
+        ]);
+    }
+
+    public function test_delivery_fare_paid_after_delivery_is_not_reported_as_gap(): void
+    {
+        $order = $this->deliveredOrder(20600, 2165, 'paye');
+        $this->orderPayment('acompte', 20600, 'escrow_order_'.$order->id);
+        $this->orderPayment('paiement_livraison', 2165, 'escrow_order_'.$order->id);
+
+        $this->artisan('prosartisan:reconcile-treasury')
+            ->doesntExpectOutputToContain('Écart commande')
+            ->assertSuccessful();
+    }
+
+    public function test_delivery_fare_not_yet_paid_is_not_reported_as_gap(): void
+    {
+        $order = $this->deliveredOrder(20600, 2165, 'a_payer');
+        $this->orderPayment('acompte', 20600, 'escrow_order_'.$order->id);
+
+        $this->artisan('prosartisan:reconcile-treasury')
+            ->doesntExpectOutputToContain('Écart commande')
+            ->assertSuccessful();
+    }
+
+    public function test_grouped_orders_count_each_fare_paid_to_its_own_escrow(): void
+    {
+        $first = $this->deliveredOrder(20600, 2165, 'paye', 'GRP-1');
+        $this->deliveredOrder(10600, 1500, 'a_payer', 'GRP-1');
+        $this->orderPayment('acompte', 31200, 'escrow_group_GRP-1');
+        $this->orderPayment('paiement_livraison', 2165, 'escrow_order_'.$first->id);
+
+        $this->artisan('prosartisan:reconcile-treasury')
+            ->doesntExpectOutputToContain('Écart groupe')
+            ->assertSuccessful();
+    }
+
+    public function test_an_underpaid_order_is_still_reported(): void
+    {
+        $order = $this->deliveredOrder(20600, 2165, 'paye');
+        $this->orderPayment('acompte', 18000, 'escrow_order_'.$order->id);
+        $this->orderPayment('paiement_livraison', 2165, 'escrow_order_'.$order->id);
+
+        $this->artisan('prosartisan:reconcile-treasury')
+            ->expectsOutputToContain("Écart commande #{$order->id} (Livrée) : attendu 22765 FCFA, déposé 20165 FCFA")
+            ->assertFailed();
     }
 }
