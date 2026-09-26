@@ -26,7 +26,7 @@ export default function SupplierLogin() {
     } | null>(null);
     const [botAnswer, setBotAnswer] = useState('');
     const [botTrap, setBotTrap] = useState('');
-    const [loadingChallenge, setLoadingChallenge] = useState(false);
+    const [loadingChallenge, setLoadingChallenge] = useState(true);
 
     const fetchChallenge = async () => {
         try {
@@ -42,7 +42,27 @@ export default function SupplierLogin() {
     };
 
     useEffect(() => {
-        fetchChallenge();
+        let isMounted = true;
+        api.getSecurityChallenge('send_otp')
+            .then(data => {
+                if (isMounted) {
+                    setChallenge(data);
+                    setBotAnswer('');
+                }
+            })
+            .catch(e => {
+                if (isMounted) {
+                    console.error('Failed to load anti-bot challenge', e);
+                }
+            })
+            .finally(() => {
+                if (isMounted) {
+                    setLoadingChallenge(false);
+                }
+            });
+        return () => {
+            isMounted = false;
+        };
     }, []);
 
     useEffect(() => {
