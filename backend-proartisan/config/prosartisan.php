@@ -4,6 +4,10 @@ return [
     // Domaine du site vitrine : la racine du backend y redirige (routes/web.php).
     'front_url' => env('FRONT_URL', 'https://www.prosartisan.net'),
 
+    // Manuel d'utilisation (source unique dans docs/produit, le serveur
+    // héberge le dépôt entier), consulté et téléchargé depuis le backoffice.
+    'user_manual_path' => env('USER_MANUAL_PATH', base_path('../docs/produit/manuel-utilisation.html')),
+
     'gps' => [
         'jcode_max_distance' => env('GPS_JCODE_MAX_DISTANCE', 100),   // mètres
         'artisan_blur_radius' => env('GPS_ARTISAN_BLUR', 50),          // mètres

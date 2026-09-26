@@ -107,6 +107,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/notifications', [BackofficeController::class, 'notifications'])->name('notifications');
         Route::post('/notifications/{notification}/read', [BackofficeController::class, 'markNotificationRead'])->name('notifications.read');
         Route::post('/notifications/mark-all-read', [BackofficeController::class, 'markAllNotificationsRead'])->name('notifications.mark-all-read');
+        Route::get('/manuel', [BackofficeController::class, 'userManual'])->name('manual');
+        Route::get('/manuel/document', [BackofficeController::class, 'userManualDocument'])->name('manual.document');
+        Route::get('/manuel/telecharger', [BackofficeController::class, 'downloadUserManual'])->name('manual.download');
         Route::post('/logout', [AuthenticatedSessionController::class, 'destroy'])->name('logout');
 
         // KYC & vérifications

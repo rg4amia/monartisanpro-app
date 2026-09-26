@@ -1,0 +1,659 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<!-- Source unique du manuel d'utilisation : servie par le backoffice (onglet « Manuel d'utilisation »,
+     UserManualService) et publiée à l'identique. Toute évolution fonctionnelle visible des utilisateurs
+     met ce fichier à jour dans le même commit. -->
+<title>Manuel ProsArtisan</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,700;12..96,800&family=Source+Sans+3:ital,wght@0,400;0,600;0,700;1,400&family=JetBrains+Mono:wght@500&display=swap">
+<style>
+:root {
+  --bg: #F5F6FA;
+  --surface: #FFFFFF;
+  --ink: #1A2C5B;
+  --text: #26324A;
+  --muted: #5B6680;
+  --line: #DCE1EC;
+  --client: #2F5DB8;
+  --artisan: #B85A0C;
+  --fournisseur: #1E8448;
+  --livreur: #946F00;
+  --referent: #6A4DB0;
+  --admin: #475069;
+  --warn: #B4471F;
+  --info: #2F5DB8;
+  --display: "Bricolage Grotesque", "Segoe UI", system-ui, sans-serif;
+  --body: "Source Sans 3", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "Cascadia Mono", Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    color-scheme: dark;
+    --bg: #0E1424;
+    --surface: #161F35;
+    --ink: #DCE4F7;
+    --text: #C9D2E6;
+    --muted: #8C97B2;
+    --line: #28344F;
+    --client: #86A8F0;
+    --artisan: #F0A45C;
+    --fournisseur: #5FCB8C;
+    --livreur: #E8C547;
+    --referent: #B7A2F0;
+    --admin: #A8B2CC;
+    --warn: #F29170;
+    --info: #86A8F0;
+  }
+}
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --bg: #0E1424;
+  --surface: #161F35;
+  --ink: #DCE4F7;
+  --text: #C9D2E6;
+  --muted: #8C97B2;
+  --line: #28344F;
+  --client: #86A8F0;
+  --artisan: #F0A45C;
+  --fournisseur: #5FCB8C;
+  --livreur: #E8C547;
+  --referent: #B7A2F0;
+  --admin: #A8B2CC;
+  --warn: #F29170;
+  --info: #86A8F0;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+@media (prefers-reduced-motion: reduce) { html { scroll-behavior: auto; } }
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: var(--body);
+  font-size: 17px;
+  line-height: 1.6;
+  padding-inline: 16px;
+  padding-block: 0 64px;
+  margin: 0;
+}
+a { color: var(--info); text-underline-offset: 3px; }
+a:focus-visible { outline: 2px solid var(--info); outline-offset: 2px; border-radius: 3px; }
+h1, h2, h3 { font-family: var(--display); color: var(--ink); text-wrap: balance; line-height: 1.15; }
+code, .code { font-family: var(--mono); font-size: 0.86em; background: color-mix(in srgb, var(--ink) 8%, var(--surface)); padding: 1px 6px; border-radius: 4px; color: var(--ink); white-space: nowrap; }
+
+.masthead {
+  max-width: 1180px;
+  margin: 0 auto;
+  padding-block: 48px 32px;
+  border-bottom: 1px solid var(--line);
+  display: grid;
+  gap: 14px;
+}
+.eyebrow { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-weight: 600; }
+.masthead h1 { font-size: clamp(34px, 6vw, 56px); margin: 0; font-weight: 800; letter-spacing: -0.01em; }
+.masthead p { margin: 0; max-width: 62ch; font-size: 18px; }
+.meta { display: flex; flex-wrap: wrap; gap: 8px 18px; font-size: 14px; color: var(--muted); }
+.meta b { color: var(--text); font-weight: 600; }
+
+.spaces { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 6px; }
+.space-chip {
+  display: inline-flex; align-items: center; gap: 8px;
+  padding: 6px 12px 6px 8px; border-radius: 999px;
+  border: 1px solid var(--line); background: var(--surface);
+  color: var(--text); text-decoration: none; font-weight: 600; font-size: 15px;
+}
+.space-chip:hover { border-color: var(--c); }
+.dot { width: 12px; height: 12px; border-radius: 3px; background: var(--c); flex: none; }
+
+.layout {
+  max-width: 1180px;
+  margin: 0 auto;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 40px;
+  padding-top: 32px;
+}
+@media (min-width: 980px) {
+  .layout { grid-template-columns: 250px minmax(0, 1fr); }
+}
+.toc { font-size: 15px; }
+@media (min-width: 980px) {
+  .toc { position: sticky; top: calc(env(safe-area-inset-top, 0px) + 20px); align-self: start; max-height: calc(100vh - 40px); overflow-y: auto; }
+}
+.toc h2 { font-size: 13px; letter-spacing: 0.08em; text-transform: uppercase; color: var(--muted); font-family: var(--body); margin: 0 0 10px; }
+.toc ol { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; }
+.toc a { display: flex; gap: 8px; align-items: center; padding: 5px 8px; border-radius: 6px; color: var(--text); text-decoration: none; }
+.toc a:hover { background: color-mix(in srgb, var(--ink) 7%, transparent); }
+.toc .sub { padding-left: 28px; font-size: 14px; color: var(--muted); }
+
+main { min-width: 0; }
+.chapter { padding-block: 8px 40px; border-bottom: 1px solid var(--line); margin-bottom: 40px; scroll-margin-top: 16px; }
+.chapter:last-child { border-bottom: 0; }
+.chapter-head { display: grid; grid-template-columns: auto 1fr; gap: 6px 16px; align-items: center; margin-bottom: 18px; }
+.badge {
+  grid-row: span 2;
+  width: 52px; height: 52px; border-radius: 12px;
+  display: grid; place-items: center;
+  background: var(--c); color: var(--surface);
+  font-family: var(--display); font-weight: 800; font-size: 22px;
+}
+.chapter-head h2 { margin: 0; font-size: clamp(26px, 4vw, 34px); }
+.chapter-head p { margin: 0; color: var(--muted); max-width: 62ch; }
+
+.prose { max-width: 70ch; }
+h3 { font-size: 21px; margin: 32px 0 8px; scroll-margin-top: 16px; }
+h3 .tag { font-family: var(--body); font-size: 12px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; color: var(--c, var(--muted)); vertical-align: middle; margin-left: 6px; }
+p { margin: 0 0 12px; }
+ul, ol { margin: 0 0 14px; padding-left: 22px; }
+li { margin-bottom: 6px; }
+li::marker { color: var(--c, var(--muted)); font-weight: 700; }
+ol.steps { counter-reset: step; list-style: none; padding-left: 0; display: grid; gap: 10px; }
+ol.steps > li { counter-increment: step; display: grid; grid-template-columns: 30px 1fr; gap: 12px; margin: 0; }
+ol.steps > li::before {
+  content: counter(step);
+  width: 28px; height: 28px; border-radius: 50%;
+  border: 2px solid var(--c, var(--ink)); color: var(--c, var(--ink));
+  display: grid; place-items: center; font-weight: 700; font-size: 14px;
+  font-variant-numeric: tabular-nums;
+}
+.ui { font-weight: 700; color: var(--ink); }
+
+.callout {
+  margin: 16px 0; padding: 12px 16px; border-radius: 10px;
+  background: color-mix(in srgb, var(--k) 9%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--k) 30%, var(--line));
+  max-width: 70ch;
+}
+.callout strong:first-child { color: var(--k); display: block; font-size: 14px; letter-spacing: 0.04em; text-transform: uppercase; margin-bottom: 2px; }
+.callout p:last-child, .callout ul:last-child { margin-bottom: 0; }
+.note { --k: var(--info); }
+.warn { --k: var(--warn); }
+
+.table-wrap { overflow-x: auto; margin: 14px 0 18px; max-width: 100%; }
+table { border-collapse: collapse; width: 100%; min-width: 520px; font-size: 15px; background: var(--surface); border: 1px solid var(--line); border-radius: 8px; }
+th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+th { font-size: 13px; letter-spacing: 0.04em; text-transform: uppercase; color: var(--muted); font-weight: 700; background: color-mix(in srgb, var(--ink) 4%, var(--surface)); }
+tr:last-child td { border-bottom: 0; }
+td.num { font-variant-numeric: tabular-nums; white-space: nowrap; }
+
+.flow { display: flex; flex-wrap: wrap; gap: 6px; align-items: center; margin: 12px 0 16px; font-size: 14px; }
+.flow span { padding: 4px 10px; border-radius: 6px; background: var(--surface); border: 1px solid var(--line); font-weight: 600; }
+.flow i { color: var(--muted); font-style: normal; }
+
+dl.glossary { display: grid; grid-template-columns: 1fr; gap: 12px; max-width: 76ch; }
+@media (min-width: 700px) { dl.glossary { grid-template-columns: 220px 1fr; gap: 12px 24px; } }
+dl.glossary dt { font-weight: 700; color: var(--ink); }
+dl.glossary dd { margin: 0; }
+
+footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-top: 1px solid var(--line); font-size: 14px; color: var(--muted); }
+</style>
+</head>
+<body>
+<header class="masthead">
+  <div class="eyebrow">Application mobile Android · site vitrine · backoffice</div>
+  <h1>Manuel d'utilisation ProsArtisan</h1>
+  <p>Le guide de chaque utilisateur de la plateforme : trouver un artisan de confiance et payer en toute sécurité, réaliser un chantier, vendre des matériaux, livrer des commandes et administrer le service.</p>
+  <div class="meta">
+    <span>Version <b>26 septembre 2026</b></span>
+    <span>Application <b>1.0.0</b></span>
+    <span>Montants en <b>FCFA</b></span>
+    <span>Numéros au format <b><code>+225</code> + 10 chiffres</b></span>
+  </div>
+  <nav class="spaces" aria-label="Espaces">
+    <a class="space-chip" href="#client" style="--c: var(--client)"><span class="dot"></span>Client</a>
+    <a class="space-chip" href="#artisan" style="--c: var(--artisan)"><span class="dot"></span>Artisan</a>
+    <a class="space-chip" href="#fournisseur" style="--c: var(--fournisseur)"><span class="dot"></span>Fournisseur</a>
+    <a class="space-chip" href="#livreur" style="--c: var(--livreur)"><span class="dot"></span>Livreur</a>
+    <a class="space-chip" href="#referent" style="--c: var(--referent)"><span class="dot"></span>Référent</a>
+    <a class="space-chip" href="#admin" style="--c: var(--admin)"><span class="dot"></span>Administration</a>
+  </nav>
+</header>
+
+<div class="layout">
+  <aside class="toc" aria-label="Sommaire">
+    <h2>Sommaire</h2>
+    <ol>
+      <li><a href="#principes">Comment fonctionne ProsArtisan</a></li>
+      <li><a href="#premiers-pas">Premiers pas</a></li>
+      <li><a href="#client"><span class="dot" style="--c: var(--client)"></span>Espace Client</a></li>
+      <li><a class="sub" href="#client-mission">Demander des travaux</a></li>
+      <li><a class="sub" href="#client-chantier">Suivre et payer le chantier</a></li>
+      <li><a class="sub" href="#client-litige">Litiges et remboursements</a></li>
+      <li><a class="sub" href="#client-boutique">Acheter des matériaux</a></li>
+      <li><a href="#artisan"><span class="dot" style="--c: var(--artisan)"></span>Espace Artisan</a></li>
+      <li><a class="sub" href="#artisan-devis">Demandes et devis</a></li>
+      <li><a class="sub" href="#artisan-chantier">Matériaux et étapes</a></li>
+      <li><a class="sub" href="#artisan-argent">Gains et micro-crédit</a></li>
+      <li><a class="sub" href="#artisan-jury">Espace juré</a></li>
+      <li><a href="#fournisseur"><span class="dot" style="--c: var(--fournisseur)"></span>Espace Fournisseur</a></li>
+      <li><a href="#livreur"><span class="dot" style="--c: var(--livreur)"></span>Espace Livreur</a></li>
+      <li><a href="#referent"><span class="dot" style="--c: var(--referent)"></span>Espace Référent</a></li>
+      <li><a href="#admin"><span class="dot" style="--c: var(--admin)"></span>Backoffice</a></li>
+      <li><a href="#communs">Portefeuille, reçus, score, aide</a></li>
+      <li><a href="#glossaire">Glossaire</a></li>
+    </ol>
+  </aside>
+
+  <main>
+    <!-- ───────────── Principes ───────────── -->
+    <section class="chapter" id="principes">
+      <div class="chapter-head" style="--c: var(--ink)">
+        <div class="badge">i</div>
+        <h2>Comment fonctionne ProsArtisan</h2>
+        <p>Cinq profils, une seule règle : l'argent du client est protégé jusqu'à ce que le travail soit fait.</p>
+      </div>
+      <div class="prose">
+        <p>ProsArtisan met en relation des <b>clients</b> qui ont des travaux à faire, des <b>artisans</b> vérifiés, des <b>quincailleries</b> qui fournissent les matériaux, des <b>livreurs</b> qui les transportent et des <b>référents de zone</b> qui contrôlent les gros chantiers.</p>
+        <p>Quand un client accepte un devis, il paie le montant sur la plateforme. Cet argent est placé dans le <b>Coffre de sécurité</b> : il ne va pas directement à l'artisan. Il est divisé en deux parts :</p>
+        <ul>
+          <li><b>la part matériaux</b>, réservée à la quincaillerie, que l'artisan utilise avec un <b>bon matériel</b> (J-Code) ;</li>
+          <li><b>la part main-d'œuvre</b>, versée à l'artisan étape par étape, à chaque fois que le client valide le travail avec un code reçu par SMS.</li>
+        </ul>
+        <div class="flow" aria-label="Parcours d'un chantier">
+          <span>Demande</span><i>→</i><span>Devis</span><i>→</i><span>Paiement au coffre</span><i>→</i><span>Bon matériel</span><i>→</i><span>Étapes validées</span><i>→</i><span>Évaluation</span>
+        </div>
+        <div class="callout warn">
+          <strong>Ne payez jamais hors de l'application</strong>
+          <p>Un paiement en main propre ou par transfert direct n'est ni protégé ni traçable, et il enfreint les conditions d'utilisation. En cas de désaccord, seuls les paiements faits sur ProsArtisan peuvent être arbitrés et remboursés.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── Premiers pas ───────────── -->
+    <section class="chapter" id="premiers-pas">
+      <div class="chapter-head" style="--c: var(--ink)">
+        <div class="badge">1</div>
+        <h2>Premiers pas</h2>
+        <p>Valable pour tous les profils de l'application mobile.</p>
+      </div>
+      <div class="prose" style="--c: var(--ink)">
+        <h3 id="inscription">Créer son compte</h3>
+        <ol class="steps">
+          <li><div>Installez l'application ProsArtisan (Android) et ouvrez-la.</div></li>
+          <li><div>Saisissez votre numéro de téléphone. Un petit calcul vous est demandé : il sert à bloquer les robots qui enverraient des SMS en masse.</div></li>
+          <li><div>Entrez le code à 4 chiffres reçu par SMS.</div></li>
+          <li><div>Choisissez votre profil : <span class="ui">Client</span>, <span class="ui">Artisan</span>, <span class="ui">Fournisseur</span> ou <span class="ui">Livreur</span>.</div></li>
+          <li><div>Acceptez les conditions générales d'utilisation et la politique de confidentialité. Elles restent consultables à tout moment depuis <span class="ui">Profil</span>.</div></li>
+        </ol>
+
+        <h3 id="kyc">Vérifier son identité (KYC)</h3>
+        <p>Aucun paiement, devis, commande ou retrait n'est possible tant que l'identité n'est pas vérifiée.</p>
+        <ol class="steps">
+          <li><div>Photographiez votre pièce d'identité (CNI), puis prenez un selfie.</div></li>
+          <li><div>L'application analyse automatiquement la pièce et compare votre visage à la photo de la pièce. Si tout concorde, votre compte peut être activé tout de suite : un message de félicitations s'affiche.</div></li>
+          <li><div>Sinon, votre dossier est examiné par l'équipe ProsArtisan. Les comptes fournisseur sont toujours examinés par une personne.</div></li>
+        </ol>
+        <div class="callout note">
+          <strong>Photos lisibles</strong>
+          <p>Photographiez la pièce à plat, en pleine lumière, sans reflet, et vérifiez qu'elle n'est pas expirée. Une photo floue retarde la validation.</p>
+        </div>
+
+        <h3 id="mobile-money">Renseigner son numéro Mobile Money</h3>
+        <p>Dans <span class="ui">Profil › Moyen de paiement Mobile Money</span> (client) ou <span class="ui">Profil › Reversement Mobile Money</span> (artisan, livreur, fournisseur), choisissez votre opérateur et saisissez votre numéro. C'est sur ce numéro que vous recevez vos gains et vos remboursements. Un numéro erroné fait échouer les virements : corrigez-le puis relancez le virement depuis le portefeuille.</p>
+
+        <h3 id="adresses">Le carnet d'adresses</h3>
+        <p>Enregistrez vos adresses (Maison, Chantier, Bureau…) avec le nom et le téléphone de la personne sur place. La première devient l'adresse par défaut. Elles servent aussi bien aux demandes de travaux qu'aux livraisons de matériaux. L'adresse d'une mission ou d'une commande est figée au moment où vous la passez : la modifier ensuite dans le carnet ne change pas une commande déjà passée.</p>
+      </div>
+    </section>
+
+    <!-- ───────────── Client ───────────── -->
+    <section class="chapter" id="client" style="--c: var(--client)">
+      <div class="chapter-head">
+        <div class="badge">C</div>
+        <h2>Espace Client</h2>
+        <p>Onglets : <span class="ui">Accueil</span>, <span class="ui">Artisans</span>, <span class="ui">Boutiques</span>, <span class="ui">Missions</span>, <span class="ui">Profil</span>.</p>
+      </div>
+      <div class="prose">
+        <h3 id="client-mission">Demander des travaux</h3>
+        <ol class="steps">
+          <li><div>Depuis l'<span class="ui">Accueil</span>, lancez une demande. Décrivez le problème et, si possible, ajoutez jusqu'à 5 photos ou une courte vidéo (30 secondes maximum).</div></li>
+          <li><div>L'assistant analyse votre demande : il indique le métier conseillé, l'urgence, les précautions de sécurité à prendre tout de suite, les matériaux probables et une estimation du budget. C'est une aide, pas un devis.</div></li>
+          <li><div>Choisissez le type d'intervention (maintenance, dépannage, assistance ou simple déplacement / diagnostic).</div></li>
+          <li><div>Indiquez l'adresse du chantier : votre position actuelle, une adresse du carnet, ou un point choisi sur la carte.</div></li>
+          <li><div>Choisissez un artisan. La recherche commence dans un rayon de 2 km puis s'élargit automatiquement à 5, 15 et 50 km s'il n'y a personne. Le bouton <span class="ui">Élargir la zone</span> cherche directement jusqu'à 50 km. Les artisans sont classés par Score ProsArtisan ; le <b>marqueur doré</b> signale les mieux notés.</div></li>
+        </ol>
+        <p>La position affichée des artisans est volontairement approximative (environ 50 m) pour protéger leur vie privée.</p>
+
+        <h3>Recevoir et accepter un devis</h3>
+        <ol class="steps">
+          <li><div>L'artisan reçoit votre demande et l'accepte ou la refuse. S'il refuse, vous êtes prévenu et pouvez en choisir un autre.</div></li>
+          <li><div>S'il accepte, il vous envoie un devis : lignes de matériaux, lignes de main-d'œuvre et <b>étapes de paiement</b> avec leurs dates.</div></li>
+          <li><div>Vous seul pouvez accepter ou refuser le devis. Un refus prévient l'artisan.</div></li>
+          <li><div>À l'acceptation, payez par <b>Wave</b> ou <b>Orange Money</b>. Au-delà du plafond Mobile Money, le paiement passe par virement bancaire, avec les coordonnées affichées dans l'application.</div></li>
+        </ol>
+        <div class="callout note">
+          <strong>Devis en deux temps</strong>
+          <p>Quand l'artisan doit voir le chantier avant de chiffrer, il peut d'abord proposer un devis de déplacement / diagnostic, puis un <b>avenant</b> avec les matériaux. L'avenant s'ajoute au coffre déjà constitué, sans repartir de zéro.</p>
+        </div>
+
+        <h3 id="client-chantier">Suivre le chantier et valider les étapes</h3>
+        <ol class="steps">
+          <li><div>Dans <span class="ui">Missions</span>, ouvrez le chantier pour voir le Coffre de sécurité (part matériaux et part main-d'œuvre), les étapes et les messages avec l'artisan.</div></li>
+          <li><div>Quand l'artisan termine une étape, il envoie des photos géolocalisées. Vérifiez le travail.</div></li>
+          <li><div>S'il est conforme, validez l'étape avec le code reçu par SMS : la part correspondante est versée à l'artisan.</div></li>
+          <li><div>Sans réponse de votre part pendant 72 heures, l'étape est payée automatiquement. Si le travail ne vous convient pas, ouvrez un litige avant ce délai.</div></li>
+        </ol>
+        <div class="callout note">
+          <strong>Chantiers de plus de 2 000 000 FCFA</strong>
+          <p>Un référent de zone vient contrôler le chantier sur place avant tout paiement d'étape.</p>
+        </div>
+
+        <h3>Évaluer</h3>
+        <p>À la fin d'une mission ou d'une livraison, notez séparément l'artisan (fiabilité, intégrité, qualité, réactivité), le livreur et la quincaillerie. Le bouton de notation se trouve directement sur la carte de la mission terminée. Vos notes construisent leur Score ProsArtisan.</p>
+
+        <h3 id="client-litige">Litiges et remboursements</h3>
+        <ol class="steps">
+          <li><div>Depuis le chantier, ouvrez un litige et décrivez le problème. Les fonds de la mission sont bloqués aussitôt.</div></li>
+          <li><div>Ajoutez au moins <b>2 photos</b> prises sur place (elles sont géolocalisées et scellées : toute retouche ultérieure est détectée). L'artisan répond avec ses propres preuves.</div></li>
+          <li><div>Le litige est arbitré par l'équipe ProsArtisan, parfois après la visite d'un référent. Pour une question technique, un <b>jury</b> de trois artisans expérimentés du même métier peut donner un avis. Les jurés ne connaissent pas votre identité.</div></li>
+          <li><div>Sur la fiche du litige, choisissez à l'avance le <b>moyen de remboursement</b> : Wave ou Orange Money, et le numéro qui recevra l'argent si la décision vous est favorable.</div></li>
+        </ol>
+        <p>Si le virement de remboursement échoue (numéro erroné, incident opérateur), la somme reste due et réservée : elle n'est jamais perdue. Elle apparaît dans <span class="ui">Profil › Historique des Paiements</span>, sous <b>Virements en attente</b>. Elle est relancée automatiquement ; vous pouvez aussi <span class="ui">Modifier le moyen de remboursement</span> puis <span class="ui">Relancer le virement</span>.</p>
+
+        <h3 id="client-boutique">Acheter des matériaux</h3>
+        <ol class="steps">
+          <li><div>Dans <span class="ui">Boutiques</span>, parcourez les quincailleries agréées et leur catalogue. Un même panier peut regrouper plusieurs quincailleries.</div></li>
+          <li><div>Choisissez <b>retrait en boutique</b> ou <b>livraison</b> à une adresse du carnet. Un code promo peut s'appliquer.</div></li>
+          <li><div>Payez par Wave ou Orange Money. Le stock vous est réservé pendant <b>30 minutes</b> : sans paiement dans ce délai, la commande est annulée et le stock libéré. Une commande en attente se paie depuis <span class="ui">Suivre mes commandes</span> avec le bouton <span class="ui">Payer</span>.</div></li>
+          <li><div><b>En livraison</b> : votre code de réception est visible dans le suivi de la commande. Ne le donnez au livreur qu'une fois les matériaux reçus et vérifiés ; vous pouvez aussi confirmer vous-même la réception depuis le suivi.</div></li>
+          <li><div><b>En retrait boutique</b> : quand la commande est prête, présentez votre code de retrait en boutique. La quincaillerie le valide à la remise des matériaux.</div></li>
+        </ol>
+        <h3>Payer la course de livraison</h3>
+        <p>La course fonctionne comme un taxi à la demande : à la commande, vous voyez une <b>estimation</b>. Après la livraison, le montant final est calculé sur le <b>trajet réellement parcouru</b> (relevé GPS du livreur), avec le temps d'attente éventuel. Il ne peut pas dépasser 1,5 fois l'itinéraire prévu. Payez-le depuis le suivi de la commande.</p>
+        <div class="callout warn">
+          <strong>Course impayée</strong>
+          <p>Une course livrée non réglée fait l'objet de rappels (notification et SMS). Après <b>5 rappels</b> sans paiement, la plateforme considère que la course a été payée hors application : votre compte ne peut plus passer de commande ni publier de mission tant que la course n'est pas réglée. Le paiement lève la restriction automatiquement.</p>
+        </div>
+
+        <h3>Autres services</h3>
+        <ul>
+          <li><b>Recruter de la main-d'œuvre</b> (<span class="ui">Profil</span>) : publiez une offre, recevez des candidatures d'artisans classées par proximité et score. Les coordonnées des candidats ne sont jamais communiquées ; l'accès aux candidatures et l'engagement à la journée se paient par la plateforme.</li>
+          <li><b>Parrainage</b> : parrainez vos proches et obtenez des réductions.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ───────────── Artisan ───────────── -->
+    <section class="chapter" id="artisan" style="--c: var(--artisan)">
+      <div class="chapter-head">
+        <div class="badge">A</div>
+        <h2>Espace Artisan</h2>
+        <p>Onglets : <span class="ui">Accueil</span>, <span class="ui">Devis &amp; Projets</span>, <span class="ui">Bons Matériaux</span>, <span class="ui">Assistant IA</span>, <span class="ui">Profil</span>.</p>
+      </div>
+      <div class="prose">
+        <h3 id="artisan-devis">Répondre à une demande et faire le devis</h3>
+        <ol class="steps">
+          <li><div>Une nouvelle demande apparaît dans <span class="ui">Demandes en attente</span>. Acceptez-la ou refusez-la. Le bouton <span class="ui">Créer le devis</span> n'apparaît qu'après votre acceptation.</div></li>
+          <li><div>Composez le devis : lignes de matériaux, lignes de main-d'œuvre, et étapes de paiement datées dont la somme égale le total. Pour une urgence ou un déplacement / diagnostic, la première étape peut être datée d'aujourd'hui ; sinon les dates sont dans le futur.</div></li>
+          <li><div>Option : <span class="ui">Dicter le devis à la voix</span>. Décrivez le chantier oralement ; l'assistant propose des lignes et des étapes équilibrées que vous corrigez avant l'envoi.</div></li>
+          <li><div>Envoyez. Le client accepte ou refuse ; vous êtes prévenu dans les deux cas.</div></li>
+        </ol>
+        <p>L'adresse exacte du client n'est visible qu'une fois le devis accepté et payé.</p>
+
+        <h3 id="artisan-chantier">Acheter les matériaux avec un bon (J-Code)</h3>
+        <ol class="steps">
+          <li><div>Une fois la mission payée, créez un <b>Bon Matériel Quincaillerie</b> dans <span class="ui">Bons Matériaux</span> : quincaillerie, articles et quantités. Vous obtenez un code du type <code>PA-7K2Q</code>, un QR code et un code USSD.</div></li>
+          <li><div>Présentez-le en boutique. Le fournisseur le scanne <b>sur place</b> : le scan est refusé à plus de 100 mètres de la boutique.</div></li>
+          <li><div>La quincaillerie est payée directement sur la part matériaux ; vous ne manipulez pas d'argent.</div></li>
+          <li><div>Sur le chantier, prenez la photo géolocalisée des matériaux reçus : le client est prévenu.</div></li>
+        </ol>
+        <p>Statuts d'un bon : <b>Bon disponible</b>, <b>Matériel retiré</b>, <b>Bon expiré</b>.</p>
+
+        <h3>Réaliser et faire valider les étapes</h3>
+        <ol class="steps">
+          <li><div>À la fin d'une étape, envoyez les photos géolocalisées du travail. Elles sont analysées automatiquement.</div></li>
+          <li><div>Le client valide avec son code SMS ; sans réponse de sa part sous 72 heures, l'étape est payée automatiquement.</div></li>
+          <li><div>Au-delà de 2 000 000 FCFA, un référent contrôle le chantier avant chaque paiement.</div></li>
+        </ol>
+        <p><b>Mode chantier hors ligne :</b> sans réseau, les photos sont mises en attente et envoyées dès le retour de la connexion. Un message vous le confirme.</p>
+        <p>Statuts d'une étape : <b>À réaliser</b>, <b>Preuves envoyées</b>, <b>Étape validée</b>, <b>Paiement versé</b>.</p>
+
+        <h3 id="artisan-argent">Être payé</h3>
+        <p>Chaque étape validée est virée sur votre numéro Mobile Money. Votre portefeuille n'est débité qu'au virement réussi : si le virement échoue, l'argent reste à vous. Il apparaît dans <b>Virements en attente</b>, est relancé automatiquement (5 tentatives, à intervalles croissants), et vous pouvez le relancer vous-même après avoir corrigé votre numéro. Un paiement dû à un artisan n'est jamais annulé.</p>
+
+        <h3>Score ProsArtisan et marqueur doré</h3>
+        <p>Votre score va de 0 à 1000 et démarre à <b>0</b>. Il se construit uniquement à partir des évaluations réelles des clients, sur quatre critères :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Critère</th><th>Points maximum</th><th>Ce qui compte</th></tr></thead>
+            <tbody>
+              <tr><td>Fiabilité</td><td class="num">400</td><td>Délais tenus, étapes livrées à temps</td></tr>
+              <tr><td>Intégrité</td><td class="num">300</td><td>Honnêteté, respect du devis</td></tr>
+              <tr><td>Qualité</td><td class="num">200</td><td>Qualité du travail</td></tr>
+              <tr><td>Réactivité</td><td class="num">100</td><td>Rapidité de réponse</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul>
+          <li>Il faut <b>10 missions</b> évaluées pour débloquer tout le potentiel du score.</li>
+          <li>À partir de <b>700</b> : marqueur doré (vous passez en tête des recherches) et accès au micro-crédit.</li>
+          <li>Au-delà de <b>800</b> : il faut au moins trois critères notés 4,8/5 ou plus.</li>
+          <li>Une longue inactivité (60 jours et plus) fait baisser le score petit à petit.</li>
+        </ul>
+
+        <h3>Micro-crédit d'urgence</h3>
+        <p>Avec un score d'au moins 700, vous pouvez demander un micro-crédit depuis l'accueil. Plafond : <code>50 000 + (score − 700) × 1 500</code> FCFA, soit 500 000 FCFA à 1000 points. Le montant est versé sur votre Mobile Money. Il est remboursé automatiquement par <b>20 %</b> de chaque étape payée ensuite, ou d'un coup quand vous le souhaitez. Un seul crédit à la fois ; un rapport de solvabilité PDF est téléchargeable.</p>
+
+        <h3 id="artisan-jury">Espace juré <span class="tag">Nouveau</span></h3>
+        <p>Les artisans les mieux notés d'un métier peuvent être choisis pour donner un avis technique sur un litige de ce métier. Seuls les artisans qui ne sont pas parties au litige et dont le score atteint le seuil fixé par ProsArtisan (800 par défaut) peuvent être choisis.</p>
+        <ol class="steps">
+          <li><div>Vous recevez une notification <b>Arbitrage ProsArtisan requis</b>. Ouvrez-la, ou allez dans <span class="ui">Profil › Espace juré</span>.</div></li>
+          <li><div>Le dossier est <b>anonyme</b> : motif, description, montant, étapes et preuves des deux parties. Chaque photo indique si elle est certifiée intègre ou si elle a été modifiée depuis son dépôt.</div></li>
+          <li><div>Donnez votre avis dans les <b>48 heures</b> : <b>Travaux conformes</b>, <b>Travaux non conformes</b> ou <b>Responsabilité partagée</b> (indiquez alors la part imputable au bon travail de l'artisan). Ajoutez un avis technique. Votre avis est définitif.</div></li>
+          <li><div>Vous recevez une indemnité de <b>5 000 FCFA</b> sur votre portefeuille.</div></li>
+        </ol>
+        <p>Sans réponse sous 48 heures, le dossier est confié à un autre artisan. Quand deux jurés sur trois sont d'accord, leur avis oriente la décision.</p>
+
+        <h3>Autres services</h3>
+        <ul>
+          <li><b>Offres de recrutement</b> : postulez aux offres de chantier proches, avec une note vocale de 20 secondes maximum. Ne donnez jamais vos coordonnées dans la note : elle serait supprimée.</li>
+          <li><b>Parrainage</b> : parrainez des apprentis artisans.</li>
+          <li><b>Assistant IA</b> : posez vos questions de métier, dans la limite d'un quota quotidien.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ───────────── Fournisseur ───────────── -->
+    <section class="chapter" id="fournisseur" style="--c: var(--fournisseur)">
+      <div class="chapter-head">
+        <div class="badge">F</div>
+        <h2>Espace Fournisseur (quincaillerie)</h2>
+        <p>Onglets : <span class="ui">Boutique</span>, <span class="ui">Scanner un bon</span>, <span class="ui">Catalogue</span>, <span class="ui">Commandes</span>, <span class="ui">Profil</span>. Un espace fournisseur web est aussi disponible depuis le site vitrine.</p>
+      </div>
+      <div class="prose">
+        <h3>Tenir son catalogue</h3>
+        <p>Dans <span class="ui">Catalogue</span>, ajoutez vos articles, prix et stocks. Gardez le stock à jour : il est réservé au client pendant son paiement.</p>
+
+        <h3>Servir un bon matériel (J-Code)</h3>
+        <ol class="steps">
+          <li><div>L'artisan présente son bon. Ouvrez <span class="ui">Scanner un bon</span> et scannez le QR code ou saisissez le code <code>PA-XXXX</code>.</div></li>
+          <li><div>Le scan doit être fait <b>dans votre boutique</b> : à plus de 100 mètres, il est bloqué automatiquement.</div></li>
+          <li><div>Indiquez les quantités servies et joignez la photo du reçu si besoin. Vous êtes crédité sur la part matériaux de la mission.</div></li>
+        </ol>
+
+        <h3>Traiter une commande</h3>
+        <ol class="steps">
+          <li><div>Une commande payée apparaît dans <span class="ui">Commandes › À préparer</span>. Les commandes non encore payées ne vous sont pas présentées.</div></li>
+          <li><div>Préparez-la et marquez-la <b>prête</b> : la recherche d'un livreur démarre (ou le client est prévenu, s'il vient la retirer).</div></li>
+          <li><div>À la remise des matériaux, communiquez le <b>code de retrait</b> à 4 chiffres au livreur (ou validez-le vous-même). Vous êtes alors payé.</div></li>
+        </ol>
+        <div class="callout note">
+          <strong>Codes secrets</strong>
+          <p>Le code de retrait est visible par vous seul et ne peut pas être deviné à partir du numéro de commande. Ne le communiquez qu'au moment de la remise effective des matériaux.</p>
+        </div>
+
+        <h3>Être payé : paiements J+1</h3>
+        <p>Vos ventes sont retirables sous 24 heures. Dans <span class="ui">Paiements J+1</span>, demandez un retrait :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Moyen</th><th>Frais</th></tr></thead>
+            <tbody>
+              <tr><td>Wave CI</td><td class="num">1 %</td></tr>
+              <tr><td>Orange Money CI</td><td class="num">1 %</td></tr>
+              <tr><td>Virement bancaire</td><td class="num">500 FCFA forfaitaires</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <p>Le montant demandé est mis de côté jusqu'au versement. Un reçu PDF est disponible pour chaque retrait versé.</p>
+      </div>
+    </section>
+
+    <!-- ───────────── Livreur ───────────── -->
+    <section class="chapter" id="livreur" style="--c: var(--livreur)">
+      <div class="chapter-head">
+        <div class="badge">L</div>
+        <h2>Espace Livreur</h2>
+        <p>Onglets : <span class="ui">Tableau Bord</span>, <span class="ui">Livraisons</span>, <span class="ui">Code Retrait</span>, <span class="ui">Gains</span>, <span class="ui">Profil</span>.</p>
+      </div>
+      <div class="prose">
+        <h3>Accepter une course</h3>
+        <ol class="steps">
+          <li><div>Restez connecté : les courses prêtes dans un rayon de 10 km vous sont proposées, puis au-delà si personne ne répond.</div></li>
+          <li><div>Chaque course affiche une estimation calculée sur la distance, la durée et votre véhicule (moto, tricycle, voiture, camionnette). Plusieurs commandes d'une même quincaillerie peuvent être proposées en <b>tournée groupée</b>, avec l'ordre de passage.</div></li>
+          <li><div>Acceptez. Allez à la boutique dans les 15 minutes : sans retrait, la course est proposée à un autre livreur.</div></li>
+        </ol>
+
+        <h3>Retrait et livraison</h3>
+        <div class="flow" aria-label="Étapes d'une course">
+          <span>Acceptée</span><i>→</i><span>Code de retrait saisi</span><i>→</i><span>En route</span><i>→</i><span>Code de réception saisi</span><i>→</i><span>Livrée</span>
+        </div>
+        <ol class="steps">
+          <li><div>À la boutique, vérifiez les matériaux. Le fournisseur vous communique le <b>code de retrait</b> : saisissez-le dans <span class="ui">Code Retrait</span>. L'adresse de livraison s'affiche.</div></li>
+          <li><div>Gardez l'application ouverte pendant le trajet : votre position sert à calculer le prix final de la course. Sans signal pendant plus de 25 minutes, vous serez relancé et l'équipe prévenue.</div></li>
+          <li><div>À l'arrivée, remettez les matériaux. Le client vous donne son <b>code de réception</b> : saisissez-le pour confirmer la livraison.</div></li>
+        </ol>
+        <p>Sans connexion internet, le retrait et la livraison peuvent aussi être confirmés par SMS ou USSD au format <code>RET &lt;n° commande&gt; &lt;code&gt;</code> et <code>REC &lt;n° commande&gt; &lt;code&gt;</code>.</p>
+        <div class="callout note">
+          <strong>Aucun code ne vous est envoyé</strong>
+          <p>Vous ne recevez jamais de code par notification. Le code de retrait vient du fournisseur, le code de réception vient du client, en main propre.</p>
+        </div>
+
+        <h3>Vos gains</h3>
+        <p>Le prix final de la course est calculé à la livraison, sur le trajet réel, plus un bonus si vous avez attendu. Vous êtes crédité dès que le client a payé la course. Dans <span class="ui">Gains</span>, <b>Gains de livraison en attente</b> regroupe les courses en cours et les courses livrées pas encore payées.</p>
+        <p>Pour retirer : <span class="ui">Retirer mes gains</span>, choisissez Wave, Orange Money ou un virement bancaire (minimum 500 FCFA). La demande est validée par ProsArtisan puis versée. Le montant reste mis de côté jusqu'au virement. Une fois le retrait versé, son <span class="ui">Reçu PDF</span> est disponible dans la liste de vos retraits.</p>
+      </div>
+    </section>
+
+    <!-- ───────────── Référent ───────────── -->
+    <section class="chapter" id="referent" style="--c: var(--referent)">
+      <div class="chapter-head">
+        <div class="badge">R</div>
+        <h2>Espace Référent de zone</h2>
+        <p>Onglets : <span class="ui">Inspections</span>, <span class="ui">Missions</span>, <span class="ui">Carte Zone</span>, <span class="ui">Litiges</span>, <span class="ui">Profil</span>. Comptes créés par ProsArtisan.</p>
+      </div>
+      <div class="prose">
+        <ul>
+          <li><b>Inspections</b> : pour les chantiers de plus de 2 000 000 FCFA, rendez-vous sur place avant chaque paiement d'étape et validez le contrôle depuis le chantier (la position GPS est vérifiée). Sans votre validation, l'étape reste impayée, même validée par le client.</li>
+          <li><b>Litiges</b> : certains litiges demandent une visite de terrain avant la décision ; vous êtes notifié et votre rapport est joint au dossier.</li>
+          <li><b>Carte Zone</b> : vue des chantiers de votre secteur.</li>
+        </ul>
+      </div>
+    </section>
+
+    <!-- ───────────── Admin ───────────── -->
+    <section class="chapter" id="admin" style="--c: var(--admin)">
+      <div class="chapter-head">
+        <div class="badge">B</div>
+        <h2>Backoffice (administration)</h2>
+        <p>Accessible sur le web aux comptes administrateur, avec double authentification. Chaque onglet dépend des droits attribués dans <span class="ui">Rôles &amp; Actions</span>.</p>
+      </div>
+      <div class="prose">
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Onglet</th><th>À quoi il sert</th></tr></thead>
+            <tbody>
+              <tr><td>Vue d'ensemble</td><td>Indicateurs clés, activité, alertes.</td></tr>
+              <tr><td>KYC &amp; Vérifications</td><td>Valider ou rejeter les dossiers d'identité, un par un ou par lot. L'analyse automatique s'affiche en aide à la décision : <b>IA favorable</b>, <b>Revue conseillée</b>, <b>Risque élevé</b>.</td></tr>
+              <tr><td>Utilisateurs</td><td>Rechercher, suspendre, réactiver, exporter ; données personnelles et anonymisation (RGPD).</td></tr>
+              <tr><td>Missions</td><td>Suivi de chaque chantier, historique de ses états, supervision de la flotte de livreurs sur la carte d'Abidjan.</td></tr>
+              <tr><td>Litiges</td><td>Arbitrer, demander une télé-expertise IA, convoquer le <b>Jury ProsArtisan</b>.</td></tr>
+              <tr><td>Transactions</td><td>Paiements, virements sortants (relancer, marquer versé sur référence), retraits livreurs et quincailleries, sous-onglet <b>Encaissements</b>.</td></tr>
+              <tr><td>Paramètres</td><td>Commissions, délais, coordonnées de virement bancaire, seuils (dont le score minimal d'un juré).</td></tr>
+              <tr><td>Évaluations &amp; Scores</td><td>Consulter les notes, geler un score en cas d'abus.</td></tr>
+              <tr><td>Communications, Notifications &amp; Alertes</td><td>Messages aux utilisateurs, alertes internes.</td></tr>
+              <tr><td>CMS Vitrine, WhatsApp, FAQ Aide &amp; Support</td><td>Contenu du site, bouton WhatsApp et suivi des clics, questions de l'écran d'aide par profil.</td></tr>
+              <tr><td>Recrutement</td><td>Modérer les offres, activer la publication par profil.</td></tr>
+              <tr><td>Suivi &amp; Coûts IA</td><td>Quotas d'utilisation de l'assistant par utilisateur.</td></tr>
+              <tr><td>Journal d'audit, Santé &amp; Observabilité</td><td>Trace de toutes les actions sensibles ; état technique et incidents.</td></tr>
+              <tr><td>Manuel d'utilisation</td><td>Ce manuel, à consulter dans le backoffice, à ouvrir en plein écran ou à télécharger. Ouvert à tous les administrateurs.</td></tr>
+            </tbody>
+          </table>
+        </div>
+
+        <h3>Convoquer un jury <span class="tag">Nouveau</span></h3>
+        <ol class="steps">
+          <li><div>Sur la fiche du litige, cliquez sur <span class="ui">Convoquer Jury ProsArtisan (3 pairs)</span>. Trois artisans sont tirés au sort parmi ceux du même métier, au KYC actif, étrangers aux parties, dont le score recalculé atteint le seuil.</div></li>
+          <li><div>S'il n'y a pas trois jurés éligibles, aucun jury n'est convoqué : le litige passe en « jury indisponible », tous les administrateurs reçoivent une alerte, et l'arbitrage vous revient.</div></li>
+          <li><div>Pour élargir le vivier, abaissez <span class="ui">Paramètres › Score ProsArtisan minimal d'un juré</span> (800 par défaut, de 0 à 1000), puis relancez la convocation.</div></li>
+        </ol>
+        <p>Un juré qui ne vote pas en 48 heures est remplacé automatiquement selon les mêmes règles ; faute de remplaçant, les administrateurs sont alertés.</p>
+
+        <h3>Encaissements</h3>
+        <ul>
+          <li><b>Courses impayées</b> : suivre les rappels, en envoyer un manuellement, lever la restriction d'un client.</li>
+          <li><b>Virements bancaires de commandes</b> : confirmer la réception d'un virement pour valider la commande.</li>
+          <li><b>Virements sortants échoués</b> : relancer, ou marquer comme versé avec la référence d'un paiement fait manuellement.</li>
+        </ul>
+        <div class="callout note">
+          <strong>Traçabilité</strong>
+          <p>Toute action sensible (revue KYC, arbitrage, paramètres, versements, exports, changement de droits…) est enregistrée dans le journal d'audit avec son auteur et sa date.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ───────────── Communs ───────────── -->
+    <section class="chapter" id="communs">
+      <div class="chapter-head" style="--c: var(--ink)">
+        <div class="badge">+</div>
+        <h2>Portefeuille, reçus, score, aide</h2>
+        <p>Fonctions communes à tous les profils.</p>
+      </div>
+      <div class="prose" style="--c: var(--ink)">
+        <h3 id="portefeuille">Portefeuille et historique</h3>
+        <p><span class="ui">Profil › Historique des Paiements</span> affiche vos soldes et toutes vos opérations. Chaque ligne indique son sens : <b>entrée</b> (en vert, avec +), <b>sortie</b> (en rouge, avec −) ou <b>fonds sécurisés</b> (le coffre d'une mission, qui n'est ni un gain ni une dépense).</p>
+
+        <h3 id="recus">Reçus PDF <span class="tag">Nouveau</span></h3>
+        <p>Toute opération confirmée dont vous êtes titulaire propose un bouton <span class="ui">Reçu PDF</span> : paiement de devis, d'étape, de commande, de course, retrait. Le reçu s'ouvre dans votre navigateur ; le lien est valable 15 minutes, touchez de nouveau le bouton si besoin.</p>
+
+        <h3>Aide et support</h3>
+        <p><span class="ui">Profil › Aide et support</span> propose les questions fréquentes de votre profil et les moyens de contacter l'équipe : WhatsApp, appel ou e-mail.</p>
+
+        <h3>Données personnelles</h3>
+        <p>Vous pouvez demander l'accès à vos données ou la suppression de votre compte. Les données financières sont conservées anonymisées, pour l'intégrité des comptes.</p>
+      </div>
+    </section>
+
+    <!-- ───────────── Glossaire ───────────── -->
+    <section class="chapter" id="glossaire">
+      <div class="chapter-head" style="--c: var(--ink)">
+        <div class="badge">A–Z</div>
+        <h2>Glossaire</h2>
+        <p>Les mots de l'application.</p>
+      </div>
+      <dl class="glossary">
+        <dt>Coffre de sécurité</dt><dd>L'argent payé par le client pour une mission, bloqué et protégé jusqu'à la validation du travail. Aussi appelé séquestre.</dd>
+        <dt>Bon matériel (J-Code)</dt><dd>Code <code>PA-XXXX</code> qui permet à l'artisan de retirer les matériaux payés par le client, en boutique, sans manipuler d'argent.</dd>
+        <dt>Étape (jalon)</dt><dd>Partie du chantier payée à l'artisan une fois validée par le client.</dd>
+        <dt>Code SMS (OTP)</dt><dd>Code à usage unique envoyé par SMS pour se connecter ou valider une étape.</dd>
+        <dt>Avenant</dt><dd>Complément à un devis accepté (par exemple les matériaux après un diagnostic) qui s'ajoute au coffre existant.</dd>
+        <dt>KYC</dt><dd>Vérification d'identité obligatoire avant toute opération financière.</dd>
+        <dt>Score ProsArtisan</dt><dd>Note de réputation de 0 à 1000, construite uniquement à partir d'évaluations réelles.</dd>
+        <dt>Marqueur doré</dt><dd>Signe distinctif des artisans au score de 700 ou plus, placés en tête des recherches.</dd>
+        <dt>Référent de zone</dt><dd>Contrôleur ProsArtisan qui inspecte sur place les chantiers de plus de 2 000 000 FCFA et certains litiges.</dd>
+        <dt>Jury ProsArtisan</dt><dd>Trois artisans expérimentés du même métier qui donnent un avis anonyme sur un litige technique.</dd>
+        <dt>Code de retrait / de réception</dt><dd>Codes secrets à 4 chiffres échangés en main propre : le fournisseur donne le premier au livreur, le client donne le second au livreur à la livraison.</dd>
+        <dt>Virement en attente</dt><dd>Somme due dont le virement Mobile Money a échoué : elle reste réservée et est relancée jusqu'au versement.</dd>
+      </dl>
+    </section>
+  </main>
+</div>
+
+<footer class="colophon">
+  Manuel ProsArtisan, version du 26 septembre 2026 : il décrit l'application 1.0.0 et le backoffice à cette date, y compris l'espace juré, les reçus PDF et le choix du moyen de remboursement.
+</footer>
+</body>
+</html>

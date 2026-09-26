@@ -537,6 +537,14 @@ export interface WhatsappSettings {
 
 export type FaqRole = 'client' | 'artisan' | 'livreur' | 'fournisseur';
 
+/** Manuel d'utilisation servi par le backoffice (UserManualService). */
+export interface UserManualSummary {
+    available: boolean;
+    html: string | null;
+    updatedAt: string | null;
+    sizeKb: number | null;
+}
+
 export interface FaqStats {
     total: number;
     actives: number;

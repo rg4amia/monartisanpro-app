@@ -61,6 +61,7 @@ export function buildNavigation(permissions: string[], counts: NavigationCounts)
                 { count: counts.newContactMessages, id: 'vitrine', label: tabMeta.vitrine.label },
                 { count: counts.whatsappClicksToday, id: 'whatsapp', label: tabMeta.whatsapp.label },
                 { count: counts.faqCount, id: 'faq', label: tabMeta.faq.label },
+                { id: 'manual', label: tabMeta.manual.label },
             ],
         },
     ];

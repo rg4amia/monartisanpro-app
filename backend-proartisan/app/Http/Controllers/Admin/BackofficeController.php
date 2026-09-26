@@ -43,6 +43,7 @@ use App\Services\Admin\AdminPromoCodeService;
 use App\Services\Admin\AdminSettingsService;
 use App\Services\Admin\AdminTaxonomyService;
 use App\Services\Admin\AdminUserService;
+use App\Services\Admin\UserManualService;
 use App\Services\DoubleEntryLedgerService;
 use App\Services\LitigeService;
 use App\Services\AdminService;
@@ -50,6 +51,7 @@ use App\Services\CommunicationService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\Response as HttpResponse;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
@@ -565,6 +567,29 @@ class BackofficeController extends Controller
     public function faq(): Response
     {
         return $this->page('admin/faq', $this->panelData->faq());
+    }
+
+    public function userManual(UserManualService $manual): Response
+    {
+        return $this->page('admin/manual', ['userManual' => $manual->summary()]);
+    }
+
+    /** Manuel en pleine page, dans un nouvel onglet. */
+    public function userManualDocument(UserManualService $manual): HttpResponse
+    {
+        abort_unless($manual->available(), 404, "Le manuel d'utilisation est introuvable sur le serveur.");
+
+        return response($manual->contents(), 200, ['Content-Type' => 'text/html; charset=UTF-8']);
+    }
+
+    public function downloadUserManual(UserManualService $manual): HttpResponse
+    {
+        abort_unless($manual->available(), 404, "Le manuel d'utilisation est introuvable sur le serveur.");
+
+        return response($manual->contents(), 200, [
+            'Content-Type' => 'text/html; charset=UTF-8',
+            'Content-Disposition' => 'attachment; filename="'.$manual->downloadName().'"',
+        ]);
     }
 
     public function recruitment(Request $request): Response

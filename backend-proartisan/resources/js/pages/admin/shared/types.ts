@@ -22,7 +22,8 @@ export type AdminTab =
     | 'vitrine'
     | 'whatsapp'
     | 'faq'
-    | 'recruitment';
+    | 'recruitment'
+    | 'manual';
 
 export type ThemeMode = 'light' | 'dark';
 

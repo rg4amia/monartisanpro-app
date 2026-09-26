@@ -45,6 +45,7 @@ import type {
     TerritoryEntityItem,
     TerritorySummary,
     TransactionStats,
+    UserManualSummary,
     UserStats,
     WhatsappClickLogItem,
     WhatsappClickStats,
@@ -166,6 +167,7 @@ export interface AdminPageProps {
     whatsappSettings?: WhatsappSettings;
     faqs?: FaqItem[];
     faqStats?: FaqStats;
+    userManual?: UserManualSummary | null;
     recruitmentOffersPage?: Paginated<RecruitmentOfferItem> | null;
     recruitmentStats?: RecruitmentStats;
     recruitmentSettings?: RecruitmentSettings;

@@ -23,6 +23,7 @@ import { DashboardPanel } from './panels/DashboardPanel';
 import { ArtisanLedgerModal, MissionDetailModal, OrderDetailModal, TransactionDetailModal } from './panels/DetailModals';
 import { EvaluationsPanel } from './panels/EvaluationsPanel';
 import { FaqPanel } from './panels/FaqPanel';
+import { ManualPanel } from './panels/ManualPanel';
 import { AiQuotaFormModal, CampagneParrainageFormModal, CommunicationFormModal, PromoCodeFormModal, StatusFormModal, UserFormModal } from './panels/FormModals';
 import { KycPanel } from './panels/KycPanel';
 import { LitigesPanel } from './panels/LitigesPanel';
@@ -151,6 +152,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         whatsappClickStats = { total: 0, today: 0, last_7_days: 0 },
         whatsappSettings = { whatsapp_widget_enabled: '1', whatsapp_widget_phone: '', whatsapp_widget_message: '' },
         faqs = [],
+        userManual = null,
         faqStats = { total: 0, actives: 0, roles_covered: 0 },
         recruitmentOffersPage = undefined,
         recruitmentStats = { total: 0, pending_review: 0, active: 0, filled: 0 },
@@ -1066,6 +1068,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                             {activeTab === 'faq' ? (
                                 <FaqPanel faqs={faqs} canManage={canManageFaq} />
                             ) : null}
+
+                            {activeTab === 'manual' ? <ManualPanel manual={userManual} /> : null}
 
                             {activeTab === 'recruitment' ? (
                                 <RecruitmentPanel

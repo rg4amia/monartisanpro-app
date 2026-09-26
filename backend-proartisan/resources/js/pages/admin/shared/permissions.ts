@@ -36,6 +36,7 @@ export const tabCapability: Record<AdminTab, string | null> = {
     llm_admin: 'admin.llm.manage',
     ai_dashboard: 'admin.ai.manage',
     cartography: 'admin.territory.view',
+    manual: null,
 };
 
 export function canOpenTab(permissions: AdminCapabilities | undefined, tab: AdminTab): boolean {

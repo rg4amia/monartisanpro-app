@@ -9,6 +9,8 @@ on:
       - "backend-proartisan/**"
       - "frontend_flutter/**"
       - "vitrine-nextjs/**"
+      # Manuel servi par le backoffice (UserManualService) : sa mise à jour seule doit être déployée.
+      - "docs/produit/manuel-utilisation.html"
       - ".github/workflows/backend-ci.yml"
   pull_request:
     branches: [new-dev-inz]
@@ -16,6 +18,8 @@ on:
       - "backend-proartisan/**"
       - "frontend_flutter/**"
       - "vitrine-nextjs/**"
+      # Manuel servi par le backoffice (UserManualService) : sa mise à jour seule doit être déployée.
+      - "docs/produit/manuel-utilisation.html"
       - ".github/workflows/backend-ci.yml"
   workflow_dispatch:
 

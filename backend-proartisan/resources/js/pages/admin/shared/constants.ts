@@ -25,6 +25,7 @@ export const tabRoutes: Record<AdminTab, string> = {
     faq: '/admin/faq',
     recruitment: '/admin/recruitment',
     cartography: '/admin/cartographie',
+    manual: '/admin/manuel',
 };
 
 export const tabMeta: Record<AdminTab, { description: string; label: string; section: string }> = {
@@ -118,6 +119,11 @@ export const tabMeta: Record<AdminTab, { description: string; label: string; sec
         section: 'COMMUNICATION',
         description: 'Configuration du bouton WhatsApp "click-to-chat" du front office et suivi des clics enregistrés.',
     },
+    manual: {
+        label: "Manuel d'utilisation",
+        section: 'PLATEFORME',
+        description: "Guide d'utilisation de ProsArtisan par espace (client, artisan, fournisseur, livreur, référent, backoffice), à consulter ou télécharger.",
+    },
     faq: {
         label: 'FAQ Aide & Support',
         section: 'COMMUNICATION',
@@ -163,6 +169,7 @@ export const searchPlaceholders: Record<AdminTab, string> = {
     faq: 'Rechercher une question, une réponse ou une catégorie...',
     recruitment: 'Rechercher une offre par titre...',
     cartography: 'Rechercher un artisan, client, fournisseur ou mission dans la zone...',
+    manual: 'Rechercher dans le manuel (Ctrl + F dans la page)...',
 };
 
 export const quickDockTabs: AdminTab[] = ['dashboard', 'missions', 'users', 'settings'];
