@@ -28,12 +28,12 @@ void showOtpValidationDialog(BuildContext context, JalonModel jalon) {
             ),
             const SizedBox(height: 12),
             Text(
-              'Valider le Jalon ${jalon.ordre}',
+              'Valider l\'étape ${jalon.ordre}',
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 8),
             const Text(
-              'Saisissez le code de validation OTP à 4 chiffres envoyé par SMS.',
+              'Saisissez le code secret à 4 chiffres reçu par SMS.',
               textAlign: TextAlign.center,
               style: TextStyle(fontSize: 12, color: AppColors.textSecondary),
             ),

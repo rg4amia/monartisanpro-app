@@ -34,6 +34,7 @@ class JcodeController extends GetxController {
   final isUploadingProductImage = false.obs;
   final isImportingDevis = false.obs;
   final isUploadingPhotoMateriaux = false.obs;
+  final isMultiSupplierMode = false.obs;
 
   /// Id du dernier J-Code dont la photo matériaux a été envoyée avec succès
   /// dans cette session (le modèle J-Code n'expose pas ce champ côté API).
@@ -197,17 +198,19 @@ class JcodeController extends GetxController {
   }
 
   void resetComposer() {
+    isMultiSupplierMode.value = false;
     selectedSupplier.value = null;
     supplierProducts.clear();
     draftItems.clear();
   }
 
   Future<void> generateJcodeForDraft(int missionId) async {
+    final isMulti = isMultiSupplierMode.value;
     final supplier = selectedSupplier.value;
-    if (supplier == null) {
+    if (!isMulti && supplier == null) {
       Get.snackbar(
         'Fournisseur requis',
-        'Choisissez un fournisseur avant de générer le J-Code.',
+        'Choisissez un fournisseur ou activez le mode Multi-Comptoirs.',
         snackPosition: SnackPosition.TOP,
       );
       return;
@@ -226,7 +229,7 @@ class JcodeController extends GetxController {
     try {
       final jcode = await _repo.createJcode(
         missionId: missionId,
-        fournisseurId: supplier.id,
+        fournisseurId: isMulti ? null : supplier?.id,
         montant: draftTotal,
         items: draftItems.toList(),
       );
@@ -234,7 +237,9 @@ class JcodeController extends GetxController {
       resetComposer();
       Get.snackbar(
         'J-Code généré',
-        'Commande matériaux créée pour ${supplier.shopName}.',
+        isMulti
+            ? 'J-Code Multi-Comptoirs créé avec succès (utilisable dans toute quincaillerie agréée).'
+            : 'Commande matériaux créée pour ${supplier?.shopName}.',
         snackPosition: SnackPosition.TOP,
       );
     } catch (e) {
@@ -407,6 +412,7 @@ class JcodeController extends GetxController {
     required double lat,
     required double lng,
     required List<Map<String, dynamic>> servedItems,
+    String? recuPhotoPath,
   }) async {
     isScanning.value = true;
     try {
@@ -415,6 +421,7 @@ class JcodeController extends GetxController {
         lat: lat,
         lng: lng,
         servedItems: servedItems,
+        recuPhotoPath: recuPhotoPath,
       );
       scanResult.value = result;
       unawaited(Get.offNamed(Routes.transactionConfirm, arguments: result));

@@ -49,6 +49,16 @@ class JCode extends Model
         return $this->hasMany(JCodeItem::class, 'jcode_id')->orderBy('id');
     }
 
+    public function redemptions()
+    {
+        return $this->hasMany(JCodeRedemption::class, 'jcode_id')->orderBy('id', 'desc');
+    }
+
+    public function isMultiSupplier(): bool
+    {
+        return $this->fournisseur_id === null;
+    }
+
     public function isActif(): bool
     {
         return in_array($this->statut, ['actif', 'partiellement_utilise'])

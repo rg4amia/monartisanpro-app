@@ -4,7 +4,6 @@ namespace Tests\Feature;
 
 use App\Models\Mission;
 use App\Models\User;
-use App\Services\AiMonitoringService;
 use App\Services\GeminiService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -202,5 +201,30 @@ class VoiceQuoteTest extends TestCase
         $this->assertEquals(35000, $totalJalons);
         // Le dernier jalon doit absorber la différence : 20000 + 5000 = 25000
         $this->assertEquals(25000, $balanced['jalons'][1]['montant']);
+    }
+
+    public function test_voice_quote_accepts_text_transcript(): void
+    {
+        $response = $this->actingAs($this->artisan)
+            ->postJson("/api/v1/missions/{$this->mission->id}/devis/voice-quote", [
+                'transcript' => 'Ya dra sur le tuyau sous évier, faut 2 tuyaux PVC 40, de la colle Tangit et 1 siphon.',
+            ]);
+
+        $response->assertStatus(200)
+            ->assertJsonPath('success', true)
+            ->assertJsonPath('data.transcription', 'Ya dra sur le tuyau sous évier, faut 2 tuyaux PVC 40, de la colle Tangit et 1 siphon.');
+    }
+
+    public function test_voice_quote_prompt_contains_nouchi_and_ivorian_btp_lexicon(): void
+    {
+        $gemini = app(GeminiService::class);
+        $prompt = $gemini->buildVoiceQuotePrompt($this->mission);
+
+        $this->assertStringContainsString('nouchi', $prompt);
+        $this->assertStringContainsString('ya dra', $prompt);
+        $this->assertStringContainsString('fer de 12', $prompt);
+        $this->assertStringContainsString('CPJ', $prompt);
+        $this->assertStringContainsString('Tangit', $prompt);
+        $this->assertStringContainsString('BIGINT', $prompt);
     }
 }

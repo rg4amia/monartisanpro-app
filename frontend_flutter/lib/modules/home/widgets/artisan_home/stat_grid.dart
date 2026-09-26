@@ -47,7 +47,7 @@ class StatGrid extends StatelessWidget {
                 child: StatCard(
                   label: 'Financees',
                   value: '${controller.fundedMissionCount}',
-                  subtitle: 'Pretes pour J-Code',
+                  subtitle: 'Bons matériaux prêts',
                   color: AppColors.primary,
                   icon: Icons.account_balance_wallet_outlined,
                 ),

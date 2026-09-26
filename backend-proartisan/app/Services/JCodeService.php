@@ -31,11 +31,13 @@ class JCodeService
     public function generate(
         Mission $mission,
         User $artisan,
-        User $fournisseur,
+        ?User $fournisseur,
         array $items,
         ?int $montant = null
     ): JCode {
-        $this->supplierCatalogService->ensureApprovedSupplier($fournisseur);
+        if ($fournisseur !== null) {
+            $this->supplierCatalogService->ensureApprovedSupplier($fournisseur);
+        }
 
         return DB::transaction(function () use ($mission, $artisan, $fournisseur, $items, $montant) {
             $normalizedItems = [];
@@ -46,15 +48,19 @@ class JCodeService
                 $productId = $item['supplier_product_id'] ?? null;
 
                 if ($productId) {
-                    $product = SupplierProduct::query()
+                    $productQuery = SupplierProduct::query()
                         ->whereKey($productId)
-                        ->where('supplier_id', $fournisseur->id)
-                        ->where('is_active', true)
-                        ->first();
+                        ->where('is_active', true);
+
+                    if ($fournisseur !== null) {
+                        $productQuery->where('supplier_id', $fournisseur->id);
+                    }
+
+                    $product = $productQuery->first();
 
                     if (! $product) {
                         throw ValidationException::withMessages([
-                            "items.$index.supplier_product_id" => ['Cet article n\'appartient pas au fournisseur sélectionné.'],
+                            "items.$index.supplier_product_id" => [$fournisseur ? 'Cet article n\'appartient pas au fournisseur sélectionné.' : 'Cet article est introuvable ou inactif.'],
                         ]);
                     }
 
@@ -123,7 +129,7 @@ class JCodeService
             $jcode = JCode::create([
                 'mission_id' => $mission->id,
                 'artisan_id' => $artisan->id,
-                'fournisseur_id' => $fournisseur->id,
+                'fournisseur_id' => $fournisseur?->id,
                 'code' => $code,
                 'ussd_code' => '*555*'.str_replace('PA-', '', $code).'#',
                 'qr_url' => null,
@@ -146,7 +152,14 @@ class JCodeService
      *
      * @param  array  $servedItems  [{jcode_item_id: int, quantity_served: int}, ...]
      */
-    public function scan(JCode $jcode, User $fournisseur, float $lat, float $lng, array $servedItems = []): array
+    public function scan(
+        JCode $jcode,
+        User $fournisseur,
+        float $lat,
+        float $lng,
+        array $servedItems = [],
+        ?string $recuPhotoUrl = null
+    ): array
     {
         $jcode->loadMissing(['artisan', 'items.supplierProduct']);
 
@@ -213,8 +226,10 @@ class JCodeService
         $jcodeItemsById = $jcode->items->keyBy('id');
         $montantServiCeScan = 0;
 
-        $scanResult = DB::transaction(function () use ($jcode, $fournisseur, $lat, $lng, $servedItems, $jcodeItemsById, &$montantServiCeScan) {
+        $scanResult = DB::transaction(function () use ($jcode, $fournisseur, $lat, $lng, $servedItems, $jcodeItemsById, $recuPhotoUrl, &$montantServiCeScan) {
             $jcode->setPositionScan($lat, $lng);
+
+            $servedItemsDetails = [];
 
             foreach ($servedItems as $served) {
                 $itemId = $served['jcode_item_id'];
@@ -260,6 +275,14 @@ class JCodeService
                     'status' => $isFullyServed ? 'served' : 'partial',
                     'served_by_supplier_id' => $fournisseur->id,
                 ]);
+
+                $servedItemsDetails[] = [
+                    'item_id' => $item->id,
+                    'name' => $item->item_name,
+                    'quantity' => $qtyServed,
+                    'unit_price' => $item->unit_price,
+                    'subtotal' => $montantItem,
+                ];
             }
 
             // Mettre à jour le montant consommé total du J-Code
@@ -273,8 +296,20 @@ class JCodeService
                 'paiement_status' => 'programme',
             ]);
 
+            // Enregistrer la rédemption / débit partiel
+            $redemption = $jcode->redemptions()->create([
+                'fournisseur_id' => $fournisseur->id,
+                'montant' => $montantServiCeScan,
+                'recu_photo_url' => $recuPhotoUrl,
+                'latitude' => $lat,
+                'longitude' => $lng,
+                'items_json' => $servedItemsDetails,
+                'scanned_at' => now(),
+            ]);
+
             return [
                 'fully_consumed' => $isFullyConsumed,
+                'redemption_id' => $redemption->id,
             ];
         });
 
@@ -306,6 +341,7 @@ class JCodeService
             'statut' => $jcode->statut,
             'items_served' => count($servedItems),
             'fully_consumed' => $scanResult['fully_consumed'],
+            'redemption_id' => $scanResult['redemption_id'] ?? null,
             'artisan' => ['id' => $jcode->artisan_id, 'name' => $jcode->artisan->name],
         ];
     }

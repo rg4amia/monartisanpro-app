@@ -90,7 +90,7 @@ class BottomActions extends StatelessWidget {
     if (mission.status == 'financee') {
       final secondary = mission.montantMateriaux > 0
           ? _ActionButtonConfig(
-              label: 'J-Code',
+              label: 'Bon Matériaux',
               icon: Icons.qr_code_2_outlined,
               color: AppColors.primary,
               filled: false,
@@ -115,7 +115,7 @@ class BottomActions extends StatelessWidget {
     if (mission.status == 'en_cours' && nextPendingJalon != null) {
       return _ActionRow(
         primary: _ActionButtonConfig(
-          label: 'Soumettre un jalon',
+          label: 'Valider l\'étape',
           icon: Icons.camera_alt_outlined,
           color: AppColors.primary,
           onTap: () => Get.to(
@@ -124,7 +124,7 @@ class BottomActions extends StatelessWidget {
           ),
         ),
         secondary: _ActionButtonConfig(
-          label: 'J-Code',
+          label: 'Bon Matériaux',
           icon: Icons.qr_code_2_outlined,
           color: AppColors.primary,
           filled: false,
@@ -140,7 +140,7 @@ class BottomActions extends StatelessWidget {
 
     return _ActionRow(
       primary: _ActionButtonConfig(
-        label: 'Voir les jalons',
+        label: 'Voir les étapes',
         icon: Icons.rule_folder_outlined,
         color: AppColors.primary,
         onTap: () {},
@@ -168,7 +168,7 @@ class BottomActions extends StatelessWidget {
       if (nextSubmittedJalon != null) {
         return _ActionRow(
           primary: _ActionButtonConfig(
-            label: 'Valider le jalon (OTP)',
+            label: 'Valider l\'étape (SMS)',
             icon: Icons.check_circle_outline,
             color: AppColors.success,
             onTap: () => showOtpValidationDialog(context, nextSubmittedJalon!),

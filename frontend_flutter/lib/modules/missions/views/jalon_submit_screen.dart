@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 
+import '../../../core/services/media_compressor_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/jalon_model.dart';
@@ -137,18 +138,17 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
         ),
       );
 
-      // 4. Capturer ou sélectionner le fichier
+      // 4. Capturer ou sélectionner le fichier optimisé
       XFile? file;
       if (isVideo) {
-        file = await _picker.pickVideo(
+        file = await MediaCompressorService.pickOptimizedVideo(
+          picker: _picker,
           source: fromCamera ? ImageSource.camera : ImageSource.gallery,
-          maxDuration: const Duration(seconds: 30),
         );
       } else {
-        file = await _picker.pickImage(
+        file = await MediaCompressorService.pickOptimizedImage(
+          picker: _picker,
           source: fromCamera ? ImageSource.camera : ImageSource.gallery,
-          imageQuality: 80,
-          maxWidth: 1920,
         );
       }
 
@@ -279,7 +279,7 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: Text(
-          isAlreadySubmitted ? 'Ajouter des preuves' : 'Soumettre le jalon',
+          isAlreadySubmitted ? 'Ajouter des preuves' : 'Valider l\'étape',
         ),
         elevation: 0,
         backgroundColor: Colors.white,
@@ -333,7 +333,7 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'Jalon ${_jalon!.ordre}',
+                              'Étape ${_jalon!.ordre}',
                               style: const TextStyle(
                                 fontSize: 18,
                                 fontWeight: FontWeight.w700,
@@ -565,7 +565,7 @@ class _JalonSubmitScreenState extends State<JalonSubmitScreen> {
               : Text(
                   isAlreadySubmitted
                       ? 'Envoyer les preuves'
-                      : 'Soumettre le jalon',
+                      : 'Valider l\'étape (envoyer preuves)',
                   style: const TextStyle(
                     fontSize: 16,
                     fontWeight: FontWeight.w600,

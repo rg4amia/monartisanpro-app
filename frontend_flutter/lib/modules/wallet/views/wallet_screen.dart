@@ -139,8 +139,8 @@ class _BalanceCards extends StatelessWidget {
                       const SizedBox(width: 10),
                       Text(
                         role == 'driver'
-                            ? 'Gains Disponibles (Livreur)'
-                            : 'Gains Disponibles (MO)',
+                            ? 'Gains disponibles (Courses livrées)'
+                            : 'Gains disponibles (Main-d\'œuvre)',
                         style: const TextStyle(
                           color: Colors.white70,
                           fontWeight: FontWeight.w600,
@@ -202,21 +202,21 @@ class _BalanceCards extends StatelessWidget {
         const SizedBox(height: 16),
         if (role == 'driver')
           _buildEscrowCard(
-            title: 'Séquestre Livraisons (à percevoir)',
+            title: 'Gains de livraison en attente',
             value: controller.walletEscrowLivreur.value,
             icon: Icons.local_shipping_outlined,
             color: AppColors.driver,
             bgColor: AppColors.driverSoft,
-            tooltip: 'Libéré après validation du code de réception client',
+            tooltip: 'Débloqué dès que le client valide la réception du matériel',
           )
         else if (role == 'artisan')
           _buildEscrowCard(
-            title: 'Séquestre Chantiers (Jalons en cours)',
+            title: 'Paiements sécurisés (Étapes en cours)',
             value: controller.walletMateriaux.value,
             icon: Icons.lock_outline_rounded,
             color: Colors.amber.shade700,
             bgColor: Colors.amber.shade50,
-            tooltip: 'Fonds débloqués après validation OTP client par jalon',
+            tooltip: 'Fonds débloqués dès que le client valide chaque étape (code SMS)',
           ),
       ],
     );

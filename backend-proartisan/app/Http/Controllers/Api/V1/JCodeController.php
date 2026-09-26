@@ -33,7 +33,8 @@ class JCodeController extends Controller
     {
         $user = $request->user();
         $mission = Mission::findOrFail($request->mission_id);
-        $fournisseur = User::findOrFail($request->fournisseur_id);
+        $fournisseurId = $request->validated('fournisseur_id');
+        $fournisseur = $fournisseurId ? User::findOrFail($fournisseurId) : null;
 
         if ($mission->artisan_id !== $user->id) {
             return response()->json([
@@ -69,9 +70,9 @@ class JCodeController extends Controller
     public function active(Request $request): JsonResponse
     {
         $jcodes = JCode::where('artisan_id', $request->user()->id)
-            ->where('statut', 'actif')
+            ->whereIn('statut', ['actif', 'partiellement_utilise'])
             ->where('expires_at', '>', now())
-            ->with(['artisan', 'mission', 'fournisseur.fournisseurAgree', 'items.supplierProduct'])
+            ->with(['artisan', 'mission', 'fournisseur.fournisseurAgree', 'items.supplierProduct', 'redemptions.fournisseur.fournisseurAgree'])
             ->orderBy('created_at', 'desc')
             ->get();
 
@@ -84,16 +85,22 @@ class JCodeController extends Controller
     public function show(JCode $jcode, Request $request): JsonResponse
     {
         $user = $request->user();
-        if ($jcode->artisan_id !== $user->id && $jcode->fournisseur_id !== $user->id && $user->role !== 'admin') {
-            return response()->json([
-                'success' => false,
-                'message' => 'Non autorisé.',
-            ], 403);
+        if ($jcode->artisan_id !== $user->id && $user->role !== 'admin') {
+            $hasRedeemed = $jcode->redemptions()->where('fournisseur_id', $user->id)->exists();
+            $isDesignatedSupplier = ($jcode->fournisseur_id !== null && $jcode->fournisseur_id === $user->id);
+            $isMultiSupplierCandidate = ($jcode->fournisseur_id === null && $user->role === 'fournisseur');
+
+            if (! $isDesignatedSupplier && ! $hasRedeemed && ! $isMultiSupplierCandidate) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Non autorisé.',
+                ], 403);
+            }
         }
 
         return response()->json([
             'success' => true,
-            'data' => new JCodeResource($jcode->load('artisan', 'fournisseur.fournisseurAgree', 'items.supplierProduct')),
+            'data' => new JCodeResource($jcode->load(['artisan', 'fournisseur.fournisseurAgree', 'items.supplierProduct', 'redemptions.fournisseur.fournisseurAgree'])),
         ]);
     }
 
@@ -112,12 +119,10 @@ class JCodeController extends Controller
             ], 403);
         }
 
-        // Seul le fournisseur désigné à la génération du J-Code peut le
-        // scanner : sans ce contrôle, n'importe quel fournisseur agréé de la
-        // plateforme pouvait scanner un J-Code destiné à un concurrent (GPS
-        // vérifié sur SA propre boutique) et détourner à son profit le
-        // paiement J+1 programmé par PaySupplierJob.
-        if ($jcode->fournisseur_id !== $user->id) {
+        // Si le J-Code est assigné à un comptoir exclusif, seul celui-ci peut le scanner.
+        // S'il s'agit d'un J-Code multi-comptoirs (fournisseur_id === null),
+        // tout fournisseur agréé peut scanner et débiter les matériaux disponibles.
+        if ($jcode->fournisseur_id !== null && $jcode->fournisseur_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Ce J-Code n\'est pas destiné à votre boutique.',
@@ -131,12 +136,19 @@ class JCodeController extends Controller
             ]);
         }
 
+        $recuPhotoUrl = null;
+        if ($request->hasFile('recu_photo')) {
+            $path = $request->file('recu_photo')->store('jcode_receipts', 'public');
+            $recuPhotoUrl = asset('storage/'.$path);
+        }
+
         $result = $this->jCodeService->scan(
             $jcode,
             $user,
             (float) $request->lat,
             (float) $request->lng,
             $request->validated('served_items') ?? [],
+            $recuPhotoUrl,
         );
 
         try {
@@ -188,8 +200,8 @@ class JCodeController extends Controller
                 ], 403);
             }
 
-            // Vérifier que le J-Code a été scanné (utilisé)
-            if ($jcode->statut !== 'utilise') {
+            // Vérifier que le J-Code a été scanné (utilisé ou partiellement utilisé)
+            if (! in_array($jcode->statut, ['utilise', 'partiellement_utilise'])) {
                 return response()->json([
                     'success' => false,
                     'message' => 'Le J-Code doit être utilisé avant d\'uploader une photo',
@@ -264,5 +276,36 @@ class JCodeController extends Controller
                 'message' => 'Erreur lors de l\'upload de la photo: '.$e->getMessage(),
             ], 500);
         }
+    }
+
+    /**
+     * Liste des débits/rédemptions d'un J-Code multi-comptoirs.
+     * GET /api/v1/jcodes/{jcode}/redemptions
+     */
+    public function redemptions(JCode $jcode, Request $request): JsonResponse
+    {
+        $user = $request->user();
+
+        if ($jcode->artisan_id !== $user->id && $user->role !== 'admin') {
+            $hasRedeemed = $jcode->redemptions()->where('fournisseur_id', $user->id)->exists();
+            $isDesignatedSupplier = ($jcode->fournisseur_id !== null && $jcode->fournisseur_id === $user->id);
+
+            if (! $isDesignatedSupplier && ! $hasRedeemed) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Non autorisé.',
+                ], 403);
+            }
+        }
+
+        $redemptions = $jcode->redemptions()
+            ->with(['fournisseur.fournisseurAgree'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return response()->json([
+            'success' => true,
+            'data' => \App\Http\Resources\JCodeRedemptionResource::collection($redemptions),
+        ]);
     }
 }

@@ -107,10 +107,10 @@ class QuickActions extends StatelessWidget {
           gradient: AppColors.gradientMasonry,
           badge: fundedMission != null ? 'Retrait Prêt' : null,
           title: fundedMission == null
-              ? 'Module J-Code Matériaux'
-              : 'Générer le J-Code de la mission #${fundedMission.id}',
+              ? 'Bons Matériaux Quincaillerie'
+              : 'Générer le bon matériaux #${fundedMission.id}',
           subtitle: fundedMission == null
-              ? 'Préparer une commande matériaux ou consulter un code actif'
+              ? 'Préparer une commande matériaux ou consulter un bon actif'
               : 'Mission financée, prête pour le retrait quincaillerie',
           onTap: () => Get.toNamed(
             Routes.jcode,
@@ -128,8 +128,8 @@ class QuickActions extends StatelessWidget {
               ? 'Suivre mes chantiers'
               : 'Suivre le chantier #${ongoingMission.id}',
           subtitle: ongoingMission == null
-              ? 'Voir les jalons, preuves photo et validations OTP'
-              : 'Avancement des jalons et déboursement main d\'œuvre',
+              ? 'Voir les étapes, photos et validations par code SMS'
+              : 'Avancement des étapes et déblocage des gains main-d\'œuvre',
           onTap: () {
             if (ongoingMission != null) {
               Get.toNamed(Routes.missionTracking, arguments: ongoingMission);
@@ -153,9 +153,9 @@ class QuickActions extends StatelessWidget {
           gradient: const LinearGradient(
             colors: [Color(0xFF0D9488), Color(0xFF14B8A6)],
           ),
-          title: 'Paiements Reçus & Portefeuille',
+          title: 'Gains & Portefeuille',
           subtitle:
-              'Consulter tous les reversements Wave/Orange Money et jalons libérés',
+              'Consulter vos virements Wave/Orange Money et étapes débloquées',
           onTap: () => Get.toNamed(Routes.wallet),
         ),
         const SizedBox(height: 12),

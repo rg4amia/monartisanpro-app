@@ -296,25 +296,29 @@ class DevisController extends Controller
         }
 
         $request->validate([
-            'audio' => ['required', 'file', 'max:10240'], // Max 10 Mo
+            'audio' => ['required_without:transcript', 'nullable', 'file', 'max:10240'], // Max 10 Mo
+            'transcript' => ['required_without:audio', 'nullable', 'string', 'max:2500'],
         ]);
 
-        $file = $request->file('audio');
-        $mimeType = $file->getMimeType() ?: 'audio/m4a';
-        if (str_contains($mimeType, 'octet-stream') || empty($mimeType)) {
-            $ext = strtolower($file->getClientOriginalExtension());
-            $mimeType = match ($ext) {
-                'mp3' => 'audio/mp3',
-                'wav' => 'audio/wav',
-                'aac' => 'audio/aac',
-                'ogg' => 'audio/ogg',
-                default => 'audio/m4a',
-            };
+        if ($request->filled('transcript') && ! $request->hasFile('audio')) {
+            $suggestion = $geminiService->parseVoiceQuoteTranscript($mission, (string) $request->input('transcript'), $user->id);
+        } else {
+            $file = $request->file('audio');
+            $mimeType = $file->getMimeType() ?: 'audio/m4a';
+            if (str_contains($mimeType, 'octet-stream') || empty($mimeType)) {
+                $ext = strtolower($file->getClientOriginalExtension());
+                $mimeType = match ($ext) {
+                    'mp3' => 'audio/mp3',
+                    'wav' => 'audio/wav',
+                    'aac' => 'audio/aac',
+                    'ogg' => 'audio/ogg',
+                    default => 'audio/m4a',
+                };
+            }
+
+            $audioBase64 = base64_encode(file_get_contents($file->getPathname()));
+            $suggestion = $geminiService->parseVoiceQuote($mission, $audioBase64, $mimeType, $user->id);
         }
-
-        $audioBase64 = base64_encode(file_get_contents($file->getPathname()));
-
-        $suggestion = $geminiService->parseVoiceQuote($mission, $audioBase64, $mimeType, $user->id);
 
         return response()->json([
             'success' => true,

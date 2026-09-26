@@ -1,5 +1,6 @@
 import '../../core/utils/json_readers.dart';
 import 'jcode_item_model.dart';
+import 'jcode_redemption_model.dart';
 import 'supplier_model.dart';
 
 class JcodeModel {
@@ -20,6 +21,8 @@ class JcodeModel {
   final String? paymentStatus;
   final SupplierModel? supplier;
   final List<JcodeItemModel> items;
+  final bool isMultiSupplier;
+  final List<JcodeRedemptionModel> redemptions;
 
   const JcodeModel({
     required this.id,
@@ -39,6 +42,8 @@ class JcodeModel {
     this.paymentStatus,
     this.supplier,
     this.items = const [],
+    this.isMultiSupplier = false,
+    this.redemptions = const [],
   });
 
   bool get isActive => statut == 'actif' || statut == 'partiellement_utilise';
@@ -51,6 +56,12 @@ class JcodeModel {
     final artisan = readMap(json['artisan']);
     final fournisseur = readMap(json['fournisseur']);
     final itemsRaw = json['items'];
+    final redemptionsRaw = json['redemptions'];
+    final isMulti = json['isMultiSupplier'] == true ||
+        json['is_multi_supplier'] == true ||
+        (json['fournisseurId'] == null &&
+            json['fournisseur_id'] == null &&
+            fournisseur == null);
 
     return JcodeModel(
       id: _parseInt(json['id']),
@@ -85,6 +96,13 @@ class JcodeModel {
               .map(JcodeItemModel.fromJson)
               .toList()
           : const [],
+      isMultiSupplier: isMulti,
+      redemptions: redemptionsRaw is List
+          ? redemptionsRaw
+              .whereType<Map<String, dynamic>>()
+              .map(JcodeRedemptionModel.fromJson)
+              .toList()
+          : const [],
     );
   }
 
@@ -106,6 +124,8 @@ class JcodeModel {
         'paymentStatus': paymentStatus,
         'supplier': supplier?.toJson(),
         'items': items.map((item) => item.toJson()).toList(),
+        'isMultiSupplier': isMultiSupplier,
+        'redemptions': redemptions.map((r) => r.toJson()).toList(),
       };
 
   static int _parseInt(dynamic value) {

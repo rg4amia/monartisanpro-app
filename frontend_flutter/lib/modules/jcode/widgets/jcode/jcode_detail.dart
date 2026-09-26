@@ -55,6 +55,48 @@ class JcodeDetail extends StatelessWidget {
           ),
         ),
         const SizedBox(height: 16),
+        if (jcode.isMultiSupplier) ...[
+          JcodeSectionCard(
+            child: Row(
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: AppColors.secondary.withValues(alpha: 0.12),
+                    borderRadius: BorderRadius.circular(12),
+                  ),
+                  child: const Icon(Icons.alt_route_rounded,
+                      color: AppColors.secondary, size: 28),
+                ),
+                const SizedBox(width: 14),
+                const Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Bon Matériaux Multi-Quincailleries',
+                        style: TextStyle(
+                          fontWeight: FontWeight.w700,
+                          fontSize: 16,
+                          color: AppColors.secondary,
+                        ),
+                      ),
+                      SizedBox(height: 4),
+                      Text(
+                        'Valable pour retrait partiel ou total dans n\'importe quelle quincaillerie agréée.',
+                        style: TextStyle(
+                          fontSize: 12,
+                          color: AppColors.textSecondary,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 16),
+        ],
         JcodeSectionCard(
           child: Column(
             children: [
@@ -64,12 +106,52 @@ class JcodeDetail extends StatelessWidget {
               ),
               const Divider(height: 20),
               JcodeDetailRow(
-                label: 'Montant',
+                label: 'Montant initial',
                 value: Formatters.fcfa(jcode.montant),
                 valueStyle: const TextStyle(
                   fontWeight: FontWeight.bold,
+                  fontSize: 16,
+                  color: AppColors.textPrimary,
+                ),
+              ),
+              if (jcode.montantConsomme > 0) ...[
+                const Divider(height: 20),
+                JcodeDetailRow(
+                  label: 'Montant retiré',
+                  value: Formatters.fcfa(jcode.montantConsomme),
+                  valueStyle: const TextStyle(
+                    fontWeight: FontWeight.w600,
+                    fontSize: 16,
+                    color: AppColors.warning,
+                  ),
+                ),
+              ],
+              const Divider(height: 20),
+              JcodeDetailRow(
+                label: 'Solde restant',
+                value: Formatters.fcfa(jcode.montantRestant),
+                valueStyle: TextStyle(
+                  fontWeight: FontWeight.bold,
                   fontSize: 18,
-                  color: AppColors.success,
+                  color: jcode.montantRestant > 0
+                      ? AppColors.success
+                      : AppColors.textSecondary,
+                ),
+              ),
+              const SizedBox(height: 12),
+              ClipRRect(
+                borderRadius: BorderRadius.circular(6),
+                child: LinearProgressIndicator(
+                  value: jcode.montant > 0
+                      ? (jcode.montantConsomme / jcode.montant).clamp(0.0, 1.0)
+                      : 1.0,
+                  backgroundColor: AppColors.border,
+                  valueColor: AlwaysStoppedAnimation<Color>(
+                    jcode.montantRestant == 0
+                        ? AppColors.info
+                        : AppColors.success,
+                  ),
+                  minHeight: 8,
                 ),
               ),
               const Divider(height: 20),
@@ -80,7 +162,7 @@ class JcodeDetail extends StatelessWidget {
               if (jcode.scannedAt != null) ...[
                 const Divider(height: 20),
                 JcodeDetailRow(
-                  label: 'Scanné le',
+                  label: 'Dernier scan le',
                   value: Formatters.dateTime(jcode.scannedAt!),
                 ),
               ],
@@ -124,6 +206,81 @@ class JcodeDetail extends StatelessWidget {
                 ),
                 const SizedBox(height: 12),
                 ...jcode.items.map((item) => JcodeServedItemTile(item: item)),
+              ],
+            ),
+          ),
+        ],
+        if (jcode.redemptions.isNotEmpty) ...[
+          const SizedBox(height: 16),
+          JcodeSectionCard(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                  children: [
+                    const Icon(Icons.receipt_long,
+                        color: AppColors.primary, size: 20),
+                    const SizedBox(width: 8),
+                    Text(
+                      'Historique des retraits (${jcode.redemptions.length})',
+                      style: const TextStyle(
+                        fontSize: 17,
+                        fontWeight: FontWeight.w700,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 12),
+                ...jcode.redemptions.map((redemption) {
+                  return Container(
+                    margin: const EdgeInsets.only(bottom: 10),
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: AppColors.surface,
+                      borderRadius: BorderRadius.circular(10),
+                      border: Border.all(color: AppColors.border),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Expanded(
+                              child: Text(
+                                redemption.fournisseur?.shopName ??
+                                    'Quincaillerie partenaire',
+                                style: const TextStyle(
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 14,
+                                ),
+                              ),
+                            ),
+                            Text(
+                              Formatters.fcfa(redemption.montant),
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                                color: AppColors.primary,
+                                fontSize: 15,
+                              ),
+                            ),
+                          ],
+                        ),
+                        if (redemption.scannedAt != null) ...[
+                          const SizedBox(height: 4),
+                          Text(
+                            Formatters.dateTime(redemption.scannedAt!),
+                            style: const TextStyle(
+                              fontSize: 12,
+                              color: AppColors.textSecondary,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
+                  );
+                }),
               ],
             ),
           ),
@@ -204,6 +361,7 @@ class JcodeStatusBadge extends StatelessWidget {
   Widget build(BuildContext context) {
     final colors = {
       'actif': AppColors.success,
+      'partiellement_utilise': AppColors.warning,
       'utilise': AppColors.info,
       'expire': AppColors.danger,
     };

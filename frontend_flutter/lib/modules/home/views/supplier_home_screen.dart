@@ -71,7 +71,7 @@ class SupplierHomeScreen extends StatelessWidget {
                               child: _MetricCard(
                                 title: 'Collectes actives',
                                 value: '${missions.length}',
-                                subtitle: 'J-Codes à traiter',
+                                subtitle: 'Bons à traiter',
                                 color: AppColors.success,
                                 background: AppColors.supplierSoft,
                                 icon: Icons.local_shipping_outlined,
@@ -399,7 +399,7 @@ class _PrimaryScannerCard extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Scanner un J-Code',
+                    'Scanner un bon de retrait',
                     style: TextStyle(
                       fontSize: 18,
                       fontWeight: FontWeight.w800,
@@ -582,7 +582,7 @@ class _SupplierEmptyState extends StatelessWidget {
           ),
           SizedBox(height: 6),
           Text(
-            'Les J-Codes validés par les artisans apparaîtront ici dès qu’un retrait sera prêt.',
+            'Les bons de retrait validés par les artisans apparaîtront ici dès qu’un retrait sera prêt.',
             textAlign: TextAlign.center,
             style: TextStyle(
               fontSize: 13,

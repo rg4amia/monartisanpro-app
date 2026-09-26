@@ -4,13 +4,14 @@ import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../models/jcode_item_model.dart';
 import '../models/jcode_model.dart';
+import '../models/jcode_redemption_model.dart';
 
 class JcodeRepository {
   final ApiClient _client = ApiClient();
 
   Future<JcodeModel> createJcode({
     required int missionId,
-    required int fournisseurId,
+    int? fournisseurId,
     required List<JcodeItemModel> items,
     int? montant,
   }) async {
@@ -48,13 +49,50 @@ class JcodeRepository {
     );
   }
 
+  Future<List<JcodeRedemptionModel>> getRedemptions(Object identifier) async {
+    final res = await _client.get(ApiEndpoints.jcodeRedemptions(identifier));
+    final data = (res.data as Map<String, dynamic>)['data'];
+    if (data is List) {
+      return data
+          .whereType<Map<String, dynamic>>()
+          .map(JcodeRedemptionModel.fromJson)
+          .toList();
+    }
+    return const [];
+  }
+
   /// Supplier scans a J-Code by numeric ID or business code (ex: PA-AB12).
   Future<Map<String, dynamic>> scanJcode({
     required String identifier,
     required double lat,
     required double lng,
     List<Map<String, dynamic>>? servedItems,
+    String? recuPhotoPath,
   }) async {
+    if (recuPhotoPath != null && recuPhotoPath.isNotEmpty) {
+      final formDataMap = <String, dynamic>{
+        'lat': lat,
+        'lng': lng,
+        'recu_photo': await MultipartFile.fromFile(
+          recuPhotoPath,
+          filename: recuPhotoPath.split('/').last,
+        ),
+      };
+      if (servedItems != null) {
+        for (var i = 0; i < servedItems.length; i++) {
+          formDataMap['served_items[$i][jcode_item_id]'] =
+              servedItems[i]['jcode_item_id'];
+          formDataMap['served_items[$i][quantity_served]'] =
+              servedItems[i]['quantity_served'];
+        }
+      }
+      final res = await _client.postMultipart(
+        ApiEndpoints.scanJcode(identifier),
+        FormData.fromMap(formDataMap),
+      );
+      return res.data as Map<String, dynamic>;
+    }
+
     final res = await _client.post(
       ApiEndpoints.scanJcode(identifier),
       data: {

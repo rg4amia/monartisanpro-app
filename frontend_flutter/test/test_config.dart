@@ -1,6 +1,6 @@
-/// Configuration pour les tests avec le backend Laravel Herd
+/// Configuration pour les tests avec le backend Laravel
 class TestConfig {
-  static const String baseUrl = 'http://backend-proartisan.test/api/v1';
+  static const String baseUrl = 'http://127.0.0.1:8000/api/v1';
 
   // Données de test
   static const String testPhone = '+2250700000001';

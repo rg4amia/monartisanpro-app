@@ -155,7 +155,7 @@ class MainTabScreen extends StatelessWidget {
           _NavItem(
             icon: Icons.qr_code_2_outlined,
             activeIcon: Icons.qr_code_2_rounded,
-            label: 'J-Codes',
+            label: 'Bons Matériaux',
           ),
           _NavItem(
             icon: Icons.smart_toy_outlined,
@@ -188,7 +188,7 @@ class MainTabScreen extends StatelessWidget {
           _NavItem(
             icon: Icons.qr_code_scanner_outlined,
             activeIcon: Icons.qr_code_scanner_rounded,
-            label: 'Scan J-Code',
+            label: 'Scanner un bon',
           ),
           _NavItem(
             icon: Icons.inventory_2_outlined,

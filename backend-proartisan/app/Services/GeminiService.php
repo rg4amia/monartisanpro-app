@@ -289,6 +289,11 @@ class GeminiService
                 ['type' => 'mat', 'description' => 'Pots de peinture blanc mat (30L) et pinceaux/rouleaux', 'montant' => 45000, 'source' => 'custom'],
                 ['type' => 'mo', 'description' => 'Préparation des supports et application de deux couches de peinture', 'montant' => 25000, 'source' => 'custom'],
             ];
+        } elseif (str_contains($desc, 'macon') || str_contains($desc, 'ciment') || str_contains($desc, 'fer') || str_contains($desc, 'beton') || str_contains($desc, 'coffrage')) {
+            $lignes = [
+                ['type' => 'mat', 'description' => 'Fournitures maçonnerie (fers de 12, sacs de ciment CPJ 42.5, fil recuit, pointes)', 'montant' => 40000, 'source' => 'custom'],
+                ['type' => 'mo', 'description' => 'Façonnage ferraillage, coffrage et coulage béton', 'montant' => 30000, 'source' => 'custom'],
+            ];
         } else {
             $lignes = [
                 ['type' => 'mat', 'description' => 'Matériaux et outillages consommables nécessaires aux travaux', 'montant' => 35000, 'source' => 'custom'],
@@ -508,48 +513,66 @@ Retourne obligatoirement ce format JSON uniquement:
     }
 
     /**
-     * Analyse un enregistrement audio dicté par un artisan pour générer les lignes et jalons de devis.
-     * Supporte les accents ivoiriens, le nouchi et le vocabulaire BTP local.
+     * Construit le prompt système pour la transcription et structuration d'un devis dicté en audio ou texte.
+     * Intègre le glossaire BTP ivoirien, le parler nouchi, les unités courantes et les règles financières FCFA.
      */
-    public function parseVoiceQuote(
-        Mission $mission,
-        string $audioBase64,
-        string $mimeType,
-        ?int $userId = null
-    ): array {
-        if (empty($this->apiKey) || config('app.env') === 'testing') {
-            $fallback = $this->getFallbackDevisSuggestion($mission);
-            $fallback['transcription'] = "Transcription audio simulée (mode test/hors-ligne) : fournitures et main d'œuvre pour les travaux de la mission.";
+    public function buildVoiceQuotePrompt(Mission $mission, ?string $context = null): string
+    {
+        return "Tu es un métreur et expert BTP expérimenté en Côte d'Ivoire (Abidjan et villes de l'intérieur).
+Un artisan du bâtiment ivoirien t'envoie un enregistrement vocal ou une dictée décrivant son devis (fournitures, outillage, main d'œuvre, délais).
 
-            return $fallback;
-        }
+Comprends parfaitement le français ivoirien, le nouchi (argot populaire ivoirien) et le jargon technique des chantiers en Côte d'Ivoire.
 
-        $startTime = microtime(true);
+Dictionnaires et repères contextuels ivoiriens :
+1. Pannes & Expressions de chantier :
+   - « ya dra » / « y a drap » : il y a un problème / une panne à régler
+   - « ça fait masse » : court-circuit électrique ou défaut d'isolement
+   - « l'eau coule sous la dalle / sous l'évier » : fuite d'eau sanitaire
+   - « tuyau percé / tuyau bouché / siphon gâté » : plomberie défaillante
+   - « frotter » : enduire, appliquer un crépi ou peindre un mur
+   - « sciencer » : réfléchir, calculer le coût, trouver la solution technique
+   - « pia » / « djinzin » / « gbô » : argent, coût en FCFA
+   - « djassa » / « gnan » : quincaillerie, marché de matériaux
 
-        try {
-            $prompt = "Tu es un métreur et expert BTP expérimenté en Côte d'Ivoire.
-Un artisan du bâtiment t'a envoyé un enregistrement vocal décrivant son devis (fournitures, outillage, main d'œuvre, délais).
-Comprends le français, le langage familier ivoirien, le nouchi et les expressions de chantier locales.
+2. Matériaux, outillages et unités courantes en Côte d'Ivoire :
+   - Maçonnerie & Gros œuvre :
+     * Fers à béton : « fer de 6 », « fer de 8 », « fer de 10 », « fer de 12 » (en barres de 12m)
+     * Ciment : « ciment CPJ 32.5 » ou « CPJ 42.5 » (ex: Bélier, Dangote, Ivoire Ciment, vendu au sac de 50kg)
+     * Granulats : sable lagunaire, sable de carrière, gravier 5/15 ou 15/25 (en voyages ou mètres cubes)
+     * Bois & fixations : chevrons, bastaings, contreplaqué marine/ordinaire, « paquet de pointes 60, 70 ou 80 », fil de fer recuit
+   - Plomberie :
+     * Tuyauterie : tuyau pression PN10/PN16, tube PVC évacuation diamètres 32, 40, 50, 100
+     * Raccords : coudes 90°/45°, tés, manchons, réductions, vannes d'arrêt 1/2 ou 3/4
+     * Consommables : colle PVC Tangit, ruban téflon, filasse, pâte à joint
+     * Sanitaires : siphon lavabo/évier, mécanisme WC complet, flexible sanitaire
+   - Électricité :
+     * Câblage : câble TH 1.5mm² (éclairage), 2.5mm² (prises), 4mm² ou 6mm² (climatisation)
+     * Protections : disjoncteur différentiel 30mA, disjoncteurs divisionnaires 10A/16A/20A/32A
+     * Accessoires : gaine orange ICTA, boîte de dérivation, dominos, interrupteurs va-et-vient, réglettes LED
+   - Peinture & Finitions :
+     * Peinture : seau 15L ou 30L peinture à l'eau (mat ou satin), pot de peinture à l'huile (glycéro)
+     * Préparation : pot d'enduit de rebouchage/lissage, rouleau anti-goutte, pinceau à rechampir, diluant
 
 Contexte de la mission :
 - Titre / besoin client : \"{$mission->description}\"
+".($context ? "- Contexte additionnel : \"{$context}\"\n" : '')."
 
 Ta tâche :
-1. Transcrire fidèlement ce que dit l'artisan dans le champ \"transcription\".
+1. Transcrire fidèlement ce que dit l'artisan dans le champ \"transcription\" (si audio fourni).
 2. Extraire et catégoriser les lignes de devis (lignes) :
    - \"type\": \"mo\" (main d'œuvre) ou \"mat\" (matériaux / fournitures)
-   - \"description\": description claire et propre en français (ex: \"Achat de 3 sacs de ciment CPJ 42.5\", \"Pose et raccordement plomberie\")
-   - \"montant\": entier en FCFA (sans décimale). Si l'artisan donne un prix unitaire et une quantité, calcule le montant total.
-3. Proposer un découpage logique en jalons de paiement (jalons) :
+   - \"description\": formulation claire et professionnelle en français (ex: \"Achat de 4 barres de fer de 12 et 2 sacs de ciment Bélier\", \"Pose et raccordement plomberie sous évier\")
+   - \"montant\": entier en FCFA (sans décimale, format BIGINT). Calcule la somme si quantités et prix unitaires sont mentionnés.
+3. Proposer un découpage logique et équilibré en jalons de paiement (jalons) :
    - \"ordre\": 1, 2, ...
-   - \"description\": livrable ou étape correspondante
+   - \"description\": livrable ou étape correspondante (ex: \"Acompte et approvisionnement des fournitures\", \"Exécution des travaux et finitions\")
    - \"montant\": entier en FCFA
-   - \"date_cible_days\": nombre de jours requis pour atteindre ce jalon (par défaut 2 à 5 jours)
+   - \"date_cible_days\": délai estimé en jours (généralement 1 à 5 jours)
 
 RÈGLES CRITIQUES :
-- Le montant total des lignes (somme de lignes.*.montant) DOIT être exactement égal au montant total des jalons (somme de jalons.*.montant).
-- Aucun numéro de téléphone ni coordonnée dans les descriptions.
-- Si le montant n'est pas précisé dans l'audio pour certains éléments, estime un prix cohérent avec le marché abidjanais en FCFA.
+- Le montant total des lignes (somme de lignes.*.montant) DOIT être STRICTEMENT ÉGAL au montant total des jalons (somme de jalons.*.montant).
+- Aucun numéro de téléphone ni coordonnée personnelle dans les descriptions.
+- Tous les montants financiers sont en FCFA entiers.
 
 Retourne obligatoirement ce format JSON uniquement:
 {
@@ -570,6 +593,125 @@ Retourne obligatoirement ce format JSON uniquement:
     }
   ]
 }";
+    }
+
+    /**
+     * Analyse une dictée textuelle d'un artisan pour générer les lignes et jalons de devis.
+     */
+    public function parseVoiceQuoteTranscript(
+        Mission $mission,
+        string $transcript,
+        ?int $userId = null
+    ): array {
+        if (empty($this->apiKey) || config('app.env') === 'testing') {
+            $fallback = $this->getFallbackDevisSuggestion($mission);
+            $fallback['transcription'] = $transcript;
+
+            return $fallback;
+        }
+
+        $startTime = microtime(true);
+
+        try {
+            $prompt = $this->buildVoiceQuotePrompt($mission, "Dictée artisan : {$transcript}");
+
+            $response = Http::timeout(25)
+                ->withHeaders(['User-Agent' => 'Mozilla/5.0'])
+                ->withOptions(['curl' => [CURLOPT_IPRESOLVE => CURL_IPRESOLVE_V4]])
+                ->post($this->getEndpointUrl(), [
+                    'contents' => [
+                        [
+                            'parts' => [
+                                ['text' => $prompt],
+                            ],
+                        ],
+                    ],
+                    'generationConfig' => [
+                        'response_mime_type' => 'application/json',
+                    ],
+                ]);
+
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+
+            if ($response->successful()) {
+                $rawJson = $response->json();
+                $textResult = $rawJson['candidates'][0]['content']['parts'][0]['text'] ?? '';
+                $result = json_decode($textResult, true);
+
+                $usage = $rawJson['usageMetadata'] ?? [];
+                $promptTokens = (int) ($usage['promptTokenCount'] ?? 200);
+                $completionTokens = (int) ($usage['candidatesTokenCount'] ?? 150);
+
+                AiMonitoringService::log(
+                    $this->model,
+                    'voice_quote_text',
+                    $promptTokens,
+                    $completionTokens,
+                    $responseTimeMs,
+                    200,
+                    null,
+                    $userId
+                );
+
+                if (isset($result['lignes']) && isset($result['jalons'])) {
+                    $balanced = $this->formatAndBalanceSuggestion($result);
+                    $balanced['transcription'] = $transcript;
+
+                    return $balanced;
+                }
+            }
+
+            AiMonitoringService::log(
+                $this->model,
+                'voice_quote_text',
+                0,
+                0,
+                $responseTimeMs,
+                $response->status(),
+                $response->body(),
+                $userId
+            );
+        } catch (\Exception $e) {
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+            AiMonitoringService::log(
+                $this->model,
+                'voice_quote_text',
+                0,
+                0,
+                $responseTimeMs,
+                500,
+                $e->getMessage(),
+                $userId
+            );
+        }
+
+        $fallback = $this->getFallbackDevisSuggestion($mission);
+        $fallback['transcription'] = $transcript;
+
+        return $fallback;
+    }
+
+    /**
+     * Analyse un enregistrement audio dicté par un artisan pour générer les lignes et jalons de devis.
+     * Supporte les accents ivoiriens, le nouchi et le vocabulaire BTP local.
+     */
+    public function parseVoiceQuote(
+        Mission $mission,
+        string $audioBase64,
+        string $mimeType,
+        ?int $userId = null
+    ): array {
+        if (empty($this->apiKey) || config('app.env') === 'testing') {
+            $fallback = $this->getFallbackDevisSuggestion($mission);
+            $fallback['transcription'] = "Transcription audio simulée (mode test/hors-ligne) : fournitures et main d'œuvre pour les travaux de la mission.";
+
+            return $fallback;
+        }
+
+        $startTime = microtime(true);
+
+        try {
+            $prompt = $this->buildVoiceQuotePrompt($mission);
 
             $response = Http::timeout(25)
                 ->withHeaders([

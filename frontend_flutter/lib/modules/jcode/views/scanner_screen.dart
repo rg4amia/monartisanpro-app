@@ -19,7 +19,7 @@ class ScannerScreen extends GetView<JcodeController> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('Vérification J-Code'),
+        title: const Text('Scanner Bon Matériaux'),
         centerTitle: true,
       ),
       body: SingleChildScrollView(
@@ -30,7 +30,7 @@ class ScannerScreen extends GetView<JcodeController> {
             const Padding(
               padding: EdgeInsets.all(24),
               child: Text(
-                'Scan the Artisan\'s J-Code to\nauthorize material delivery',
+                'Scannez le Bon Matériaux de l\'artisan\npour autoriser la délivrance du matériel',
                 textAlign: TextAlign.center,
                 style: TextStyle(
                   fontSize: 20,
@@ -164,7 +164,7 @@ class ScannerScreen extends GetView<JcodeController> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         const Text(
-                          'GPS Validation',
+                          'Contrôle GPS boutique',
                           style: TextStyle(
                             fontWeight: FontWeight.w600,
                             fontSize: 15,
@@ -173,7 +173,7 @@ class ScannerScreen extends GetView<JcodeController> {
                         ),
                         const SizedBox(height: 2),
                         Text(
-                          'Supplier is at the registered location',
+                          'Vérifie que vous êtes bien dans votre quincaillerie',
                           style: TextStyle(
                             fontSize: 12,
                             color: AppColors.textSecondary,
@@ -204,7 +204,7 @@ class ScannerScreen extends GetView<JcodeController> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
-                    'Manual Entry',
+                    'Saisie manuelle du code',
                     style: TextStyle(
                       fontSize: 14,
                       color: AppColors.textSecondary,

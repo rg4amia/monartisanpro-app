@@ -96,6 +96,14 @@ class StorageService {
   static bool isNotificationSoundEnabled() =>
       _box.read<bool>(_notificationSoundEnabledKey) ?? true;
 
+  // ── Data Saver Preference (Économie de données mobiles) ────────────────────
+  static const String _dataSaverKey = 'data_saver_enabled';
+
+  static void setDataSaverEnabled(bool value) =>
+      _box.write(_dataSaverKey, value);
+  static bool isDataSaverEnabled() =>
+      _box.read<bool>(_dataSaverKey) ?? true; // Actif par défaut en Côte d'Ivoire
+
   // ── Clear all ───────────────────────────────────────────────────────────────
   static Future<void> clearAll() async {
     await clearToken();

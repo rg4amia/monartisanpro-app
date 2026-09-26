@@ -22,6 +22,9 @@ class ScanJCodeRequest extends FormRequest
             'served_items' => ['nullable', 'array'],
             'served_items.*.jcode_item_id' => ['required', 'integer', 'exists:jcode_items,id'],
             'served_items.*.quantity_served' => ['required', 'integer', 'min:1'],
+
+            // Photo optionnelle du reçu / bordereau émargé par l'artisan
+            'recu_photo' => ['nullable', 'image', 'max:10240'],
         ];
 
         if ($user && ! $user->payment_phone) {

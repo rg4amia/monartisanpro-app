@@ -14,7 +14,7 @@ class JalonsSection extends StatelessWidget {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const Text(
-          'Jalons de paiement',
+          'Étapes de paiement du chantier',
           style: TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.w700,
@@ -38,7 +38,7 @@ class JalonsSection extends StatelessWidget {
               const SizedBox(width: 8),
               Expanded(
                 child: Text(
-                  'Les paiements seront libérés jalon par jalon après validation avec code OTP',
+                  'Les paiements seront débloqués étape par étape après validation avec le code secret SMS',
                   style: TextStyle(
                     fontSize: 12,
                     color: AppColors.primary,

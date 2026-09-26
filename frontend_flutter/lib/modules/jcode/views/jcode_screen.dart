@@ -41,7 +41,7 @@ class _JcodeScreenState extends State<JcodeScreen> {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
-        title: const Text('J-Code Matériaux'),
+        title: const Text('Bon Matériaux (J-Code)'),
         actions: [
           IconButton(
             onPressed: controller.loadActiveJcode,

@@ -123,7 +123,7 @@ class JalonCard extends StatelessWidget {
               arguments: jalon,
             ),
             icon: const Icon(Icons.camera_alt_outlined, size: 18),
-            label: const Text('Soumettre le jalon'),
+            label: const Text('Valider l\'étape'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.primary,
               foregroundColor: Colors.white,
@@ -146,7 +146,7 @@ class JalonCard extends StatelessWidget {
                 ),
                 icon: const Icon(Icons.add_a_photo_outlined, size: 16),
                 label: const Text(
-                  'Compléter preuves',
+                  'Ajouter des photos',
                   style: TextStyle(fontSize: 12),
                 ),
               ),
@@ -157,7 +157,7 @@ class JalonCard extends StatelessWidget {
                 onPressed: () async => controller.requestOtp(jalon.id),
                 icon: const Icon(Icons.sms_outlined, size: 16),
                 label: const Text(
-                  'Renvoyer OTP',
+                  'Renvoyer le code SMS',
                   style: TextStyle(fontSize: 12),
                 ),
                 style: ElevatedButton.styleFrom(
@@ -215,7 +215,7 @@ class JalonCard extends StatelessWidget {
                   child: OutlinedButton.icon(
                     onPressed: () => showOtpValidationDialog(context, jalon),
                     icon: const Icon(Icons.sms_outlined, size: 18),
-                    label: const Text('Valider via OTP'),
+                    label: const Text('Valider par code SMS'),
                     style: OutlinedButton.styleFrom(
                       side: const BorderSide(color: AppColors.success),
                       foregroundColor: AppColors.success,

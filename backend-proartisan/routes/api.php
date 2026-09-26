@@ -288,6 +288,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/jcodes/{jcode}', [JCodeController::class, 'show']);
         Route::post('/jcodes/{jcode}/scan', [JCodeController::class, 'scan'])->middleware(['can:jcode.scan', 'kyc.verified']);
         Route::post('/jcodes/{jcode}/photo-materiaux', [JCodeController::class, 'uploadPhotoMateriaux'])->middleware(['can:jcode.upload-photo-materials', 'kyc.verified']);
+        Route::get('/jcodes/{jcode}/redemptions', [JCodeController::class, 'redemptions']);
 
         // ── Paiements (Wave & Orange Money) ───────────────────────────────────
         Route::prefix('payments')->group(function () {

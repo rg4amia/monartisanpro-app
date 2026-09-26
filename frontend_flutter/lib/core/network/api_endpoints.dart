@@ -150,6 +150,8 @@ class ApiEndpoints {
   static String scanJcode(Object identifier) => '/jcodes/$identifier/scan';
   static String jcodePhotoMateriaux(Object identifier) =>
       '/jcodes/$identifier/photo-materiaux';
+  static String jcodeRedemptions(Object identifier) =>
+      '/jcodes/$identifier/redemptions';
 
   // Wallet & Transactions
   static const String transactions = '/transactions';

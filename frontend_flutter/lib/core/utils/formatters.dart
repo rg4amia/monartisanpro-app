@@ -61,6 +61,7 @@ class Formatters {
   static String jcodeStatus(String status) {
     const labels = {
       'actif': 'Bon disponible',
+      'partiellement_utilise': 'Partiellement retiré',
       'utilise': 'Matériel retiré',
       'expire': 'Bon expiré',
     };

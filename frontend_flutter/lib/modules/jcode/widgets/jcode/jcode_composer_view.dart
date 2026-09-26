@@ -61,7 +61,7 @@ class _ComposerViewState extends State<JcodeComposerView> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Choisissez un fournisseur, ajoutez les articles du catalogue ou vos articles personnalisés, puis générez le J-Code.',
+                  'Choisissez une quincaillerie, ajoutez les articles nécessaires, puis générez le Bon Matériaux.',
                   style: TextStyle(color: AppColors.textSecondary, height: 1.4),
                 ),
                 const SizedBox(height: 16),
@@ -119,6 +119,7 @@ class _ComposerViewState extends State<JcodeComposerView> {
             child: Obx(() {
               final suppliers = widget.controller.suppliers;
               final selectedSupplier = widget.controller.selectedSupplier.value;
+              final isMulti = widget.controller.isMultiSupplierMode.value;
 
               return Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -127,7 +128,7 @@ class _ComposerViewState extends State<JcodeComposerView> {
                     children: [
                       const Expanded(
                         child: Text(
-                          'Fournisseur',
+                          'Destination du J-Code',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -141,22 +142,55 @@ class _ComposerViewState extends State<JcodeComposerView> {
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
-                  if (widget.controller.isSuppliersLoading.value &&
-                      suppliers.isEmpty)
-                    const Center(child: CircularProgressIndicator())
-                  else if (suppliers.isEmpty)
-                    const Text(
-                      'Aucun fournisseur agréé disponible pour le moment.',
-                      style: TextStyle(color: AppColors.textSecondary),
-                    )
-                  else
-                    DropdownButtonFormField<int>(
-                      initialValue: selectedSupplier?.id,
-                      decoration: const InputDecoration(
-                        labelText: 'Sélectionnez un fournisseur',
-                        prefixIcon: Icon(Icons.storefront_outlined),
+                  const SizedBox(height: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: isMulti
+                          ? AppColors.secondary.withValues(alpha: 0.08)
+                          : AppColors.surface,
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(
+                        color: isMulti ? AppColors.secondary : AppColors.border,
                       ),
+                    ),
+                    child: SwitchListTile(
+                      contentPadding: EdgeInsets.zero,
+                      value: isMulti,
+                      activeColor: AppColors.secondary,
+                      title: const Text(
+                        'J-Code Multi-Comptoirs',
+                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                      subtitle: const Text(
+                        'Valable dans toutes les quincailleries agréées partenaires (débits partiels possibles).',
+                        style: TextStyle(fontSize: 12),
+                      ),
+                      onChanged: (val) {
+                        widget.controller.isMultiSupplierMode.value = val;
+                        if (val) {
+                          widget.controller.selectSupplier(null);
+                        }
+                      },
+                    ),
+                  ),
+                  if (!isMulti) ...[
+                    const SizedBox(height: 12),
+                    if (widget.controller.isSuppliersLoading.value &&
+                        suppliers.isEmpty)
+                      const Center(child: CircularProgressIndicator())
+                    else if (suppliers.isEmpty)
+                      const Text(
+                        'Aucun fournisseur agréé disponible pour le moment.',
+                        style: TextStyle(color: AppColors.textSecondary),
+                      )
+                    else
+                      DropdownButtonFormField<int>(
+                        initialValue: selectedSupplier?.id,
+                        decoration: const InputDecoration(
+                          labelText: 'Sélectionnez un fournisseur',
+                          prefixIcon: Icon(Icons.storefront_outlined),
+                        ),
                       items: suppliers
                           .map(
                             (supplier) => DropdownMenuItem<int>(
@@ -214,6 +248,7 @@ class _ComposerViewState extends State<JcodeComposerView> {
                       ),
                     ),
                   ],
+                ],
                 ],
               );
             }),
@@ -435,7 +470,7 @@ class _ComposerViewState extends State<JcodeComposerView> {
                       label: Text(
                         widget.controller.isLoading.value
                             ? 'Génération...'
-                            : 'Générer le J-Code',
+                            : 'Générer le Bon Matériaux',
                       ),
                     ),
                   ),
