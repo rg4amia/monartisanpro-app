@@ -8,8 +8,8 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
-| 2026-09-26 | Plan | [Chantier 13 — Machine à États Formelle & Guards d'Intégrité des Missions](plans/2026-09-26-chantier-13-machine-etats-guards-missions.md) | livré | — |
-| 2026-09-26 | Plan | [Chantier 12 — Jury ProsArtisan (Arbitrage par les Pairs) & Evidence Vault (Coffre-fort SHA-256)](plans/2026-09-26-chantier-12-jury-prosartisan-evidence-vault.md) | livré | — |
+| 2026-09-26 | Plan | [Chantier 13 — Machine à États Formelle & Guards d'Intégrité des Missions](plans/2026-09-26-chantier-13-machine-etats-guards-missions.md) | livré | `faf6fd8f` |
+| 2026-09-26 | Plan | [Chantier 12 — Jury ProsArtisan (Arbitrage par les Pairs) & Evidence Vault (Coffre-fort SHA-256)](plans/2026-09-26-chantier-12-jury-prosartisan-evidence-vault.md) | livré | `faf6fd8f` |
 | 2026-09-26 | Plan | [Chantier 11 — Encaissement réel des commandes, relances de course, course au trajet GPS, reçus PDF](plans/2026-09-26-chantier-11-encaissements-relances-recus.md) | livré | `346e3ddc` |
 | 2026-09-26 | Plan | [Chantier 10 — Portefeuilles, versements Mobile Money et course livreur « à la Yango »](plans/2026-09-26-chantier-10-portefeuilles-versements.md) | livré | `e06db5d9` |
 | 2026-09-26 | Plan | [Feuille de route — Chantiers 6 à 9 (Innovations & Améliorations)](plans/2026-09-26-feuille-de-route-chantiers-innovations.md) | livré | `30880554`, `63e6e08e` |
