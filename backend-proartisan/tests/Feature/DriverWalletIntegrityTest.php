@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Enums\PaymentProvider;
 use App\Models\Evaluation;
 use App\Models\Order;
 use App\Models\SupplierProduct;
@@ -296,6 +297,8 @@ class DriverWalletIntegrityTest extends TestCase
         $order = $result['orders'][0];
         $this->assertSame(2000, (int) $order->delivery_cost, 'La course reste estimée sur la commande.');
         $this->assertSame((int) $order->subtotal + (int) $order->platform_fee, (int) $order->total_amount);
+        // Le paiement du panier (Chantier 11) porte exactement ce total, sans la course.
+        app(PaymentService::class)->initiateOrderPayment($this->client, $order, PaymentProvider::WAVE, '+2250700000003');
         $this->assertSame((int) $result['total_amount'], (int) Transaction::where('wallet_dest', 'like', 'escrow_group_%')->value('montant'));
     }
 

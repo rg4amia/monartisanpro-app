@@ -4,14 +4,31 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
+import '../../../core/payments/operator_payment_runner.dart';
+import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/json_readers.dart';
+import '../../../data/models/payment_model.dart';
 import '../../../data/models/supplier_model.dart';
 import '../../../data/models/supplier_product_model.dart';
 import '../../../data/repositories/order_repository.dart';
 import '../../../data/repositories/supplier_catalog_repository.dart';
 
 class OrderController extends GetxController {
+  OrderController({OperatorPaymentRunner? paymentRunner})
+      : _paymentRunner = paymentRunner ?? OperatorPaymentRunner();
+
   final OrderRepository _repo = OrderRepository();
   final SupplierCatalogRepository _catalogRepo = SupplierCatalogRepository();
+  final OperatorPaymentRunner _paymentRunner;
+
+  /// Issue du paiement ouvert à la création de la dernière commande
+  /// (Chantier 11) : `null` si le paiement n'a pas pu être ouvert — la
+  /// commande reste à régler depuis « Mes commandes » avant l'échéance.
+  final lastPaymentOutcome = Rxn<OperatorPaymentOutcome>();
+
+  /// Message du serveur accompagnant la création (échec d'ouverture du
+  /// paiement, par exemple).
+  final lastOrderMessage = RxnString();
 
   final isSubmitting = false.obs;
   final isLoading = false.obs;
@@ -171,26 +188,22 @@ class OrderController extends GetxController {
     required List<Map<String, dynamic>> packages,
     String? promoCode,
     int? addressId,
+    String paymentProvider = 'wave',
   }) async {
     if (isSubmitting.value) return false;
     isSubmitting.value = true;
     errorMsg.value = null;
 
     try {
-      await _repo.createMultiOrders(
+      final response = await _repo.createMultiOrders(
         packages: packages,
         promoCode: promoCode,
         addressId: addressId,
-      );
-      Get.snackbar(
-        'Succès',
-        'Commandes multi-fournisseurs créées et payées en compte séquestre !',
-        backgroundColor: const Color(0xFF24734F),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 4),
+        paymentProvider: paymentProvider,
+        paymentPhone: StorageService.getPhone(),
       );
       clearCart();
+      await _settlePayment(response);
       return true;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
@@ -227,13 +240,14 @@ class OrderController extends GetxController {
     double? surgeMultiplier,
     String? promoCode,
     int? addressId,
+    String paymentProvider = 'wave',
   }) async {
     if (isSubmitting.value) return false;
     isSubmitting.value = true;
     errorMsg.value = null;
 
     try {
-      await _repo.createOrder(
+      final response = await _repo.createOrder(
         supplierId: supplierId,
         deliveryMode: deliveryMode,
         items: items,
@@ -241,16 +255,11 @@ class OrderController extends GetxController {
         surgeMultiplier: surgeMultiplier,
         promoCode: promoCode,
         addressId: addressId,
-      );
-      Get.snackbar(
-        'Succès',
-        'Commande créée avec succès en compte séquestre !',
-        backgroundColor: const Color(0xFF24734F),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-        duration: const Duration(seconds: 3),
+        paymentProvider: paymentProvider,
+        paymentPhone: StorageService.getPhone(),
       );
       clearCart();
+      await _settlePayment(response);
       return true;
     } on DioException catch (e) {
       errorMsg.value = _handleDioError(e);
@@ -275,6 +284,24 @@ class OrderController extends GetxController {
       return false;
     } finally {
       isSubmitting.value = false;
+    }
+  }
+
+  /// Ouvre la page de paiement renvoyée à la création de la commande et suit
+  /// sa confirmation. La commande existe déjà : un paiement non abouti ne
+  /// l'annule pas, elle reste à régler depuis « Mes commandes ».
+  Future<void> _settlePayment(Map<String, dynamic> response) async {
+    lastPaymentOutcome.value = null;
+    lastOrderMessage.value = readString(response['message']);
+
+    final payment = readMap(response['payment']);
+    if (payment == null) return;
+
+    try {
+      lastPaymentOutcome.value =
+          await _paymentRunner.run(PaymentInitiationModel.fromJson(payment));
+    } catch (_) {
+      lastPaymentOutcome.value = OperatorPaymentOutcome.pending;
     }
   }
 

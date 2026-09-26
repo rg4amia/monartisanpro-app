@@ -190,7 +190,7 @@
     <table class="grid-table" cellspacing="10" cellpadding="0">
         <tr>
             <td>
-                <div class="card-label">Bénéficiaire des Fonds</div>
+                <div class="card-label">{{ $party_label ?? 'Bénéficiaire des Fonds' }}</div>
                 <div class="info-row">
                     <span class="info-label">Nom complet :</span>
                     <span class="info-value">{{ $beneficiary_name }}</span>
@@ -215,8 +215,8 @@
                     <span class="info-value">{{ $payment_date }}</span>
                 </div>
                 <div class="info-row">
-                    <span class="info-label">Mission ID :</span>
-                    <span class="info-value">#{{ $mission_id ?? 'N/A' }}</span>
+                    <span class="info-label">{{ $reference_label ?? 'Mission' }} :</span>
+                    <span class="info-value">{{ $reference_value ?? ('#'.($mission_id ?? 'N/A')) }}</span>
                 </div>
                 <div class="info-row">
                     <span class="info-label">Opérateur :</span>
@@ -266,7 +266,7 @@
     <div class="amount-box">
         <div class="amount-label">Montant Net Décaissé & Transféré</div>
         <div class="amount-val">{{ number_format($amount, 0, ',', ' ') }} FCFA</div>
-        <div class="amount-words">Payé avec succès via {{ strtoupper($provider ?? 'Mobile Money') }}</div>
+        <div class="amount-words">{{ $amount_caption ?? 'Payé avec succès via' }} {{ strtoupper($provider ?? 'Mobile Money') }}</div>
     </div>
 
     <table class="stamp-box" style="border: none;">

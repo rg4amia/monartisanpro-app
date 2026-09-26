@@ -698,9 +698,12 @@ class WalletService
 
         $client = $mission->client;
         $artisan = $mission->artisan;
-        $provider = $this->resolveMissionProvider($mission, $client);
+        // Moyen de remboursement déclaré par le client sur le litige
+        // (Chantier 11), sinon celui qui a servi à payer la mission.
+        $provider = $litige?->refund_provider ?: $this->resolveMissionProvider($mission, $client);
+        $phone = $litige?->refund_phone ?: null;
 
-        return DB::transaction(function () use ($mission, $client, $artisan, $refundMateriaux, $refundMo, $total, $litige, $provider) {
+        return DB::transaction(function () use ($mission, $client, $artisan, $refundMateriaux, $refundMo, $total, $litige, $provider, $phone) {
             $payout = $this->payouts()->dispatch(
                 $client,
                 $refundMo > 0 ? WalletType::WALLET_MO : WalletType::WALLET_MATERIAUX,
@@ -723,6 +726,7 @@ class WalletService
                     'mission_id' => $mission->id,
                     'litige_id' => $litige?->id,
                 ],
+                phone: $phone,
                 source: $artisan,
                 debits: [
                     [

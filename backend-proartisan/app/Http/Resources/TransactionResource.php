@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Enums\PaymentStatus;
 use App\Services\TransactionPresenter;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
@@ -22,6 +23,10 @@ class TransactionResource extends JsonResource
             'montantSigne' => $view['montant_signe'],
             'orderId' => $this->metadata['order_id'] ?? null,
             'payoutId' => $this->metadata['payout_id'] ?? null,
+            // Reçu PDF téléchargeable par le titulaire d'une transaction
+            // confirmée (`/transactions/{id}/receipt-link`, Chantier 11).
+            'receiptAvailable' => (int) $this->user_id === (int) $request->user()?->id
+                && $this->statut instanceof PaymentStatus && $this->statut->isSuccessful(),
             'id' => $this->id,
             'type' => $this->type,
             'montant' => $this->montant,

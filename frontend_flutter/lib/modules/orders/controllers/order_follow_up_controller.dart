@@ -1,9 +1,10 @@
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
+import '../../../core/payments/operator_payment_runner.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/error_handler.dart';
 import '../../../data/models/delivery_fare_model.dart';
+import '../../../data/models/payment_model.dart';
 import '../../../data/repositories/order_repository.dart';
 import '../../../data/repositories/payment_repository.dart';
 
@@ -17,16 +18,20 @@ class OrderFollowUpController extends GetxController {
     OrderRepository? repository,
     PaymentRepository? paymentRepository,
     Future<bool> Function(Uri uri)? openPaymentUrl,
+    Duration pollInterval = const Duration(seconds: 2),
   })  : _repo = repository ?? OrderRepository(),
         _paymentRepo = paymentRepository ?? PaymentRepository(),
-        _openPaymentUrl = openPaymentUrl ??
-            ((uri) => launchUrl(uri, mode: LaunchMode.externalApplication));
+        _runner = OperatorPaymentRunner(
+          paymentRepository: paymentRepository,
+          openPaymentUrl: openPaymentUrl,
+          pollInterval: pollInterval,
+        );
 
   final OrderRepository _repo;
   final PaymentRepository _paymentRepo;
-  final Future<bool> Function(Uri uri) _openPaymentUrl;
+  final OperatorPaymentRunner _runner;
 
-  /// Commande dont le paiement de la course est en cours.
+  /// Commande dont le paiement (course ou commande) est en cours.
   final payingOrderId = RxnInt();
 
   final orders = <Map<String, dynamic>>[].obs;
@@ -166,7 +171,35 @@ class OrderFollowUpController extends GetxController {
   /// Ouvre la page de paiement de l'opérateur puis interroge le statut ; le
   /// serveur crédite le livreur à la confirmation. Renvoie `true` si le
   /// paiement est confirmé pendant l'attente.
-  Future<bool> payDeliveryFare(int orderId, {required String provider}) async {
+  Future<bool> payDeliveryFare(int orderId, {required String provider}) =>
+      _payThroughOperator(
+        orderId,
+        provider,
+        (phone) => _paymentRepo.initiateDeliveryFarePayment(
+          orderId: orderId,
+          provider: provider,
+          phone: phone,
+        ),
+      );
+
+  /// Règle une commande de matériaux en attente de paiement — tout le panier
+  /// multi-quincailleries si elle en fait partie (Chantier 11).
+  Future<bool> payOrder(int orderId, {required String provider}) =>
+      _payThroughOperator(
+        orderId,
+        provider,
+        (phone) => _paymentRepo.initiateOrderPayment(
+          orderId: orderId,
+          provider: provider,
+          phone: phone,
+        ),
+      );
+
+  Future<bool> _payThroughOperator(
+    int orderId,
+    String provider,
+    Future<PaymentInitiationModel> Function(String phone) initiate,
+  ) async {
     payingOrderId.value = orderId;
     errorMsg.value = null;
 
@@ -179,37 +212,23 @@ class OrderFollowUpController extends GetxController {
         return false;
       }
 
-      final payment = await _paymentRepo.initiateDeliveryFarePayment(
-        orderId: orderId,
-        provider: provider,
-        phone: phone,
-      );
+      final payment = await initiate(phone);
 
-      final url = payment.launchUrl;
-      if (url != null && url.isNotEmpty) {
-        final uri = Uri.tryParse(url);
-        if (uri != null) await _openPaymentUrl(uri);
-      }
-
-      for (var attempt = 0; attempt < 6; attempt++) {
-        final status = await _paymentRepo.checkStatus(payment.transactionId);
-        if (status.isConfirmed) {
+      switch (await _runner.run(payment)) {
+        case OperatorPaymentOutcome.confirmed:
           await load(silent: true);
 
           return true;
-        }
-        if (status.isFailed) {
+        case OperatorPaymentOutcome.failed:
           errorMsg.value = 'Le paiement a échoué ou a été annulé.';
 
           return false;
-        }
-        await Future<void>.delayed(const Duration(seconds: 2));
+        case OperatorPaymentOutcome.pending:
+          errorMsg.value =
+              'Paiement en attente de confirmation. Tirez pour actualiser dans un instant.';
+
+          return false;
       }
-
-      errorMsg.value =
-          'Paiement en attente de confirmation. Tirez pour actualiser dans un instant.';
-
-      return false;
     } catch (e) {
       errorMsg.value = ErrorHandler.getErrorMessage(e);
 

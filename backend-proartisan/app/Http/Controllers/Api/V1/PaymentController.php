@@ -223,6 +223,44 @@ class PaymentController extends Controller
     }
 
     /**
+     * Règle une commande de matériaux en attente de paiement (ou tout son
+     * panier multi-quincailleries). Montant fixé par le serveur ; client de
+     * la commande uniquement (vérifié par le service).
+     */
+    public function initiateOrderPayment(Request $request, Order $order): JsonResponse
+    {
+        $validator = Validator::make($request->all(), [
+            'provider' => 'required|in:wave,orange_money,virement_bancaire',
+            'phone' => 'required_if:provider,wave,orange_money|nullable|string|max:20',
+        ]);
+
+        if ($validator->fails()) {
+            return $this->validationError($validator);
+        }
+
+        try {
+            $result = $this->paymentService->initiateOrderPayment(
+                $request->user(),
+                $order,
+                PaymentProvider::from($request->provider),
+                $request->phone,
+            );
+
+            return response()->json(['success' => true] + $result);
+        } catch (PaymentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], $e->getStatus());
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage(),
+            ], 400);
+        }
+    }
+
+    /**
      * Affiche la page de simulation de paiement.
      */
     public function showMockPay(Request $request): View

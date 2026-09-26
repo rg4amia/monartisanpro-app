@@ -5,6 +5,8 @@ use App\Console\Commands\AutoReleaseJalonsCommand;
 use App\Console\Commands\DecayScoreCommand;
 use App\Console\Commands\DriverWatchdogCommand;
 use App\Console\Commands\ExpireRecruitmentOffersCommand;
+use App\Console\Commands\ExpireUnpaidOrdersCommand;
+use App\Console\Commands\RemindUnpaidDeliveryFaresCommand;
 use App\Console\Commands\RetryFailedPayoutsCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
@@ -51,6 +53,20 @@ Schedule::command(RetryFailedPayoutsCommand::class)
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/retry-failed-payouts.log'));
+
+// Chantier 11 — annulation des commandes de matériaux impayées (stock restitué)
+Schedule::command(ExpireUnpaidOrdersCommand::class)
+    ->everyFiveMinutes()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/expire-unpaid-orders.log'));
+
+// Chantier 11 — relance des courses livrées impayées, restriction au-delà du plafond
+Schedule::command(RemindUnpaidDeliveryFaresCommand::class)
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/remind-unpaid-delivery-fares.log'));
 
 // Module Recrutement — clôture automatique des offres expirées
 Schedule::command(ExpireRecruitmentOffersCommand::class)

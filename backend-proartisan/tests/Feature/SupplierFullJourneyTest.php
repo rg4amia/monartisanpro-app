@@ -9,6 +9,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
+use Tests\Support\PaysOrders;
 use Tests\TestCase;
 
 /**
@@ -23,6 +24,7 @@ use Tests\TestCase;
  */
 class SupplierFullJourneyTest extends TestCase
 {
+    use PaysOrders;
     use RefreshDatabase;
 
     private User $client;
@@ -84,7 +86,17 @@ class SupplierFullJourneyTest extends TestCase
 
         $response->assertCreated();
 
-        return Order::latest('id')->firstOrFail();
+        // Encaissement réel (Chantier 11) : invisible de la quincaillerie tant
+        // que le client n'a pas payé, puis transmise à la confirmation.
+        $order = Order::latest('id')->firstOrFail();
+        $this->assertSame('pending', $order->status);
+        $this->actingAs($this->supplier)->getJson('/api/v1/supplier/orders')
+            ->assertOk()
+            ->assertJsonMissing(['id' => $order->id]);
+
+        $this->payOrder($order);
+
+        return $order->fresh();
     }
 
     public function test_supplier_publishes_sells_prepares_and_gets_paid_on_store_pickup(): void

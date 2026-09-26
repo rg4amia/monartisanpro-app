@@ -164,6 +164,18 @@ class ApiEndpoints {
   static String deliveryFarePayment(int orderId) =>
       '/payments/orders/$orderId/delivery-fare';
 
+  /// Règlement d'une commande de matériaux en attente (Chantier 11).
+  static String orderCheckoutPayment(int orderId) =>
+      '/payments/orders/$orderId/checkout';
+
+  /// Lien signé (15 min) vers le reçu PDF d'une transaction.
+  static String transactionReceiptLink(int transactionId) =>
+      '/transactions/$transactionId/receipt-link';
+
+  /// Moyen de réception d'un remboursement choisi par le client.
+  static String payoutDestination(int payoutId) =>
+      '/payouts/$payoutId/destination';
+
   // Litiges
   static const String litiges = '/litiges';
   static String litige(int id) => '/litiges/$id';

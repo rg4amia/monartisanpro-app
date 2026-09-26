@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 class Litige extends Model
 {
     protected $fillable = [
+        'refund_provider',
+        'refund_phone',
         'mission_id',
         'declencheur_id',
         'type',

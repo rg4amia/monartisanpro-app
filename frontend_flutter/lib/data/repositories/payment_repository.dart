@@ -1,5 +1,6 @@
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/utils/json_readers.dart';
 import '../models/payment_model.dart';
 
 class PaymentRepository {
@@ -66,6 +67,36 @@ class PaymentRepository {
     return PaymentInitiationModel.fromJson(
       (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
     );
+  }
+
+  /// Règlement d'une commande de matériaux en attente — ou de tout son
+  /// panier multi-quincailleries (Chantier 11). Montant fixé par le serveur.
+  Future<PaymentInitiationModel> initiateOrderPayment({
+    required int orderId,
+    required String provider,
+    required String phone,
+  }) async {
+    final res = await _client.post(
+      ApiEndpoints.orderCheckoutPayment(orderId),
+      data: {'provider': provider, 'phone': phone},
+    );
+
+    return PaymentInitiationModel.fromJson(
+      readMap(readMap(res.data)?['data']) ?? const <String, dynamic>{},
+    );
+  }
+
+  /// Lien signé (15 min) vers le reçu PDF d'une transaction confirmée.
+  Future<String> receiptLink(int transactionId) async {
+    final res = await _client.get(
+      ApiEndpoints.transactionReceiptLink(transactionId),
+    );
+    final url = readString(readMap(readMap(res.data)?['data'])?['url']);
+    if (url == null || url.isEmpty) {
+      throw const FormatException('Lien de reçu absent de la réponse.');
+    }
+
+    return url;
   }
 
   Future<PaymentStatusModel> checkStatus(int transactionId) async {

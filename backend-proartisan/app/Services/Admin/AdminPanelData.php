@@ -27,11 +27,13 @@ use App\Models\Vitrine\VitrineVideo;
 use App\Models\WhatsappClickLog;
 use App\Services\AdminService;
 use App\Services\BankTransferSettingsService;
+use App\Services\DeliveryFareCollectionService;
 use App\Services\DeliveryTrackingService;
 use App\Services\DriverCashoutService;
 use App\Services\GeneratedDocumentService;
 use App\Services\KycService;
 use App\Services\MobileMoneyPayoutService;
+use App\Services\OrderService;
 use App\Services\UploadLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -59,6 +61,8 @@ class AdminPanelData
         private KycService $kycService,
         private MobileMoneyPayoutService $payouts,
         private DriverCashoutService $driverCashouts,
+        private DeliveryFareCollectionService $fareCollection,
+        private OrderService $orders,
     ) {}
 
     /**
@@ -328,6 +332,10 @@ class AdminPanelData
             // Chantier 10 : versements Mobile Money à traiter et retraits livreur.
             'payoutsOverview' => Schema::hasTable('mobile_money_payouts') ? $this->payouts->adminOverview() : null,
             'driverCashoutsOverview' => Schema::hasTable('driver_cashouts') ? $this->driverCashouts->adminOverview() : null,
+            // Chantier 11 : courses impayées, comptes restreints, virements de commande à confirmer.
+            'collectionsOverview' => Schema::hasColumn('orders', 'delivery_fare_reminders_count')
+                ? $this->fareCollection->adminOverview() + ['pending_bank_transfers' => $this->orders->pendingBankTransferPayments()]
+                : null,
         ];
     }
 

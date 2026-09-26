@@ -174,7 +174,7 @@ Route::prefix('v1')->group(function () {
         Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
         Route::post('/orders/estimate-delivery', [OrderController::class, 'estimateDelivery']);
         Route::post('/orders/multi-estimate', [OrderController::class, 'estimateMultiDelivery']);
-        Route::post('/orders/multi-store', [OrderController::class, 'multiStore'])->middleware('kyc.verified');
+        Route::post('/orders/multi-store', [OrderController::class, 'multiStore'])->middleware(['kyc.verified', 'payment.unrestricted']);
         Route::post('/orders/{order}/prepared', [OrderController::class, 'markPrepared']);
         Route::post('/orders/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);
         Route::post('/orders/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
@@ -225,10 +225,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/driver/cashouts', [DriverCashoutController::class, 'store'])->middleware(['kyc.verified', 'throttle:10,1']);
         Route::get('/payouts', [PayoutController::class, 'index']);
         Route::post('/payouts/{payout}/retry', [PayoutController::class, 'retry'])->middleware('throttle:10,1');
+        Route::put('/payouts/{payout}/destination', [PayoutController::class, 'updateDestination'])->middleware('throttle:10,1');
 
         // ── Missions ──────────────────────────────────────────────────────────
         Route::get('/missions', [MissionController::class, 'index']);
-        Route::post('/missions', [MissionController::class, 'store'])->middleware(['can:mission.create', 'kyc.verified']);
+        Route::post('/missions', [MissionController::class, 'store'])->middleware(['can:mission.create', 'kyc.verified', 'payment.unrestricted']);
         Route::get('/missions/{mission}', [MissionController::class, 'show']);
         Route::get('/missions/{mission}/site-map', [MissionController::class, 'siteMap']);
         Route::post('/missions/estimate', [MissionController::class, 'estimate'])->middleware('can:mission.estimate');
@@ -308,6 +309,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/initiate', [PaymentController::class, 'initiatePayment'])->middleware('kyc.verified');
             Route::post('/jalons/{jalon}/pay', [PaymentController::class, 'initiateJalonPayment'])->middleware('kyc.verified');
             Route::post('/orders/{order}/delivery-fare', [PaymentController::class, 'initiateDeliveryFarePayment']);
+            Route::post('/orders/{order}/checkout', [PaymentController::class, 'initiateOrderPayment']);
             Route::get('/{transaction}/status', [PaymentController::class, 'checkStatus']);
             Route::get('/history', [PaymentController::class, 'history']);
         });
@@ -323,6 +325,7 @@ Route::prefix('v1')->group(function () {
 
         // ── Wallet & Transactions ─────────────────────────────────────────────
         Route::get('/transactions', [TransactionController::class, 'index']);
+        Route::get('/transactions/{transaction}/receipt-link', [TransactionController::class, 'receiptLink']);
         Route::get('/wallets/balance', [TransactionController::class, 'balance']);
 
         // ── Litiges ───────────────────────────────────────────────────────────
@@ -333,6 +336,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/litiges/{litige}/evaluate-sla', [LitigeController::class, 'evaluateSla']);
         Route::post('/litiges/{litige}/tele-expertise', [LitigeController::class, 'requestTeleExpertise']);
         Route::put('/litiges/{litige}/arbitrage', [LitigeController::class, 'arbitrage']);
+        Route::put('/litiges/{litige}/refund-destination', [LitigeController::class, 'refundDestination'])->middleware('throttle:10,1');
         Route::post('/litiges/{litige}/jury/assign', [LitigeJuryController::class, 'assign']);
         Route::post('/litiges/{litige}/jury/vote', [LitigeJuryController::class, 'vote']);
         Route::post('/litiges/{litige}/llm-mediation', [LlmAdminController::class, 'llmMediation']);
@@ -349,7 +353,8 @@ Route::prefix('v1')->group(function () {
         // ── Commandes e-Commerce (Fournisseurs & Livraison) ─────────────────────
         Route::prefix('orders')->group(function () {
             Route::get('/', [OrderController::class, 'index']);
-            Route::post('/', [OrderController::class, 'store'])->middleware('kyc.verified');
+            // Création refusée à un client restreint pour course impayée (Chantier 11).
+            Route::post('/', [OrderController::class, 'store'])->middleware(['kyc.verified', 'payment.unrestricted']);
             Route::get('/{order}', [OrderController::class, 'show']);
             Route::post('/{order}/prepared', [OrderController::class, 'markPrepared']);
             Route::post('/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);

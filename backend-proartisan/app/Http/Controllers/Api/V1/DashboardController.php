@@ -259,10 +259,10 @@ class DashboardController extends Controller
 
     private function getSupplierStats($user): array
     {
-        $totalOrders = Order::where('supplier_id', $user->id)->count();
-        $pendingOrders = Order::where('supplier_id', $user->id)->where('status', 'paid')->count();
+        $totalOrders = Order::visibleToSupplier()->where('supplier_id', $user->id)->count();
+        $pendingOrders = Order::visibleToSupplier()->where('supplier_id', $user->id)->where('status', 'paid')->count();
 
-        $totalRevenue = Order::where('supplier_id', $user->id)
+        $totalRevenue = Order::visibleToSupplier()->where('supplier_id', $user->id)
             ->where('status', 'delivered')
             ->sum('subtotal');
 
@@ -270,7 +270,7 @@ class DashboardController extends Controller
             ->where('is_active', true)
             ->count();
 
-        $recentOrders = Order::where('supplier_id', $user->id)
+        $recentOrders = Order::visibleToSupplier()->where('supplier_id', $user->id)
             ->with(['client', 'items.product'])
             ->latest()
             ->take(5)

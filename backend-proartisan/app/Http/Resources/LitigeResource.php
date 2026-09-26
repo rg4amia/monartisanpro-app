@@ -26,6 +26,11 @@ class LitigeResource extends JsonResource
             'statut' => $this->statut,
             'workflowStep' => $this->workflow_step,
             'decision' => $this->decision,
+            // Moyen de remboursement choisi : donnée du seul client, jamais
+            // exposée à l'artisan (numéro personnel).
+            'refundDestination' => $this->refund_provider && (int) $request->user()?->id === (int) $this->mission?->client_id
+                ? ['provider' => $this->refund_provider, 'phone' => $this->refund_phone]
+                : null,
             'adminNotes' => $this->admin_notes,
             'resolutionReason' => $this->resolution_reason,
             'resolutionPayload' => $this->resolution_payload ?? [],

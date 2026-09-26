@@ -19,10 +19,10 @@ class SupplierDashboardController extends Controller
     {
         $supplier = $request->user();
 
-        $totalOrders = Order::where('supplier_id', $supplier->id)->count();
-        $pendingOrders = Order::where('supplier_id', $supplier->id)->where('status', 'paid')->count();
+        $totalOrders = Order::visibleToSupplier()->where('supplier_id', $supplier->id)->count();
+        $pendingOrders = Order::visibleToSupplier()->where('supplier_id', $supplier->id)->where('status', 'paid')->count();
 
-        $totalRevenue = Order::where('supplier_id', $supplier->id)
+        $totalRevenue = Order::visibleToSupplier()->where('supplier_id', $supplier->id)
             ->where('status', 'delivered')
             ->sum('subtotal');
 
@@ -30,7 +30,7 @@ class SupplierDashboardController extends Controller
             ->where('is_active', true)
             ->count();
 
-        $recentOrders = Order::where('supplier_id', $supplier->id)
+        $recentOrders = Order::visibleToSupplier()->where('supplier_id', $supplier->id)
             ->with(['client', 'items.product'])
             ->latest()
             ->take(5)
@@ -56,7 +56,7 @@ class SupplierDashboardController extends Controller
     public function orders(Request $request): JsonResponse
     {
         $supplier = $request->user();
-        $orders = Order::where('supplier_id', $supplier->id)
+        $orders = Order::visibleToSupplier()->where('supplier_id', $supplier->id)
             ->with(['client', 'items.product', 'driver'])
             ->latest()
             ->get();
@@ -75,7 +75,7 @@ class SupplierDashboardController extends Controller
         $supplier = $request->user();
 
         // 1. Litiges sur ses commandes directes
-        $orderLitiges = Order::where('supplier_id', $supplier->id)
+        $orderLitiges = Order::visibleToSupplier()->where('supplier_id', $supplier->id)
             ->where('status', 'disputed')
             ->with(['client'])
             ->get();

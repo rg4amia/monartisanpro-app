@@ -31,6 +31,8 @@ class MobileMoneyPayoutEvent extends Model
 
     public const ACTION_CHANGEMENT_NUMERO = 'changement_numero';
 
+    public const ACTION_CHANGEMENT_DESTINATION = 'changement_destination';
+
     public const ACTION_LABELS = [
         self::ACTION_TENTATIVE => 'Tentative de virement',
         self::ACTION_SUCCES => 'Virement réussi',
@@ -41,6 +43,7 @@ class MobileMoneyPayoutEvent extends Model
         self::ACTION_VERSEMENT_MANUEL => 'Versement manuel hors plateforme',
         self::ACTION_ANNULATION => 'Versement annulé',
         self::ACTION_CHANGEMENT_NUMERO => 'Numéro de paiement mis à jour',
+        self::ACTION_CHANGEMENT_DESTINATION => 'Moyen de remboursement choisi par le client',
     ];
 
     protected $fillable = [

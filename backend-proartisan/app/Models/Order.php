@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -63,6 +64,14 @@ class Order extends Model
         'delivery_fare_prepaid',
         'delivery_fare_status',
         'delivery_fare_settled_at',
+        'delivery_fare_reminders_count',
+        'delivery_fare_last_reminder_at',
+        'actual_distance_km',
+        'actual_duration_min',
+        'fare_source',
+        'payment_expires_at',
+        'paid_at',
+        'promo_code',
         'dispute_reason',
         'dispute_opened_at',
     ];
@@ -100,6 +109,12 @@ class Order extends Model
             'waiting_fee' => 'integer',
             'delivery_fare_prepaid' => 'integer',
             'delivery_fare_settled_at' => 'datetime',
+            'delivery_fare_reminders_count' => 'integer',
+            'delivery_fare_last_reminder_at' => 'datetime',
+            'actual_distance_km' => 'float',
+            'actual_duration_min' => 'float',
+            'payment_expires_at' => 'datetime',
+            'paid_at' => 'datetime',
             'driver_reassignment_count' => 'integer',
             'delivered_at' => 'datetime',
             'driver_assigned_at' => 'datetime',
@@ -108,6 +123,16 @@ class Order extends Model
             'dispute_opened_at' => 'datetime',
             'is_parent_group' => 'boolean',
         ];
+    }
+
+    /**
+     * Commandes visibles d'une quincaillerie : jamais une commande que le
+     * client n'a pas encore réglée (Chantier 11) — elle n'est ni à préparer,
+     * ni un revenu.
+     */
+    public function scopeVisibleToSupplier(Builder $query): Builder
+    {
+        return $query->where('status', '!=', 'pending');
     }
 
     /**
@@ -158,6 +183,18 @@ class Order extends Model
                     default => 'Estimation',
                 },
                 'settled_at' => $this->delivery_fare_settled_at?->toIso8601String(),
+                // Trajet réel mesuré sur la trace GPS (null tant que la course
+                // n'est pas livrée, ou si la trace était insuffisante).
+                'distance_km' => $this->actual_distance_km !== null ? (float) $this->actual_distance_km : null,
+                'duration_min' => $this->actual_duration_min !== null ? (float) $this->actual_duration_min : null,
+                'fare_source' => $this->fare_source,
+                'fare_source_label' => match ($this->fare_source) {
+                    'gps' => 'Calculée sur le trajet réel',
+                    'gps_plafonne' => 'Trajet réel plafonné',
+                    'estimation' => "Calculée sur l'itinéraire (trace GPS insuffisante)",
+                    default => null,
+                },
+                'reminders_count' => (int) $this->delivery_fare_reminders_count,
             ];
         });
     }

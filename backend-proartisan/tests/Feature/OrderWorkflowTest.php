@@ -13,8 +13,9 @@ use App\Services\PaymentService;
 use App\Services\WalletService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
+use Tests\Support\PaysOrders;
 
-uses(RefreshDatabase::class);
+uses(RefreshDatabase::class, PaysOrders::class);
 
 beforeEach(function () {
     // Mocker GoogleMapsService pour retourner des valeurs fixes
@@ -56,34 +57,42 @@ test('client can create order in pickup mode and pay it', function () {
                     'quantity' => 2,
                 ],
             ],
+            'payment_provider' => 'wave',
+            'payment_phone' => '+2250101010101',
         ]);
 
     $response->assertStatus(201);
     $response->assertJsonPath('success', true);
+    expect($response->json('payment.payment_url'))->not->toBeEmpty();
 
+    // Encaissement réel (Chantier 11) : la commande attend le paiement, stock réservé.
     $this->assertDatabaseHas('orders', [
         'client_id' => $client->id,
         'supplier_id' => $supplier->id,
         'delivery_mode' => 'pickup',
-        'status' => 'paid',
+        'status' => 'pending',
         'subtotal' => 10000,
         'delivery_cost' => 0,
         'platform_fee' => 300, // 3% of 10000
         'total_amount' => 10300,
     ]);
 
-    // Vérifier que le stock a été décrémenté
     $product->refresh();
     expect($product->stock_quantity)->toBe(8);
 
-    // Vérifier que la transaction séquestre a été créée
     // (id réel de la commande : MariaDB ne réinitialise pas l'AUTO_INCREMENT au rollback)
     $orderId = Order::where('client_id', $client->id)->value('id');
-    $this->assertDatabaseHas('transactions', [
-        'user_id' => $client->id,
-        'montant' => 10300,
-        'wallet_dest' => "escrow_order_{$orderId}",
-    ]);
+    $payment = Transaction::where('user_id', $client->id)->where('wallet_dest', "escrow_order_{$orderId}")->sole();
+    expect((int) $payment->montant)->toBe(10300)
+        ->and($payment->statut->value)->toBe('en_attente');
+
+    // Confirmation de l'opérateur : la commande est encaissée.
+    app(PaymentService::class)->confirmSimulatedPayment($payment);
+
+    $order = Order::findOrFail($orderId);
+    expect($order->status)->toBe('paid')
+        ->and($order->paid_at)->not->toBeNull()
+        ->and($payment->fresh()->statut->value)->toBe('confirme');
 });
 
 test('client can create order in delivery mode with dynamic maps calculation', function () {
@@ -131,12 +140,12 @@ test('client can create order in delivery mode with dynamic maps calculation', f
 
     $response->assertStatus(201);
 
-    // Le frais de livraison est initialement à 0 (calculé et payé lors de l'acceptation par le livreur)
+    // Le frais de livraison est initialement à 0 (course révélée et payée à la livraison)
     $this->assertDatabaseHas('orders', [
         'client_id' => $client->id,
         'supplier_id' => $supplier->id,
         'delivery_mode' => 'delivery',
-        'status' => 'paid',
+        'status' => 'pending',
         'subtotal' => 10000,
         'delivery_cost' => 0,
         'platform_fee' => 300,
@@ -153,6 +162,7 @@ test('full pickup order validation workflow', function () {
 
     // 1. Passer commande
     $order = app(OrderService::class)->createOrder($client, $supplier, [['supplier_product_id' => $product->id, 'quantity' => 1]], 'pickup');
+    $this->payOrder($order);
 
     // 2. Le fournisseur prépare la commande
     $this->actingAs($supplier)
@@ -199,6 +209,7 @@ test('full delivery order validation workflow', function () {
 
     // 1. Passer commande
     $order = app(OrderService::class)->createOrder($client, $supplier, [['supplier_product_id' => $product->id, 'quantity' => 1]], 'delivery');
+    $this->payOrder($order);
 
     // 2. Le fournisseur prépare la commande -> Passe à searching_driver
     $this->actingAs($supplier)

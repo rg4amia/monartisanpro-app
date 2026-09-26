@@ -2,6 +2,8 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\PaymentProvider;
+use App\Exceptions\PaymentException;
 use App\Http\Controllers\Controller;
 use App\Models\Address;
 use App\Models\Order;
@@ -9,6 +11,7 @@ use App\Models\SupplierProduct;
 use App\Models\User;
 use App\Services\DeliveryPricingService;
 use App\Services\OrderService;
+use App\Services\PaymentService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -44,6 +47,8 @@ class OrderController extends Controller
             'surge_multiplier' => 'nullable|numeric|min:1.0|max:3.0',
             'promo_code' => 'nullable|string|max:50',
             'mission_id' => 'nullable|exists:missions,id',
+            'payment_provider' => 'nullable|in:wave,orange_money,virement_bancaire',
+            'payment_phone' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -102,10 +107,13 @@ class OrderController extends Controller
                 $request->filled('mission_id') ? (int) $request->input('mission_id') : null
             );
 
+            $payment = $this->openOrderPayment($request, $order);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Commande créée et payée avec succès en compte séquestre.',
+                'message' => $payment['error'] ?? 'Commande créée : réglez-la pour la transmettre à la quincaillerie.',
                 'data' => $order->load('items.product'),
+                'payment' => $payment['data'] ?? null,
             ], 201);
         } catch (\Exception $e) {
             Log::error('Order creation error: '.$e->getMessage(), [
@@ -168,7 +176,7 @@ class OrderController extends Controller
         if ($user->role === 'client') {
             $query->where('client_id', $user->id);
         } elseif ($user->role === 'fournisseur') {
-            $query->where('supplier_id', $user->id);
+            $query->visibleToSupplier()->where('supplier_id', $user->id);
         } elseif (in_array($user->role, ['driver', 'livreur'])) {
             $query->where('driver_id', $user->id);
         } else {
@@ -607,6 +615,8 @@ class OrderController extends Controller
             'packages.*.items.*.supplier_product_id' => 'required|exists:supplier_products,id',
             'packages.*.items.*.quantity' => 'required|integer|min:1',
             'promo_code' => 'nullable|string',
+            'payment_provider' => 'nullable|in:wave,orange_money,virement_bancaire',
+            'payment_phone' => 'nullable|string|max:20',
         ]);
 
         if ($validator->fails()) {
@@ -656,10 +666,13 @@ class OrderController extends Controller
                 $address
             );
 
+            $payment = $this->openOrderPayment($request, $result['orders'][0]);
+
             return response()->json([
                 'success' => true,
-                'message' => 'Commandes multi-fournisseurs créées et payées avec succès.',
+                'message' => $payment['error'] ?? 'Commandes créées : réglez le panier pour les transmettre aux quincailleries.',
                 'data' => $result,
+                'payment' => $payment['data'] ?? null,
             ], 201);
         } catch (\Exception $e) {
             Log::error('Multi-order creation error: '.$e->getMessage(), [
@@ -677,6 +690,38 @@ class OrderController extends Controller
                 } catch (\Exception $e) {
                 }
             }
+        }
+    }
+
+    /**
+     * Ouvre le paiement d'une commande juste créée (Chantier 11). Un échec
+     * d'initiation (opérateur indisponible, plafond Mobile Money) ne défait
+     * pas la commande : le client la règle ensuite depuis « Mes commandes »
+     * (`POST /payments/orders/{order}/checkout`) avant l'échéance.
+     *
+     * @return array{data?: array, error?: string}
+     */
+    private function openOrderPayment(Request $request, Order $order): array
+    {
+        if (! $request->filled('payment_provider')) {
+            return [];
+        }
+
+        try {
+            $result = app(PaymentService::class)->initiateOrderPayment(
+                $request->user(),
+                $order,
+                PaymentProvider::from($request->input('payment_provider')),
+                $request->input('payment_phone'),
+            );
+
+            return ['data' => $result['data'] ?? null];
+        } catch (PaymentException $e) {
+            return ['error' => 'Commande créée, mais le paiement n\'a pas pu être ouvert : '.$e->getMessage()];
+        } catch (\Throwable $e) {
+            Log::warning('[Commande] Ouverture du paiement impossible : '.$e->getMessage(), ['order_id' => $order->id]);
+
+            return ['error' => 'Commande créée, mais le paiement n\'a pas pu être ouvert. Réglez-la depuis « Mes commandes ».'];
         }
     }
 }

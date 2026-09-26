@@ -25,6 +25,8 @@ import {
 import type { AdminTransaction, DocumentStats, GeneratedDocumentItem, Paginated, TransactionStats } from '../shared';
 import { CashoutQuincaillerieSection } from './CashoutQuincaillerieSection';
 import { DocumentsReportsSection } from './DocumentsReportsSection';
+import { CollectionsSection } from './CollectionsSection';
+import type { CollectionsOverview } from './CollectionsSection';
 import { PayoutsSection } from './PayoutsSection';
 import type { DriverCashoutsOverview, PayoutsOverview } from './PayoutsSection';
 
@@ -52,6 +54,7 @@ interface TransactionsPanelProps {
     documentStats?: DocumentStats;
     payoutsOverview?: PayoutsOverview | null;
     driverCashoutsOverview?: DriverCashoutsOverview | null;
+    collectionsOverview?: CollectionsOverview | null;
 }
 
 export function TransactionsPanel({
@@ -76,10 +79,12 @@ export function TransactionsPanel({
     documentStats,
     payoutsOverview,
     driverCashoutsOverview,
+    collectionsOverview,
 }: TransactionsPanelProps) {
     const rows = transactionsPage?.data ?? [];
-    const [subTab, setSubTab] = useState<'treasury' | 'payouts' | 'commissions' | 'journal' | 'documents' | 'ledger'>('treasury');
+    const [subTab, setSubTab] = useState<'treasury' | 'payouts' | 'collections' | 'commissions' | 'journal' | 'documents' | 'ledger'>('treasury');
     const payoutsToHandle = (payoutsOverview?.stats.failed_count ?? 0) + (driverCashoutsOverview?.pending.length ?? 0);
+    const collectionsToHandle = (collectionsOverview?.stats.unpaid_count ?? 0) + (collectionsOverview?.pending_bank_transfers.length ?? 0);
 
     return (
         <section className="mt-5 space-y-6">
@@ -114,6 +119,24 @@ export function TransactionsPanel({
                         {payoutsToHandle > 0 ? (
                             <span className="rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-extrabold text-white">
                                 {numberFormat.format(payoutsToHandle)}
+                            </span>
+                        ) : null}
+                    </button>
+                    <button
+                        type="button"
+                        onClick={() => setSubTab('collections')}
+                        className={cn(
+                            'inline-flex items-center gap-2 rounded-2xl px-4 py-2.5 text-xs font-bold transition',
+                            subTab === 'collections'
+                                ? 'bg-[#ebb95e] text-[#241b16] shadow-sm'
+                                : 'bg-[var(--admin-panel-strong)] text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel-strong)] hover:text-[var(--admin-text)]'
+                        )}
+                    >
+                        <span>🧾</span>
+                        <span>Encaissements</span>
+                        {collectionsToHandle > 0 ? (
+                            <span className="rounded-full bg-rose-600 px-2 py-0.5 text-[10px] font-extrabold text-white">
+                                {numberFormat.format(collectionsToHandle)}
                             </span>
                         ) : null}
                     </button>
@@ -192,6 +215,9 @@ export function TransactionsPanel({
             {subTab === 'payouts' && (
                 <PayoutsSection payoutsOverview={payoutsOverview} driverCashoutsOverview={driverCashoutsOverview} />
             )}
+
+            {/* VUE 1 ter : ENCAISSEMENTS — COURSES IMPAYÉES, RESTRICTIONS, VIREMENTS (Chantier 11) */}
+            {subTab === 'collections' && <CollectionsSection collectionsOverview={collectionsOverview} />}
 
             {/* VUE 2 : COMMISSIONS & PERFORMANCE MÉTIERS */}
             {subTab === 'commissions' && (

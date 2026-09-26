@@ -227,6 +227,124 @@ class PaymentService
     }
 
     /**
+     * Initie l'encaissement d'une commande de matériaux — ou de tout le panier
+     * multi-quincailleries dont elle fait partie (Chantier 11). Le montant est
+     * la somme des `total_amount` établis par le serveur à la création, jamais
+     * un montant posté (Règle d'or 36) ; seul le client de la commande paie.
+     */
+    public function initiateOrderPayment(User $client, Order $order, PaymentProvider $provider, ?string $phone): array
+    {
+        if ((int) $order->client_id !== (int) $client->id) {
+            throw new PaymentException("Vous n'êtes pas autorisé à régler cette commande.", 403);
+        }
+
+        $orderService = app(OrderService::class);
+        $orders = $orderService->ordersPaidTogether($order)
+            ->where('status', OrderService::STATUS_PENDING_PAYMENT)
+            ->values();
+
+        if ($orders->isEmpty()) {
+            throw new PaymentException('Cette commande est déjà réglée ou a été annulée.', 422);
+        }
+
+        if ($orders->contains(fn (Order $pending) => $pending->payment_expires_at && $pending->payment_expires_at->isPast())) {
+            throw new PaymentException('Le délai de paiement de cette commande est dépassé : elle va être annulée. Passez une nouvelle commande.', 422);
+        }
+
+        $montant = (int) $orders->sum('total_amount');
+        if ($montant <= 0) {
+            throw new PaymentException('Le montant de cette commande est nul : aucun paiement à effectuer.', 422);
+        }
+
+        $this->assertPaymentAllowed($montant, $provider);
+
+        $orderIds = $orders->pluck('id')->map(fn ($id) => (int) $id)->all();
+        $phone = (string) ($phone ?? $client->payment_phone ?? $client->phone ?? '');
+        $groupId = $order->order_group_id;
+
+        $existing = Transaction::where('user_id', $client->id)
+            ->where('type', 'acompte')
+            ->where('montant', $montant)
+            ->where('provider', $provider)
+            ->where('statut', PaymentStatus::EN_ATTENTE)
+            ->whereJsonContains('metadata->order_ids', $orderIds[0])
+            ->orderByDesc('id')
+            ->first();
+
+        $subject = ['order_id' => $order->id, 'order_ids' => $orderIds];
+
+        if ($existing && ($reused = $this->reusePendingTransaction($existing, $provider, 'Paiement de la commande', $subject))) {
+            return $reused;
+        }
+
+        $label = $groupId
+            ? "Commande multi-quincailleries {$groupId}"
+            : "Commande de matériaux #{$order->id}";
+
+        $transaction = Transaction::create([
+            'user_id' => $client->id,
+            'type' => 'acompte',
+            'montant' => $montant,
+            'wallet_source' => $provider === PaymentProvider::VIREMENT_BANCAIRE ? 'client_bank_'.$client->id : 'client_mobile_money_'.$client->id,
+            'wallet_dest' => $groupId ? 'escrow_group_'.$groupId : 'escrow_order_'.$order->id,
+            'provider' => $provider,
+            'statut' => PaymentStatus::EN_ATTENTE,
+            'client_phone' => $phone,
+            'metadata' => array_filter([
+                'payment_type' => 'order',
+                'order_id' => $groupId ? null : $order->id,
+                'order_group_id' => $groupId,
+                'order_ids' => $orderIds,
+                'description' => $groupId ? "Paiement groupé panier multi-fournisseurs {$groupId}" : "Paiement de la commande e-commerce #{$order->id} en séquestre",
+            ], fn ($value) => $value !== null),
+        ]);
+
+        // Un virement demande plus de temps qu'un paiement Mobile Money : la
+        // réservation du stock est prolongée d'autant.
+        if ($provider === PaymentProvider::VIREMENT_BANCAIRE) {
+            Order::whereIn('id', $orderIds)->update(['payment_expires_at' => $orderService->paymentDeadline(bankTransfer: true)]);
+        }
+
+        return $this->startCheckout(
+            $transaction,
+            $provider,
+            $phone,
+            $label,
+            ['order_ids' => $orderIds, 'payment_type' => 'order'],
+            'REF-CMD-'.$order->id.'-'.str_pad((string) random_int(0, 999), 3, '0', STR_PAD_LEFT),
+            'Instructions de virement bancaire pour votre commande de matériaux',
+            'Paiement de la commande',
+            $subject,
+        );
+    }
+
+    /**
+     * Confirme à la main un virement bancaire reçu pour une commande de
+     * matériaux (seule voie de confirmation d'un virement). Audité par le
+     * contrôleur ; même effet qu'un webhook, donc idempotent.
+     */
+    public function confirmOrderBankTransfer(Transaction $transaction, string $bankReference): Transaction
+    {
+        if (($transaction->metadata['payment_type'] ?? null) !== 'order' || $transaction->provider !== PaymentProvider::VIREMENT_BANCAIRE) {
+            throw new PaymentException('Seul le virement bancaire d\'une commande de matériaux se confirme ici.', 422);
+        }
+
+        if ($transaction->statut !== PaymentStatus::EN_ATTENTE) {
+            throw new PaymentException('Ce virement n\'est plus en attente de confirmation.', 422);
+        }
+
+        $transaction->update([
+            'statut' => PaymentStatus::CONFIRME,
+            'paid_at' => now(),
+            'metadata' => array_merge($transaction->metadata ?? [], ['bank_confirmation_reference' => $bankReference]),
+        ]);
+
+        $this->applyConfirmedPayment($transaction);
+
+        return $transaction->refresh();
+    }
+
+    /**
      * Initie le paiement du séquestre d'un engagement de recrutement : les
      * journées en attente de paiement (lot initial ou prolongation). Leurs
      * identifiants sont figés sur la transaction, qui ne pourra débloquer
@@ -409,6 +527,13 @@ class PaymentService
 
         // Séquestres de recrutement (engagement journalier, accès aux candidatures).
         app(RecruitmentEngagementService::class)->applyConfirmedPayment($transaction);
+
+        // Commande de matériaux (ou panier) : encaissement réel (Chantier 11).
+        if (($transaction->metadata['payment_type'] ?? '') === 'order') {
+            app(OrderService::class)->confirmOrderPayment($transaction);
+
+            return;
+        }
 
         // Course de livraison réglée par le client : crédit du livreur.
         if (($transaction->metadata['payment_type'] ?? '') === 'delivery_fare') {
@@ -644,7 +769,9 @@ class PaymentService
                 'reference_externe' => $result['order_id'],
                 'metadata' => array_merge($transaction->metadata ?? [], [
                     'payment_url' => $result['payment_url'],
-                    'order_id' => $result['order_id'],
+                    // Jamais sous `order_id` : cette clé désigne la commande
+                    // ProsArtisan (course, commande de matériaux).
+                    'orange_order_reference' => $result['order_id'],
                 ]),
             ]);
 

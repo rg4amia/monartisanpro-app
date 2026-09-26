@@ -30,6 +30,8 @@ class OrderRepository {
     double? surgeMultiplier,
     String? promoCode,
     int? addressId,
+    String? paymentProvider,
+    String? paymentPhone,
   }) async {
     final res = await _client.post(
       ApiEndpoints.orders,
@@ -41,6 +43,9 @@ class OrderRepository {
         if (surgeMultiplier != null) 'surge_multiplier': surgeMultiplier,
         if (promoCode != null && promoCode.isNotEmpty) 'promo_code': promoCode,
         if (addressId != null) 'address_id': addressId,
+        if (paymentProvider != null) 'payment_provider': paymentProvider,
+        if (paymentPhone != null && paymentPhone.isNotEmpty)
+          'payment_phone': paymentPhone,
       },
     );
     await _invalidateMyOrders();
@@ -51,6 +56,8 @@ class OrderRepository {
     required List<Map<String, dynamic>> packages,
     String? promoCode,
     int? addressId,
+    String? paymentProvider,
+    String? paymentPhone,
   }) async {
     final res = await _client.post(
       ApiEndpoints.ordersMultiStore,
@@ -58,6 +65,9 @@ class OrderRepository {
         'packages': packages,
         if (promoCode != null && promoCode.isNotEmpty) 'promo_code': promoCode,
         if (addressId != null) 'address_id': addressId,
+        if (paymentProvider != null) 'payment_provider': paymentProvider,
+        if (paymentPhone != null && paymentPhone.isNotEmpty)
+          'payment_phone': paymentPhone,
       },
     );
     await _invalidateMyOrders();

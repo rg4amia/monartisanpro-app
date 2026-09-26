@@ -3,11 +3,13 @@
 namespace Tests\Feature;
 
 use App\Enums\WalletType;
+use App\Models\Litige;
 use App\Models\Mission;
 use App\Models\MobileMoneyPayout;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\MobileMoneyPayoutService;
+use App\Services\OrangeMoneyService;
 use App\Services\WalletService;
 use App\Services\WaveService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -171,6 +173,80 @@ class ClientRefundPayoutTest extends TestCase
 
         $this->assertSame(MobileMoneyPayout::STATUT_VERSE, $payout->fresh()->statut);
         $this->assertSame(0, $this->artisan->fresh()->wallet_materiaux);
+    }
+
+    public function test_the_client_chooses_where_to_receive_the_refund(): void
+    {
+        $payout = $this->failedRefund();
+
+        // Un tiers ne peut pas détourner le remboursement.
+        $this->actingAs($this->artisan)
+            ->putJson("/api/v1/payouts/{$payout->id}/destination", ['provider' => 'orange_money', 'phone' => '+2250799999999'])
+            ->assertForbidden();
+
+        $this->actingAs($this->client)
+            ->putJson("/api/v1/payouts/{$payout->id}/destination", ['provider' => 'orange_money', 'phone' => '0700000000'])
+            ->assertStatus(422);
+
+        $this->actingAs($this->client)
+            ->putJson("/api/v1/payouts/{$payout->id}/destination", ['provider' => 'orange_money', 'phone' => '+2250711223344'])
+            ->assertOk();
+
+        $payout->refresh();
+        $this->assertSame('orange_money', $payout->provider);
+        $this->assertSame('+2250711223344', $payout->phone);
+        $this->assertTrue($payout->phone_locked, 'Une relance ne remplace plus ce numéro par celui du profil.');
+        $this->assertSame('changement_destination', $payout->events()->pluck('action')->last());
+    }
+
+    public function test_the_destination_of_a_step_payment_is_not_editable_here(): void
+    {
+        $artisanPayout = MobileMoneyPayout::create([
+            'reference' => MobileMoneyPayout::generateReference(),
+            'user_id' => $this->artisan->id,
+            'wallet_type' => WalletType::WALLET_MO->value,
+            'context' => MobileMoneyPayout::CONTEXT_JALON,
+            'montant' => 5000,
+            'provider' => 'wave',
+            'phone' => '+2250700000002',
+            'statut' => MobileMoneyPayout::STATUT_ECHOUE,
+        ]);
+
+        $this->actingAs($this->artisan)
+            ->putJson("/api/v1/payouts/{$artisanPayout->id}/destination", ['provider' => 'orange_money', 'phone' => '+2250711223344'])
+            ->assertStatus(422);
+    }
+
+    public function test_a_refund_preference_declared_on_the_dispute_is_used(): void
+    {
+        $litige = Litige::create([
+            'mission_id' => $this->mission->id,
+            'declencheur_id' => $this->client->id,
+            'type' => 'client',
+            'motif' => 'Travaux non conformes',
+            'description' => 'Carrelage posé de travers.',
+            'statut' => 'ouvert',
+        ]);
+
+        $this->actingAs($this->artisan)
+            ->putJson("/api/v1/litiges/{$litige->id}/refund-destination", ['provider' => 'wave', 'phone' => '+2250755555555'])
+            ->assertForbidden();
+
+        $this->actingAs($this->client)
+            ->putJson("/api/v1/litiges/{$litige->id}/refund-destination", ['provider' => 'orange_money', 'phone' => '+2250711223344'])
+            ->assertOk();
+
+        $this->mock(OrangeMoneyService::class, function (MockInterface $mock) {
+            $mock->shouldReceive('transferToMobileMoney')
+                ->once()
+                ->with('+2250711223344', 100000, \Mockery::any())
+                ->andReturn(['txnid' => 'OM-REFUND-1']);
+        });
+
+        $transaction = app(WalletService::class)->refundClientFromDispute($this->mission, 65000, 35000, $litige->fresh());
+
+        $this->assertSame('confirme', $transaction->statut->value);
+        $this->assertSame('orange_money', MobileMoneyPayout::firstOrFail()->provider);
     }
 
     public function test_a_refund_owed_to_the_client_cannot_be_cancelled(): void

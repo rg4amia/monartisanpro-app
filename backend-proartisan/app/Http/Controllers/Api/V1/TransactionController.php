@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\URL;
 
 class TransactionController extends Controller
 {
@@ -38,6 +39,33 @@ class TransactionController extends Controller
             'meta' => [
                 'total' => $transactions->total(),
                 'current_page' => $transactions->currentPage(),
+            ],
+        ]);
+    }
+
+    /**
+     * Lien signé (15 min) vers le reçu PDF d'une transaction confirmée du
+     * titulaire : paiement de commande, de course, acompte, retrait livreur,
+     * remboursement, versement… (Chantier 11). Propriété vérifiée (Règle
+     * d'or 36) : jamais le reçu d'un autre utilisateur.
+     */
+    public function receiptLink(Request $request, Transaction $transaction): JsonResponse
+    {
+        if ((int) $transaction->user_id !== (int) $request->user()->id) {
+            return response()->json(['success' => false, 'message' => 'Ce reçu ne vous appartient pas.'], 403);
+        }
+
+        if (! $transaction->statut->isSuccessful()) {
+            return response()->json(['success' => false, 'message' => 'Le reçu est disponible une fois le paiement confirmé.'], 422);
+        }
+
+        $expiresAt = now()->addMinutes(15);
+
+        return response()->json([
+            'success' => true,
+            'data' => [
+                'url' => URL::temporarySignedRoute('receipts.transaction.file', $expiresAt, ['transaction' => $transaction->id]),
+                'expires_at' => $expiresAt->toIso8601String(),
             ],
         ]);
     }

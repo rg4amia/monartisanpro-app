@@ -9,10 +9,12 @@ use App\Models\User;
 use App\Services\GoogleMapsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
+use Tests\Support\PaysOrders;
 use Tests\TestCase;
 
 class Sprint5ComplianceTest extends TestCase
 {
+    use PaysOrders;
     use RefreshDatabase;
 
     public function test_surge_pricing_and_vehicle_multipliers(): void
@@ -91,6 +93,7 @@ class Sprint5ComplianceTest extends TestCase
 
         $response1->assertCreated();
         $order1 = Order::findOrFail($response1->json('data.id'));
+        $this->payOrder($order1);
 
         // Préparer et accepter la commande pour déclencher le calcul de livraison
         $this->actingAs($supplier)->postJson("/api/v1/orders/{$order1->id}/prepared")->assertOk();
@@ -116,6 +119,7 @@ class Sprint5ComplianceTest extends TestCase
 
         $response2->assertCreated();
         $order2 = Order::findOrFail($response2->json('data.id'));
+        $this->payOrder($order2);
 
         $this->actingAs($supplier)->postJson("/api/v1/orders/{$order2->id}/prepared")->assertOk();
         $this->actingAs($driver)->postJson("/api/v1/deliveries/{$order2->id}/accept")->assertOk();
@@ -140,6 +144,7 @@ class Sprint5ComplianceTest extends TestCase
 
         $response3->assertCreated();
         $order3 = Order::findOrFail($response3->json('data.id'));
+        $this->payOrder($order3);
 
         $this->actingAs($supplier)->postJson("/api/v1/orders/{$order3->id}/prepared")->assertOk();
         $this->actingAs($driver)->postJson("/api/v1/deliveries/{$order3->id}/accept")->assertOk();

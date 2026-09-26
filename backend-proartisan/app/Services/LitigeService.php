@@ -9,6 +9,7 @@ use App\Models\JuryReview;
 use App\Models\Litige;
 use App\Models\LitigeEvidence;
 use App\Models\Mission;
+use App\Models\MobileMoneyPayout;
 use App\Models\Parrainage;
 use App\Models\ScoreLedgerEntry;
 use App\Models\User;
@@ -226,6 +227,36 @@ class LitigeService
         }
 
         return $litige;
+    }
+
+    /**
+     * Le client de la mission indique l'opérateur et le numéro sur lesquels
+     * recevoir un éventuel remboursement (Chantier 11). Si le remboursement
+     * est déjà en cours et non abouti, sa destination est mise à jour aussi.
+     */
+    public function setRefundDestination(Litige $litige, User $user, string $provider, string $phone): Litige
+    {
+        $mission = $litige->mission;
+        if (! $mission || (int) $mission->client_id !== (int) $user->id) {
+            throw new \DomainException('Seul le client de la mission choisit le moyen de remboursement.', 403);
+        }
+
+        $payouts = app(MobileMoneyPayoutService::class);
+        $payouts->assertValidDestination($provider, $phone);
+
+        $litige->update(['refund_provider' => $provider, 'refund_phone' => $phone]);
+
+        $pending = MobileMoneyPayout::where('mission_id', $mission->id)
+            ->where('user_id', $user->id)
+            ->where('context', MobileMoneyPayout::CONTEXT_REMBOURSEMENT_CLIENT)
+            ->whereIn('statut', MobileMoneyPayout::STATUTS_NON_ABOUTIS)
+            ->get();
+
+        foreach ($pending as $payout) {
+            $payouts->changeRefundDestination($payout, $user, $provider, $phone);
+        }
+
+        return $litige->fresh();
     }
 
     public function evaluateSla(Litige $litige): Litige

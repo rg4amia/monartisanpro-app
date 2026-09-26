@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\AdminService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
+use Tests\Support\PaysOrders;
 use Tests\TestCase;
 
 /**
@@ -22,6 +23,7 @@ use Tests\TestCase;
  */
 class OrderCodeVisibilityTest extends TestCase
 {
+    use PaysOrders;
     use RefreshDatabase;
 
     private User $client;
@@ -253,6 +255,7 @@ class OrderCodeVisibilityTest extends TestCase
         ])->assertCreated();
 
         $order = Order::latest('id')->firstOrFail();
+        $this->payOrder($order);
 
         $this->actingAs($this->supplier)
             ->postJson("/api/v1/orders/{$order->id}/prepared")

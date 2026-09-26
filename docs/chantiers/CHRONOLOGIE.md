@@ -8,6 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-09-26 | Plan | [Chantier 11 — Encaissement réel des commandes, relances de course, course au trajet GPS, reçus PDF](plans/2026-09-26-chantier-11-encaissements-relances-recus.md) | livré | — |
 | 2026-09-26 | Plan | [Chantier 10 — Portefeuilles, versements Mobile Money et course livreur « à la Yango »](plans/2026-09-26-chantier-10-portefeuilles-versements.md) | livré | `e06db5d9` |
 | 2026-09-26 | Plan | [Feuille de route — Chantiers 6 à 9 (Innovations & Améliorations)](plans/2026-09-26-feuille-de-route-chantiers-innovations.md) | livré | `30880554`, `63e6e08e` |
 | 2026-09-25 | Audit | [Réalisation du Chantier 5 — KYC Gemini](audits/2026-09-25-audit-chantier-5-kyc-gemini.md) | — | `25a97550` et suivant |

@@ -6,6 +6,7 @@ use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
 use App\Enums\WalletType;
 use App\Models\Address;
+use App\Models\DeliveryTracking;
 use App\Models\FournisseurAgree;
 use App\Models\Order;
 use App\Models\OrderItem;
@@ -14,6 +15,8 @@ use App\Models\Setting;
 use App\Models\SupplierProduct;
 use App\Models\Transaction;
 use App\Models\User;
+use Carbon\CarbonInterface;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -22,6 +25,12 @@ class OrderService
 {
     /** Courses acceptées par un livreur et pas encore livrées. */
     public const DRIVER_IN_PROGRESS_STATUSES = ['driver_assigned', 'driver_picked_up', 'shipping'];
+
+    /** Commande créée, en attente du paiement du client (stock réservé). */
+    public const STATUS_PENDING_PAYMENT = 'pending';
+
+    /** Délai laissé à un virement bancaire (confirmé par un admin). */
+    public const BANK_TRANSFER_PAYMENT_HOURS = 72;
 
     private DeliveryPricingService $pricingService;
 
@@ -84,13 +93,15 @@ class OrderService
 
             // 4. Calcul de la remise éventuelle liée au code promo
             $discountAmount = 0;
+            $appliedPromo = null;
             if ($promoCode) {
                 $codeStr = strtoupper(trim($promoCode));
-                $appliedPromo = PromoCode::where('code', $codeStr)->first();
-                if ($appliedPromo) {
+                $promo = PromoCode::where('code', $codeStr)->first();
+                if ($promo) {
                     try {
-                        $discountAmount = $appliedPromo->calculateDiscount($subtotal);
-                        $appliedPromo->increment('used_count');
+                        $discountAmount = $promo->calculateDiscount($subtotal);
+                        $promo->increment('used_count');
+                        $appliedPromo = $promo;
                     } catch (\Exception $e) {
                         // En cas de non-éligibilité, on ne bloque pas
                     }
@@ -113,7 +124,11 @@ class OrderService
                 'client_id' => $client->id,
                 'supplier_id' => $supplier->id,
                 'delivery_mode' => $deliveryMode,
-                'status' => 'paid', // La commande est payée directement à la création
+                // Encaissement réel (Chantier 11) : la commande attend le
+                // paiement Wave / Orange Money du client, stock réservé.
+                'status' => self::STATUS_PENDING_PAYMENT,
+                'payment_expires_at' => $this->paymentDeadline(),
+                'promo_code' => $appliedPromo?->code,
                 'subtotal' => $subtotal,
                 'delivery_cost' => $deliveryCost,
                 'platform_fee' => $platformFee,
@@ -140,46 +155,6 @@ class OrderService
 
                 // Décrémenter le stock
                 $data['product']->decrement('stock_quantity', $data['quantity']);
-            }
-
-            // 7. Enregistrement de la transaction séquestre associée
-            Transaction::create([
-                'user_id' => $client->id,
-                'type' => 'acompte',
-                'montant' => $totalAmount,
-                'wallet_source' => 'client_mobile_money_'.$client->id,
-                'wallet_dest' => 'escrow_order_'.$order->id,
-                'provider' => PaymentProvider::WAVE,
-                'statut' => PaymentStatus::CONFIRME,
-                'paid_at' => now(),
-                'metadata' => [
-                    'order_id' => $order->id,
-                    'description' => "Paiement de la commande e-commerce #{$order->id} en séquestre",
-                ],
-            ]);
-
-            // Notification Fournisseur
-            try {
-                app(NotificationService::class)->send(
-                    $supplier,
-                    'payment',
-                    'Nouvelle commande reçue',
-                    "La commande #{$order->id} d'un montant de ".number_format($order->subtotal, 0, ',', ' ').' FCFA a été payée et est en attente de préparation.'
-                );
-            } catch (\Throwable $e) {
-                Log::warning('Notification fournisseur non bloquante : '.$e->getMessage());
-            }
-
-            // Notification Client
-            try {
-                app(NotificationService::class)->send(
-                    $client,
-                    'payment',
-                    'Paiement commande confirmé',
-                    'Votre paiement de '.number_format($order->total_amount, 0, ',', ' ')." FCFA pour la commande #{$order->id} est sécurisé en compte séquestre."
-                );
-            } catch (\Throwable $e) {
-                Log::warning('Notification client non bloquante : '.$e->getMessage());
             }
 
             return $order;
@@ -269,7 +244,8 @@ class OrderService
                     'client_id' => $client->id,
                     'supplier_id' => $supplier->id,
                     'delivery_mode' => $deliveryMode,
-                    'status' => 'paid',
+                    'status' => self::STATUS_PENDING_PAYMENT,
+                    'payment_expires_at' => $this->paymentDeadline(),
                     'subtotal' => $pkgSubtotal,
                     'delivery_cost' => $pkgDeliveryCost,
                     'platform_fee' => $pkgPlatformFee,
@@ -298,70 +274,44 @@ class OrderService
                     $data['product']->decrement('stock_quantity', $data['quantity']);
                 }
 
-                $createdOrders[] = $order->load('items.product', 'supplier.fournisseurAgree');
+                $createdOrders[] = $order;
                 $totalSubtotal += $pkgSubtotal;
                 $totalDeliveryCost += $pkgDeliveryCost;
                 $totalPlatformFee += $pkgPlatformFee;
                 $grandTotal += $pkgTotal;
-
-                // Notification individuelle au fournisseur
-                try {
-                    app(NotificationService::class)->send(
-                        $supplier,
-                        'payment',
-                        'Nouvelle commande reçue (Panier multi-fournisseurs)',
-                        "La commande #{$order->id} (Groupe {$orderGroupId}) d'un montant de ".number_format($order->subtotal, 0, ',', ' ').' FCFA a été payée et est en attente de préparation.'
-                    );
-                } catch (\Throwable $e) {
-                    Log::warning('Notification fournisseur non bloquante : '.$e->getMessage());
-                }
             }
 
-            // Gestion éventuelle du code promo global
-            $discountAmount = 0;
+            // Code promo global : la remise est imputée sur les sous-commandes
+            // (dans l'ordre), pour que le montant à encaisser reste la somme
+            // exacte de leurs `total_amount` — jamais un montant à part.
             if ($promoCode) {
                 $codeStr = strtoupper(trim($promoCode));
                 $appliedPromo = PromoCode::where('code', $codeStr)->first();
                 if ($appliedPromo) {
                     try {
-                        $discountAmount = $appliedPromo->calculateDiscount($totalSubtotal);
+                        $remaining = $appliedPromo->calculateDiscount($totalSubtotal);
                         $appliedPromo->increment('used_count');
-                        $grandTotal = max(0, $grandTotal - $discountAmount);
+
+                        foreach ($createdOrders as $index => $created) {
+                            $cut = min($remaining, (int) $created->total_amount);
+                            $created->update([
+                                'total_amount' => (int) $created->total_amount - $cut,
+                                // Porté par la première sous-commande : restitué une fois à l'expiration.
+                                'promo_code' => $index === 0 ? $appliedPromo->code : null,
+                            ]);
+                            $remaining -= $cut;
+                            $grandTotal -= $cut;
+                        }
                     } catch (\Exception $e) {
-                        // ignore
+                        // Non éligible : aucune remise.
                     }
                 }
             }
 
-            // Enregistrement de la transaction financière unique pour le groupe
-            Transaction::create([
-                'user_id' => $client->id,
-                'type' => 'acompte',
-                'montant' => $grandTotal,
-                'wallet_source' => 'client_mobile_money_'.$client->id,
-                'wallet_dest' => 'escrow_group_'.$orderGroupId,
-                'provider' => PaymentProvider::WAVE,
-                'statut' => PaymentStatus::CONFIRME,
-                'paid_at' => now(),
-                'metadata' => [
-                    'order_group_id' => $orderGroupId,
-                    'order_ids' => array_column($createdOrders, 'id'),
-                    'packages_count' => count($createdOrders),
-                    'description' => "Paiement groupé panier multi-fournisseurs {$orderGroupId}",
-                ],
-            ]);
-
-            // Notification Client
-            try {
-                app(NotificationService::class)->send(
-                    $client,
-                    'payment',
-                    'Paiement groupé confirmé',
-                    "Votre commande multi-fournisseurs ({$orderGroupId}) pour ".count($createdOrders)." quincailleries d'un montant total de ".number_format($grandTotal, 0, ',', ' ').' FCFA est sécurisée en compte séquestre.'
-                );
-            } catch (\Throwable $e) {
-                Log::warning('Notification client non bloquante : '.$e->getMessage());
-            }
+            $createdOrders = array_map(
+                fn (Order $created) => $created->load('items.product', 'supplier.fournisseurAgree'),
+                $createdOrders
+            );
 
             return [
                 'order_group_id' => $orderGroupId,
@@ -372,8 +322,310 @@ class OrderService
                 'total_platform_fee' => $totalPlatformFee,
                 'total_amount' => $grandTotal,
                 'packages_count' => count($createdOrders),
+                'payment_expires_at' => $createdOrders[0]->payment_expires_at?->toIso8601String(),
             ];
         });
+    }
+
+    /**
+     * Échéance de paiement d'une commande créée maintenant.
+     */
+    public function paymentDeadline(bool $bankTransfer = false): CarbonInterface
+    {
+        if ($bankTransfer) {
+            return now()->addHours(self::BANK_TRANSFER_PAYMENT_HOURS);
+        }
+
+        $minutes = (int) Setting::getValueByKey('order_payment_timeout_minutes', 30);
+
+        return now()->addMinutes(max(5, $minutes));
+    }
+
+    /**
+     * Commandes réglées ensemble : tout le panier multi-quincailleries, sinon
+     * la commande seule.
+     *
+     * @return Collection<int, Order>
+     */
+    public function ordersPaidTogether(Order $order): Collection
+    {
+        if ($order->order_group_id) {
+            return Order::where('order_group_id', $order->order_group_id)->orderBy('id')->get();
+        }
+
+        return new Collection([$order]);
+    }
+
+    /**
+     * Encaisse une commande (ou un panier) après confirmation du paiement du
+     * client. Idempotent : webhook, interrogation de statut et simulateur
+     * peuvent confirmer le même paiement (Règle d'or 36). Le montant et le
+     * payeur sont revérifiés contre ce que le serveur a établi.
+     *
+     * Un paiement confirmé après l'annulation de la commande (délai dépassé)
+     * la réactive si le stock le permet ; sinon il est signalé à l'admin pour
+     * remboursement, jamais perdu en silence.
+     *
+     * @return bool vrai si ce paiement vient d'encaisser la commande
+     */
+    public function confirmOrderPayment(Transaction $payment): bool
+    {
+        $ids = array_values(array_unique(array_map('intval', (array) ($payment->metadata['order_ids'] ?? []))));
+        if ($ids === []) {
+            return false;
+        }
+
+        $confirmed = DB::transaction(function () use ($payment, $ids) {
+            $orders = Order::whereIn('id', $ids)->orderBy('id')->lockForUpdate()->get();
+
+            if ($orders->count() !== count($ids)
+                || $orders->every(fn (Order $order) => ! in_array($order->status, [self::STATUS_PENDING_PAYMENT, 'cancelled'], true))) {
+                return null;
+            }
+
+            $expected = (int) $orders->sum('total_amount');
+            if ((int) $payment->montant !== $expected || $orders->contains(fn (Order $order) => (int) $order->client_id !== (int) $payment->user_id)) {
+                Log::warning("[Commande] Paiement #{$payment->id} non conforme", ['attendu' => $expected, 'recu' => $payment->montant]);
+
+                return null;
+            }
+
+            $cancelled = $orders->where('status', 'cancelled');
+            if ($cancelled->isNotEmpty() && ! $this->reserveStockAgain($cancelled)) {
+                $payment->update(['metadata' => array_merge($payment->metadata ?? [], ['refund_required' => true])]);
+
+                try {
+                    app(NotificationService::class)->sendAdmin(
+                        'payment',
+                        'Paiement reçu pour une commande annulée',
+                        "Le paiement #{$payment->id} (".number_format($expected, 0, ',', ' ').' FCFA) est arrivé après l\'annulation des commandes #'.implode(', #', $ids).' et le stock ne permet plus de les honorer : remboursement du client à effectuer.'
+                    );
+                } catch (\Throwable $e) {
+                    Log::warning('[Commande] Alerte admin non envoyée : '.$e->getMessage());
+                }
+
+                return null;
+            }
+
+            foreach ($orders as $order) {
+                if (in_array($order->status, [self::STATUS_PENDING_PAYMENT, 'cancelled'], true)) {
+                    $order->update(['status' => 'paid', 'paid_at' => now(), 'payment_expires_at' => null]);
+                }
+            }
+
+            return $orders;
+        });
+
+        if (! $confirmed) {
+            return false;
+        }
+
+        $this->notifyOrderPaid($confirmed, (int) $payment->montant);
+
+        return true;
+    }
+
+    /**
+     * Annule les commandes dont le délai de paiement est dépassé, après avoir
+     * interrogé l'opérateur (un paiement abouti sans webhook est encaissé, pas
+     * annulé). Stock et code promo sont restitués.
+     *
+     * @return array{checked: int, cancelled: int, confirmed: int}
+     */
+    public function expireUnpaidOrders(): array
+    {
+        $expired = Order::where('status', self::STATUS_PENDING_PAYMENT)
+            ->whereNotNull('payment_expires_at')
+            ->where('payment_expires_at', '<=', now())
+            ->orderBy('id')
+            ->limit(200)
+            ->get();
+
+        $seen = [];
+        $cancelled = 0;
+        $confirmed = 0;
+
+        foreach ($expired as $order) {
+            $key = $order->order_group_id ?: 'order-'.$order->id;
+            if (isset($seen[$key])) {
+                continue;
+            }
+            $seen[$key] = true;
+
+            foreach ($this->pendingOrderPayments($order) as $transaction) {
+                try {
+                    app(PaymentService::class)->refreshStatus($transaction);
+                } catch (\Throwable $e) {
+                    Log::warning("[Commande] Statut du paiement #{$transaction->id} indisponible : {$e->getMessage()}");
+                }
+            }
+
+            if ($order->fresh()->status !== self::STATUS_PENDING_PAYMENT) {
+                $confirmed++;
+
+                continue;
+            }
+
+            $this->cancelUnpaidOrders($this->ordersPaidTogether($order));
+            $cancelled++;
+        }
+
+        return ['checked' => count($seen), 'cancelled' => $cancelled, 'confirmed' => $confirmed];
+    }
+
+    /**
+     * Virements bancaires de commandes en attente de confirmation par un
+     * admin (backoffice, sous-onglet « Encaissements »).
+     */
+    public function pendingBankTransferPayments(): array
+    {
+        return Transaction::with('user:id,name,phone')
+            ->where('statut', PaymentStatus::EN_ATTENTE)
+            ->where('provider', PaymentProvider::VIREMENT_BANCAIRE)
+            ->where('type', 'acompte')
+            ->whereJsonContains('metadata->payment_type', 'order')
+            ->orderBy('created_at')
+            ->limit(100)
+            ->get()
+            ->map(fn (Transaction $transaction) => [
+                'transaction_id' => $transaction->id,
+                'reference' => $transaction->reference_externe,
+                'montant' => (int) $transaction->montant,
+                'client' => $transaction->user ? ['id' => $transaction->user->id, 'name' => $transaction->user->name, 'phone' => $transaction->user->phone] : null,
+                'order_ids' => array_map('intval', (array) ($transaction->metadata['order_ids'] ?? [])),
+                'created_at' => $transaction->created_at?->toIso8601String(),
+            ])
+            ->values()
+            ->all();
+    }
+
+    /**
+     * Paiements en cours (non aboutis) d'une commande.
+     *
+     * @return Collection<int, Transaction>
+     */
+    public function pendingOrderPayments(Order $order): Collection
+    {
+        return Transaction::where('statut', PaymentStatus::EN_ATTENTE)
+            ->where('user_id', $order->client_id)
+            ->whereJsonContains('metadata->order_ids', $order->id)
+            ->get();
+    }
+
+    /**
+     * Annule des commandes restées impayées : stock et code promo restitués,
+     * paiements en cours clos.
+     */
+    private function cancelUnpaidOrders(Collection $orders): void
+    {
+        $cancelledIds = DB::transaction(function () use ($orders) {
+            $ids = [];
+
+            foreach ($orders as $order) {
+                $order = Order::lockForUpdate()->find($order->id);
+                if (! $order || $order->status !== self::STATUS_PENDING_PAYMENT) {
+                    continue;
+                }
+
+                foreach ($order->items as $item) {
+                    SupplierProduct::whereKey($item->supplier_product_id)->increment('stock_quantity', $item->quantity);
+                }
+
+                if ($order->promo_code) {
+                    PromoCode::where('code', $order->promo_code)->where('used_count', '>', 0)->decrement('used_count');
+                }
+
+                foreach ($this->pendingOrderPayments($order) as $transaction) {
+                    $transaction->update([
+                        'statut' => PaymentStatus::ECHOUE,
+                        'failed_at' => now(),
+                        'error_message' => 'Délai de paiement de la commande dépassé.',
+                    ]);
+                }
+
+                $order->update(['status' => 'cancelled', 'payment_expires_at' => null]);
+                $ids[] = $order->id;
+            }
+
+            return $ids;
+        });
+
+        if ($cancelledIds === []) {
+            return;
+        }
+
+        try {
+            app(NotificationService::class)->send(
+                $orders->first()->client,
+                'payment',
+                'Commande annulée',
+                'Votre commande #'.implode(', #', $cancelledIds)." n'a pas été réglée dans le délai imparti : elle est annulée et les articles sont remis en vente."
+            );
+        } catch (\Throwable $e) {
+            Log::warning('[Commande] Notification d\'annulation non envoyée : '.$e->getMessage());
+        }
+    }
+
+    /**
+     * Réserve à nouveau le stock de commandes annulées (paiement tardif).
+     */
+    private function reserveStockAgain(Collection $orders): bool
+    {
+        $needed = [];
+        foreach ($orders as $order) {
+            foreach ($order->items as $item) {
+                $needed[$item->supplier_product_id] = ($needed[$item->supplier_product_id] ?? 0) + (int) $item->quantity;
+            }
+        }
+
+        $products = SupplierProduct::whereIn('id', array_keys($needed))->lockForUpdate()->get()->keyBy('id');
+        foreach ($needed as $productId => $quantity) {
+            if (! $products->has($productId) || $products[$productId]->stock_quantity < $quantity) {
+                return false;
+            }
+        }
+
+        foreach ($needed as $productId => $quantity) {
+            $products[$productId]->decrement('stock_quantity', $quantity);
+        }
+
+        foreach ($orders as $order) {
+            if ($order->promo_code) {
+                PromoCode::where('code', $order->promo_code)->increment('used_count');
+            }
+        }
+
+        return true;
+    }
+
+    private function notifyOrderPaid(Collection $orders, int $amount): void
+    {
+        $notifications = app(NotificationService::class);
+        $fmt = fn (int $value) => number_format($value, 0, ',', ' ').' FCFA';
+
+        foreach ($orders as $order) {
+            try {
+                $notifications->send(
+                    $order->supplier,
+                    'payment',
+                    'Nouvelle commande reçue',
+                    "La commande #{$order->id} d'un montant de {$fmt((int) $order->subtotal)} a été payée et est en attente de préparation."
+                );
+            } catch (\Throwable $e) {
+                Log::warning('Notification fournisseur non bloquante : '.$e->getMessage());
+            }
+        }
+
+        try {
+            $notifications->send(
+                $orders->first()->client,
+                'payment',
+                'Paiement commande confirmé',
+                "Votre paiement de {$fmt($amount)} pour la commande #".implode(', #', $orders->pluck('id')->all()).' est sécurisé en compte séquestre.'
+            );
+        } catch (\Throwable $e) {
+            Log::warning('Notification client non bloquante : '.$e->getMessage());
+        }
     }
 
     /**
@@ -923,7 +1175,19 @@ class OrderService
     {
         $prepaid = (int) $order->delivery_fare_prepaid;
         $waitingFee = (int) $order->waiting_fee;
-        $base = $this->pricingService->calculateOrderDeliveryCost($order);
+
+        // Montant final calculé sur le trajet GPS réel (Chantier 11), borné
+        // par l'itinéraire calculé : trace insuffisante → itinéraire ;
+        // trajet anormalement long (détour, fraude) → plafonné.
+        $routed = $this->pricingService->calculateOrderDeliveryCost($order);
+        $trip = $this->measureTrip($order);
+        ['base' => $base, 'source' => $source] = $this->finalFare($order, $routed, $trip);
+
+        $order->forceFill([
+            'actual_distance_km' => $trip['distance_km'] ?? null,
+            'actual_duration_min' => $trip['duration_min'] ?? null,
+            'fare_source' => $source,
+        ]);
 
         // Course prépayée sous l'ancien modèle : le client ne paie jamais moins
         // que ce qu'il a déjà réglé, et le livreur ne touche pas moins.
@@ -959,6 +1223,110 @@ class OrderService
             "Montant de la course #{$order->id} : {$fmt($total)}{$bonus}. Vos gains seront crédités dès le paiement du client.");
 
         return $order;
+    }
+
+    /** Plafond du tarif GPS, en multiple du tarif de l'itinéraire calculé. */
+    public const GPS_FARE_CAP_RATIO = 1.5;
+
+    /** Vitesse au-delà de laquelle un point GPS est un saut aberrant (km/h). */
+    private const MAX_PLAUSIBLE_SPEED_KMH = 130;
+
+    /**
+     * Trajet réellement parcouru entre le retrait en quincaillerie et
+     * maintenant (livraison), d'après la télémétrie du livreur. Les points
+     * aberrants (saut impossible entre deux relevés) sont écartés ; le temps
+     * d'attente, déjà rémunéré par le bonus d'attente, est retiré de la durée.
+     *
+     * @return array{distance_km: float, duration_min: float, points: int}|null
+     */
+    public function measureTrip(Order $order): ?array
+    {
+        $start = $order->driver_picked_up_at;
+        if (! $order->driver_id || ! $start) {
+            return null;
+        }
+
+        $points = DeliveryTracking::where('order_id', $order->id)
+            ->where('driver_id', $order->driver_id)
+            ->where('created_at', '>=', $start)
+            ->orderBy('created_at')
+            ->orderBy('id')
+            ->get(['latitude', 'longitude', 'created_at']);
+
+        $kept = 0;
+        $distanceKm = 0.0;
+        $previous = null;
+
+        foreach ($points as $point) {
+            if ($previous === null) {
+                $previous = $point;
+                $kept = 1;
+
+                continue;
+            }
+
+            $segmentKm = $this->haversineKm(
+                (float) $previous->latitude,
+                (float) $previous->longitude,
+                (float) $point->latitude,
+                (float) $point->longitude
+            );
+            $hours = max(1, $previous->created_at->diffInSeconds($point->created_at, true)) / 3600;
+
+            if ($segmentKm / $hours > self::MAX_PLAUSIBLE_SPEED_KMH) {
+                continue;
+            }
+
+            $distanceKm += $segmentKm;
+            $previous = $point;
+            $kept++;
+        }
+
+        $durationMin = max(0.0, $start->diffInSeconds(now(), true) / 60 - (int) $order->waiting_time_minutes);
+
+        return [
+            'distance_km' => round($distanceKm, 2),
+            'duration_min' => round($durationMin, 1),
+            'points' => $kept,
+        ];
+    }
+
+    /**
+     * Tarif final de la course et sa provenance (`gps`, `gps_plafonne`,
+     * `estimation`).
+     *
+     * @return array{base: int, source: string}
+     */
+    private function finalFare(Order $order, int $routed, ?array $trip): array
+    {
+        // Moins de trois relevés ou quasi aucun déplacement : la trace ne
+        // décrit pas le trajet (GPS coupé, application en arrière-plan).
+        if (! $trip || $trip['points'] < 3 || $trip['distance_km'] < 0.2) {
+            return ['base' => $routed, 'source' => 'estimation'];
+        }
+
+        $gps = $this->pricingService->fareFromTrip(
+            $trip['distance_km'],
+            $trip['duration_min'],
+            (string) ($order->vehicle_class ?? 'moto'),
+            (float) ($order->surge_multiplier ?? 1.0)
+        );
+
+        $cap = (int) round($routed * self::GPS_FARE_CAP_RATIO);
+        if ($gps > $cap) {
+            return ['base' => $cap, 'source' => 'gps_plafonne'];
+        }
+
+        return ['base' => $gps, 'source' => 'gps'];
+    }
+
+    private function haversineKm(float $lat1, float $lng1, float $lat2, float $lng2): float
+    {
+        $dLat = deg2rad($lat2 - $lat1);
+        $dLng = deg2rad($lng2 - $lng1);
+        $a = sin($dLat / 2) ** 2 + cos(deg2rad($lat1)) * cos(deg2rad($lat2)) * sin($dLng / 2) ** 2;
+
+        return 6371.0 * 2 * atan2(sqrt($a), sqrt(1 - $a));
     }
 
     /**
@@ -1017,6 +1385,11 @@ class OrderService
                 ['net' => $net] = $this->driverShare($order->deliveryFareTotal());
                 app(NotificationService::class)->send($order->driver, 'payment', 'Course réglée',
                     "Le client a réglé la course #{$order->id}. ".number_format($net, 0, ',', ' ').' FCFA ont été crédités sur votre portefeuille.');
+            }
+
+            // Dernière course due réglée : la restriction du client tombe.
+            if ($order->client) {
+                app(DeliveryFareCollectionService::class)->liftIfSettled($order->client->fresh());
             }
 
             return true;

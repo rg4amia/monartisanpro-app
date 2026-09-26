@@ -365,6 +365,10 @@ class DriverCashoutService
             'beneficiary_phone' => $cashout->beneficiary_phone,
             'notes' => $cashout->notes,
             'payout' => $payout ? $this->payouts->present($payout, false) : null,
+            // Transaction du versement : son reçu PDF est disponible une fois
+            // le retrait versé (`/transactions/{id}/receipt-link`).
+            'transaction_id' => $payout?->transaction_id,
+            'receipt_available' => $payout?->isPaid() ?? false,
             'created_at' => $cashout->created_at?->toIso8601String(),
             'processed_at' => $cashout->processed_at?->toIso8601String(),
         ];

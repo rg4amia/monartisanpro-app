@@ -160,6 +160,71 @@ class MobileMoneyPayoutService
         return $this->attempt($payout, MobileMoneyPayoutEvent::ACTION_RELANCE_BENEFICIAIRE, $user);
     }
 
+    /** Opérateurs vers lesquels un client peut demander son remboursement. */
+    public const REFUND_PROVIDERS = ['wave', 'orange_money'];
+
+    /** Format d'un numéro Mobile Money ivoirien. */
+    public const PHONE_PATTERN = '/^\+225[0-9]{10}$/';
+
+    /**
+     * Le client choisit l'opérateur et le numéro sur lesquels recevoir son
+     * remboursement (Chantier 11). Propriété vérifiée ; seul un remboursement
+     * non abouti se modifie ; le numéro est ensuite verrouillé (une relance ne
+     * le remplace plus par son numéro de profil) et le choix est consigné.
+     */
+    public function changeRefundDestination(MobileMoneyPayout $payout, User $user, string $provider, string $phone): MobileMoneyPayout
+    {
+        if ($payout->user_id !== $user->id) {
+            throw new \DomainException('Ce versement ne vous appartient pas.', 403);
+        }
+
+        if ($payout->context !== MobileMoneyPayout::CONTEXT_REMBOURSEMENT_CLIENT) {
+            throw new \InvalidArgumentException('Seul le moyen de réception d\'un remboursement se modifie ici.');
+        }
+
+        $this->assertValidDestination($provider, $phone);
+
+        return DB::transaction(function () use ($payout, $user, $provider, $phone) {
+            $payout = MobileMoneyPayout::lockForUpdate()->findOrFail($payout->id);
+
+            if (! in_array($payout->statut, MobileMoneyPayout::STATUTS_NON_ABOUTIS, true)) {
+                throw new \InvalidArgumentException('Ce remboursement est déjà versé : son moyen de réception ne se modifie plus.');
+            }
+
+            $before = ['provider' => $payout->provider, 'phone' => $payout->phone];
+            $payout->update(['provider' => $provider, 'phone' => $phone, 'phone_locked' => true]);
+            $payout->transaction?->update(['provider' => $provider]);
+
+            $this->recordEvent($payout, MobileMoneyPayoutEvent::ACTION_CHANGEMENT_DESTINATION, $payout->statut, self::providerLabel($provider)." · {$phone}", $user, [
+                'avant' => $before,
+                'apres' => ['provider' => $provider, 'phone' => $phone],
+            ]);
+
+            return $payout->fresh();
+        });
+    }
+
+    public function assertValidDestination(string $provider, string $phone): void
+    {
+        if (! in_array($provider, self::REFUND_PROVIDERS, true)) {
+            throw new \InvalidArgumentException('Choisissez Wave ou Orange Money.');
+        }
+
+        if (! preg_match(self::PHONE_PATTERN, $phone)) {
+            throw new \InvalidArgumentException('Numéro invalide : format attendu +225 suivi de 10 chiffres.');
+        }
+    }
+
+    public static function providerLabel(string $provider): string
+    {
+        return match ($provider) {
+            'wave' => 'Wave',
+            'orange_money' => 'Orange Money',
+            'virement_bancaire' => 'Virement bancaire',
+            default => $provider,
+        };
+    }
+
     /**
      * Relance automatique des versements échoués arrivés à échéance.
      *

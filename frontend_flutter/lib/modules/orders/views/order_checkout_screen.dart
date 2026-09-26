@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
+import '../../../core/payments/operator_payment_runner.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../data/models/address_model.dart';
 import '../../addresses/controllers/address_controller.dart';
@@ -41,6 +42,9 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   /// Flag réactif pour éviter toute double soumission après succès.
   final _orderSubmitted = false.obs;
+
+  /// Opérateur Mobile Money choisi pour régler la commande (Chantier 11).
+  String _paymentProvider = 'wave';
 
   @override
   void initState() {
@@ -282,6 +286,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             packages: multiPackages,
             promoCode: _appliedPromoCode,
             addressId: addressId,
+            paymentProvider: _paymentProvider,
           )
         : await controller.createOrder(
             supplierId: effectiveSupplierId,
@@ -292,50 +297,54 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                 deliveryMode == 'delivery' ? surgeMultiplier : null,
             promoCode: _appliedPromoCode,
             addressId: addressId,
+            paymentProvider: _paymentProvider,
           );
 
     if (success) {
+      final outcome = controller.lastPaymentOutcome.value;
+      final paid = outcome == OperatorPaymentOutcome.confirmed;
+      final detail = switch (outcome) {
+        OperatorPaymentOutcome.confirmed =>
+          'Les fonds sont sécurisés en compte séquestre et la quincaillerie a été notifiée. Vous recevrez des SMS de suivi.',
+        OperatorPaymentOutcome.failed =>
+          "Le paiement n'a pas abouti. Réglez la commande depuis « Mes commandes » avant l'échéance : sans paiement, elle sera annulée et les articles remis en vente.",
+        _ => controller.lastOrderMessage.value ??
+            'Le paiement est en attente de confirmation. Suivez-le depuis « Mes commandes » : la quincaillerie est prévenue dès sa confirmation.',
+      };
+
       unawaited(
         Get.dialog(
           AlertDialog(
             shape:
                 RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-            title: const Row(
+            title: Row(
               children: [
                 Icon(
-                  Icons.check_circle_rounded,
-                  color: Color(0xFF10B981),
+                  paid
+                      ? Icons.check_circle_rounded
+                      : Icons.hourglass_top_rounded,
+                  color: paid
+                      ? const Color(0xFF10B981)
+                      : const Color(0xFFF59E0B),
                   size: 28,
                 ),
-                SizedBox(width: 10),
+                const SizedBox(width: 10),
                 Text(
-                  'Commande confirmée',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 17),
+                  paid ? 'Commande payée' : 'Commande enregistrée',
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 17,
+                  ),
                 ),
               ],
             ),
-            content: const Column(
-              mainAxisSize: MainAxisSize.min,
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  'Votre commande a été enregistrée avec succès !',
-                  style: TextStyle(
-                    fontWeight: FontWeight.w600,
-                    fontSize: 14,
-                    color: Color(0xFF1F2937),
-                  ),
-                ),
-                SizedBox(height: 8),
-                Text(
-                  'Le paiement est sécurisé en compte séquestre et le fournisseur a été notifié. Vous recevrez des SMS de suivi.',
-                  style: TextStyle(
-                    fontSize: 13,
-                    color: Color(0xFF4B5563),
-                    height: 1.4,
-                  ),
-                ),
-              ],
+            content: Text(
+              detail,
+              style: const TextStyle(
+                fontSize: 13,
+                color: Color(0xFF4B5563),
+                height: 1.4,
+              ),
             ),
             actions: [
               ElevatedButton(
@@ -368,6 +377,69 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       // En cas d'échec, permettre une nouvelle tentative
       _orderSubmitted.value = false;
     }
+  }
+
+  Widget _paymentOption({
+    required String provider,
+    required String label,
+    required Color color,
+  }) {
+    final selected = _paymentProvider == provider;
+
+    return Semantics(
+      selected: selected,
+      button: true,
+      label: 'Payer avec $label',
+      child: InkWell(
+        borderRadius: BorderRadius.circular(12),
+        onTap: () => setState(() => _paymentProvider = provider),
+        child: Container(
+          padding: const EdgeInsets.all(12),
+          decoration: BoxDecoration(
+            color: color.withValues(alpha: selected ? 0.10 : 0.03),
+            borderRadius: BorderRadius.circular(12),
+            border: Border.all(
+              color: color.withValues(alpha: selected ? 0.6 : 0.2),
+              width: selected ? 1.5 : 1,
+            ),
+          ),
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: color,
+                  borderRadius: BorderRadius.circular(8),
+                ),
+                child: const Icon(
+                  Icons.account_balance_wallet,
+                  color: Colors.white,
+                  size: 18,
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Text(
+                  label,
+                  style: const TextStyle(
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                    color: AppColors.textPrimary,
+                  ),
+                ),
+              ),
+              Icon(
+                selected
+                    ? Icons.radio_button_checked
+                    : Icons.radio_button_unchecked,
+                color: color,
+                size: 20,
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   Widget _buildStepHeader(String stepNum, String title) {
@@ -792,60 +864,23 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                   _buildStepHeader('3', 'MODE DE PAIEMENT'),
                   const Divider(height: 24, color: Color(0xFFEDF2F7)),
 
-                  // Option Wave CI
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: const Color(0xFF1EA6D6).withValues(alpha: 0.08),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(
-                        color: const Color(0xFF1EA6D6).withValues(alpha: 0.3),
-                      ),
-                    ),
-                    child: Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(6),
-                          decoration: BoxDecoration(
-                            color: const Color(0xFF1EA6D6),
-                            borderRadius: BorderRadius.circular(8),
-                          ),
-                          child: const Icon(
-                            Icons.account_balance_wallet,
-                            color: Colors.white,
-                            size: 18,
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Wave CI / Orange Money (Séquestre)',
-                                style: TextStyle(
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 13,
-                                  color: AppColors.textPrimary,
-                                ),
-                              ),
-                              SizedBox(height: 2),
-                              Text(
-                                'Fonds bloqués et libérés à la livraison',
-                                style: TextStyle(
-                                  fontSize: 11,
-                                  color: AppColors.textSecondary,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        const Icon(
-                          Icons.check_circle,
-                          color: Color(0xFF1EA6D6),
-                          size: 20,
-                        ),
-                      ],
+                  _paymentOption(
+                    provider: 'wave',
+                    label: 'Wave',
+                    color: const Color(0xFF1EA6D6),
+                  ),
+                  const SizedBox(height: 10),
+                  _paymentOption(
+                    provider: 'orange_money',
+                    label: 'Orange Money',
+                    color: const Color(0xFFF97316),
+                  ),
+                  const SizedBox(height: 10),
+                  const Text(
+                    'Le montant est encaissé en compte séquestre et reversé à la quincaillerie au retrait ou à la livraison. La course se règle à la livraison.',
+                    style: TextStyle(
+                      fontSize: 11,
+                      color: AppColors.textSecondary,
                     ),
                   ),
                 ],

@@ -306,6 +306,22 @@ class DeliveryPricingService
     }
 
     /**
+     * Tarif d'un trajet effectivement parcouru (distance et durée mesurées
+     * sur la trace GPS du livreur) : même barème que l'estimation — distance,
+     * durée, classe de véhicule, majoration figée à la commande, forfait
+     * plancher (Chantier 11).
+     */
+    public function fareFromTrip(float $distanceKm, float $durationMin, string $vehicleClass, float $surgeMultiplier = 1.0): int
+    {
+        $vehicleMultiplier = self::VEHICLE_MULTIPLIERS[$vehicleClass] ?? self::VEHICLE_MULTIPLIERS['moto'];
+        $surge = max(1.0, min(3.0, $surgeMultiplier));
+
+        $raw = ((max(0.0, $distanceKm) * self::RATE_PER_KM) + (max(0.0, $durationMin) * self::RATE_PER_MIN)) * $vehicleMultiplier * $surge;
+
+        return (int) max(self::MINIMUM_FARE, round($raw));
+    }
+
+    /**
      * Retourne la classe de véhicule la plus sévère (donc la plus chère/adaptée)
      * entre deux classes, selon l'ordre moto < voiture < cargo.
      */

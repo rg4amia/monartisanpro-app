@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Admin\AdminCashoutController;
+use App\Http\Controllers\Admin\AdminCollectionController;
 use App\Http\Controllers\Admin\AdminDocumentController;
 use App\Http\Controllers\Admin\AdminFraudController;
 use App\Http\Controllers\Admin\AdminPayoutController;
@@ -15,6 +16,7 @@ use App\Http\Controllers\Admin\VitrineAdminController;
 use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\KycDocumentController;
+use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RecruitmentVoiceNoteController;
 use App\Http\Controllers\UserPhotoController;
 use Illuminate\Support\Facades\Route;
@@ -49,6 +51,12 @@ Route::get('/', function () {
 Route::get('/kyc/documents/{document}/file', [KycDocumentController::class, 'show'])
     ->middleware('signed')
     ->name('kyc.document.file');
+
+// Reçu PDF d'une transaction (Chantier 11) : même principe, lien délivré au
+// seul titulaire par GET /api/v1/transactions/{transaction}/receipt-link.
+Route::get('/receipts/transactions/{transaction}', [ReceiptController::class, 'show'])
+    ->middleware('signed')
+    ->name('receipts.transaction.file');
 
 // Note vocale de candidature au recrutement : même principe
 // (RecruitmentApplication::voiceNoteUrl), servie uniquement une fois validée
@@ -151,6 +159,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/driver-cashouts/{cashout}/approve', [AdminPayoutController::class, 'approveCashout'])->middleware('can:admin.transactions.manage')->name('driver-cashouts.approve');
         Route::post('/driver-cashouts/{cashout}/pay', [AdminPayoutController::class, 'payCashout'])->middleware('can:admin.transactions.manage')->name('driver-cashouts.pay');
         Route::post('/driver-cashouts/{cashout}/reject', [AdminPayoutController::class, 'rejectCashout'])->middleware('can:admin.transactions.manage')->name('driver-cashouts.reject');
+        // Chantier 11 — encaissements : courses impayées, restrictions, virements de commande.
+        Route::post('/collections/orders/{order}/remind', [AdminCollectionController::class, 'remindFare'])->middleware('can:admin.transactions.manage')->name('collections.remind');
+        Route::post('/collections/users/{user}/lift-restriction', [AdminCollectionController::class, 'liftRestriction'])->middleware('can:admin.transactions.manage')->name('collections.lift-restriction');
+        Route::post('/collections/transactions/{transaction}/confirm-bank-transfer', [AdminCollectionController::class, 'confirmBankTransfer'])->middleware('can:admin.transactions.manage')->name('collections.confirm-bank-transfer');
         Route::get('/exports/{resource}', [BackofficeController::class, 'exportCsv'])->middleware('can:admin.exports')->name('exports');
 
         // Documents & Reçus de Décaissement

@@ -32,6 +32,8 @@ class User extends Authenticatable
         'account_status',
         'account_status_reason',
         'blocked_at',
+        'payment_restricted_at',
+        'payment_restriction_reason',
         'score_prosartisan',
         'wallet_materiaux',
         'wallet_mo',
@@ -62,6 +64,7 @@ class User extends Authenticatable
         return [
             'password' => 'hashed',
             'blocked_at' => 'datetime',
+            'payment_restricted_at' => 'datetime',
             'cgu_accepted_at' => 'datetime',
             'anonymized_at' => 'datetime',
             'wallet_materiaux' => 'integer',
@@ -315,6 +318,15 @@ class User extends Authenticatable
     public function isAccountActive(): bool
     {
         return ($this->account_status ?? 'actif') === 'actif';
+    }
+
+    /**
+     * Restriction pour course impayée (Chantier 11) : le client ne peut plus
+     * commander ni publier de mission, mais peut toujours payer ce qu'il doit.
+     */
+    public function isPaymentRestricted(): bool
+    {
+        return $this->payment_restricted_at !== null;
     }
 
     // ── Méthodes GPS (SQL brut, compatible MySQL 5.7) ────────────────────────

@@ -4,6 +4,7 @@ use App\Http\Middleware\AccountActive;
 use App\Http\Middleware\AdminOnly;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\KycVerified;
+use App\Http\Middleware\PaymentUnrestricted;
 use App\Http\Middleware\SanitizeRequests;
 use App\Http\Middleware\SecurityHeadersMiddleware;
 use App\Http\Middleware\SupplierOnly;
@@ -63,6 +64,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'kyc.verified' => KycVerified::class,
             'admin.only' => AdminOnly::class,
             'account.active' => AccountActive::class,
+            'payment.unrestricted' => PaymentUnrestricted::class,
             'supplier.only' => SupplierOnly::class,
             'gateway.verified' => VerifyGatewayRequest::class,
             'smspro.signed' => VerifySmsproWebhook::class,

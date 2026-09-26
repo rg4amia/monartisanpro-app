@@ -84,32 +84,55 @@ class PdfService
         $mission = $transaction->mission;
         $user = $transaction->user ?? $mission?->artisan ?? $mission?->client;
 
-        // Déterminer le libellé du type de libération
-        $disbursementType = match ($transaction->type) {
-            'liberation_jalon' => 'Libération Jalon Main d\'Œuvre',
-            'paiement_fournisseur' => 'Règlement Matériaux J-Code',
-            'remboursement' => 'Remboursement Séquestre',
-            'credit' => 'Avance Micro-Crédit',
-            'acompte' => 'Acompte Séquestre Mission',
+        // Commandes de matériaux concernées (commande seule ou panier), course.
+        $orderIds = array_values(array_filter(array_map('intval', (array) ($transaction->metadata['order_ids'] ?? [$transaction->metadata['order_id'] ?? null]))));
+        $orderRef = $orderIds !== [] ? '#'.implode(', #', $orderIds) : null;
+        $isOrderPayment = $transaction->type === 'acompte' && $orderRef !== null;
+
+        // Déterminer le libellé du type d'opération
+        $disbursementType = match (true) {
+            $isOrderPayment => 'Paiement Commande de Matériaux',
+            $transaction->type === 'paiement_livraison' => 'Paiement Course de Livraison',
+            $transaction->type === 'paiement_livreur' => 'Retrait des Gains Livreur',
+            $transaction->type === 'liberation_jalon' => 'Libération Jalon Main d\'Œuvre',
+            $transaction->type === 'paiement_fournisseur' => 'Règlement Matériaux J-Code',
+            $transaction->type === 'remboursement' => 'Remboursement Séquestre',
+            $transaction->type === 'credit' => 'Avance Micro-Crédit',
+            $transaction->type === 'acompte' => 'Acompte Séquestre Mission',
             default => 'Décaissement Plateforme',
         };
 
-        $badgeLabel = match ($transaction->type) {
-            'liberation_jalon' => 'Fonds Libérés (Artisan)',
-            'paiement_fournisseur' => 'Fonds Libérés (Fournisseur)',
-            'remboursement' => 'Remboursement Validé',
-            'credit' => 'Financement Accordé',
+        $badgeLabel = match (true) {
+            $isOrderPayment, $transaction->type === 'paiement_livraison', $transaction->type === 'acompte' => 'Paiement Reçu',
+            $transaction->type === 'paiement_livreur' => 'Gains Versés (Livreur)',
+            $transaction->type === 'liberation_jalon' => 'Fonds Libérés (Artisan)',
+            $transaction->type === 'paiement_fournisseur' => 'Fonds Libérés (Fournisseur)',
+            $transaction->type === 'remboursement' => 'Remboursement Validé',
+            $transaction->type === 'credit' => 'Financement Accordé',
             default => 'Transaction Confirmée',
         };
 
         $receiptNumber = 'REC-TX-'.str_pad($transaction->id, 6, '0', STR_PAD_LEFT);
 
-        $description = match ($transaction->type) {
-            'liberation_jalon' => "Versement des honoraires de main-d'œuvre pour le jalon validé sur la mission #{$transaction->mission_id}.",
-            'paiement_fournisseur' => "Paiement des fournitures et matériaux du bon J-Code validé sur la mission #{$transaction->mission_id}.",
-            'remboursement' => "Remboursement des fonds placés sous séquestre pour la mission #{$transaction->mission_id}.",
-            'credit' => "Octroi de micro-crédit d'urgence matériel pour l'artisan.",
+        $description = match (true) {
+            $isOrderPayment => "Paiement de la commande de matériaux {$orderRef}, conservé en séquestre jusqu'au retrait ou à la livraison.",
+            $transaction->type === 'paiement_livraison' => "Paiement de la course de livraison de la commande {$orderRef}.",
+            $transaction->type === 'paiement_livreur' => 'Versement des gains de livraison sur Mobile Money.',
+            $transaction->type === 'liberation_jalon' => "Versement des honoraires de main-d'œuvre pour le jalon validé sur la mission #{$transaction->mission_id}.",
+            $transaction->type === 'paiement_fournisseur' => "Paiement des fournitures et matériaux du bon J-Code validé sur la mission #{$transaction->mission_id}.",
+            $transaction->type === 'remboursement' => "Remboursement des fonds placés sous séquestre pour la mission #{$transaction->mission_id}.",
+            $transaction->type === 'credit' => "Octroi de micro-crédit d'urgence matériel pour l'artisan.",
+            $transaction->type === 'acompte' => "Acompte versé en séquestre pour la mission #{$transaction->mission_id}.",
             default => "Libération de fonds pour l'opération #{$transaction->id}.",
+        };
+
+        // Le client paie (commande, course, acompte) ; les autres reçoivent.
+        $isPayer = in_array($transaction->type, ['acompte', 'paiement_livraison'], true);
+
+        [$referenceLabel, $referenceValue] = match (true) {
+            $orderRef !== null => ['Commande', $orderRef],
+            $transaction->type === 'paiement_livreur' => ['Retrait', $transaction->metadata['reference'] ?? '#'.$transaction->id],
+            default => ['Mission', $transaction->mission_id ? '#'.$transaction->mission_id : 'N/A'],
         };
 
         $data = [
@@ -130,6 +153,10 @@ class PdfService
             'transaction_id' => $transaction->id,
             'amount' => (int) $transaction->montant,
             'deductions' => 0,
+            'party_label' => $isPayer ? 'Payeur' : 'Bénéficiaire des Fonds',
+            'reference_label' => $referenceLabel,
+            'reference_value' => $referenceValue,
+            'amount_caption' => $isPayer ? 'Payé avec succès via' : 'Versé avec succès via',
         ];
 
         $pdf = Pdf::loadView('pdf.payment_receipt', $data);

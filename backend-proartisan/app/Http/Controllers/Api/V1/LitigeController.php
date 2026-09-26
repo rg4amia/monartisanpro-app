@@ -48,6 +48,37 @@ class LitigeController extends Controller
         ], 201);
     }
 
+    /**
+     * PUT /api/v1/litiges/{litige}/refund-destination — moyen de remboursement
+     * choisi par le client de la mission (Chantier 11).
+     */
+    public function refundDestination(Litige $litige, Request $request): JsonResponse
+    {
+        $validated = $request->validate([
+            'provider' => 'required|in:wave,orange_money',
+            'phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
+        ], [
+            'phone.regex' => 'Numéro invalide : format attendu +225 suivi de 10 chiffres.',
+        ]);
+
+        try {
+            $litige = $this->litigeService->setRefundDestination($litige, $request->user(), $validated['provider'], $validated['phone']);
+        } catch (\DomainException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 403);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Moyen de remboursement enregistré.',
+            'data' => [
+                'refund_provider' => $litige->refund_provider,
+                'refund_phone' => $litige->refund_phone,
+            ],
+        ]);
+    }
+
     public function show(Litige $litige, Request $request): JsonResponse
     {
         $user = $request->user();

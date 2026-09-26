@@ -8,6 +8,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use App\Services\GoogleMapsService;
 use App\Services\OsrmRoutingService;
+use App\Services\PaymentService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
 
@@ -138,6 +139,8 @@ test('client can checkout split-cart with multiple suppliers in single transacti
                 ],
             ],
         ],
+        'payment_provider' => 'orange_money',
+        'payment_phone' => '+2250707070707',
     ]);
 
     $response->assertStatus(201);
@@ -151,13 +154,23 @@ test('client can checkout split-cart with multiple suppliers in single transacti
     $orders = Order::where('order_group_id', $orderGroupId)->get();
     $this->assertCount(2, $orders);
 
-    // Verify single aggregated escrow transaction
-    $this->assertDatabaseHas('transactions', [
-        'user_id' => $client->id,
-        'type' => 'acompte',
-        'wallet_dest' => 'escrow_group_'.$orderGroupId,
-        'statut' => 'confirme',
-    ]);
+    // Encaissement réel (Chantier 11) : un seul paiement pour tout le
+    // panier, en attente de l'opérateur ; les sous-commandes attendent.
+    expect($orders->pluck('status')->unique()->all())->toBe(['pending']);
+    $payment = Transaction::where('user_id', $client->id)
+        ->where('type', 'acompte')
+        ->where('wallet_dest', 'escrow_group_'.$orderGroupId)
+        ->sole();
+    expect($payment->statut->value)->toBe('en_attente')
+        ->and((int) $payment->montant)->toBe((int) $orders->sum('total_amount'))
+        ->and($payment->metadata['order_ids'])->toEqualCanonicalizing($orders->pluck('id')->all())
+        // La référence Orange Money n'écrase plus l'identifiant de commande.
+        ->and($payment->metadata)->not->toHaveKey('order_id')
+        ->and($payment->metadata['orange_order_reference'] ?? null)->not->toBeNull();
+
+    app(PaymentService::class)->confirmSimulatedPayment($payment);
+
+    expect(Order::where('order_group_id', $orderGroupId)->pluck('status')->unique()->all())->toBe(['paid']);
 
     // Verify stock decrement
     $this->assertEquals(18, $prod1->fresh()->stock_quantity);
