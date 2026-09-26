@@ -61,7 +61,8 @@ class Chantier12JuryAndVaultTest extends TestCase
         $this->litige = Litige::create([
             'mission_id' => $this->mission->id,
             'declencheur_id' => $this->client->id,
-            'type' => 'malfacon',
+            'type' => 'client',
+            'motif' => 'malfaçon',
             'description' => 'Fissures anormales constatées après ragréage.',
             'statut' => 'ouvert',
             'workflow_step' => 'instruction',
