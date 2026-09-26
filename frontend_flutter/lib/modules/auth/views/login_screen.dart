@@ -683,7 +683,8 @@ class _LoginScreenState extends State<LoginScreen>
     final result = await Get.dialog<bool>(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-        child: Padding(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(22),
           child: Column(
             mainAxisSize: MainAxisSize.min,
@@ -723,8 +724,8 @@ class _LoginScreenState extends State<LoginScreen>
               Obx(
                 () => Container(
                   padding: const EdgeInsets.symmetric(
-                    horizontal: 16,
-                    vertical: 12,
+                    horizontal: 14,
+                    vertical: 10,
                   ),
                   decoration: BoxDecoration(
                     color: AppColors.secondary.withValues(alpha: 0.5),
@@ -734,20 +735,28 @@ class _LoginScreenState extends State<LoginScreen>
                     ),
                   ),
                   child: Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        _c.challengeQuestion.value ?? 'Addition requise',
-                        style: TextStyle(
-                          fontSize: 15,
-                          fontWeight: FontWeight.w800,
-                          color: roleColor,
+                      Expanded(
+                        child: Text(
+                          _c.challengeQuestion.value ?? 'Addition requise',
+                          style: TextStyle(
+                            fontSize: 14,
+                            fontWeight: FontWeight.w800,
+                            color: roleColor,
+                          ),
+                          softWrap: true,
                         ),
                       ),
+                      const SizedBox(width: 8),
                       IconButton(
                         onPressed: () => _c.fetchSecurityChallenge(),
                         icon: const Icon(Icons.refresh_rounded, size: 20),
                         tooltip: 'Changer le calcul',
+                        padding: EdgeInsets.zero,
+                        constraints: const BoxConstraints(
+                          minWidth: 32,
+                          minHeight: 32,
+                        ),
                       ),
                     ],
                   ),

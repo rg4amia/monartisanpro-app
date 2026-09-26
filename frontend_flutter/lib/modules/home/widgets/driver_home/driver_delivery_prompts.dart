@@ -16,27 +16,29 @@ void promptPickupCode(HomeController controller, MissionModel mission) {
         'Code d\'enlèvement magasin',
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Entrez le code d\'enlèvement fourni par la quincaillerie.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: textController,
-            textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              hintText: 'Code de retrait fournisseur',
-              helperText:
-                  'Communiqué par la quincaillerie lors de l\'enlèvement.',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Entrez le code d\'enlèvement fourni par la quincaillerie.',
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            TextField(
+              controller: textController,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                hintText: 'Code de retrait fournisseur',
+                helperText:
+                    'Communiqué par la quincaillerie lors de l\'enlèvement.',
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(onPressed: () => Get.back(), child: const Text('Annuler')),
@@ -64,26 +66,28 @@ void promptDropoffCode(HomeController controller, MissionModel mission) {
         'Code de réception client',
         style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
       ),
-      content: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Saisissez le code de confirmation OTP envoyé au client.',
-            style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-          ),
-          const SizedBox(height: 12),
-          TextField(
-            controller: textController,
-            textCapitalization: TextCapitalization.characters,
-            decoration: InputDecoration(
-              hintText: 'Code de réception client (OTP)',
-              helperText: 'Demandez le code OTP affiché sur l\'app du client.',
-              border:
-                  OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+      content: SingleChildScrollView(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Saisissez le code de confirmation OTP envoyé au client.',
+              style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
             ),
-          ),
-        ],
+            const SizedBox(height: 12),
+            TextField(
+              controller: textController,
+              textCapitalization: TextCapitalization.characters,
+              decoration: InputDecoration(
+                hintText: 'Code de réception client (OTP)',
+                helperText: 'Demandez le code OTP affiché sur l\'app du client.',
+                border:
+                    OutlineInputBorder(borderRadius: BorderRadius.circular(10)),
+              ),
+            ),
+          ],
+        ),
       ),
       actions: [
         TextButton(onPressed: () => Get.back(), child: const Text('Annuler')),
@@ -142,47 +146,49 @@ void promptWaitingSurge(HomeController controller, MissionModel mission) {
             'Signaler un temps d\'attente',
             style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
           ),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text(
-                'Indiquez le temps d\'attente au retrait ou à la livraison. '
-                'Des frais supplémentaires seront ajoutés à la commande.',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 12),
-              Wrap(
-                spacing: 8,
-                runSpacing: 8,
-                children: [5, 10, 15, 30].map((minutes) {
-                  final selected = minutesController.text == '$minutes';
-                  return ChoiceChip(
-                    label: Text('$minutes min'),
-                    selected: selected,
-                    onSelected: isSubmitting
-                        ? null
-                        : (_) => setDialogState(
-                              () => minutesController.text = '$minutes',
-                            ),
-                  );
-                }).toList(),
-              ),
-              const SizedBox(height: 12),
-              TextField(
-                controller: minutesController,
-                enabled: !isSubmitting,
-                keyboardType: TextInputType.number,
-                decoration: InputDecoration(
-                  hintText: 'Minutes d\'attente',
-                  helperText: 'Minimum 1 minute.',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
+          content: SingleChildScrollView(
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Indiquez le temps d\'attente au retrait ou à la livraison. '
+                  'Des frais supplémentaires seront ajoutés à la commande.',
+                  style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
-                onChanged: (_) => setDialogState(() {}),
-              ),
-            ],
+                const SizedBox(height: 12),
+                Wrap(
+                  spacing: 8,
+                  runSpacing: 8,
+                  children: [5, 10, 15, 30].map((minutes) {
+                    final selected = minutesController.text == '$minutes';
+                    return ChoiceChip(
+                      label: Text('$minutes min'),
+                      selected: selected,
+                      onSelected: isSubmitting
+                          ? null
+                          : (_) => setDialogState(
+                                () => minutesController.text = '$minutes',
+                              ),
+                    );
+                  }).toList(),
+                ),
+                const SizedBox(height: 12),
+                TextField(
+                  controller: minutesController,
+                  enabled: !isSubmitting,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    hintText: 'Minutes d\'attente',
+                    helperText: 'Minimum 1 minute.',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                  ),
+                  onChanged: (_) => setDialogState(() {}),
+                ),
+              ],
+            ),
           ),
           actions: [
             TextButton(

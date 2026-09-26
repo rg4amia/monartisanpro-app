@@ -83,8 +83,8 @@ export function TransactionsPanel({
 }: TransactionsPanelProps) {
     const rows = transactionsPage?.data ?? [];
     const [subTab, setSubTab] = useState<'treasury' | 'payouts' | 'collections' | 'commissions' | 'journal' | 'documents' | 'ledger'>('treasury');
-    const payoutsToHandle = (payoutsOverview?.stats.failed_count ?? 0) + (driverCashoutsOverview?.pending.length ?? 0);
-    const collectionsToHandle = (collectionsOverview?.stats.unpaid_count ?? 0) + (collectionsOverview?.pending_bank_transfers.length ?? 0);
+    const payoutsToHandle = (payoutsOverview?.stats?.failed_count ?? 0) + (driverCashoutsOverview?.pending?.length ?? 0);
+    const collectionsToHandle = (collectionsOverview?.stats?.unpaid_count ?? 0) + (collectionsOverview?.pending_bank_transfers?.length ?? 0);
 
     return (
         <section className="mt-5 space-y-6">

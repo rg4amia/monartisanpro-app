@@ -149,23 +149,25 @@ class QuoteBuilderScreen extends GetView<DevisController> {
       AlertDialog(
         title:
             Text(type == 'mo' ? 'Ajouter main d\'œuvre' : 'Ajouter matériau'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: descCtrl,
-              decoration: const InputDecoration(labelText: 'Description'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: montantCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Montant (FCFA)',
-                suffixText: 'FCFA',
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: descCtrl,
+                decoration: const InputDecoration(labelText: 'Description'),
               ),
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: montantCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Montant (FCFA)',
+                  suffixText: 'FCFA',
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -194,45 +196,47 @@ class QuoteBuilderScreen extends GetView<DevisController> {
     Get.dialog(
       AlertDialog(
         title: const Text('Ajouter un jalon'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: descCtrl,
-              decoration:
-                  const InputDecoration(labelText: 'Description du jalon'),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: montantCtrl,
-              keyboardType: TextInputType.number,
-              decoration: const InputDecoration(
-                labelText: 'Montant (FCFA)',
-                suffixText: 'FCFA',
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                controller: descCtrl,
+                decoration:
+                    const InputDecoration(labelText: 'Description du jalon'),
               ),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: dateCtrl,
-              readOnly: true,
-              decoration: const InputDecoration(
-                labelText: 'Date cible',
-                suffixIcon: Icon(Icons.calendar_today, size: 18),
+              const SizedBox(height: 12),
+              TextField(
+                controller: montantCtrl,
+                keyboardType: TextInputType.number,
+                decoration: const InputDecoration(
+                  labelText: 'Montant (FCFA)',
+                  suffixText: 'FCFA',
+                ),
               ),
-              onTap: () async {
-                final picked = await showDatePicker(
-                  context: context,
-                  initialDate: DateTime.now().add(const Duration(days: 7)),
-                  // Le backend valide `after:today` : au plus tôt demain.
-                  firstDate: DateTime.now().add(const Duration(days: 1)),
-                  lastDate: DateTime.now().add(const Duration(days: 365)),
-                );
-                if (picked != null) {
-                  dateCtrl.text = picked.toIso8601String().substring(0, 10);
-                }
-              },
-            ),
-          ],
+              const SizedBox(height: 12),
+              TextField(
+                controller: dateCtrl,
+                readOnly: true,
+                decoration: const InputDecoration(
+                  labelText: 'Date cible',
+                  suffixIcon: Icon(Icons.calendar_today, size: 18),
+                ),
+                onTap: () async {
+                  final picked = await showDatePicker(
+                    context: context,
+                    initialDate: DateTime.now().add(const Duration(days: 7)),
+                    // Le backend valide `after:today` : au plus tôt demain.
+                    firstDate: DateTime.now().add(const Duration(days: 1)),
+                    lastDate: DateTime.now().add(const Duration(days: 365)),
+                  );
+                  if (picked != null) {
+                    dateCtrl.text = picked.toIso8601String().substring(0, 10);
+                  }
+                },
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

@@ -55,8 +55,8 @@ export function CollectionsSection({ collectionsOverview }: { collectionsOvervie
     const restricted = collectionsOverview?.restricted ?? [];
     const transfers = collectionsOverview?.pending_bank_transfers ?? [];
     const stats = collectionsOverview?.stats;
-    const maxReminders = collectionsOverview?.settings.max_reminders ?? 5;
-    const intervalHours = collectionsOverview?.settings.interval_hours ?? 24;
+    const maxReminders = collectionsOverview?.settings?.max_reminders ?? 5;
+    const intervalHours = collectionsOverview?.settings?.interval_hours ?? 24;
 
     const remind = async (fare: UnpaidFareItem) => {
         const ok = await askConfirm({
@@ -86,7 +86,7 @@ export function CollectionsSection({ collectionsOverview }: { collectionsOvervie
     const confirmTransfer = async (transfer: PendingBankTransferItem) => {
         const reference = await askConfirm({
             title: `Confirmer le virement de ${money(transfer.montant)}`,
-            message: `À n'utiliser qu'après réception effective sur le compte ProsArtisan. La commande #${transfer.order_ids.join(', #')} sera transmise à la quincaillerie.`,
+            message: `À n'utiliser qu'après réception effective sur le compte ProsArtisan. La commande #${(transfer.order_ids ?? []).join(', #')} sera transmise à la quincaillerie.`,
             promptLabel: 'Référence du virement reçu',
             promptMinLength: 3,
             confirmLabel: 'Confirmer la réception',

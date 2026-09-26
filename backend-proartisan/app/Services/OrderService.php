@@ -479,24 +479,29 @@ class OrderService
      */
     public function pendingBankTransferPayments(): array
     {
-        return Transaction::with('user:id,name,phone')
-            ->where('statut', PaymentStatus::EN_ATTENTE)
-            ->where('provider', PaymentProvider::VIREMENT_BANCAIRE)
-            ->where('type', 'acompte')
-            ->whereJsonContains('metadata->payment_type', 'order')
-            ->orderBy('created_at')
-            ->limit(100)
-            ->get()
-            ->map(fn (Transaction $transaction) => [
-                'transaction_id' => $transaction->id,
-                'reference' => $transaction->reference_externe,
-                'montant' => (int) $transaction->montant,
-                'client' => $transaction->user ? ['id' => $transaction->user->id, 'name' => $transaction->user->name, 'phone' => $transaction->user->phone] : null,
-                'order_ids' => array_map('intval', (array) ($transaction->metadata['order_ids'] ?? [])),
-                'created_at' => $transaction->created_at?->toIso8601String(),
-            ])
-            ->values()
-            ->all();
+        try {
+            return Transaction::with('user:id,name,phone')
+                ->where('statut', PaymentStatus::EN_ATTENTE)
+                ->where('provider', PaymentProvider::VIREMENT_BANCAIRE)
+                ->where('type', 'acompte')
+                ->orderBy('created_at')
+                ->limit(100)
+                ->get()
+                ->filter(fn (Transaction $transaction) => is_array($transaction->metadata) && ($transaction->metadata['payment_type'] ?? null) === 'order')
+                ->map(fn (Transaction $transaction) => [
+                    'transaction_id' => $transaction->id,
+                    'reference' => $transaction->reference_externe,
+                    'montant' => (int) $transaction->montant,
+                    'client' => $transaction->user ? ['id' => $transaction->user->id, 'name' => $transaction->user->name, 'phone' => $transaction->user->phone] : null,
+                    'order_ids' => array_map('intval', (array) ($transaction->metadata['order_ids'] ?? [])),
+                    'created_at' => $transaction->created_at?->toIso8601String(),
+                ])
+                ->values()
+                ->all();
+        } catch (\Throwable $e) {
+            Log::warning('[OrderService] pendingBankTransferPayments failed: '.$e->getMessage());
+            return [];
+        }
     }
 
     /**

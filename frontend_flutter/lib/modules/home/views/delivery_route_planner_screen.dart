@@ -537,36 +537,40 @@ class _DeliveryRoutePlannerScreenState
           children: [
             Icon(Icons.storefront_rounded, color: AppColors.warning),
             SizedBox(width: 8),
-            Text(
-              'Enlèvement Magasin',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Confirmez la récupération du matériel chez ${widget.mission.artisanName ?? 'le fournisseur'}.',
-              style:
-                  const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: textController,
-              textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(
-                labelText: 'Code de retrait fournisseur',
-                // Le livreur ne reçoit plus ce code : il doit le demander, et
-                // c'est cette demande qui atteste de sa présence en boutique.
-                hintText: 'À demander au fournisseur après chargement',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                prefixIcon: const Icon(Icons.qr_code_scanner_rounded),
+            Expanded(
+              child: Text(
+                'Enlèvement Magasin',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
             ),
           ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Confirmez la récupération du matériel chez ${widget.mission.artisanName ?? 'le fournisseur'}.',
+                style:
+                    const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: textController,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  labelText: 'Code de retrait fournisseur',
+                  // Le livreur ne reçoit plus ce code : il doit le demander, et
+                  // c'est cette demande qui atteste de sa présence en boutique.
+                  hintText: 'À demander au fournisseur après chargement',
+                  border:
+                      OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.qr_code_scanner_rounded),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(
@@ -616,34 +620,38 @@ class _DeliveryRoutePlannerScreenState
           children: [
             Icon(Icons.check_circle_rounded, color: AppColors.success),
             SizedBox(width: 8),
-            Text(
-              'Livraison Client',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              'Remettez les articles à ${widget.mission.clientName ?? 'Client'} et demandez le code de réception OTP.',
-              style:
-                  const TextStyle(fontSize: 13, color: AppColors.textSecondary),
-            ),
-            const SizedBox(height: 14),
-            TextField(
-              controller: textController,
-              textCapitalization: TextCapitalization.characters,
-              decoration: InputDecoration(
-                labelText: 'Code de réception client (OTP)',
-                hintText: 'À demander au client une fois le colis remis',
-                border:
-                    OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
-                prefixIcon: const Icon(Icons.pin_outlined),
+            Expanded(
+              child: Text(
+                'Livraison Client',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
               ),
             ),
           ],
+        ),
+        content: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                'Remettez les articles à ${widget.mission.clientName ?? 'Client'} et demandez le code de réception OTP.',
+                style:
+                    const TextStyle(fontSize: 13, color: AppColors.textSecondary),
+              ),
+              const SizedBox(height: 14),
+              TextField(
+                controller: textController,
+                textCapitalization: TextCapitalization.characters,
+                decoration: InputDecoration(
+                  labelText: 'Code de réception client (OTP)',
+                  hintText: 'À demander au client une fois le colis remis',
+                  border:
+                      OutlineInputBorder(borderRadius: BorderRadius.circular(12)),
+                  prefixIcon: const Icon(Icons.pin_outlined),
+                ),
+              ),
+            ],
+          ),
         ),
         actions: [
           TextButton(

@@ -128,7 +128,8 @@ class ReviewActionButtons extends StatelessWidget {
     Get.dialog(
       Dialog(
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        child: Padding(
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        child: SingleChildScrollView(
           padding: const EdgeInsets.all(20),
           child: StatefulBuilder(
             builder: (context, setState) {

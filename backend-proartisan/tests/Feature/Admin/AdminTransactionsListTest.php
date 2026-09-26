@@ -77,4 +77,35 @@ class AdminTransactionsListTest extends TestCase
                 ->has('transactionsPage.data', 1)
                 ->where('transactionsPage.data.0.reference_externe', 'WAVE-SPECIAL-001'));
     }
+
+    public function test_collections_overview_and_pending_bank_transfers_render_safely(): void
+    {
+        $admin = $this->admin();
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+
+        // Transaction avec metadata valide
+        $this->tx([
+            'user_id' => $client->id,
+            'statut' => 'en_attente',
+            'provider' => 'virement_bancaire',
+            'type' => 'acompte',
+            'metadata' => ['payment_type' => 'order', 'order_ids' => [101, 102]],
+        ]);
+
+        // Transaction sans metadata ou metadata null
+        $this->tx([
+            'user_id' => $client->id,
+            'statut' => 'en_attente',
+            'provider' => 'virement_bancaire',
+            'type' => 'acompte',
+            'metadata' => null,
+        ]);
+
+        $this->actingAs($admin)->get('/admin/transactions')
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->component('admin/transactions')
+                ->has('collectionsOverview.pending_bank_transfers', 1)
+                ->where('collectionsOverview.pending_bank_transfers.0.order_ids', [101, 102]));
+    }
 }

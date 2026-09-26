@@ -360,18 +360,21 @@ class _ClientOrderCard extends StatelessWidget {
           children: [
             Icon(Icons.report_problem_outlined, color: AppColors.danger),
             SizedBox(width: 8),
-            Text(
-              'Signaler un problème',
-              style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+            Expanded(
+              child: Text(
+                'Signaler un problème',
+                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w800),
+              ),
             ),
           ],
         ),
-        content: Form(
-          key: formKey,
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
+        content: SingleChildScrollView(
+          child: Form(
+            key: formKey,
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
               const Text(
                 'Décrivez le problème rencontré avec cette commande '
                 '(matériaux manquants, colis endommagé...). Un litige bloque '
@@ -398,7 +401,8 @@ class _ClientOrderCard extends StatelessWidget {
                   return null;
                 },
               ),
-            ],
+              ],
+            ),
           ),
         ),
         actions: [

@@ -32,6 +32,11 @@ Future<void> main() async {
         );
       };
 
+      // Remplacement de l'ErrorWidget par défaut pour éviter tout bandeau/écran d'erreur brut
+      ErrorWidget.builder = (FlutterErrorDetails details) {
+        return const SizedBox.shrink();
+      };
+
       // Erreurs async hors framework Flutter.
       PlatformDispatcher.instance.onError = (error, stack) {
         unawaited(

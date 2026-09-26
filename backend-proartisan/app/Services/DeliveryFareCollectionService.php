@@ -7,6 +7,7 @@ use App\Models\Setting;
 use App\Models\User;
 use App\Services\Admin\AdminActivityLogger;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Facades\Schema;
 
 /**
  * Recouvrement des courses livrées impayées (Chantier 11).
@@ -221,52 +222,77 @@ class DeliveryFareCollectionService
         $interval = $this->reminderIntervalHours();
         $max = $this->maxReminders();
 
-        $unpaid = $this->unpaidQuery()
-            ->with(['client:id,name,phone,payment_restricted_at', 'driver:id,name,phone'])
-            ->orderBy('delivered_at')
-            ->limit(200)
-            ->get()
-            ->map(function (Order $order) use ($interval) {
-                $since = $order->delivery_fare_last_reminder_at ?? $order->delivered_at ?? $order->updated_at;
-
+        try {
+            if (! Schema::hasColumn('orders', 'delivery_fare_status')) {
                 return [
-                    'order_id' => $order->id,
-                    'client' => $order->client ? ['id' => $order->client->id, 'name' => $order->client->name, 'phone' => $order->client->phone, 'restricted' => $order->client->isPaymentRestricted()] : null,
-                    'driver' => $order->driver ? ['id' => $order->driver->id, 'name' => $order->driver->name] : null,
-                    'montant' => $order->deliveryFareDue(),
-                    'delivered_at' => $order->delivered_at?->toIso8601String(),
-                    'reminders_count' => (int) $order->delivery_fare_reminders_count,
-                    'last_reminder_at' => $order->delivery_fare_last_reminder_at?->toIso8601String(),
-                    'next_reminder_at' => $since?->copy()->addHours($interval)->toIso8601String(),
+                    'unpaid' => [],
+                    'restricted' => [],
+                    'settings' => ['interval_hours' => $interval, 'max_reminders' => $max],
+                    'stats' => ['unpaid_count' => 0, 'unpaid_amount' => 0, 'restricted_count' => 0],
                 ];
-            })
-            ->values()
-            ->all();
+            }
 
-        $restricted = User::whereNotNull('payment_restricted_at')
-            ->orderByDesc('payment_restricted_at')
-            ->limit(100)
-            ->get(['id', 'name', 'phone', 'payment_restricted_at', 'payment_restriction_reason'])
-            ->map(fn (User $user) => [
-                'id' => $user->id,
-                'name' => $user->name,
-                'phone' => $user->phone,
-                'restricted_at' => $user->payment_restricted_at?->toIso8601String(),
-                'reason' => $user->payment_restriction_reason,
-            ])
-            ->values()
-            ->all();
+            $unpaid = $this->unpaidQuery()
+                ->with(['client:id,name,phone,payment_restricted_at', 'driver:id,name,phone'])
+                ->orderBy('delivered_at')
+                ->limit(200)
+                ->get()
+                ->map(function (Order $order) use ($interval) {
+                    $since = $order->delivery_fare_last_reminder_at ?? $order->delivered_at ?? $order->updated_at;
 
-        return [
-            'unpaid' => $unpaid,
-            'restricted' => $restricted,
-            'settings' => ['interval_hours' => $interval, 'max_reminders' => $max],
-            'stats' => [
-                'unpaid_count' => count($unpaid),
-                'unpaid_amount' => array_sum(array_column($unpaid, 'montant')),
-                'restricted_count' => User::whereNotNull('payment_restricted_at')->count(),
-            ],
-        ];
+                    return [
+                        'order_id' => $order->id,
+                        'client' => $order->client ? ['id' => $order->client->id, 'name' => $order->client->name, 'phone' => $order->client->phone, 'restricted' => $order->client->isPaymentRestricted()] : null,
+                        'driver' => $order->driver ? ['id' => $order->driver->id, 'name' => $order->driver->name] : null,
+                        'montant' => $order->deliveryFareDue(),
+                        'delivered_at' => $order->delivered_at?->toIso8601String(),
+                        'reminders_count' => (int) ($order->delivery_fare_reminders_count ?? 0),
+                        'last_reminder_at' => $order->delivery_fare_last_reminder_at?->toIso8601String(),
+                        'next_reminder_at' => $since?->copy()->addHours($interval)->toIso8601String(),
+                    ];
+                })
+                ->values()
+                ->all();
+
+            $restricted = Schema::hasColumn('users', 'payment_restricted_at')
+                ? User::whereNotNull('payment_restricted_at')
+                    ->orderByDesc('payment_restricted_at')
+                    ->limit(100)
+                    ->get(['id', 'name', 'phone', 'payment_restricted_at', 'payment_restriction_reason'])
+                    ->map(fn (User $user) => [
+                        'id' => $user->id,
+                        'name' => $user->name,
+                        'phone' => $user->phone,
+                        'restricted_at' => $user->payment_restricted_at?->toIso8601String(),
+                        'reason' => $user->payment_restriction_reason,
+                    ])
+                    ->values()
+                    ->all()
+                : [];
+
+            $restrictedCount = Schema::hasColumn('users', 'payment_restricted_at')
+                ? User::whereNotNull('payment_restricted_at')->count()
+                : 0;
+
+            return [
+                'unpaid' => $unpaid,
+                'restricted' => $restricted,
+                'settings' => ['interval_hours' => $interval, 'max_reminders' => $max],
+                'stats' => [
+                    'unpaid_count' => count($unpaid),
+                    'unpaid_amount' => array_sum(array_column($unpaid, 'montant')),
+                    'restricted_count' => $restrictedCount,
+                ],
+            ];
+        } catch (\Throwable $e) {
+            Log::warning('[DeliveryFareCollectionService] adminOverview failed: '.$e->getMessage());
+            return [
+                'unpaid' => [],
+                'restricted' => [],
+                'settings' => ['interval_hours' => $interval, 'max_reminders' => $max],
+                'stats' => ['unpaid_count' => 0, 'unpaid_amount' => 0, 'restricted_count' => 0],
+            ];
+        }
     }
 
     private function unpaidQuery()

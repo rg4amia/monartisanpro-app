@@ -330,12 +330,24 @@ class AdminPanelData
             ], 30)->withQueryString(),
             'documentStats' => $this->documentService->getStats(),
             // Chantier 10 : versements Mobile Money à traiter et retraits livreur.
-            'payoutsOverview' => Schema::hasTable('mobile_money_payouts') ? $this->payouts->adminOverview() : null,
-            'driverCashoutsOverview' => Schema::hasTable('driver_cashouts') ? $this->driverCashouts->adminOverview() : null,
+            'payoutsOverview' => rescue(
+                fn () => Schema::hasTable('mobile_money_payouts') ? $this->payouts->adminOverview() : null,
+                null,
+                false
+            ),
+            'driverCashoutsOverview' => rescue(
+                fn () => Schema::hasTable('driver_cashouts') ? $this->driverCashouts->adminOverview() : null,
+                null,
+                false
+            ),
             // Chantier 11 : courses impayées, comptes restreints, virements de commande à confirmer.
-            'collectionsOverview' => Schema::hasColumn('orders', 'delivery_fare_reminders_count')
-                ? $this->fareCollection->adminOverview() + ['pending_bank_transfers' => $this->orders->pendingBankTransferPayments()]
-                : null,
+            'collectionsOverview' => rescue(
+                fn () => (Schema::hasColumn('orders', 'delivery_fare_reminders_count') || Schema::hasColumn('orders', 'delivery_fare_status'))
+                    ? ($this->fareCollection->adminOverview() + ['pending_bank_transfers' => $this->orders->pendingBankTransferPayments()])
+                    : null,
+                null,
+                false
+            ),
         ];
     }
 

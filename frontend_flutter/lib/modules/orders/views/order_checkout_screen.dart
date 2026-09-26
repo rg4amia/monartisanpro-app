@@ -329,11 +329,13 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                   size: 28,
                 ),
                 const SizedBox(width: 10),
-                Text(
-                  paid ? 'Commande payée' : 'Commande enregistrée',
-                  style: const TextStyle(
-                    fontWeight: FontWeight.bold,
-                    fontSize: 17,
+                Expanded(
+                  child: Text(
+                    paid ? 'Commande payée' : 'Commande enregistrée',
+                    style: const TextStyle(
+                      fontWeight: FontWeight.bold,
+                      fontSize: 17,
+                    ),
                   ),
                 ),
               ],
