@@ -24,6 +24,7 @@ class SettingsController extends GetxController {
 
   final notificationsEnabled = true.obs;
   final notificationSoundEnabled = true.obs;
+  final dataSaverEnabled = true.obs;
 
   final paymentPhone = ''.obs;
   final preferredPaymentProvider = 'wave'.obs;
@@ -40,6 +41,7 @@ class SettingsController extends GetxController {
     notificationsEnabled.value = StorageService.areNotificationsEnabled();
     notificationSoundEnabled.value =
         StorageService.isNotificationSoundEnabled();
+    dataSaverEnabled.value = StorageService.isDataSaverEnabled();
     _loadData();
   }
 
@@ -76,6 +78,11 @@ class SettingsController extends GetxController {
   void toggleNotificationSound(bool value) {
     notificationSoundEnabled.value = value;
     StorageService.setNotificationSoundEnabled(value);
+  }
+
+  void toggleDataSaver(bool value) {
+    dataSaverEnabled.value = value;
+    StorageService.setDataSaverEnabled(value);
   }
 
   Future<void> deleteAccount() async {

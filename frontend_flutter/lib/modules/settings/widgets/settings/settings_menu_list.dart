@@ -167,6 +167,61 @@ class SettingsMenuList extends StatelessWidget {
                     ],
                   ),
                 ),
+
+                const SizedBox(height: 16),
+                const Divider(height: 1, color: SettingsColors.subtle),
+                const SizedBox(height: 16),
+
+                // Mode économie de données (Data Saver) switch Row
+                Obx(
+                  () => Row(
+                    children: [
+                      Container(
+                        width: 44,
+                        height: 44,
+                        decoration: BoxDecoration(
+                          color: orangeAccentLight,
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: const Icon(
+                          Icons.data_saver_on_outlined,
+                          color: orangeAccent,
+                          size: 22,
+                        ),
+                      ),
+                      const SizedBox(width: 14),
+                      const Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'Économie de données',
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.w700,
+                                color: SettingsColors.ink,
+                              ),
+                            ),
+                            SizedBox(height: 2),
+                            Text(
+                              'Compression automatique des photos et vidéos',
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: SettingsColors.muted,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      Switch(
+                        value: controller.dataSaverEnabled.value,
+                        onChanged: controller.toggleDataSaver,
+                        activeThumbColor: orangeAccent,
+                        activeTrackColor: orangeAccent.withValues(alpha: 0.3),
+                      ),
+                    ],
+                  ),
+                ),
               ],
             ),
           ),

@@ -1,6 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/core/services/media_compressor_service.dart';
 import 'package:frontend_flutter/core/storage/storage_service.dart';
+import 'package:frontend_flutter/modules/settings/controllers/settings_controller.dart';
 import '../../helpers/test_helpers.dart';
 
 void main() {
@@ -28,6 +29,20 @@ void main() {
       StorageService.setDataSaverEnabled(false);
       expect(StorageService.isDataSaverEnabled(), isFalse);
       StorageService.setDataSaverEnabled(true);
+      expect(StorageService.isDataSaverEnabled(), isTrue);
+    });
+
+    test('SettingsController reflects and toggles data saver state', () {
+      StorageService.setDataSaverEnabled(true);
+      final controller = SettingsController();
+      expect(controller.dataSaverEnabled.value, isTrue);
+
+      controller.toggleDataSaver(false);
+      expect(controller.dataSaverEnabled.value, isFalse);
+      expect(StorageService.isDataSaverEnabled(), isFalse);
+
+      controller.toggleDataSaver(true);
+      expect(controller.dataSaverEnabled.value, isTrue);
       expect(StorageService.isDataSaverEnabled(), isTrue);
     });
   });
