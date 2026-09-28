@@ -5,7 +5,7 @@
 différés du commit `be598ed7` (sécurité réseau, synchro hors-ligne, anti-contournement).
 
 | # | Chantier | Effort | Priorité | Risque de régression |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 1 | Couche réseau + cache unifiée pour tous les repositories | ~5 j | Haute | Moyen |
 | 2 | Découpe des 5 vues > 1 400 lignes | ~4 j | Moyenne | Faible |
 | 3 | Durcissement progressif du lint | ~3 j | Moyenne | Faible |
@@ -17,7 +17,7 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 ## État d'avancement (mis à jour le 2 septembre 2026)
 
 | Chantier | Étape | Statut | Commit |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | 1 | `NetworkExecutor` + tests | ✅ Fait | `bb947ba2` |
 | 1 | `CacheStore<T>` + `HiveCipherProvider` + tests | ✅ Fait | `bb947ba2` |
 | 1 | `mission_repository` délègue à `NetworkExecutor` | ✅ Fait | `bb947ba2` |
@@ -68,7 +68,7 @@ Total indicatif : **~12 jours-homme**, découpables en 3 lots livrables indépen
 ### 1.1 Constat
 
 | Repository | LOC | Retry | Cache offline |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `mission_repository.dart` | 526 | ✅ `_executeWithRetry` (backoff expo.) | ✅ `MissionCacheService` (Hive AES-256) |
 | 14 autres (`artisan`, `wallet`, `devis`, `order`, `jcode`…) | 16–170 | ❌ | ❌ |
 
@@ -81,7 +81,7 @@ et `wallet_repository` (solde) sont les manques les plus visibles pour l'utilisa
 Deux primitives réutilisables dans `core/network/` et `core/cache/`, sans imposer
 de réécriture massive des repositories.
 
-```
+```text
 core/network/
   network_executor.dart      # retry + classification d'erreurs (extrait de mission_repository)
 core/cache/
@@ -173,7 +173,7 @@ Future<List<ArtisanModel>> getNearby({...}) => cachedFetch(
 ### 2.1 Constat
 
 | Fichier | LOC | Sous-widgets privés déjà présents |
-|---|---|---|
+| --- | --- | --- |
 | `missions/views/mission_tracking_screen.dart` | 2 740 | ~20 (`_MissionHeaderCard`, `_JalonsSection`, `_JalonCard`…) |
 | `missions/views/devis_creation_screen.dart` | 2 162 | ~18 |
 | `home/views/client_home_screen.dart` | 2 091 | à cartographier |
@@ -192,7 +192,7 @@ et les `_MaterialsSection` / `_JalonsSection` de `devis_creation_screen.dart`.
 
 Par module concerné :
 
-```
+```text
 modules/missions/views/
   mission_tracking_screen.dart          # < 300 l. : Scaffold + orchestration
   widgets/tracking/
@@ -264,7 +264,7 @@ potentiels : `Future` non attendus dans des `initState`, `onPressed`…).
 ### 3.2 Stratégie : une règle à la fois, chaque activation = 1 PR verte
 
 | Ordre | Règle | Nature du fix | Auto-fixable | Volume estimé |
-|---|---|---|---|---|
+| --- | --- | --- | --- | --- |
 | 1 | `directives_ordering` | tri des imports | ✅ `dart fix --apply` | ~faible |
 | 2 | `prefer_single_quotes` | `"` → `'` | ✅ `dart fix --apply` | ~moyen |
 | 3 | `require_trailing_commas` | virgules finales | ✅ `dart format` + `dart fix` | ~moyen |
@@ -301,7 +301,7 @@ potentiels : `Future` non attendus dans des `initState`, `onPressed`…).
 
 ## Séquencement recommandé
 
-```
+```text
 Sprint N     : Chantier 1 étapes 1–2 (NetworkExecutor + CacheStore + tests)
                Chantier 3 étapes 1–2 (errors/ + règles auto-fixables)
 Sprint N+1   : Chantier 1 étapes 3–5 (migration repos + SyncService.flush + bandeau)

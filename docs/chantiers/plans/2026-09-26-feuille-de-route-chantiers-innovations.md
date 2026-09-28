@@ -46,16 +46,16 @@ flowchart TD
 
 ## 🛠️ Chantier 6 — Expérience Terrain Artisan & Économie de Données Mobiles
 
-### 1. Fiche Signalétique
+### 1. Fiche Signalétique (Chantier 6)
 * **Code :** `CHANTIER-06`
 * **Priorité :** 🔴 Haute (Adoption immédiate sur le terrain)
 * **Effort estimé :** 4 jours-homme (2 lots)
 * **Composants touchés :** `GeminiService.php`, `VoiceQuoteTest.php`, `frontend_flutter/lib/modules/missions/widgets/devis_creation/`, `media_compressor_service.dart`.
 
-### 2. Objectif
-Faciliter l'expression des devis par les artisans moins à l'aise avec la rédaction formelle via un modèle de langage calibré sur le lexique ivoirien du BTP, tout en réduisant de 70% la facture data internet des utilisateurs lors de l'envoi de preuves photos/vidéos.
+### 2. Objectif (Chantier 6)
+Permettre à un artisan de s'exprimer dans son langage professionnel quotidien (nouchi technique) et réduire l'usage de données mobiles de 70%.
 
-### 3. Découpage en Lots
+### 3. Découpage en Lots (Chantier 6)
 
 #### 🔹 Lot 6A : Voice-to-Quote en Nouchi & Glossaire BTP Ivoirien (2 jours)
 * **Backend :**
@@ -80,16 +80,16 @@ Faciliter l'expression des devis par les artisans moins à l'aise avec la rédac
 
 ## 💳 Chantier 7 — Le J-Code Multi-Comptoirs (Consommation Fractionnée)
 
-### 1. Fiche Signalétique
+### 1. Fiche Signalétique (Chantier 7)
 * **Code :** `CHANTIER-07`
 * **Priorité :** 🔴 Haute (Flexibilité logistique et satisfaction fournisseurs)
 * **Effort estimé :** 5 jours-homme (2 lots)
 * **Composants touchés :** `jcodes`, nouvelle table `jcode_redemptions`, `JCodeService.php`, `SupplierCashoutService.php`, écrans mobile J-Code.
 
-### 2. Objectif
+### 2. Objectif (Chantier 7)
 Permettre à un artisan de s'approvisionner dans plusieurs quincailleries spécialisées avec un seul J-Code rattaché à son enveloppe `wallet_materiaux`, sans bloquer la totalité du montant chez un unique commerçant.
 
-### 3. Découpage en Lots
+### 3. Découpage en Lots (Chantier 7)
 
 #### 🔹 Lot 7A : Schéma & Moteur de Débits Partiels Backend (3 jours)
 * **Base de données :**
@@ -114,16 +114,16 @@ Permettre à un artisan de s'approvisionner dans plusieurs quincailleries spéci
 
 ## ⚡ Chantier 8 — Télémétrie Temps Réel & Moteur Anti-Collusion
 
-### 1. Fiche Signalétique
+### 1. Fiche Signalétique (Chantier 8)
 * **Code :** `CHANTIER-08`
 * **Priorité :** 🟡 Moyenne / Sécurité critique
 * **Effort estimé :** 6 jours-homme (2 lots)
 * **Composants touchés :** Laravel Reverb, `AntiBotService.php`, `FraudDetectionService.php`, `DeliveryTrackingService.php`, Flutter WebSocket client.
 
-### 2. Objectif
+### 2. Objectif (Chantier 8)
 Éliminer le polling HTTP coûteux en batterie pour le suivi de course livreur et les jalons, tout en armant le système contre les fraudes de complicité (faux chantiers artisan-client).
 
-### 3. Découpage en Lots
+### 3. Découpage en Lots (Chantier 8)
 
 #### 🔹 Lot 8A : WebSockets Natifs avec Laravel Reverb (3 jours)
 * **Backend :**
@@ -148,16 +148,16 @@ Permettre à un artisan de s'approvisionner dans plusieurs quincailleries spéci
 
 ## 🏛️ Chantier 9 — Rigueur Bancaire & Résolution Structurée des Litiges
 
-### 1. Fiche Signalétique
+### 1. Fiche Signalétique (Chantier 9)
 * **Code :** `CHANTIER-09`
 * **Priorité :** 🔴 Haute (Éligibilité institutionnelle, banques & litiges volumineux)
 * **Effort estimé :** 7 jours-homme (3 lots)
 * **Composants touchés :** `ledger_entries`, `WalletService.php`, `LitigeService.php`, `MicroCreditService.php`, Admin backoffice Inertia.
 
-### 2. Objectif
+### 2. Objectif (Chantier 9)
 Mettre en place une comptabilité en partie double infalsifiable (Double-Entry Ledger) pour les audits bancaires et la BCEAO, intégrer la télé-expertise assistée par vision IA pour réduire de 80% les déplacements physiques de litiges, et formaliser le passeport de solvabilité bancaire.
 
-### 3. Découpage en Lots
+### 3. Découpage en Lots (Chantier 9)
 
 #### 🔹 Lot 9A : Grand Livre en Partie Double (Double-Entry Ledger Pur) (3 jours)
 * **Architecture financière :**
