@@ -761,3 +761,130 @@ export interface NotificationDeliveryStats {
     skipped: number;
     sms_sent: number;
 }
+
+/** Campagnes push & SMS du backoffice (Chantier 14, lot D). */
+export type NotificationCampaignStatus = 'brouillon' | 'programmee' | 'en_cours' | 'envoyee' | 'annulee';
+
+export type NotificationCampaignNature = 'service' | 'promotionnel';
+
+export type NotificationCampaignScreen = 'notifications' | 'home' | 'communication';
+
+// Alias (et non interface) : transmissible tel quel à router.post d'Inertia.
+export type NotificationCampaignTarget = {
+    roles: string[];
+    commune_ids: number[];
+    kyc_statuses: string[];
+    user_ids: number[];
+};
+
+export interface NotificationCampaignUser {
+    id: number;
+    name: string;
+    phone: string | null;
+    role: string;
+}
+
+/** Destinataires et SMS calculés par le serveur ; jamais de coût (décision n° 3). */
+export interface NotificationCampaignEstimate {
+    recipients: number;
+    max_recipients: number;
+    over_limit: boolean;
+    sms_recipients: number;
+    sms_segments: number;
+    sms_messages: number;
+}
+
+export interface NotificationCampaignItem {
+    id: number;
+    name: string;
+    nature: NotificationCampaignNature;
+    nature_label: string;
+    push_title: string | null;
+    push_body: string | null;
+    sms_body: string | null;
+    channels: NotificationChannels;
+    target: NotificationCampaignTarget;
+    selected_users: NotificationCampaignUser[];
+    open_screen: NotificationCampaignScreen;
+    communication: { id: number; titre: string } | null;
+    status: NotificationCampaignStatus;
+    status_label: string;
+    scheduled_at: string | null;
+    started_at: string | null;
+    finished_at: string | null;
+    cancelled_at: string | null;
+    counts: { recipients: number; served: number; sent: number; failed: number };
+    estimate: NotificationCampaignEstimate | null;
+    editable: boolean;
+    cancellable: boolean;
+    deletable: boolean;
+    created_by: string | null;
+    created_at: string | null;
+}
+
+export interface NotificationCampaignOptions {
+    roles: Record<string, string>;
+    kyc_statuses: Record<string, string>;
+    natures: Record<NotificationCampaignNature, string>;
+    screens: Record<NotificationCampaignScreen, string>;
+    statuses: Record<NotificationCampaignStatus, string>;
+    communes: Array<{ id: number; name: string }>;
+    communications: Array<{ id: number; titre: string }>;
+    max_recipients: number;
+    max_selected_users: number;
+    sms_max_segments: number;
+}
+
+/** Annuaire artisans du backoffice (Chantier 15). */
+export type AvailabilityStatus = 'disponible' | 'occupe' | 'conge';
+
+export type AvailabilitySlot = { day: number; start: string; end: string };
+
+export interface ArtisanAvailabilityItem {
+    id: number;
+    status: AvailabilityStatus;
+    status_label: string;
+    effective_status: AvailabilityStatus;
+    effective_label: string;
+    until_date: string | null;
+    schedule: AvailabilitySlot[];
+    schedule_summary: string | null;
+    night_work: boolean;
+    review_status: 'en_attente' | 'validee' | 'refusee' | 'remplacee';
+    review_label: string;
+    rejection_reason: string | null;
+    submitted_at: string | null;
+    reviewed_at: string | null;
+}
+
+export interface DirectoryArtisanRow {
+    id: number;
+    name: string;
+    phone: string | null;
+    trade: string | null;
+    city: string | null;
+    score_prosartisan: number;
+    kyc_status: string;
+    account_status: string;
+    hidden: boolean;
+    hidden_at: string | null;
+    hidden_reason: string | null;
+    /** Visible sur le site vitrine en ce moment. */
+    listed: boolean;
+    blockers: string[];
+    published: ArtisanAvailabilityItem | null;
+    pending: ArtisanAvailabilityItem | null;
+}
+
+export interface DirectoryStats {
+    artisans: number;
+    published: number;
+    hidden: number;
+    pending: number;
+}
+
+export interface DirectoryOptions {
+    statuses: Record<AvailabilityStatus, string>;
+    days: Record<string, string>;
+    max_slots: number;
+}

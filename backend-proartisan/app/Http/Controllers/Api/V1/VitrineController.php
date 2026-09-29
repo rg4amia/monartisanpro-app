@@ -6,7 +6,6 @@ use App\Http\Controllers\Controller;
 use App\Models\ContactMessage;
 use App\Models\Evaluation;
 use App\Models\Mission;
-use App\Models\User;
 use App\Models\Vitrine\VitrineArticle;
 use App\Models\Vitrine\VitrineArtisanDuMois;
 use App\Models\Vitrine\VitrineFormation;
@@ -16,6 +15,7 @@ use App\Models\Vitrine\VitrineSetting;
 use App\Models\Vitrine\VitrineSlide;
 use App\Models\Vitrine\VitrineVideo;
 use App\Models\WhatsappClickLog;
+use App\Services\ArtisanDirectoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -84,77 +84,34 @@ class VitrineController extends Controller
     }
 
     /**
-     * Top artisans (score > 700, paginés).
+     * Top artisans (score ≥ 700), parmi ceux publiés dans l'annuaire.
      */
-    public function artisansStars(Request $request): JsonResponse
+    public function artisansStars(Request $request, ArtisanDirectoryService $directory): JsonResponse
     {
-        $artisans = User::where('role', 'artisan')
-            ->where('kyc_status', 'actif')
-            ->where('score_prosartisan', '>=', 700)
-            ->with(['artisanProfile.trade', 'commune'])
-            ->orderByDesc('score_prosartisan')
-            ->select('id', 'name', 'score_prosartisan', 'commune_id')
-            ->paginate($request->input('per_page', 12));
-
-        return response()->json(['success' => true, 'data' => $artisans]);
+        return response()->json(['success' => true, 'data' => $directory->stars((int) $request->input('per_page', 12))]);
     }
 
     /**
-     * Listing des artisans avec filtres.
+     * Annuaire des artisans : métier, commune, score minimum, disponibles
+     * maintenant (Chantier 15).
      */
-    public function artisans(Request $request): JsonResponse
+    public function artisans(Request $request, ArtisanDirectoryService $directory): JsonResponse
     {
-        $query = User::where('role', 'artisan')
-            ->where('kyc_status', 'actif')
-            ->with(['artisanProfile.trade', 'commune'])
-            ->select('id', 'name', 'score_prosartisan', 'commune_id');
-
-        if ($metier = $request->input('metier')) {
-            $query->whereHas('artisanProfile.trade', function ($q) use ($metier) {
-                $q->where('name', 'like', "%{$metier}%");
-            });
-        }
-        if ($ville = $request->input('ville')) {
-            $query->whereHas('commune', function ($q) use ($ville) {
-                $q->where('nom', 'like', "%{$ville}%");
-            });
-        }
-        if ($noteMin = $request->input('note_min')) {
-            $query->where('score_prosartisan', '>=', (int) $noteMin);
-        }
-
-        $artisans = $query->orderByDesc('score_prosartisan')
-            ->paginate($request->input('per_page', 12));
-
-        return response()->json(['success' => true, 'data' => $artisans]);
-    }
-
-    /**
-     * Profil public d'un artisan.
-     */
-    public function artisanShow(int $id): JsonResponse
-    {
-        $artisan = User::where('role', 'artisan')
-            ->where('kyc_status', 'actif')
-            ->with(['artisanProfile.trade', 'commune'])
-            ->select('id', 'name', 'score_prosartisan', 'commune_id', 'created_at')
-            ->findOrFail($id);
-
-        // Récupérer les évaluations publiques
-        $evaluations = $artisan->evaluationsRecues()
-            ->with('evaluateur:id,name')
-            ->latest()
-            ->take(10)
-            ->get(['id', 'note', 'commentaire', 'fiabilite', 'integrite', 'qualite', 'reactivite', 'evaluateur_id', 'created_at']);
-
         return response()->json([
             'success' => true,
-            'data' => [
-                'artisan' => $artisan,
-                'evaluations' => $evaluations,
-                'missions_completees' => $artisan->missionsArtisan()->where('status', 'completed')->count(),
-            ],
+            'data' => $directory->search(
+                $request->only(['metier', 'ville', 'note_min', 'disponible', 'q']),
+                (int) $request->input('per_page', 12),
+            ),
         ]);
+    }
+
+    /**
+     * Profil public d'un artisan publié dans l'annuaire.
+     */
+    public function artisanShow(int $id, ArtisanDirectoryService $directory): JsonResponse
+    {
+        return response()->json(['success' => true, 'data' => $directory->profile($id)]);
     }
 
     /**

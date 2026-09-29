@@ -26,6 +26,7 @@ class NotificationDelivery extends Model
 
     protected $fillable = [
         'notification_id',
+        'campaign_id',
         'user_id',
         'event_key',
         'channel',
@@ -51,6 +52,11 @@ class NotificationDelivery extends Model
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
+    }
+
+    public function campaign(): BelongsTo
+    {
+        return $this->belongsTo(NotificationCampaign::class, 'campaign_id');
     }
 
     public function notification(): BelongsTo

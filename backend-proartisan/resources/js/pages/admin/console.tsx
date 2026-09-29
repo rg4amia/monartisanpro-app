@@ -28,6 +28,8 @@ import { AiQuotaFormModal, CampagneParrainageFormModal, CommunicationFormModal, 
 import { KycPanel } from './panels/KycPanel';
 import { LitigesPanel } from './panels/LitigesPanel';
 import { MissionsPanel } from './panels/MissionsPanel';
+import { ArtisanDirectoryPanel } from './panels/ArtisanDirectoryPanel';
+import { NotificationCampaignsPanel } from './panels/NotificationCampaignsPanel';
 import { NotificationMessagesPanel } from './panels/NotificationMessagesPanel';
 import { NotificationsPanel } from './panels/NotificationsPanel';
 import { ObservabilityPanel } from './panels/ObservabilityPanel';
@@ -161,6 +163,11 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         notificationSmsMaxSegments = 3,
         notificationDeliveries = null,
         notificationDeliveryStats = undefined,
+        notificationCampaigns = null,
+        notificationCampaignOptions = undefined,
+        directoryArtisans = null,
+        directoryStats = undefined,
+        directoryOptions = undefined,
         recruitmentOffersPage = undefined,
         recruitmentStats = { total: 0, pending_review: 0, active: 0, filled: 0 },
         recruitmentSettings = { client_posting_enabled: '1', fournisseur_posting_enabled: '1' },
@@ -1085,6 +1092,14 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     deliveries={notificationDeliveries}
                                     deliveryStats={notificationDeliveryStats}
                                 />
+                            ) : null}
+
+                            {activeTab === 'notification_campaigns' && notificationCampaignOptions ? (
+                                <NotificationCampaignsPanel campaigns={notificationCampaigns} options={notificationCampaignOptions} />
+                            ) : null}
+
+                            {activeTab === 'artisan_directory' && directoryOptions ? (
+                                <ArtisanDirectoryPanel artisans={directoryArtisans} stats={directoryStats} options={directoryOptions} />
                             ) : null}
 
                             {activeTab === 'manual' ? <ManualPanel manual={userManual} /> : null}

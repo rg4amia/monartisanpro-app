@@ -226,7 +226,7 @@ class NotificationTemplateAdminService
      */
     public function deliveries(Request $request): LengthAwarePaginator
     {
-        $query = NotificationDelivery::query()->with('user:id,name,phone,role');
+        $query = NotificationDelivery::query()->with(['user:id,name,phone,role', 'campaign:id,name']);
 
         if (in_array($status = (string) $request->query('delivery_status', ''), array_keys(self::DELIVERY_STATUS_LABELS), true)) {
             $query->where('status', $status);
@@ -242,6 +242,7 @@ class NotificationTemplateAdminService
             ));
             $query->where(function ($q) use ($search, $events) {
                 $q->whereIn('event_key', $events)
+                    ->orWhereHas('campaign', fn ($c) => $c->where('name', 'like', "%{$search}%"))
                     ->orWhereHas('user', fn ($u) => $u->where('name', 'like', "%{$search}%")->orWhere('phone', 'like', "%{$search}%"));
             });
         }
@@ -252,9 +253,11 @@ class NotificationTemplateAdminService
         $page->getCollection()->transform(fn (NotificationDelivery $delivery) => [
             'id' => $delivery->id,
             'event' => $delivery->event_key,
-            'event_label' => NotificationCatalog::has((string) $delivery->event_key)
+            'event_label' => $delivery->campaign_id !== null
+                ? 'Campagne : '.($delivery->campaign?->name ?? '#'.$delivery->campaign_id)
+                : (NotificationCatalog::has((string) $delivery->event_key)
                 ? NotificationCatalog::get($delivery->event_key)['label']
-                : $delivery->event_key,
+                : $delivery->event_key),
             'channel' => $delivery->channel,
             'provider' => $delivery->provider,
             'status' => $delivery->status,

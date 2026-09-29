@@ -20,4 +20,5 @@ it('planifie les commandes de maintenance métier', function (string $signature)
     'prosartisan:remind-unpaid-delivery-fares',
     'prosartisan:driver-watchdog',
     'admin:health-check',
+    'notifications:send-campaigns',
 ]);

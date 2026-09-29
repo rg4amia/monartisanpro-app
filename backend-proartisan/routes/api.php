@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\LlmAdminController;
 use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AdminRolePermissionController;
+use App\Http\Controllers\Api\V1\ArtisanAvailabilityController;
 use App\Http\Controllers\Api\V1\ArtisanController;
 use App\Http\Controllers\Api\V1\ArtisanStockController;
 use App\Http\Controllers\Api\V1\AuthController;
@@ -205,6 +206,10 @@ Route::prefix('v1')->group(function () {
         Route::get('/artisans/{user}', [ArtisanController::class, 'show']);
         Route::get('/artisans/{user}/score', [ArtisanController::class, 'score']);
         Route::get('/artisans/{user}/report', [ArtisanController::class, 'downloadReport']);
+
+        // Disponibilité publiée dans l'annuaire après validation (Chantier 15)
+        Route::get('/artisan/availability', [ArtisanAvailabilityController::class, 'show']);
+        Route::post('/artisan/availability', [ArtisanAvailabilityController::class, 'store'])->middleware('throttle:10,1');
 
         Route::apiResource('artisan-stock', ArtisanStockController::class)->except(['show']);
 

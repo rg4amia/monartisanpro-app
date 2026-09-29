@@ -69,6 +69,8 @@ import '../../modules/score/bindings/score_binding.dart';
 import '../../modules/score/views/score_screen.dart';
 import '../../modules/services/views/services_screen.dart';
 import '../../modules/settings/bindings/settings_binding.dart';
+import '../../modules/settings/controllers/availability_controller.dart';
+import '../../modules/settings/views/availability_screen.dart';
 import '../../modules/settings/views/legal_terms_screen.dart';
 import '../../modules/settings/views/settings_screen.dart';
 import '../../modules/settings/views/update_profile_screen.dart';
@@ -265,6 +267,16 @@ class AppPages {
       name: Routes.litigeDetail,
       page: () => const LitigeDetailScreen(),
       binding: LitigeDetailBinding(),
+    ),
+
+    // Disponibilité publiée dans l'annuaire après validation (Chantier 15)
+    GetPage(
+      name: Routes.artisanAvailability,
+      page: () => const AvailabilityScreen(),
+      binding: BindingsBuilder(
+        () =>
+            Get.lazyPut<AvailabilityController>(() => AvailabilityController()),
+      ),
     ),
 
     // Espace juré (Chantier 12) — dossiers anonymisés

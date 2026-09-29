@@ -67,6 +67,7 @@ class User extends Authenticatable
             'payment_restricted_at' => 'datetime',
             'cgu_accepted_at' => 'datetime',
             'anonymized_at' => 'datetime',
+            'directory_hidden_at' => 'datetime',
             'wallet_materiaux' => 'integer',
             'wallet_mo' => 'integer',
             'score_prosartisan' => 'integer',
@@ -162,6 +163,30 @@ class User extends Authenticatable
     public function artisanProfile()
     {
         return $this->hasOne(ArtisanProfile::class);
+    }
+
+    /** Versions de disponibilité pour l'annuaire du site vitrine (Chantier 15). */
+    public function availabilities()
+    {
+        return $this->hasMany(ArtisanAvailability::class);
+    }
+
+    /** Disponibilité publiée : la dernière version validée. */
+    public function publishedAvailability()
+    {
+        return $this->hasOne(ArtisanAvailability::class)->ofMany(
+            ['id' => 'max'],
+            fn ($query) => $query->where('review_status', ArtisanAvailability::REVIEW_APPROVED),
+        );
+    }
+
+    /** Déclaration en attente de validation, au plus une. */
+    public function pendingAvailability()
+    {
+        return $this->hasOne(ArtisanAvailability::class)->ofMany(
+            ['id' => 'max'],
+            fn ($query) => $query->where('review_status', ArtisanAvailability::REVIEW_PENDING),
+        );
     }
 
     public function commune()

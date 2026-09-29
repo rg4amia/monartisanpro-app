@@ -44,6 +44,7 @@ export function buildNavigation(permissions: string[], counts: NavigationCounts)
             label: 'Réseau',
             items: [
                 { count: counts.totalUsers, id: 'users', label: tabMeta.users.label },
+                { id: 'artisan_directory', label: tabMeta.artisan_directory.label },
                 { id: 'evaluations', label: tabMeta.evaluations.label },
                 { count: counts.pendingTransactions, id: 'transactions', label: tabMeta.transactions.label },
             ],
@@ -57,6 +58,7 @@ export function buildNavigation(permissions: string[], counts: NavigationCounts)
                 { id: 'observability', label: tabMeta.observability.label },
                 { count: counts.publishedCommunications, id: 'communications', label: tabMeta.communications.label },
                 { id: 'notification_messages', label: tabMeta.notification_messages.label },
+                { id: 'notification_campaigns', label: tabMeta.notification_campaigns.label },
                 { count: counts.activePromoCodes, id: 'promo_codes', label: 'Codes Promo' },
                 { count: counts.activeCampagnes, id: 'campagnes_parrainage', label: 'Parrainage Clients' },
                 { count: counts.newContactMessages, id: 'vitrine', label: tabMeta.vitrine.label },

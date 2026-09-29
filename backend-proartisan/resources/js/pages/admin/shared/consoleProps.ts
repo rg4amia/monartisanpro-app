@@ -34,6 +34,11 @@ import type {
     MissionStats,
     ObservabilitySnapshot,
     NotificationDeliveryRow,
+    DirectoryArtisanRow,
+    DirectoryOptions,
+    DirectoryStats,
+    NotificationCampaignItem,
+    NotificationCampaignOptions,
     NotificationDeliveryStats,
     NotificationEventItem,
     Paginated,
@@ -176,6 +181,11 @@ export interface AdminPageProps {
     notificationSmsMaxSegments?: number;
     notificationDeliveries?: Paginated<NotificationDeliveryRow> | null;
     notificationDeliveryStats?: NotificationDeliveryStats;
+    notificationCampaigns?: Paginated<NotificationCampaignItem> | null;
+    notificationCampaignOptions?: NotificationCampaignOptions;
+    directoryArtisans?: Paginated<DirectoryArtisanRow> | null;
+    directoryStats?: DirectoryStats;
+    directoryOptions?: DirectoryOptions;
     userManual?: UserManualSummary | null;
     recruitmentOffersPage?: Paginated<RecruitmentOfferItem> | null;
     recruitmentStats?: RecruitmentStats;

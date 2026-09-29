@@ -43,6 +43,14 @@ class NotificationService extends GetxService {
     }
   }
 
+  /// Une campagne s'ouvre sur l'accueil pour les écrans `home` et
+  /// `communication` (les communications publiées y sont affichées), sinon
+  /// sur la liste des notifications.
+  static bool campaignOpensHome(Map<String, dynamic> data) {
+    final screen = data['screen']?.toString() ?? 'notifications';
+    return screen == 'home' || screen == 'communication';
+  }
+
   /// Redirige l'utilisateur vers la vue correspondante selon les données de la notification.
   void routeToTarget(Map<String, dynamic> data) {
     try {
@@ -60,6 +68,24 @@ class NotificationService extends GetxService {
           litigeIdStr != null ? int.tryParse(litigeIdStr.toString()) : null;
 
       final role = StorageService.getRole() ?? 'client';
+
+      // Campagne du backoffice (Chantier 14, lot D) : accueil, où figurent
+      // aussi les communications publiées, ou liste des notifications.
+      if (type == 'campaign') {
+        if (campaignOpensHome(data)) {
+          _switchToMainTab(0);
+        } else if (Get.currentRoute != Routes.notifications) {
+          Get.toNamed(Routes.notifications);
+        }
+        return;
+      }
+
+      // Annuaire (Chantier 15) : disponibilité validée ou refusée, fiche
+      // retirée ou rétablie — l'écran « Ma disponibilité » l'explique.
+      if (type == 'directory') {
+        Get.toNamed(Routes.artisanAvailability);
+        return;
+      }
 
       // 0. Message de chantier : on ouvre directement la discussion concernée.
       // Sans ce cas, la notification n'ouvrait rien et l'utilisateur devait

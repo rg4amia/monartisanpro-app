@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
+import { ArtisanCard } from '@/components/ArtisanCard';
 import Image from 'next/image';
 import { 
   ArrowRight, ShieldCheck, Award, Users, 
@@ -330,47 +331,7 @@ export default function HomePage() {
 
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
             {topArtisans.map((artisan) => (
-              <div
-                key={artisan.id}
-                className="bg-white border border-[#e6d3b2]/40 rounded-[28px] overflow-hidden shadow-sm hover:shadow-md transition flex flex-col justify-between"
-              >
-                <div>
-                  <div className="aspect-square bg-zinc-950 overflow-hidden relative">
-                    <Image
-                      src={artisan.kyc_selfie_path || 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80'}
-                      alt={artisan.name}
-                      fill
-                      className="object-cover"
-                      unoptimized
-                    />
-                    <div className="absolute top-4 left-4 right-4 flex justify-between items-center">
-                      <span className="px-2.5 py-0.5 bg-black/60 rounded-md text-[9px] font-bold uppercase tracking-wider text-white">
-                        Vérifié
-                      </span>
-                      <div className="flex items-center gap-1 px-2 py-0.5 bg-amber-500/90 rounded-md text-white font-bold text-[10px]">
-                        <Star className="h-3 w-3 fill-current" />
-                        <span>{(artisan.score_prosartisan / 200).toFixed(1)}</span>
-                      </div>
-                    </div>
-                  </div>
-                  <div className="p-5 space-y-2">
-                    <h3 className="font-extrabold text-[#241b16] text-sm">{artisan.name}</h3>
-                    <p className="text-[10px] font-bold text-[#8a5d16] uppercase">{artisan.trade || 'Artisan'}</p>
-                    <p className="text-xs text-[#746251]">{artisan.city || 'Abidjan'}</p>
-                  </div>
-                </div>
-                <div className="p-5 pt-0">
-                  <div className="border-t border-[#e6d3b2]/10 pt-4 flex items-center justify-between text-xs text-[#746251]">
-                    <span>Score : <strong>{artisan.score_prosartisan}</strong></span>
-                    <Link
-                      href={`/contact?artisan_id=${artisan.id}`}
-                      className="px-3.5 py-1.5 bg-[#f7efe2] hover:bg-[#8a5d16] hover:text-white border border-[#e6d3b2]/50 rounded-xl text-[10px] font-bold text-[#8a5d16] transition"
-                    >
-                      Contacter
-                    </Link>
-                  </div>
-                </div>
-              </div>
+              <ArtisanCard key={artisan.id} artisan={artisan} />
             ))}
           </div>
         </section>

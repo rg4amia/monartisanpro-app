@@ -43,6 +43,8 @@ use App\Services\Admin\AdminPromoCodeService;
 use App\Services\Admin\AdminSettingsService;
 use App\Services\Admin\AdminTaxonomyService;
 use App\Services\Admin\AdminUserService;
+use App\Services\Admin\ArtisanDirectoryAdminService;
+use App\Services\Admin\NotificationCampaignAdminService;
 use App\Services\Admin\NotificationTemplateAdminService;
 use App\Services\Admin\UserManualService;
 use App\Services\AdminService;
@@ -574,6 +576,16 @@ class BackofficeController extends Controller
     public function notificationMessages(Request $request, NotificationTemplateAdminService $messages): Response
     {
         return $this->page('admin/notification-messages', $messages->panelData($request));
+    }
+
+    public function artisanDirectory(Request $request, ArtisanDirectoryAdminService $directory): Response
+    {
+        return $this->page('admin/artisan-directory', $directory->panelData($request));
+    }
+
+    public function notificationCampaigns(Request $request, NotificationCampaignAdminService $campaigns): Response
+    {
+        return $this->page('admin/notification-campaigns', $campaigns->panelData($request));
     }
 
     public function userManual(UserManualService $manual): Response

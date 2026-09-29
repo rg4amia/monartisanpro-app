@@ -23,6 +23,8 @@ export type AdminTab =
     | 'whatsapp'
     | 'faq'
     | 'notification_messages'
+    | 'notification_campaigns'
+    | 'artisan_directory'
     | 'recruitment'
     | 'manual';
 

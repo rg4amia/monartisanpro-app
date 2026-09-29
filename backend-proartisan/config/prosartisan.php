@@ -86,6 +86,14 @@ return [
         explode(',', (string) env('SUPER_ADMIN_EMAILS', 'admin@prosartisan.ci')),
     ))),
 
+    // Campagnes push et SMS du backoffice (Chantier 14, lot D).
+    'notifications' => [
+        // Plafond de destinataires d'une campagne : au-delà, la programmation est refusée.
+        'campaign_max_recipients' => (int) env('NOTIFICATION_CAMPAIGN_MAX_RECIPIENTS', 20000),
+        // Destinataires servis par campagne à chaque passage de la commande (chaque minute).
+        'campaign_batch_size' => (int) env('NOTIFICATION_CAMPAIGN_BATCH_SIZE', 1000),
+    ],
+
     'delivery' => [
         'in_transit_timeout_minutes' => (int) env('DRIVER_IN_TRANSIT_TIMEOUT_MINUTES', 25),
         'in_transit_alert_cooldown_minutes' => (int) env('DRIVER_IN_TRANSIT_ALERT_COOLDOWN_MINUTES', 30),

@@ -246,3 +246,36 @@ describe('api — session fournisseur expirée (401)', () => {
         expect(replaceSpy).toHaveBeenCalledWith('/supplier/login');
     });
 });
+
+describe('api.getArtisans (annuaire, Chantier 15)', () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+    });
+
+    it('transmet le filtre « disponibles maintenant » et lit la page renvoyée', async () => {
+        const fetchMock = mockFetchOnce({
+            json: async () => ({ success: true, data: { data: [{ id: 3, name: 'Koffi Yao', trade: null, score_prosartisan: 720, photo_url: null }] } }),
+        });
+
+        const artisans = await api.getArtisans({ ville: 'Cocody', disponible: true });
+
+        expect(artisans.map((artisan) => artisan.id)).toEqual([3]);
+        expect(fetchMock).toHaveBeenCalledWith(expect.stringMatching(/\/artisans\?per_page=48&ville=Cocody&disponible=1$/));
+    });
+
+    it("lève une erreur plutôt que d'afficher des artisans fictifs", async () => {
+        mockFetchOnce({ ok: false, status: 503 });
+        await expect(api.getArtisans()).rejects.toThrow('Annuaire indisponible');
+
+        vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+        await expect(api.getArtisans()).rejects.toThrow('offline');
+    });
+
+    it('les artisans les mieux notés ne se replient jamais sur des comptes inventés', async () => {
+        vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('offline')));
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+
+        await expect(api.getArtisansStars()).resolves.toEqual([]);
+    });
+});

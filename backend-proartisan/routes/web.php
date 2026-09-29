@@ -6,11 +6,13 @@ use App\Http\Controllers\Admin\AdminDocumentController;
 use App\Http\Controllers\Admin\AdminFraudController;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminTerritoryController;
+use App\Http\Controllers\Admin\ArtisanDirectoryAdminController;
 use App\Http\Controllers\Admin\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\BackofficeController;
 use App\Http\Controllers\Admin\FaqAdminController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\LlmAdminController;
+use App\Http\Controllers\Admin\NotificationCampaignAdminController;
 use App\Http\Controllers\Admin\NotificationTemplateAdminController;
 use App\Http\Controllers\Admin\RecruitmentAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
@@ -250,6 +252,30 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/{event}', [NotificationTemplateAdminController::class, 'update'])->where('event', '[a-z_.]+')->name('update');
             Route::delete('/{event}', [NotificationTemplateAdminController::class, 'reset'])->where('event', '[a-z_.]+')->name('reset');
             Route::post('/{event}/test', [NotificationTemplateAdminController::class, 'test'])->where('event', '[a-z_.]+')
+                ->middleware('throttle:5,1')->name('test');
+        });
+
+        // Annuaire artisans : disponibilités validées, présence sur la vitrine (Chantier 15)
+        Route::get('/annuaire-artisans', [BackofficeController::class, 'artisanDirectory'])->middleware('can:admin.directory.manage')->name('artisan-directory');
+        Route::prefix('annuaire-artisans')->name('artisan-directory.')->middleware('can:admin.directory.manage')->group(function () {
+            Route::post('/disponibilites/{availability}/valider', [ArtisanDirectoryAdminController::class, 'approve'])->name('availability.approve');
+            Route::post('/disponibilites/{availability}/refuser', [ArtisanDirectoryAdminController::class, 'reject'])->name('availability.reject');
+            Route::put('/{user}/disponibilite', [ArtisanDirectoryAdminController::class, 'setAvailability'])->name('availability.set');
+            Route::post('/{user}/retirer', [ArtisanDirectoryAdminController::class, 'hide'])->name('hide');
+            Route::post('/{user}/publier', [ArtisanDirectoryAdminController::class, 'show'])->name('show');
+        });
+
+        // Campagnes push & SMS : envois ponctuels ciblés (Chantier 14, lot D)
+        Route::get('/campagnes-notifications', [BackofficeController::class, 'notificationCampaigns'])->middleware('can:admin.notifications.broadcast')->name('notification-campaigns');
+        Route::prefix('campagnes-notifications')->name('notification-campaigns.')->middleware('can:admin.notifications.broadcast')->group(function () {
+            Route::get('/utilisateurs', [NotificationCampaignAdminController::class, 'searchUsers'])->name('users');
+            Route::post('/', [NotificationCampaignAdminController::class, 'store'])->name('store');
+            Route::put('/{campaign}', [NotificationCampaignAdminController::class, 'update'])->whereNumber('campaign')->name('update');
+            Route::delete('/{campaign}', [NotificationCampaignAdminController::class, 'destroy'])->whereNumber('campaign')->name('destroy');
+            Route::post('/{campaign}/dupliquer', [NotificationCampaignAdminController::class, 'duplicate'])->whereNumber('campaign')->name('duplicate');
+            Route::post('/{campaign}/programmer', [NotificationCampaignAdminController::class, 'schedule'])->whereNumber('campaign')->name('schedule');
+            Route::post('/{campaign}/annuler', [NotificationCampaignAdminController::class, 'cancel'])->whereNumber('campaign')->name('cancel');
+            Route::post('/{campaign}/test', [NotificationCampaignAdminController::class, 'test'])->whereNumber('campaign')
                 ->middleware('throttle:5,1')->name('test');
         });
 

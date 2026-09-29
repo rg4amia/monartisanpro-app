@@ -3,10 +3,12 @@
 namespace App\Services\Admin;
 
 use App\Models\AdminActivityLog;
+use App\Models\ArtisanAvailability;
 use App\Models\Evaluation;
 use App\Models\KycDocument;
 use App\Models\Notification;
 use App\Models\NotificationDelivery;
+use App\Models\NotificationPreference;
 use App\Models\Parrainage;
 use App\Models\Transaction;
 use App\Models\User;
@@ -115,7 +117,11 @@ class AdminGdprService
 
             // Purge des notifications personnelles et de leur journal d'envoi.
             NotificationDelivery::where('user_id', $user->id)->delete();
+            NotificationPreference::where('user_id', $user->id)->delete();
             Notification::where('user_id', $user->id)->delete();
+
+            // Disponibilités publiées dans l'annuaire (Chantier 15).
+            ArtisanAvailability::where('user_id', $user->id)->delete();
 
             $placeholderPhone = '+22599'.str_pad((string) $user->id, 8, '0', STR_PAD_LEFT);
 

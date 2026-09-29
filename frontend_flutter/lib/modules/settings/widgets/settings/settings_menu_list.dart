@@ -397,6 +397,17 @@ class SettingsMenuList extends StatelessWidget {
                     onTap: () => Get.toNamed(Routes.recruitmentOffers),
                   ),
                   const SizedBox(height: 12),
+                  // Annuaire du site vitrine (Chantier 15) : disponibilité
+                  // publiée après validation d'un administrateur.
+                  SettingsMenuItem(
+                    icon: Icons.event_available_outlined,
+                    iconBg: const Color(0xFFECFDF5),
+                    iconColor: const Color(0xFF059669),
+                    title: 'Ma disponibilité',
+                    subtitle: 'Statut et horaires affichés dans l\'annuaire',
+                    onTap: () => Get.toNamed(Routes.artisanAvailability),
+                  ),
+                  const SizedBox(height: 12),
                   // Jury ProsArtisan (Chantier 12) : dossiers d'arbitrage
                   // confiés aux artisans les mieux notés de leur métier.
                   SettingsMenuItem(

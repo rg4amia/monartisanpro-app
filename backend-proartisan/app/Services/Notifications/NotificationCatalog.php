@@ -52,6 +52,7 @@ class NotificationCatalog
         'recrutement' => 'Recrutement',
         'discussion' => 'Discussion de chantier',
         'parrainage' => 'Parrainage',
+        'annuaire' => 'Annuaire des artisans',
     ];
 
     public const AUDIENCES = [
@@ -985,6 +986,39 @@ class NotificationCatalog
             'required' => ['code'],
             'title' => 'Récompense de parrainage',
             'body' => 'Félicitations ! Votre filleul a financé sa première mission. Voici votre code promo : {code}',
+            'sms' => false,
+        ],
+        // Chantier 15 — annuaire artisans du site vitrine.
+        'annuaire.disponibilite_validee.artisan' => [
+            'label' => 'Disponibilité validée et publiée dans l\'annuaire',
+            'domain' => 'annuaire', 'audience' => 'artisan', 'type' => 'directory',
+            'title' => 'Disponibilité publiée',
+            'body' => 'Votre disponibilité a été validée : elle est désormais affichée dans l\'annuaire ProsArtisan.',
+            'sms' => false,
+        ],
+        'annuaire.disponibilite_refusee.artisan' => [
+            'label' => 'Disponibilité refusée par un administrateur',
+            'domain' => 'annuaire', 'audience' => 'artisan', 'type' => 'directory',
+            'variables' => ['motif' => 'Motif du refus'],
+            'required' => ['motif'],
+            'title' => 'Disponibilité non publiée',
+            'body' => 'Votre disponibilité n\'a pas été validée : {motif}. Votre disponibilité précédente reste affichée.',
+            'sms' => false,
+        ],
+        'annuaire.retire.artisan' => [
+            'label' => 'Fiche retirée de l\'annuaire',
+            'domain' => 'annuaire', 'audience' => 'artisan', 'type' => 'directory',
+            'variables' => ['motif' => 'Motif du retrait'],
+            'required' => ['motif'],
+            'title' => 'Fiche retirée de l\'annuaire',
+            'body' => 'Votre fiche n\'apparaît plus dans l\'annuaire ProsArtisan : {motif}. Votre compte et vos missions ne sont pas concernés.',
+            'sms' => false,
+        ],
+        'annuaire.reactive.artisan' => [
+            'label' => 'Fiche de nouveau visible dans l\'annuaire',
+            'domain' => 'annuaire', 'audience' => 'artisan', 'type' => 'directory',
+            'title' => 'Fiche de nouveau visible',
+            'body' => 'Votre fiche apparaît de nouveau dans l\'annuaire ProsArtisan.',
             'sms' => false,
         ],
     ];

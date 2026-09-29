@@ -229,6 +229,7 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
       <li><a class="sub" href="#artisan-chantier">Matériaux et étapes</a></li>
       <li><a class="sub" href="#artisan-argent">Gains et micro-crédit</a></li>
       <li><a class="sub" href="#artisan-jury">Espace juré</a></li>
+      <li><a class="sub" href="#artisan-disponibilite">Ma disponibilité (annuaire)</a></li>
       <li><a href="#fournisseur"><span class="dot" style="--c: var(--fournisseur)"></span>Espace Fournisseur</a></li>
       <li><a href="#livreur"><span class="dot" style="--c: var(--livreur)"></span>Espace Livreur</a></li>
       <li><a href="#referent"><span class="dot" style="--c: var(--referent)"></span>Espace Référent</a></li>
@@ -438,6 +439,16 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
         <h3>Micro-crédit d'urgence</h3>
         <p>Avec un score d'au moins 700, vous pouvez demander un micro-crédit depuis l'accueil. Plafond : <code>50 000 + (score − 700) × 1 500</code> FCFA, soit 500 000 FCFA à 1000 points. Le montant est versé sur votre Mobile Money. Il est remboursé automatiquement par <b>20 %</b> de chaque étape payée ensuite, ou d'un coup quand vous le souhaitez. Un seul crédit à la fois ; un rapport de solvabilité PDF est téléchargeable.</p>
 
+        <h3 id="artisan-disponibilite">Ma disponibilité dans l'annuaire <span class="tag">Nouveau</span></h3>
+        <p>L'annuaire du site ProsArtisan (<span class="ui">Artisans</span>) présente votre fiche : nom, métier, commune, score et, une fois validée, votre disponibilité.</p>
+        <ol class="steps">
+          <li><div>Allez dans <span class="ui">Profil › Ma disponibilité</span>.</div></li>
+          <li><div>Choisissez votre statut : <b>Disponible</b>, <b>Occupé</b> ou <b>En congé</b>. Pour « Occupé » et « En congé », indiquez jusqu'à quelle date (un an au plus). Passé cette date, l'annuaire vous affiche de nouveau « Disponible », sans nouvelle demande.</div></li>
+          <li><div>Ajoutez vos jours et horaires habituels (par exemple lundi de 08:00 à 17:00) avec <span class="ui">Ajouter une plage horaire</span>, puis cochez <span class="ui">J'interviens la nuit</span> si c'est le cas.</div></li>
+          <li><div>Touchez <span class="ui">Envoyer pour validation</span>. Votre demande apparaît « En attente de validation » ; en attendant, l'annuaire garde votre disponibilité précédente.</div></li>
+        </ol>
+        <p>Une notification vous prévient quand nos équipes valident votre disponibilité ou la refusent ; en cas de refus, le motif s'affiche dans <span class="ui">Ma disponibilité</span>. Une nouvelle demande remplace celle encore en attente. Si votre fiche est retirée de l'annuaire, vous en êtes informé avec le motif : votre compte et vos missions ne changent pas.</p>
+
         <h3 id="artisan-jury">Espace juré <span class="tag">Nouveau</span></h3>
         <p>Les artisans les mieux notés d'un métier peuvent être choisis pour donner un avis technique sur un litige de ce métier. Seuls les artisans qui ne sont pas parties au litige et dont le score atteint le seuil fixé par ProsArtisan (800 par défaut) peuvent être choisis.</p>
         <ol class="steps">
@@ -569,6 +580,7 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
               <tr><td>Vue d'ensemble</td><td>Indicateurs clés, activité, alertes.</td></tr>
               <tr><td>KYC &amp; Vérifications</td><td>Valider ou rejeter les dossiers d'identité, un par un ou par lot. L'analyse automatique s'affiche en aide à la décision : <b>IA favorable</b>, <b>Revue conseillée</b>, <b>Risque élevé</b>.</td></tr>
               <tr><td>Utilisateurs</td><td>Rechercher, suspendre, réactiver, exporter ; données personnelles et anonymisation (RGPD).</td></tr>
+              <tr><td>Annuaire artisans</td><td>Valider ou refuser les disponibilités déclarées par les artisans, saisir une disponibilité, activer ou désactiver un artisan dans l'annuaire du site. Droit <b>Valider les disponibilités des artisans et gérer leur présence dans l'annuaire du site</b>.</td></tr>
               <tr><td>Missions</td><td>Suivi de chaque chantier, historique de ses états, supervision de la flotte de livreurs sur la carte d'Abidjan.</td></tr>
               <tr><td>Litiges</td><td>Arbitrer, demander une télé-expertise IA, convoquer le <b>Jury ProsArtisan</b>.</td></tr>
               <tr><td>Transactions</td><td>Paiements, virements sortants (relancer, marquer versé sur référence), retraits livreurs et quincailleries, sous-onglet <b>Encaissements</b>.</td></tr>
@@ -576,6 +588,7 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
               <tr><td>Évaluations &amp; Scores</td><td>Consulter les notes, geler un score en cas d'abus.</td></tr>
               <tr><td>Communications, Notifications &amp; Alertes</td><td>Messages aux utilisateurs, alertes internes.</td></tr>
               <tr><td>Messages push &amp; SMS</td><td>Texte et canaux (application, push, SMS) de chaque notification envoyée par la plateforme, envoi de test, journal des envois. Droit <b>Modifier les messages push et SMS</b>.</td></tr>
+              <tr><td>Campagnes push &amp; SMS</td><td>Envois ponctuels vers un public ciblé (information de service ou message promotionnel) : rédaction, test, programmation, annulation, suivi. Droit <b>Créer, programmer et annuler des campagnes push et SMS</b>, distinct du précédent.</td></tr>
               <tr><td>CMS Vitrine, WhatsApp, FAQ Aide &amp; Support</td><td>Contenu du site, bouton WhatsApp et suivi des clics, questions de l'écran d'aide par profil.</td></tr>
               <tr><td>Recrutement</td><td>Modérer les offres, activer la publication par profil.</td></tr>
               <tr><td>Suivi &amp; Coûts IA</td><td>Quotas d'utilisation de l'assistant par utilisateur.</td></tr>
@@ -594,6 +607,25 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
           <li><div><span class="ui">Enregistrer</span>, puis <span class="ui">Envoyer un test</span> : le message enregistré, préfixé « [Test] », part sur votre propre téléphone. <span class="ui">Revenir au texte d'origine</span> annule toute personnalisation.</div></li>
         </ol>
         <p>Chaque modification, test ou retour à l'origine est inscrit au journal d'audit. Le sous-onglet <span class="ui">Journal des envois</span> liste chaque push et SMS avec son statut (<b>Envoyé</b>, <b>Échoué</b>, <b>Ignoré</b>) et le motif d'un échec ; les échecs apparaissent aussi dans <span class="ui">Santé &amp; Observabilité</span>.</p>
+
+        <h3>Gérer l'annuaire des artisans <span class="tag">Nouveau</span></h3>
+        <ol class="steps">
+          <li><div>Ouvrez <span class="ui">Annuaire artisans</span>. Les compteurs indiquent les artisans visibles sur le site, les fiches désactivées et les disponibilités <b>À valider</b> ; les artisans concernés apparaissent en tête de liste.</div></li>
+          <li><div>Pour chaque demande, comparez la colonne <span class="ui">Disponibilité publiée</span> et la colonne <span class="ui">À valider</span>. <span class="ui">Valider</span> la publie aussitôt ; <span class="ui">Refuser</span> demande un motif (5 caractères au moins), transmis à l'artisan, et laisse en ligne la version précédente.</div></li>
+          <li><div><span class="ui">Saisir la disponibilité</span> vous permet de corriger ou de renseigner vous-même statut, date de retour, jours et horaires et nuit : votre saisie est publiée directement et remplace une demande encore en attente.</div></li>
+          <li><div><span class="ui">Désactiver</span> retire la fiche du site (motif obligatoire, communiqué à l'artisan) sans toucher au compte ni aux missions ; <span class="ui">Réactiver</span> la remet en ligne.</div></li>
+        </ol>
+        <p>Une fiche n'est visible que si l'artisan a un KYC validé, un compte actif et n'a pas été désactivé : la colonne <span class="ui">Annuaire</span> indique « Visible » ou la raison de l'absence. Sur le site, le filtre <b>Disponibles maintenant</b> ne montre que les artisans dont la disponibilité validée est « Disponible ». Chaque validation, refus, saisie, désactivation ou réactivation est inscrite au journal d'audit.</p>
+
+        <h3>Envoyer une campagne push ou SMS <span class="tag">Nouveau</span></h3>
+        <ol class="steps">
+          <li><div>Ouvrez <span class="ui">Campagnes push &amp; SMS</span> puis <span class="ui">Nouvelle campagne</span>. Donnez-lui un nom (visible des seuls administrateurs) et choisissez sa nature : <b>Information de service</b> (maintenance, changement de conditions…) ou <b>Promotionnel</b>.</div></li>
+          <li><div>Cochez les canaux et rédigez le titre et le texte de la notification, et le texte du SMS. Une campagne <b>promotionnelle part en push uniquement</b> : le SMS n'est pas proposé, et seuls les utilisateurs ayant accepté les offres et nouveautés la reçoivent. Les variables comme <code>{nom}</code> ne sont pas acceptées : le même texte part à tous. Le compteur indique le nombre de SMS par destinataire (3 au maximum).</div></li>
+          <li><div>Choisissez le public : rôles, statut KYC, communes, et au besoin des utilisateurs précis cherchés par nom ou téléphone. Les critères se cumulent. Les administrateurs et les comptes suspendus ou anonymisés ne sont jamais visés. Choisissez enfin l'écran ouvert au toucher : liste des notifications, accueil, ou une communication publiée (affichée sur l'accueil).</div></li>
+          <li><div><span class="ui">Enregistrer le brouillon</span>. La liste affiche alors le nombre de destinataires et de SMS prévus. <span class="ui">Me l'envoyer</span> vous l'adresse, préfixée « [Test] ».</div></li>
+          <li><div><span class="ui">Envoyer…</span> rappelle le nombre de destinataires et de SMS, puis propose <b>Maintenant</b> ou <b>À une date précise</b>. La campagne part par lots, chaque minute ; au-delà du plafond de destinataires ou sans aucun destinataire, l'envoi est refusé. Aucun coût n'est affiché.</div></li>
+        </ol>
+        <p>Une campagne se modifie ou se supprime tant qu'elle n'est pas partie. <span class="ui">Annuler</span> arrête une campagne programmée ou en cours : les personnes déjà servies le restent, et personne ne reçoit jamais deux fois la même campagne. Une campagne envoyée reste dans l'historique ; <span class="ui">Dupliquer</span> en fait un nouveau brouillon. Chaque envoi figure dans le <span class="ui">Journal des envois</span> sous « Campagne : nom », et chaque action est inscrite au journal d'audit.</p>
 
         <h3>Convoquer un jury <span class="tag">Nouveau</span></h3>
         <ol class="steps">

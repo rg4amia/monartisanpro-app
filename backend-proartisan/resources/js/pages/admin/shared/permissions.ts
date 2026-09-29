@@ -33,6 +33,8 @@ export const tabCapability: Record<AdminTab, string | null> = {
     whatsapp: 'admin.whatsapp.manage',
     faq: 'admin.faq.manage',
     notification_messages: 'admin.notifications.manage',
+    notification_campaigns: 'admin.notifications.broadcast',
+    artisan_directory: 'admin.directory.manage',
     recruitment: 'admin.recruitment.manage',
     llm_admin: 'admin.llm.manage',
     ai_dashboard: 'admin.ai.manage',

@@ -178,7 +178,9 @@ class NotificationCatalogTest extends TestCase
         $this->assertFalse(method_exists(NotificationService::class, 'sendAdmin'));
 
         foreach ($this->phpFiles(app_path()) as $file) {
-            if (str_ends_with($file, 'NotificationService.php')) {
+            // Seules exceptions : NotificationService (événements du catalogue)
+            // et les campagnes du backoffice (lot D), aux textes libres.
+            if (str_ends_with($file, 'NotificationService.php') || str_ends_with($file, 'NotificationCampaignService.php')) {
                 continue;
             }
             // Toute notification in-app passe par NotificationService.

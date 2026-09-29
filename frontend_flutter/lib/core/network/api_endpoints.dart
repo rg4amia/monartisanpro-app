@@ -186,6 +186,9 @@ class ApiEndpoints {
       '/litiges/$id/refund-destination';
 
   // ── Espace juré (Chantier 12) ──
+  // Disponibilité publiée dans l'annuaire après validation (Chantier 15)
+  static const String artisanAvailability = '/artisan/availability';
+
   static const String juryDossiers = '/jury/dossiers';
   static String juryDossier(int id) => '/jury/dossiers/$id';
   static String juryDossierVote(int id) => '/jury/dossiers/$id/vote';

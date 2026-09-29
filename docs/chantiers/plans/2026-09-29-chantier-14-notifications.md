@@ -2,7 +2,7 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | en cours (lots A, B et C livrés le 2026-09-29) |
+| Statut | en cours (lots A, B, C et D livrés le 2026-09-29) |
 | Créé le | 2026-09-29 |
 | Mis à jour le | 2026-09-29 |
 | Auteur | Claude Code |
@@ -150,3 +150,20 @@ Sous l'onglet « Notifications & Alertes » existant, nouveaux sous-onglets **Mo
 - **Longueur SMS** jugée sur le texte rendu avec des valeurs d'exemple (`NotificationCatalog::example`), pas sur les accolades.
 - **Envoi de test** : message enregistré, préfixé « [Test] », vers l'administrateur seul, limité à 5 par minute ; il ne crée ni notification ni ligne de journal, seul l'audit (`notification_template.test_sent`) garde la trace et le résultat par canal.
 - Les textes candidats au raccourcissement (SMS de 3 segments, lot B) restent à la main des administrateurs, désormais outillés pour le faire.
+
+### Lot D (29/09/2026)
+
+- **Onglet dédié plutôt que sous-onglet** : les campagnes exigent `admin.notifications.broadcast` et les modèles `admin.notifications.manage`. Un onglet commun aurait obligé à ouvrir l'un avec la capacité de l'autre. Nouvel onglet **Campagnes push & SMS** (`/admin/campagnes-notifications`, section Communication). La capacité est inscrite en base par la migration `2026_09_29_120100_seed_notification_broadcast_admin_permission`.
+- **Accord promotionnel avancé du lot E** : la table `notification_preferences` est créée dès ce lot avec la seule colonne `promotional_push`, désactivée par défaut. Une campagne promotionnelle ne vise que les comptes ayant donné cet accord. **Tant que le lot E n'a pas livré le réglage mobile, aucun compte n'a donné son accord** : la programmation d'une campagne promotionnelle est refusée (« Aucun destinataire »), pour ne jamais passer outre le consentement.
+- **Pas de variable dans les campagnes** : le même texte part à tous. Un `{…}` est refusé à l'enregistrement pour ne jamais envoyer d'accolades (Règle d'or 29).
+- **Ciblage** : les critères se cumulent (rôles, statut KYC, communes, utilisateurs désignés, 500 au plus). Les administrateurs, les comptes suspendus (`account_status`), anonymisés et supprimés sont toujours exclus. Le nombre de destinataires est figé à la programmation, où le plafond est vérifié. Le ciblage est réévalué à l'envoi : un compte suspendu entre-temps est écarté.
+- **Envoi** :
+  - La commande `notifications:send-campaigns` tourne chaque minute (`withoutOverlapping`). Elle démarre la campagne par une mise à jour conditionnelle `programmee → en_cours`.
+  - Chaque passage sert un lot par campagne (`campaign_batch_size`, 1 000 par défaut). Le plafond est de 20 000 destinataires (`campaign_max_recipients`).
+  - Chaque destinataire est inscrit dans `notification_campaign_recipients`, avec une clé unique (campagne, utilisateur), **avant** l'envoi : personne ne reçoit deux fois la même campagne.
+  - Le push part groupé en un appel OneSignal par lot (`OneSignalService::deliverToMany`, 2 000 identifiants au plus). Le SMS part par paquets de 100 numéros sur la route `plain`.
+  - Le journal compte une ligne par destinataire et par canal (`notification_deliveries.campaign_id`), libellée « Campagne : nom ».
+- **Push sans `notification_id`** : un envoi groupé porte les mêmes données pour tous. Le push d'une campagne indique `campaign_id` mais pas l'identifiant de la notification in-app de chaque destinataire.
+- **Écran « communication »** : le mobile n'a pas d'écran de détail des communications. Il ouvre l'accueil, où elles sont affichées. `communication_id` est transmis pour un futur écran dédié.
+- **Annulation** : possible aussi pendant l'envoi. Les lots restants ne partent pas et les destinataires déjà servis le restent. Une campagne annulée avant tout envoi peut être supprimée.
+- **Audit** : en plus des actions prévues, `notification_campaign.scheduled`, `.duplicated` et `.test_sent`. L'audit `.sent` est attribué à l'administrateur qui a programmé la campagne.

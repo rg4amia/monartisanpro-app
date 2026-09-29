@@ -7,13 +7,26 @@ export interface Slide {
     cta_lien: string | null;
 }
 
+/** Disponibilité validée par un administrateur (Chantier 15). */
+export interface ArtisanAvailability {
+    status: 'disponible' | 'occupe' | 'conge';
+    /** Libellé prêt à afficher : « Disponible », « Occupé jusqu'au 15/10/2026 »… */
+    label: string;
+    until_date: string | null;
+    schedule: Array<{ day: number; start: string; end: string }>;
+    schedule_summary: string | null;
+    night_work: boolean;
+}
+
 export interface Artisan {
     id: number;
     name: string;
     trade: string | null;
     score_prosartisan: number;
-    kyc_selfie_path: string | null;
+    /** Photo professionnelle du profil ; jamais le selfie KYC. */
+    photo_url: string | null;
     city?: string | null;
+    availability?: ArtisanAvailability | null;
     note_moyenne?: number;
     total_avis?: number;
     taux_succes?: number;
@@ -117,10 +130,10 @@ const MOCK_SLIDES: Slide[] = [
 ];
 
 const MOCK_ARTISANS: Artisan[] = [
-    { id: 1, name: "Kouamé Bah", trade: "Électricien bâtiment", score_prosartisan: 980, kyc_selfie_path: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80", city: "Abidjan (Yopougon)" },
-    { id: 2, name: "Mariam Koné", trade: "Plombière sanitaire", score_prosartisan: 920, kyc_selfie_path: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80", city: "Abidjan (Cocody)" },
-    { id: 3, name: "Jean-Pierre Kouadio", trade: "Maçon coffreur", score_prosartisan: 890, kyc_selfie_path: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80", city: "Abidjan (Koumassi)" },
-    { id: 4, name: "Awa Touré", trade: "Menuisière ébéniste", score_prosartisan: 940, kyc_selfie_path: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80", city: "Abidjan (Marcory)" }
+    { id: 1, name: "Kouamé Bah", trade: "Électricien bâtiment", score_prosartisan: 980, photo_url: "https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?auto=format&fit=crop&w=300&q=80", city: "Abidjan (Yopougon)" },
+    { id: 2, name: "Mariam Koné", trade: "Plombière sanitaire", score_prosartisan: 920, photo_url: "https://images.unsplash.com/photo-1573496359142-b8d87734a5a2?auto=format&fit=crop&w=300&q=80", city: "Abidjan (Cocody)" },
+    { id: 3, name: "Jean-Pierre Kouadio", trade: "Maçon coffreur", score_prosartisan: 890, photo_url: "https://images.unsplash.com/photo-1500648767791-00dcc994a43e?auto=format&fit=crop&w=300&q=80", city: "Abidjan (Koumassi)" },
+    { id: 4, name: "Awa Touré", trade: "Menuisière ébéniste", score_prosartisan: 940, photo_url: "https://images.unsplash.com/photo-1534528741775-53994a69daeb?auto=format&fit=crop&w=300&q=80", city: "Abidjan (Marcory)" }
 ];
 
 const MOCK_ARTISAN_DU_MOIS: ArtisanDuMois = {
@@ -364,23 +377,33 @@ export const api = {
             console.warn('Erreur journalisation clic WhatsApp:', e);
         }
     },
+    // Jamais d'artisans fictifs à la place de vrais comptes (Règle d'or 29) :
+    // sans réponse de l'API, la section « mieux notés » reste masquée.
     async getArtisansStars(): Promise<Artisan[]> {
-        const data = await fetchFromApi<{ data: Artisan[] } | Artisan[]>('/artisans-stars', MOCK_ARTISANS);
+        const data = await fetchFromApi<{ data: Artisan[] } | Artisan[]>('/artisans-stars', []);
         if (Array.isArray(data)) return data;
-        return data.data || MOCK_ARTISANS;
+        return data.data || [];
     },
-    async getArtisans(query?: { metier?: string; ville?: string; note_min?: number }): Promise<Artisan[]> {
-        let params = '';
-        if (query) {
-            const parts = [];
-            if (query.metier) parts.push(`metier=${encodeURIComponent(query.metier)}`);
-            if (query.ville) parts.push(`ville=${encodeURIComponent(query.ville)}`);
-            if (query.note_min) parts.push(`note_min=${query.note_min}`);
-            if (parts.length > 0) params = '?' + parts.join('&');
+    /**
+     * Annuaire des artisans. Lève une erreur si l'API ne répond pas : la page
+     * l'annonce au lieu d'afficher des artisans fictifs (Règle d'or 29).
+     */
+    async getArtisans(query?: { metier?: string; ville?: string; note_min?: number; disponible?: boolean }): Promise<Artisan[]> {
+        const parts: string[] = ['per_page=48'];
+        if (query?.metier) parts.push(`metier=${encodeURIComponent(query.metier)}`);
+        if (query?.ville) parts.push(`ville=${encodeURIComponent(query.ville)}`);
+        if (query?.note_min) parts.push(`note_min=${query.note_min}`);
+        if (query?.disponible) parts.push('disponible=1');
+
+        const response = await fetch(`${getApiBaseUrl()}/artisans?${parts.join('&')}`);
+        if (!response.ok) {
+            throw new Error(`Annuaire indisponible (HTTP ${response.status})`);
         }
-        const data = await fetchFromApi<{ data: Artisan[] } | Artisan[]>('/artisans' + params, MOCK_ARTISANS);
+        const json = await response.json();
+        const data = json?.data;
         if (Array.isArray(data)) return data;
-        return data.data || MOCK_ARTISANS;
+        if (data && Array.isArray(data.data)) return data.data;
+        throw new Error("Réponse de l'annuaire illisible");
     },
     async sendContact(data: { nom: string; email: string; telephone?: string; sujet: string; message: string; artisan_id?: number | null }): Promise<{ success: boolean; message: string }> {
         try {

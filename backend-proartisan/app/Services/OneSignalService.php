@@ -13,6 +13,9 @@ class OneSignalService
 
     protected string $baseUrl = 'https://onesignal.com/api/v1/notifications';
 
+    /** Identifiants externes acceptés par OneSignal dans un seul envoi. */
+    public const MAX_EXTERNAL_IDS = 2000;
+
     public function __construct()
     {
         $this->appId = trim(config('services.onesignal.app_id', ''));
@@ -49,20 +52,39 @@ class OneSignalService
      */
     public function deliver(string $userId, string $heading, string $content, array $data = [], ?string $androidSound = null): array
     {
+        return $this->deliverToMany([$userId], $heading, $content, $data, $androidSound);
+    }
+
+    /**
+     * Un même message pour plusieurs utilisateurs en une requête (campagnes,
+     * Chantier 14, lot D). OneSignal accepte jusqu'à
+     * {@see self::MAX_EXTERNAL_IDS} identifiants par envoi.
+     *
+     * @param  list<string|int>  $userIds
+     * @return array{status: 'envoye'|'echoue'|'ignore', reason: ?string}
+     */
+    public function deliverToMany(array $userIds, string $heading, string $content, array $data = [], ?string $androidSound = null): array
+    {
+        $ids = array_values(array_map('strval', $userIds));
+
         if (! $this->isConfigured()) {
-            Log::warning('OneSignal non configuré. Notification ignorée.', ['user_id' => $userId]);
+            Log::warning('OneSignal non configuré. Notification ignorée.', ['user_ids' => $ids]);
 
             return ['status' => 'ignore', 'reason' => 'OneSignal non configuré'];
+        }
+
+        if (count($ids) > self::MAX_EXTERNAL_IDS) {
+            throw new \InvalidArgumentException('OneSignal accepte au plus '.self::MAX_EXTERNAL_IDS.' destinataires par envoi.');
         }
 
         try {
             $payload = [
                 'app_id' => $this->appId,
                 'include_aliases' => [
-                    'external_id' => [(string) $userId],
+                    'external_id' => $ids,
                 ],
                 'target_channel' => 'push',
-                'include_external_user_ids' => [(string) $userId],
+                'include_external_user_ids' => $ids,
                 'channel_for_external_user_ids' => 'push',
                 'headings' => ['en' => $heading, 'fr' => $heading],
                 'contents' => ['en' => $content, 'fr' => $content],
@@ -74,7 +96,7 @@ class OneSignalService
                 $payload['android_sound'] = $androidSound;
             }
 
-            $response = Http::timeout(3)
+            $response = Http::timeout(count($ids) > 1 ? 10 : 3)
                 ->connectTimeout(2)
                 ->withHeaders([
                     'Authorization' => 'Basic '.$this->restApiKey,
@@ -82,13 +104,13 @@ class OneSignalService
                 ])->post($this->baseUrl, $payload);
 
             if ($response->successful()) {
-                Log::info("Notification OneSignal envoyée avec succès à l'utilisateur $userId");
+                Log::info('Notification OneSignal envoyée avec succès', ['destinataires' => count($ids)]);
 
                 return ['status' => 'envoye', 'reason' => null];
             }
 
             Log::error("Erreur d'envoi OneSignal", [
-                'user_id' => $userId,
+                'user_ids' => count($ids) > 1 ? count($ids).' destinataires' : $ids,
                 'response' => $response->json(),
             ]);
 
@@ -96,7 +118,7 @@ class OneSignalService
 
             return [
                 'status' => 'echoue',
-                'reason' => mb_substr('HTTP '.$response->status().(is_array($errors) ? ' : '.implode(' ; ', array_map('strval', $errors)) : ''), 0, 500),
+                'reason' => mb_substr('HTTP '.$response->status().(is_array($errors) ? ' : '.implode(' ; ', array_map(fn ($e) => is_scalar($e) ? (string) $e : json_encode($e), $errors)) : ''), 0, 500),
             ];
         } catch (\Throwable $e) {
             Log::error("Exception lors de l'envoi de la notification OneSignal : ".$e->getMessage());

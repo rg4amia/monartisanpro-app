@@ -9,6 +9,7 @@ use App\Console\Commands\ExpireRecruitmentOffersCommand;
 use App\Console\Commands\ExpireUnpaidOrdersCommand;
 use App\Console\Commands\RemindUnpaidDeliveryFaresCommand;
 use App\Console\Commands\RetryFailedPayoutsCommand;
+use App\Console\Commands\SendNotificationCampaignsCommand;
 use Illuminate\Foundation\Inspiring;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Schedule;
@@ -82,3 +83,10 @@ Schedule::command(ExpireRecruitmentOffersCommand::class)
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/recruitment-expire.log'));
+
+// Chantier 14, lot D — envoi par lots des campagnes push et SMS du backoffice
+Schedule::command(SendNotificationCampaignsCommand::class)
+    ->everyMinute()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/notification-campaigns.log'));
