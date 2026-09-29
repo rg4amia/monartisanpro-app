@@ -43,11 +43,12 @@ use App\Services\Admin\AdminPromoCodeService;
 use App\Services\Admin\AdminSettingsService;
 use App\Services\Admin\AdminTaxonomyService;
 use App\Services\Admin\AdminUserService;
+use App\Services\Admin\NotificationTemplateAdminService;
 use App\Services\Admin\UserManualService;
-use App\Services\DoubleEntryLedgerService;
-use App\Services\LitigeService;
 use App\Services\AdminService;
 use App\Services\CommunicationService;
+use App\Services\DoubleEntryLedgerService;
+use App\Services\LitigeService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -567,6 +568,12 @@ class BackofficeController extends Controller
     public function faq(): Response
     {
         return $this->page('admin/faq', $this->panelData->faq());
+    }
+
+    /** Messages push & SMS (Chantier 14, lot C). */
+    public function notificationMessages(Request $request, NotificationTemplateAdminService $messages): Response
+    {
+        return $this->page('admin/notification-messages', $messages->panelData($request));
     }
 
     public function userManual(UserManualService $manual): Response

@@ -20,6 +20,8 @@ class NotificationCatalogTest extends TestCase
      * un choix métier, pas un détail technique.
      */
     private const EXPECTED_SMS_EVENTS = [
+        // Code à usage unique (Règle d'or 39)
+        'auth.otp',
         // Paiements reçus
         'jalon.paye.artisan',
         'jalon.libere_auto.artisan',
@@ -155,7 +157,17 @@ class NotificationCatalogTest extends TestCase
             }
         }
 
-        // alreadyNotified() désigne aussi des événements (anti-doublon KYC).
+        // Événement « direct » : son texte est tiré par l'expéditeur lui-même
+        // (OTP : SmsService, OrangeSmsService, WhatsAppService).
+        foreach (NotificationCatalog::all() as $key => $_) {
+            if (NotificationCatalog::get($key)['direct']) {
+                foreach (['SmsService', 'OrangeSmsService', 'WhatsAppService'] as $sender) {
+                    $this->assertStringContainsString("'{$key}'", file_get_contents(app_path("Services/{$sender}.php")), "{$sender} n'utilise pas {$key}");
+                }
+                $emitted[$key] = true;
+            }
+        }
+
         $unused = array_diff(array_keys(NotificationCatalog::all()), array_keys($emitted));
         $this->assertSame([], array_values($unused), 'Événements du catalogue jamais émis');
     }

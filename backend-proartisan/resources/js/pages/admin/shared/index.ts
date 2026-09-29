@@ -21,3 +21,4 @@ export * from './consoleProps';
 export * from './heroStats';
 export * from './navigation';
 export * from './pagination';
+export * from './sms';

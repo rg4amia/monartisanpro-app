@@ -23,7 +23,15 @@ use InvalidArgumentException;
  * - `required`   : variables qu'un texte personnalisé doit conserver ;
  * - `title` / `body` : texte push et in-app par défaut ;
  * - `sms_body`   : texte SMS par défaut (absent = « titre : corps ») ;
- * - `sms`        : SMS envoyé par défaut.
+ * - `sms`        : SMS envoyé par défaut ;
+ * - `in_app` / `push` : canal actif par défaut (absent = oui) ;
+ * - `locked`     : canaux imposés, que le backoffice ne peut pas changer ;
+ * - `direct`     : message envoyé hors de `NotificationService::notify()`
+ *                  (le code OTP part par `OtpService`), dont seul le texte SMS
+ *                  est tiré du catalogue.
+ *
+ * Une alerte du domaine « securite » garde toujours le push ou le SMS
+ * (`NotificationTemplateService::validate`).
  *
  * SMS par défaut (décision du 29/09/2026) : OTP, paiements reçus, fraude visant
  * l'utilisateur, ouverture d'un litige ; côté administrateurs, fraude et
@@ -81,8 +89,73 @@ class NotificationCatalog
             throw new InvalidArgumentException("Événement de notification inconnu : {$event}");
         }
 
-        return self::EVENTS[$event] + ['required' => [], 'sms_body' => null, 'variables' => []];
+        return self::EVENTS[$event] + [
+            'required' => [],
+            'sms_body' => null,
+            'variables' => [],
+            'in_app' => true,
+            'push' => true,
+            'locked' => [],
+            'direct' => false,
+        ];
     }
+
+    /**
+     * Valeur d'exemple d'une variable, pour l'aperçu et l'envoi de test du
+     * backoffice (jamais pour un envoi réel).
+     */
+    public static function example(string $variable): string
+    {
+        return self::EXAMPLES[$variable] ?? 'exemple';
+    }
+
+    private const EXAMPLES = [
+        'adresse_client' => 'Cocody Angré, 8e tranche',
+        'adresse_fournisseur' => 'Quincaillerie du Plateau',
+        'artisan' => 'Koffi Yao',
+        'avertissement' => 'Dernier rappel avant restriction du compte.',
+        'bonus' => " (dont bonus d'attente 500 FCFA)",
+        'client' => 'Awa Traoré',
+        'client_id' => '1287',
+        'code' => '482915',
+        'commande' => '1042',
+        'commandes' => '1042, #1043',
+        'compte' => '1287',
+        'contexte' => 'paiement de l\'étape 2',
+        'decision' => 'remboursement partiel du client',
+        'distance' => '240',
+        'etape' => '2',
+        'expediteur' => 'Koffi Yao',
+        'extrait' => 'Je passe demain à 9 h pour la dalle.',
+        'fournisseur' => 'Quincaillerie du Plateau',
+        'jour' => '3',
+        'jours' => '5',
+        'jures' => '1',
+        'litige' => '57',
+        'livreur' => 'Moussa Diallo',
+        'livreur_id' => '311',
+        'max' => '100',
+        'minutes' => '5',
+        'mission' => '318',
+        'montant' => '12 500',
+        'motif' => 'retard de livraison',
+        'nom' => 'Awa Traoré',
+        'offre' => 'Maçon pour chantier à Yopougon',
+        'paiement' => '905',
+        'rappel' => '2',
+        'reaffectations' => '3',
+        'recruteur' => 'Awa Traoré',
+        'reference' => 'RL-2026-0042',
+        'relances' => '5',
+        'restant' => '37 500',
+        'role' => 'artisan',
+        'score' => '800',
+        'statut' => 'retenue',
+        'taille' => '3',
+        'tarif' => '10 000',
+        'telephone' => '+2250700000000',
+        'tentative' => '2',
+    ];
 
     private const EVENTS = [
         // ─── Discussion de chantier ─────────────────────────────────────────
@@ -677,6 +750,23 @@ class NotificationCatalog
             'sms' => true,
         ],
 
+        'auth.otp' => [
+            'label' => 'Code de vérification (OTP) : connexion, étape, changement de numéro',
+            'domain' => 'securite', 'audience' => 'utilisateur', 'type' => 'otp',
+            'variables' => ['code' => 'Code à usage unique', 'minutes' => 'Durée de validité (minutes)'],
+            'required' => ['code', 'minutes'],
+            'title' => 'Code de vérification ProsArtisan',
+            'body' => 'Votre code de vérification ProsArtisan est: {code}.',
+            // L'avertissement est la seule parade au hameçonnage par téléphone,
+            // où un faux support réclame le code reçu.
+            'sms_body' => 'Votre code de vérification ProsArtisan est: {code}. Valide {minutes} minutes. Ne le communiquez jamais : ProsArtisan ne vous le demandera pas.',
+            'sms' => true,
+            'in_app' => false,
+            'push' => false,
+            // Règle d'or 39 : le code part uniquement par SMS (route `otp`).
+            'locked' => ['in_app' => false, 'push' => false, 'sms' => true],
+            'direct' => true,
+        ],
         'securite.changement_appareil.artisan' => [
             'label' => 'Connexion depuis un nouvel appareil (score gelé)',
             'domain' => 'securite', 'audience' => 'artisan', 'type' => 'security_alert',

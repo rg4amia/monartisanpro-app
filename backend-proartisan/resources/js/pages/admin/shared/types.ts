@@ -22,6 +22,7 @@ export type AdminTab =
     | 'vitrine'
     | 'whatsapp'
     | 'faq'
+    | 'notification_messages'
     | 'recruitment'
     | 'manual';
 

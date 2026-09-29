@@ -28,6 +28,7 @@ import { AiQuotaFormModal, CampagneParrainageFormModal, CommunicationFormModal, 
 import { KycPanel } from './panels/KycPanel';
 import { LitigesPanel } from './panels/LitigesPanel';
 import { MissionsPanel } from './panels/MissionsPanel';
+import { NotificationMessagesPanel } from './panels/NotificationMessagesPanel';
 import { NotificationsPanel } from './panels/NotificationsPanel';
 import { ObservabilityPanel } from './panels/ObservabilityPanel';
 import { PersonalDataModal } from './panels/PersonalDataModal';
@@ -154,6 +155,12 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         faqs = [],
         userManual = null,
         faqStats = { total: 0, actives: 0, roles_covered: 0 },
+        notificationEvents = [],
+        notificationDomains = {},
+        notificationAudiences = {},
+        notificationSmsMaxSegments = 3,
+        notificationDeliveries = null,
+        notificationDeliveryStats = undefined,
         recruitmentOffersPage = undefined,
         recruitmentStats = { total: 0, pending_review: 0, active: 0, filled: 0 },
         recruitmentSettings = { client_posting_enabled: '1', fournisseur_posting_enabled: '1' },
@@ -1067,6 +1074,17 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
                             {activeTab === 'faq' ? (
                                 <FaqPanel faqs={faqs} canManage={canManageFaq} />
+                            ) : null}
+
+                            {activeTab === 'notification_messages' ? (
+                                <NotificationMessagesPanel
+                                    events={notificationEvents}
+                                    domains={notificationDomains}
+                                    audiences={notificationAudiences}
+                                    smsMaxSegments={notificationSmsMaxSegments}
+                                    deliveries={notificationDeliveries}
+                                    deliveryStats={notificationDeliveryStats}
+                                />
                             ) : null}
 
                             {activeTab === 'manual' ? <ManualPanel manual={userManual} /> : null}

@@ -712,3 +712,52 @@ export interface DocumentStats {
     rapports_et_litiges: number;
 }
 
+
+/** Messages push & SMS du backoffice (Chantier 14, lot C). */
+export type NotificationChannel = 'in_app' | 'push' | 'sms';
+
+export type NotificationChannels = Record<NotificationChannel, boolean>;
+
+export interface NotificationEventVariable {
+    name: string;
+    description: string;
+    example: string;
+    required: boolean;
+}
+
+export interface NotificationEventItem {
+    key: string;
+    label: string;
+    domain: string;
+    audience: string;
+    variables: NotificationEventVariable[];
+    defaults: { title: string; body: string; sms_body: string | null; channels: NotificationChannels };
+    current: { title: string; body: string; sms_body: string | null; channels: NotificationChannels };
+    /** Canaux imposés par le catalogue, non modifiables. */
+    locked: Partial<NotificationChannels>;
+    /** Alerte de sécurité : garde toujours le push ou le SMS. */
+    security: boolean;
+    overridden: boolean;
+    updated_at: string | null;
+    updated_by: string | null;
+}
+
+export interface NotificationDeliveryRow {
+    id: number;
+    event: string | null;
+    event_label: string | null;
+    channel: 'push' | 'sms';
+    provider: string | null;
+    status: 'envoye' | 'echoue' | 'ignore';
+    status_label: string;
+    reason: string | null;
+    user: { id: number; name: string; role: string } | null;
+    created_at: string | null;
+}
+
+export interface NotificationDeliveryStats {
+    sent: number;
+    failed: number;
+    skipped: number;
+    sms_sent: number;
+}

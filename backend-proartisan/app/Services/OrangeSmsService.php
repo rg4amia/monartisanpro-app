@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Exceptions\CircuitOpenException;
+use App\Services\Notifications\NotificationTemplateService;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
@@ -102,7 +103,7 @@ class OrangeSmsService
         }
 
         if (! $this->clientId || ! $this->clientSecret) {
-            throw new \RuntimeException("Identifiants Orange SMS manquants (ORANGE_SMS_API_TOKEN ou ORANGE_SMS_CLIENT_ID / ORANGE_SMS_CLIENT_SECRET requis).");
+            throw new \RuntimeException('Identifiants Orange SMS manquants (ORANGE_SMS_API_TOKEN ou ORANGE_SMS_CLIENT_ID / ORANGE_SMS_CLIENT_SECRET requis).');
         }
 
         $cacheKey = 'orange_sms_oauth_token_'.md5($this->clientId);
@@ -279,8 +280,7 @@ class OrangeSmsService
     public function sendOtp(string $phone, string $code): array
     {
         $ttl = (int) config('prosartisan.otp.ttl', 5);
-        $message = "Votre code de vérification ProsArtisan est: {$code}. "
-            ."Valide {$ttl} minutes. Ne le communiquez jamais : ProsArtisan ne vous le demandera pas.";
+        $message = app(NotificationTemplateService::class)->render('auth.otp', ['code' => $code, 'minutes' => $ttl])['sms'];
 
         return $this->send($phone, $message, $this->senderName);
     }

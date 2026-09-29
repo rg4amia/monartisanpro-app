@@ -33,6 +33,9 @@ import type {
     LitigeStats,
     MissionStats,
     ObservabilitySnapshot,
+    NotificationDeliveryRow,
+    NotificationDeliveryStats,
+    NotificationEventItem,
     Paginated,
     PaginatedAuditLogs,
     PromoCodeItem,
@@ -167,6 +170,12 @@ export interface AdminPageProps {
     whatsappSettings?: WhatsappSettings;
     faqs?: FaqItem[];
     faqStats?: FaqStats;
+    notificationEvents?: NotificationEventItem[];
+    notificationDomains?: Record<string, string>;
+    notificationAudiences?: Record<string, string>;
+    notificationSmsMaxSegments?: number;
+    notificationDeliveries?: Paginated<NotificationDeliveryRow> | null;
+    notificationDeliveryStats?: NotificationDeliveryStats;
     userManual?: UserManualSummary | null;
     recruitmentOffersPage?: Paginated<RecruitmentOfferItem> | null;
     recruitmentStats?: RecruitmentStats;

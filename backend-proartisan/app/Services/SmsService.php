@@ -2,6 +2,8 @@
 
 namespace App\Services;
 
+use App\Models\Setting;
+use App\Services\Notifications\NotificationTemplateService;
 use Illuminate\Http\Client\PendingRequest;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
@@ -33,7 +35,7 @@ class SmsService
         }
 
         try {
-            $setting = \App\Models\Setting::getValueByKey('sms_provider');
+            $setting = Setting::getValueByKey('sms_provider');
             if ($setting) {
                 return (string) $setting;
             }
@@ -381,10 +383,9 @@ class SmsService
         // alors que le code expire au bout de 5.
         $ttl = (int) config('prosartisan.otp.ttl', 5);
 
-        // L'avertissement est la seule parade au hameçonnage par téléphone,
-        // où un faux support réclame le code reçu.
-        $message = "Votre code de vérification ProsArtisan est: {$code}. "
-            ."Valide {$ttl} minutes. Ne le communiquez jamais : ProsArtisan ne vous le demandera pas.";
+        // Texte du catalogue (événement `auth.otp`), modifiable depuis le
+        // backoffice ; `{code}` et `{minutes}` y restent obligatoires.
+        $message = app(NotificationTemplateService::class)->render('auth.otp', ['code' => $code, 'minutes' => $ttl])['sms'];
 
         if ($activeProvider === 'log') {
             return $this->send($phone, $message, config('services.sms.sender_id', 'ProsArtisan'), null, 'otp');

@@ -2,7 +2,7 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | en cours (lots A et B livrés le 2026-09-29) |
+| Statut | en cours (lots A, B et C livrés le 2026-09-29) |
 | Créé le | 2026-09-29 |
 | Mis à jour le | 2026-09-29 |
 | Auteur | Claude Code |
@@ -140,3 +140,13 @@ Sous l'onglet « Notifications & Alertes » existant, nouveaux sous-onglets **Mo
 - **Journal des envois** : seules les tentatives sont consignées (`envoye` / `echoue` / `ignore` pour OneSignal non configuré ou numéro absent) — un canal désactivé ne produit pas de ligne, pour ne pas doubler le volume. Pas de réponse brute du fournisseur, seulement le motif d'échec. Journal non modifiable, mais effacé par l'anonymisation RGPD. Les échecs sur 24 h entrent dans les compteurs critiques (`admin:health-check`, alerte Telegram) et l'écran Santé & Observabilité.
 - **Envoi différé** : `DeliverNotificationJob::dispatchAfterResponse` ; un envoi dont la notification in-app a disparu (transaction annulée) est abandonné. En test, `TestCase` désactive le différé (`withoutDispatchingAfterResponses`).
 - **Hors lot** : l'OTP (`SmsService::sendOtp`) n'est pas encore dans le catalogue ; il y entrera au lot C avec son verrouillage. SMS par défaut atteignant 3 segments : relance du livreur sans signal, escalade de commande sans livreur, mission de recrutement terminée — candidats à un texte SMS plus court au lot C.
+
+### Lot C (29/09/2026)
+
+- **Onglet dédié plutôt que sous-onglets de « Notifications & Alertes »** : cet onglet est ouvert à tout administrateur, alors que la gestion des messages exige `admin.notifications.manage`. Nouvel onglet **Messages push & SMS** (`/admin/messages`, section Communication), avec les sous-onglets **Modèles de messages** et **Journal des envois** ; les campagnes (lot D) s'y ajouteront. Capacité inscrite en base par la migration `2026_09_29_110000_seed_notification_messages_admin_permission` (sans elle, un administrateur restreint à cette seule capacité n'en aurait aucune, donc l'accès total).
+- **OTP dans le catalogue** (`auth.otp`, événement « direct ») : `SmsService`, `OrangeSmsService` et `WhatsAppService` tirent leur texte du catalogue au lieu de trois copies en dur ; canaux imposés (SMS seul, route `otp` inchangée), `{code}` et `{minutes}` obligatoires. Le test d'un OTP ne part jamais en push.
+- **Verrous** : clé `locked` du catalogue appliquée à la résolution (une surcharge en base ne peut pas lever un canal imposé) et à la validation ; au moins un canal actif par message ; une alerte du domaine sécurité garde le push ou le SMS.
+- **Enregistrement minimal** : une valeur identique à l'origine n'est pas stockée ; une surcharge redevenue identique à l'origine est supprimée (badge « Texte d'origine »).
+- **Longueur SMS** jugée sur le texte rendu avec des valeurs d'exemple (`NotificationCatalog::example`), pas sur les accolades.
+- **Envoi de test** : message enregistré, préfixé « [Test] », vers l'administrateur seul, limité à 5 par minute ; il ne crée ni notification ni ligne de journal, seul l'audit (`notification_template.test_sent`) garde la trace et le résultat par canal.
+- Les textes candidats au raccourcissement (SMS de 3 segments, lot B) restent à la main des administrateurs, désormais outillés pour le faire.

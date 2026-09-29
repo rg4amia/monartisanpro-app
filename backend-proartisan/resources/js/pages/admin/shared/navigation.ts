@@ -56,6 +56,7 @@ export function buildNavigation(permissions: string[], counts: NavigationCounts)
                 { id: 'audit_logs', label: tabMeta.audit_logs.label },
                 { id: 'observability', label: tabMeta.observability.label },
                 { count: counts.publishedCommunications, id: 'communications', label: tabMeta.communications.label },
+                { id: 'notification_messages', label: tabMeta.notification_messages.label },
                 { count: counts.activePromoCodes, id: 'promo_codes', label: 'Codes Promo' },
                 { count: counts.activeCampagnes, id: 'campagnes_parrainage', label: 'Parrainage Clients' },
                 { count: counts.newContactMessages, id: 'vitrine', label: tabMeta.vitrine.label },

@@ -11,6 +11,7 @@ use App\Http\Controllers\Admin\BackofficeController;
 use App\Http\Controllers\Admin\FaqAdminController;
 use App\Http\Controllers\Admin\ImpersonationController;
 use App\Http\Controllers\Admin\LlmAdminController;
+use App\Http\Controllers\Admin\NotificationTemplateAdminController;
 use App\Http\Controllers\Admin\RecruitmentAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
 use App\Http\Controllers\Api\V1\DeliveryTrackingController;
@@ -241,6 +242,15 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::post('/', [FaqAdminController::class, 'store'])->name('store');
             Route::match(['post', 'put'], '/{faq}', [FaqAdminController::class, 'update'])->name('update');
             Route::delete('/{faq}', [FaqAdminController::class, 'destroy'])->name('destroy');
+        });
+
+        // Messages push & SMS : textes et canaux par événement, journal des envois (Chantier 14, lot C)
+        Route::get('/messages', [BackofficeController::class, 'notificationMessages'])->middleware('can:admin.notifications.manage')->name('notification-messages');
+        Route::prefix('messages')->name('notification-messages.')->middleware('can:admin.notifications.manage')->group(function () {
+            Route::put('/{event}', [NotificationTemplateAdminController::class, 'update'])->where('event', '[a-z_.]+')->name('update');
+            Route::delete('/{event}', [NotificationTemplateAdminController::class, 'reset'])->where('event', '[a-z_.]+')->name('reset');
+            Route::post('/{event}/test', [NotificationTemplateAdminController::class, 'test'])->where('event', '[a-z_.]+')
+                ->middleware('throttle:5,1')->name('test');
         });
 
         // Module Recrutement (offres publiées par admin/client/fournisseur)

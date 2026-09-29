@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Services\Notifications\NotificationTemplateService;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Log;
 
@@ -97,8 +98,7 @@ class WhatsAppService
     {
         $ttl = (int) config('prosartisan.otp.ttl', 5);
 
-        $message = "Votre code de vérification ProsArtisan est: {$code}. "
-            ."Valide {$ttl} minutes. Ne le communiquez jamais : ProsArtisan ne vous le demandera pas.";
+        $message = app(NotificationTemplateService::class)->render('auth.otp', ['code' => $code, 'minutes' => $ttl])['sms'];
 
         return $this->send($phone, $message);
     }

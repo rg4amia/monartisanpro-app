@@ -575,6 +575,7 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
               <tr><td>Paramètres</td><td>Commissions, délais, coordonnées de virement bancaire, seuils (dont le score minimal d'un juré).</td></tr>
               <tr><td>Évaluations &amp; Scores</td><td>Consulter les notes, geler un score en cas d'abus.</td></tr>
               <tr><td>Communications, Notifications &amp; Alertes</td><td>Messages aux utilisateurs, alertes internes.</td></tr>
+              <tr><td>Messages push &amp; SMS</td><td>Texte et canaux (application, push, SMS) de chaque notification envoyée par la plateforme, envoi de test, journal des envois. Droit <b>Modifier les messages push et SMS</b>.</td></tr>
               <tr><td>CMS Vitrine, WhatsApp, FAQ Aide &amp; Support</td><td>Contenu du site, bouton WhatsApp et suivi des clics, questions de l'écran d'aide par profil.</td></tr>
               <tr><td>Recrutement</td><td>Modérer les offres, activer la publication par profil.</td></tr>
               <tr><td>Suivi &amp; Coûts IA</td><td>Quotas d'utilisation de l'assistant par utilisateur.</td></tr>
@@ -583,6 +584,16 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
             </tbody>
           </table>
         </div>
+
+        <h3>Modifier un message push ou SMS <span class="tag">Nouveau</span></h3>
+        <ol class="steps">
+          <li><div>Ouvrez <span class="ui">Messages push &amp; SMS</span>. Les messages sont classés par domaine (missions, étapes, commandes, livraisons, litiges…) ; filtrez par destinataire ou affichez seulement les messages <span class="ui">Envoyés par SMS</span> ou <span class="ui">Modifiés</span>. Chaque ligne indique les canaux actifs (App, Push, SMS) et porte le badge <b>Modifié</b> ou <b>Texte d'origine</b>.</div></li>
+          <li><div>Touchez <span class="ui">Modifier</span>. Changez le titre, le texte et, si besoin, un texte SMS distinct (vide : « titre : texte » est envoyé). Les variables comme <code>{commande}</code> ou <code>{montant}</code> s'insèrent d'un clic ; celles marquées <b>obligatoire</b> (code de retrait, montant, téléphone…) ne peuvent pas être retirées.</div></li>
+          <li><div>Cochez ou décochez les canaux. Certains sont <b>imposés</b> : le code de vérification (OTP) part uniquement par SMS et garde <code>{code}</code> et <code>{minutes}</code> ; une alerte de sécurité garde toujours le push ou le SMS.</div></li>
+          <li><div>Vérifiez l'aperçu (notification et SMS remplis de valeurs d'exemple) et le compteur SMS : au-delà de 3 SMS, le texte est refusé. Les accents rares (ç, ê, î…) font passer le SMS en Unicode : 70 caractères au lieu de 160.</div></li>
+          <li><div><span class="ui">Enregistrer</span>, puis <span class="ui">Envoyer un test</span> : le message enregistré, préfixé « [Test] », part sur votre propre téléphone. <span class="ui">Revenir au texte d'origine</span> annule toute personnalisation.</div></li>
+        </ol>
+        <p>Chaque modification, test ou retour à l'origine est inscrit au journal d'audit. Le sous-onglet <span class="ui">Journal des envois</span> liste chaque push et SMS avec son statut (<b>Envoyé</b>, <b>Échoué</b>, <b>Ignoré</b>) et le motif d'un échec ; les échecs apparaissent aussi dans <span class="ui">Santé &amp; Observabilité</span>.</p>
 
         <h3>Convoquer un jury <span class="tag">Nouveau</span></h3>
         <ol class="steps">

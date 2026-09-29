@@ -23,6 +23,7 @@ export const tabRoutes: Record<AdminTab, string> = {
     vitrine: '/admin/vitrine',
     whatsapp: '/admin/whatsapp',
     faq: '/admin/faq',
+    notification_messages: '/admin/messages',
     recruitment: '/admin/recruitment',
     cartography: '/admin/cartographie',
     manual: '/admin/manuel',
@@ -124,6 +125,11 @@ export const tabMeta: Record<AdminTab, { description: string; label: string; sec
         section: 'PLATEFORME',
         description: "Guide d'utilisation de ProsArtisan par espace (client, artisan, fournisseur, livreur, référent, backoffice), à consulter ou télécharger.",
     },
+    notification_messages: {
+        label: 'Messages push & SMS',
+        section: 'COMMUNICATION',
+        description: 'Textes et canaux de chaque notification envoyée par la plateforme (application, push, SMS), envoi de test et journal des envois.',
+    },
     faq: {
         label: 'FAQ Aide & Support',
         section: 'COMMUNICATION',
@@ -167,6 +173,7 @@ export const searchPlaceholders: Record<AdminTab, string> = {
     vitrine: 'Rechercher un slide, article, vidéo ou formation...',
     whatsapp: "Rechercher un clic par page d'origine...",
     faq: 'Rechercher une question, une réponse ou une catégorie...',
+    notification_messages: 'Rechercher un message, un destinataire ou un texte...',
     recruitment: 'Rechercher une offre par titre...',
     cartography: 'Rechercher un artisan, client, fournisseur ou mission dans la zone...',
     manual: 'Rechercher dans le manuel (Ctrl + F dans la page)...',

@@ -46,19 +46,50 @@ class NotificationTemplateService
         $definition = NotificationCatalog::get($event);
         $override = $this->overrides()[$event] ?? null;
 
+        $channels = [];
+        foreach ($this->defaultChannels($event) as $channel => $default) {
+            $channels[$channel] = $override["channel_{$channel}"] ?? $default;
+        }
+        // Un canal imposé l'emporte sur toute surcharge, même saisie en base.
+        foreach ($definition['locked'] as $channel => $value) {
+            $channels[$channel] = (bool) $value;
+        }
+
         return [
             'event' => $event,
             'type' => $definition['type'],
             'title' => $this->filled($override['push_title'] ?? null) ?? $definition['title'],
             'body' => $this->filled($override['push_body'] ?? null) ?? $definition['body'],
             'sms_body' => $this->filled($override['sms_body'] ?? null) ?? $definition['sms_body'],
-            'channels' => [
-                'in_app' => $override['channel_in_app'] ?? true,
-                'push' => $override['channel_push'] ?? true,
-                'sms' => $override['channel_sms'] ?? (bool) $definition['sms'],
-            ],
+            'channels' => $channels,
             'overridden' => $override !== null,
         ];
+    }
+
+    /**
+     * Canaux par défaut d'un événement, tels que fixés par le catalogue.
+     *
+     * @return array{in_app: bool, push: bool, sms: bool}
+     */
+    public function defaultChannels(string $event): array
+    {
+        $definition = NotificationCatalog::get($event);
+
+        return [
+            'in_app' => (bool) $definition['in_app'],
+            'push' => (bool) $definition['push'],
+            'sms' => (bool) $definition['sms'],
+        ];
+    }
+
+    /**
+     * Surcharge enregistrée pour un événement (null = textes d'origine).
+     *
+     * @return array<string, mixed>|null
+     */
+    public function override(string $event): ?array
+    {
+        return $this->overrides()[$event] ?? null;
     }
 
     /**
@@ -117,7 +148,7 @@ class NotificationTemplateService
      * Contrôle d'un texte personnalisé avant enregistrement (utilisé par le
      * backoffice, lot C). Renvoie les erreurs par champ, en français.
      *
-     * @param  array{push_title?: ?string, push_body?: ?string, sms_body?: ?string, channel_sms?: ?bool}  $input
+     * @param  array{push_title?: ?string, push_body?: ?string, sms_body?: ?string, channel_in_app?: ?bool, channel_push?: ?bool, channel_sms?: ?bool}  $input
      * @return array<string, list<string>>
      */
     public function validate(string $event, array $input): array
@@ -125,6 +156,38 @@ class NotificationTemplateService
         $definition = NotificationCatalog::get($event);
         $allowed = array_keys($definition['variables']);
         $errors = [];
+
+        $limits = ['push_title' => 255, 'push_body' => 1000, 'sms_body' => 1000];
+        foreach ($limits as $field => $max) {
+            if (mb_strlen((string) ($input[$field] ?? '')) > $max) {
+                $errors[$field][] = "Ce texte ne doit pas dépasser {$max} caractères.";
+            }
+        }
+
+        // Canaux : un canal imposé ne se change pas, un message garde au moins
+        // un canal, une alerte de sécurité garde le push ou le SMS.
+        $channelLabels = ['in_app' => 'dans l\'application', 'push' => 'push', 'sms' => 'SMS'];
+        $channels = $this->defaultChannels($event);
+        foreach (array_keys($channels) as $channel) {
+            $requested = $input["channel_{$channel}"] ?? null;
+            if ($requested === null) {
+                continue;
+            }
+            if (array_key_exists($channel, $definition['locked']) && (bool) $requested !== (bool) $definition['locked'][$channel]) {
+                $errors['channels'][] = "Le canal {$channelLabels[$channel]} est imposé pour ce message.";
+
+                continue;
+            }
+            $channels[$channel] = (bool) $requested;
+        }
+        foreach ($definition['locked'] as $channel => $value) {
+            $channels[$channel] = (bool) $value;
+        }
+        if (! in_array(true, $channels, true)) {
+            $errors['channels'][] = 'Au moins un canal doit rester actif.';
+        } elseif ($definition['domain'] === 'securite' && ! $channels['push'] && ! $channels['sms']) {
+            $errors['channels'][] = 'Une alerte de sécurité doit rester envoyée par push ou par SMS.';
+        }
 
         $fields = [
             'push_title' => $this->filled($input['push_title'] ?? null) ?? $definition['title'],
@@ -158,9 +221,13 @@ class NotificationTemplateService
             }
         }
 
-        $smsText = $fields['sms_body'] ?? "{$fields['push_title']}: {$fields['push_body']}";
-        $smsEnabled = $input['channel_sms'] ?? (bool) $definition['sms'];
-        if ($smsEnabled && $this->smsSegments($smsText)['segments'] > self::SMS_MAX_SEGMENTS) {
+        // Longueur jugée sur le SMS rendu avec des valeurs d'exemple.
+        $smsText = $fields['sms_body'] ?? $definition['sms_body'] ?? "{$fields['push_title']}: {$fields['push_body']}";
+        $examples = [];
+        foreach ($allowed as $name) {
+            $examples[$name] = NotificationCatalog::example($name);
+        }
+        if ($channels['sms'] && $this->smsSegments($this->interpolate($smsText, $examples))['segments'] > self::SMS_MAX_SEGMENTS) {
             $errors['sms_body'][] = 'Le SMS dépasse '.self::SMS_MAX_SEGMENTS.' segments : raccourcissez-le.';
         }
 

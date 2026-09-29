@@ -80,6 +80,7 @@ class AdminPermissionService
             'communication' => [
                 'admin.communications.manage' => 'Gérer les communications et annonces',
                 'admin.notifications.view' => 'Consulter le centre de notifications',
+                'admin.notifications.manage' => 'Modifier les messages push et SMS, les tester et consulter le journal des envois',
                 'admin.vitrine.manage' => 'Administrer le CMS de la vitrine et les contacts',
                 'admin.whatsapp.manage' => 'Configurer le bouton WhatsApp du site et consulter les clics enregistrés',
                 'admin.faq.manage' => "Gérer la FAQ d'aide et support de l'application mobile",
