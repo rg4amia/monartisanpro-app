@@ -346,4 +346,5 @@ App Router (`src/app/`), composants partagés dans `src/components/`, accès API
   - bon multi-comptoirs (`fournisseur_id` nul) : il réunit des articles de plusieurs catalogues, chacun affiché « Catalogue de … », ainsi que des articles hors catalogue ;
   - désactiver le multi-comptoirs garde les articles d'un seul fournisseur (qui devient le destinataire), sinon retire les articles de catalogue après confirmation ;
   - le choix du fournisseur est groupé par secteur.
-- **Tests** : `OrderSurgeServerSideTest.php`, `SupplierCatalogFeatureTest.php`, `multi_supplier_checkout_test.dart`, `supplier_grouping_test.dart`, `jcode_controller_test.dart`.
+- **Lisibilité des pastilles de filtre** : le thème mobile (`AppTheme.chipTheme`) fixe la couleur du libellé selon l'état (bleu nuit sur fond blanc, blanc sur la pastille sélectionnée) ; sans couleur explicite, « Tous » s'affichait blanc sur fond clair. L'icône d'un secteur sélectionné passe en blanc.
+- **Tests** : `OrderSurgeServerSideTest.php`, `SupplierCatalogFeatureTest.php`, `multi_supplier_checkout_test.dart`, `supplier_grouping_test.dart`, `jcode_controller_test.dart`, `chip_theme_contrast_test.dart`.

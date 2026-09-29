@@ -97,9 +97,28 @@ class AppTheme {
 
         // Chip
         chipTheme: ChipThemeData(
-          backgroundColor: AppColors.background,
+          backgroundColor: AppColors.surface,
           selectedColor: AppColors.primary,
-          labelStyle: const TextStyle(fontSize: 13),
+          // Texte bleu nuit sur fond blanc, blanc sur la pastille
+          // sélectionnée : sans couleur explicite, le libellé non
+          // sélectionné sortait blanc sur fond clair, donc illisible.
+          labelStyle: TextStyle(
+            fontSize: 13,
+            fontWeight: FontWeight.w600,
+            color: WidgetStateColor.resolveWith(
+              (states) => states.contains(WidgetState.selected)
+                  ? AppColors.textLight
+                  : AppColors.textPrimary,
+            ),
+          ),
+          checkmarkColor: AppColors.textLight,
+          side: WidgetStateBorderSide.resolveWith(
+            (states) => BorderSide(
+              color: states.contains(WidgetState.selected)
+                  ? AppColors.primary
+                  : AppColors.secondaryDark,
+            ),
+          ),
           shape:
               RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
         ),

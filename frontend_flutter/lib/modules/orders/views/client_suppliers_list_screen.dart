@@ -338,6 +338,7 @@ class _SectorChips extends StatelessWidget {
           Padding(
             padding: const EdgeInsets.only(right: 8),
             child: ChoiceChip(
+              showCheckmark: false,
               label: Text('Tous ($total)'),
               selected: selected == null,
               onSelected: (_) => onSelected(null),
@@ -347,7 +348,16 @@ class _SectorChips extends StatelessWidget {
             Padding(
               padding: const EdgeInsets.only(right: 8),
               child: ChoiceChip(
-                avatar: Icon(_iconOf(group), size: 16, color: _colorOf(group)),
+                showCheckmark: false,
+                // Icône blanche sur la pastille sélectionnée (fond bleu
+                // nuit), couleur du secteur sinon.
+                avatar: Icon(
+                  _iconOf(group),
+                  size: 16,
+                  color: selected == keyOf(group)
+                      ? AppColors.textLight
+                      : _colorOf(group),
+                ),
                 label: Text('${group.label} (${group.suppliers.length})'),
                 selected: selected == keyOf(group),
                 onSelected: (_) => onSelected(keyOf(group)),
