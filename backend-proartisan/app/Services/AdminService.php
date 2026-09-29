@@ -27,7 +27,6 @@ class AdminService
     public function __construct(
         private NotificationService $notificationService,
         private LitigeService $litigeService,
-        private OneSignalService $oneSignalService,
         private AdminActivityLogger $audit,
         private AdminDashboardCache $dashboardCache,
     ) {}
@@ -143,16 +142,6 @@ class AdminService
                 ? 'Votre dossier KYC est validé. Vous pouvez maintenant effectuer des transactions.'
                 : 'Votre dossier KYC a été rejeté. Merci de vérifier vos documents et de recommencer.',
             ['decision' => $decision]
-        );
-
-        // Envoi de la notification Push
-        $this->oneSignalService->sendToUser(
-            (string) $user->id,
-            'Statut KYC mis à jour',
-            $decision === 'approuve'
-                ? 'Votre dossier KYC est validé. Vous pouvez maintenant postuler !'
-                : 'Votre dossier KYC a été rejeté. Merci de vérifier vos documents.',
-            ['decision' => $decision, 'type' => 'kyc']
         );
 
         $this->audit->log('kyc.reviewed', $user, [

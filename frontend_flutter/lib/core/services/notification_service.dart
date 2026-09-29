@@ -13,23 +13,15 @@ class NotificationService extends GetxService {
   @override
   void onInit() {
     super.onInit();
-    _initOneSignal();
+    _registerListeners();
   }
 
-  void _initOneSignal() {
+  /// Écouteurs push uniquement. L'initialisation du SDK et la demande de
+  /// permission se font une seule fois dans `main.dart`, avec l'App ID de
+  /// `EnvConfig.oneSignalAppId` : ce service réinitialisait OneSignal avec un
+  /// App ID écrit en dur, qui ignorait `--dart-define=ONESIGNAL_APP_ID`.
+  void _registerListeners() {
     try {
-      // Activer les logs en mode debug
-      if (kDebugMode) {
-        OneSignal.Debug.setLogLevel(OSLogLevel.verbose);
-      }
-
-      // Initialiser OneSignal
-      const appId = '00d061c8-977b-405a-a207-e2d87846670b';
-      OneSignal.initialize(appId);
-
-      // Demander la permission de recevoir des notifications
-      OneSignal.Notifications.requestPermission(true);
-
       // Gestion des notifications reçues lorsque l'application est au premier plan
       OneSignal.Notifications.addForegroundWillDisplayListener((event) {
         if (StorageService.areNotificationsEnabled()) {
@@ -47,7 +39,7 @@ class NotificationService extends GetxService {
         }
       });
     } catch (e) {
-      debugPrint("Erreur lors de l'initialisation de OneSignal: $e");
+      debugPrint("Erreur lors de l'enregistrement des écouteurs OneSignal: $e");
     }
   }
 

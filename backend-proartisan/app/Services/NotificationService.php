@@ -26,7 +26,7 @@ class NotificationService
     public function send(User $user, string $type, string $title, string $body, array $data = []): void
     {
         // 1. Enregistrement en base (toujours)
-        Notification::create([
+        $notification = Notification::create([
             'user_id' => $user->id,
             'type' => $type,
             'title' => $title,
@@ -34,11 +34,18 @@ class NotificationService
             'data_json' => $data,
         ]);
 
-        // 2. Push Notification via OneSignal (basé sur l'ID utilisateur)
+        // 2. Push Notification via OneSignal (basé sur l'ID utilisateur).
+        // Le mobile choisit l'écran à ouvrir d'après `type` : sans lui, toucher
+        // la notification n'ouvrait rien (Chantier 14, lot A).
+        $pushData = array_merge($data, [
+            'type' => $type,
+            'notification_id' => $notification->id,
+        ]);
+
         try {
             $oneSignal = app(OneSignalService::class);
             $androidSound = in_array($user->role, self::ROLES_WITH_DISTINCT_SOUND, true) ? self::DISTINCT_SOUND : null;
-            $oneSignal->sendToUser((string) $user->id, $title, $body, $data, $androidSound);
+            $oneSignal->sendToUser((string) $user->id, $title, $body, $pushData, $androidSound);
         } catch (\Exception $e) {
             Log::error("Erreur lors de l'appel OneSignal dans NotificationService : ".$e->getMessage());
         }
@@ -63,14 +70,6 @@ class NotificationService
         foreach ($admins as $admin) {
             $this->send($admin, $type, $title, $body, $data);
         }
-    }
-
-    private function sendPush(string $token, string $title, string $body, array $data): void
-    {
-        Log::info("[FCM] Envoi push à {$token}", ['title' => $title, 'body' => $body]);
-
-        // Simuler appel Firebase
-        // if (config('services.fcm.key')) { ... }
     }
 
     private function sendSms(string $phone, string $message): void

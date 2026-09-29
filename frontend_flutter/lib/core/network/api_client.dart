@@ -6,6 +6,7 @@ import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../../app/routes/app_routes.dart';
 import '../services/device_fingerprint_service.dart';
+import '../services/push_identity.dart';
 import '../storage/storage_service.dart';
 import '../utils/error_handler.dart';
 import 'api_endpoints.dart';
@@ -97,6 +98,9 @@ class _AuthInterceptor extends Interceptor {
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
       StorageService.clearToken();
+      // Session révoquée ou expirée : l'appareil ne doit plus recevoir les
+      // notifications de ce compte tant que personne ne s'est reconnecté.
+      unawaited(PushIdentity.unlink());
 
       // Redirect to login if not already there (safeguarded for tests)
       try {

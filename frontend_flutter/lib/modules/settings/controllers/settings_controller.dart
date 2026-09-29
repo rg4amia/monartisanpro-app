@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
+import '../../../core/services/push_identity.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
@@ -91,10 +92,12 @@ class SettingsController extends GetxController {
     isLoading.value = true;
     try {
       await _userRepo.deleteAccount(userId: userId);
+      await PushIdentity.unlink();
       await StorageService.clearAll();
       unawaited(Get.offAllNamed(Routes.login));
     } catch (_) {
       // Ignorer silencieusement en cas d'erreur de réseau ou autre
+      await PushIdentity.unlink();
       await StorageService.clearAll();
       unawaited(Get.offAllNamed(Routes.login));
     } finally {

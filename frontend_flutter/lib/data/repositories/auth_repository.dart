@@ -4,6 +4,7 @@ import 'package:frontend_flutter/core/utils/json_readers.dart';
 import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
+import '../../core/services/push_identity.dart';
 import '../../core/storage/storage_service.dart';
 import '../models/user_model.dart';
 
@@ -114,6 +115,9 @@ class AuthRepository {
     } on DioException {
       // ignore errors on logout
     } finally {
+      // Détacher l'appareil du compte : sinon les push du compte sortant
+      // continuent d'arriver sur ce téléphone.
+      await PushIdentity.unlink();
       await StorageService.clearAll();
       // Purge des caches locaux : ne jamais exposer les données d'un compte
       // au compte suivant sur le même appareil.

@@ -5,11 +5,13 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Mission;
 use App\Models\MissionMessage;
+use App\Models\User;
 use App\Services\AntiCircumventionService;
 use App\Services\NotificationService;
 use App\Services\RealtimeEventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
@@ -17,7 +19,7 @@ class MissionChatController extends Controller
 {
     public function __construct(
         private AntiCircumventionService $antiCircumvention,
-        private ?NotificationService $notificationService = null
+        private NotificationService $notificationService
     ) {}
 
     /**
@@ -144,20 +146,30 @@ class MissionChatController extends Controller
             // Silencieux pour ne pas impacter l'envoi HTTP
         }
 
-        // Notification du destinataire
+        // Notification du destinataire. Le service était injecté en optionnel
+        // (résolu à null par le conteneur) et appelé via une méthode
+        // inexistante, erreur avalée : aucun message de chantier n'était
+        // jamais notifié (Chantier 14, lot A).
         $recipientId = ($user->id === $mission->client_id) ? $mission->artisan_id : $mission->client_id;
-        if ($recipientId && $this->notificationService) {
+        $recipient = $recipientId ? User::find($recipientId) : null;
+        if ($recipient) {
             try {
                 $senderName = $user->name ?? 'Votre interlocuteur';
                 $snippet = $type === 'text' ? Str::limit($message->content, 60) : ($type === 'audio' ? '🎙️ Message vocal' : '📷 Photo de chantier');
-                $this->notificationService->sendToUser(
-                    $recipientId,
+                $this->notificationService->send(
+                    $recipient,
+                    'chat_message',
                     "Nouveau message de {$senderName}",
                     $snippet,
-                    ['type' => 'chat_message', 'mission_id' => $mission->id, 'message_id' => $message->id]
+                    ['mission_id' => $mission->id, 'message_id' => $message->id]
                 );
             } catch (\Throwable $e) {
-                // Silencieux pour ne pas impacter l'envoi du message
+                // L'envoi du message ne doit pas échouer pour une notification,
+                // mais la panne doit rester visible.
+                Log::error('Notification de message de chantier impossible : '.$e->getMessage(), [
+                    'mission_id' => $mission->id,
+                    'message_id' => $message->id,
+                ]);
             }
         }
 

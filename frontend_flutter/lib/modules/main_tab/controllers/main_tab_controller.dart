@@ -1,6 +1,8 @@
-import 'package:get/get.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
+import 'dart:async';
 
+import 'package:get/get.dart';
+
+import '../../../core/services/push_identity.dart';
 import '../../../core/storage/storage_service.dart';
 
 class MainTabController extends GetxController {
@@ -14,9 +16,7 @@ class MainTabController extends GetxController {
 
     final userId = StorageService.getUserId();
     if (userId != null) {
-      try {
-        OneSignal.login(userId.toString());
-      } catch (_) {}
+      unawaited(PushIdentity.link(userId));
     }
   }
 

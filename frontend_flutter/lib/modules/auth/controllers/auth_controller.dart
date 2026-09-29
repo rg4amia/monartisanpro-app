@@ -1,9 +1,9 @@
 import 'dart:async';
 import 'package:dio/dio.dart';
 import 'package:get/get.dart';
-import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 import '../../../core/network/sync_service.dart';
+import '../../../core/services/push_identity.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/repositories/auth_repository.dart';
@@ -119,7 +119,7 @@ class AuthController extends GetxController {
           StorageService.setOnboarded(true);
 
           // Lier l'ID utilisateur à OneSignal pour les Push ciblées
-          unawaited(OneSignal.login(user.id.toString()));
+          unawaited(PushIdentity.link(user.id));
 
           // Rejoue les mutations mises en file d'attente hors-ligne.
           _flushOfflineQueue();
@@ -171,7 +171,7 @@ class AuthController extends GetxController {
       StorageService.setOnboarded(true);
 
       // Lier l'ID utilisateur à OneSignal
-      unawaited(OneSignal.login(user.id.toString()));
+      unawaited(PushIdentity.link(user.id));
       _flushOfflineQueue();
 
       // Token is already saved in repository
