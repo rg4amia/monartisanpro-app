@@ -531,6 +531,14 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 - Quand tu génères du prosartisan-marketplace : cible **Android en priorité**, supporte le mode hors-ligne pour les zones à faible connectivité
 
 ---
+121. **Liens Google Play et App Store validés avant publication (Chantier 16)** :
+- **Cycle** (`app_store_links`, `AppStoreLinkService`) : `brouillon` (créé, invisible) → `publie` (validé, affiché) → `desactive` (retiré, conservé).
+  - Un lien publié ne se modifie ni ne se supprime (422) : on le désactive, ou l'on crée puis valide son remplaçant. Le site n'affiche ainsi jamais une adresse non relue.
+  - **Un seul lien publié par magasin** : valider un lien désactive, dans la même transaction, le lien publié du même magasin.
+- **Adresse contrôlée par le serveur**, à la création, à la modification et à la validation : `https://play.google.com/store/apps/details?id=<paquet>` ou `https://apps.apple.com/[pays/]app/[nom/]id<chiffres>`. Toute autre adresse, un autre hôte ou `http` est refusé. La vitrine refiltre les liens reçus (hôte du magasin annoncé, `https`).
+- **Backoffice** : onglet **Applications mobiles** (`/admin/applications-mobiles`), capacité existante `admin.vitrine.manage`. Les actions sont confirmées par `useConfirm`, et la validation rappelle le lien qu'elle remplace. Tout est audité : `app_store_link.created` / `.updated` / `.published` (avec le lien remplacé) / `.disabled` / `.deleted`. Services : `AppStoreLinkService`, `Admin\AppStoreLinkAdminService` ; contrôleur `Admin\AppStoreLinkAdminController`.
+- **Vitrine** : `GET /api/v1/vitrine/app-links` (public, `throttle:public`) ne renvoie que les liens publiés, un par magasin. La section `AppDownloadSection` de la page d'accueil (maquette de téléphone, avantages, badges) n'apparaît que s'il en existe au moins un et ne montre que les badges publiés. Sans réponse de l'API, rien ne s'affiche, jamais de lien par défaut (Règle d'or 29).
+- **Tests** : `AppStoreLinkTest.php`, `AppStoreLinksPanel.test.tsx`, `AppDownloadSection.test.tsx`, `api.test.ts`.
 
 ## 📎 Fichier de référence du flux
 

@@ -6,6 +6,7 @@ use App\Http\Controllers\Admin\AdminDocumentController;
 use App\Http\Controllers\Admin\AdminFraudController;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminTerritoryController;
+use App\Http\Controllers\Admin\AppStoreLinkAdminController;
 use App\Http\Controllers\Admin\ArtisanDirectoryAdminController;
 use App\Http\Controllers\Admin\AuthenticatedSessionController;
 use App\Http\Controllers\Admin\BackofficeController;
@@ -263,6 +264,16 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::put('/{user}/disponibilite', [ArtisanDirectoryAdminController::class, 'setAvailability'])->name('availability.set');
             Route::post('/{user}/retirer', [ArtisanDirectoryAdminController::class, 'hide'])->name('hide');
             Route::post('/{user}/publier', [ArtisanDirectoryAdminController::class, 'show'])->name('show');
+        });
+
+        // Liens Google Play / App Store affichés sur le site vitrine (Chantier 16)
+        Route::get('/applications-mobiles', [BackofficeController::class, 'appStoreLinks'])->middleware('can:admin.vitrine.manage')->name('app-store-links');
+        Route::prefix('applications-mobiles')->name('app-store-links.')->middleware('can:admin.vitrine.manage')->group(function () {
+            Route::post('/', [AppStoreLinkAdminController::class, 'store'])->name('store');
+            Route::put('/{link}', [AppStoreLinkAdminController::class, 'update'])->whereNumber('link')->name('update');
+            Route::post('/{link}/valider', [AppStoreLinkAdminController::class, 'publish'])->whereNumber('link')->name('publish');
+            Route::post('/{link}/desactiver', [AppStoreLinkAdminController::class, 'disable'])->whereNumber('link')->name('disable');
+            Route::delete('/{link}', [AppStoreLinkAdminController::class, 'destroy'])->whereNumber('link')->name('destroy');
         });
 
         // Campagnes push & SMS : envois ponctuels ciblés (Chantier 14, lot D)

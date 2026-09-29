@@ -8,6 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-09-29 | Plan | [Chantier 16 — Liens Google Play et App Store pilotés depuis le backoffice](plans/2026-09-29-chantier-16-liens-applications-mobiles.md) | livré | — |
 | 2026-09-29 | Plan | [Chantier 15 — Annuaire artisans : disponibilité validée et présence pilotée](plans/2026-09-29-chantier-15-annuaire-artisans.md) | livré | — |
 | 2026-09-29 | Plan | [Chantier 14 — Notifications fiables et messages pilotés depuis le backoffice](plans/2026-09-29-chantier-14-notifications.md) | en cours (lots A, B, C et D livrés) | — |
 | 2026-09-26 | Audit | [Simulation de bout en bout de l'écosystème ProsArtisan](audits/2026-09-26-audit-simulation-ecosysteme.md) | — | commit « test(ecosysteme) » du 26/09/2026 |

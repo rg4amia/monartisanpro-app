@@ -15,6 +15,7 @@ use App\Models\Vitrine\VitrineSetting;
 use App\Models\Vitrine\VitrineSlide;
 use App\Models\Vitrine\VitrineVideo;
 use App\Models\WhatsappClickLog;
+use App\Services\AppStoreLinkService;
 use App\Services\ArtisanDirectoryService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -203,6 +204,18 @@ class VitrineController extends Controller
         return response()->json([
             'success' => true,
             'data' => VitrineSetting::allAsArray(),
+        ]);
+    }
+
+    /**
+     * Liens de téléchargement de l'application publiés depuis le backoffice
+     * (Chantier 16) : uniquement les liens validés, un par magasin.
+     */
+    public function appLinks(AppStoreLinkService $links): JsonResponse
+    {
+        return response()->json([
+            'success' => true,
+            'data' => $links->publicLinks(),
         ]);
     }
 

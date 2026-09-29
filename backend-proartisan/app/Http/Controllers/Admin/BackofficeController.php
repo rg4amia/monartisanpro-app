@@ -43,6 +43,7 @@ use App\Services\Admin\AdminPromoCodeService;
 use App\Services\Admin\AdminSettingsService;
 use App\Services\Admin\AdminTaxonomyService;
 use App\Services\Admin\AdminUserService;
+use App\Services\Admin\AppStoreLinkAdminService;
 use App\Services\Admin\ArtisanDirectoryAdminService;
 use App\Services\Admin\NotificationCampaignAdminService;
 use App\Services\Admin\NotificationTemplateAdminService;
@@ -581,6 +582,12 @@ class BackofficeController extends Controller
     public function artisanDirectory(Request $request, ArtisanDirectoryAdminService $directory): Response
     {
         return $this->page('admin/artisan-directory', $directory->panelData($request));
+    }
+
+    /** Liens Google Play et App Store du site vitrine (Chantier 16). */
+    public function appStoreLinks(AppStoreLinkAdminService $links): Response
+    {
+        return $this->page('admin/app-store-links', $links->panelData());
     }
 
     public function notificationCampaigns(Request $request, NotificationCampaignAdminService $campaigns): Response

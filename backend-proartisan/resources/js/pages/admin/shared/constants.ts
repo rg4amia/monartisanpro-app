@@ -26,6 +26,7 @@ export const tabRoutes: Record<AdminTab, string> = {
     notification_messages: '/admin/messages',
     notification_campaigns: '/admin/campagnes-notifications',
     artisan_directory: '/admin/annuaire-artisans',
+    app_links: '/admin/applications-mobiles',
     recruitment: '/admin/recruitment',
     cartography: '/admin/cartographie',
     manual: '/admin/manuel',
@@ -132,6 +133,11 @@ export const tabMeta: Record<AdminTab, { description: string; label: string; sec
         section: 'VALIDATIONS',
         description: "Disponibilités des artisans à valider avant publication sur le site vitrine, et présence de chaque artisan dans l'annuaire.",
     },
+    app_links: {
+        label: 'Applications mobiles',
+        section: 'COMMUNICATION',
+        description: "Liens Google Play et App Store : créés en brouillon, validés pour s'afficher sur la page d'accueil du site vitrine, désactivés à tout moment.",
+    },
     notification_campaigns: {
         label: 'Campagnes push & SMS',
         section: 'COMMUNICATION',
@@ -188,6 +194,7 @@ export const searchPlaceholders: Record<AdminTab, string> = {
     notification_messages: 'Rechercher un message, un destinataire ou un texte...',
     notification_campaigns: 'Rechercher une campagne par nom ou titre...',
     artisan_directory: 'Rechercher un artisan par nom ou téléphone...',
+    app_links: 'Rechercher un lien...',
     recruitment: 'Rechercher une offre par titre...',
     cartography: 'Rechercher un artisan, client, fournisseur ou mission dans la zone...',
     manual: 'Rechercher dans le manuel (Ctrl + F dans la page)...',

@@ -63,6 +63,7 @@ export function buildNavigation(permissions: string[], counts: NavigationCounts)
                 { count: counts.activeCampagnes, id: 'campagnes_parrainage', label: 'Parrainage Clients' },
                 { count: counts.newContactMessages, id: 'vitrine', label: tabMeta.vitrine.label },
                 { count: counts.whatsappClicksToday, id: 'whatsapp', label: tabMeta.whatsapp.label },
+                { id: 'app_links', label: tabMeta.app_links.label },
                 { count: counts.faqCount, id: 'faq', label: tabMeta.faq.label },
                 { id: 'manual', label: tabMeta.manual.label },
             ],

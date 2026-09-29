@@ -121,6 +121,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/recrutements', [VitrineController::class, 'recrutements']);
         Route::get('/popup', [VitrineController::class, 'popup']);
         Route::get('/settings', [VitrineController::class, 'settings']);
+        Route::get('/app-links', [VitrineController::class, 'appLinks']);
         Route::post('/contact', [VitrineController::class, 'contact']);
         Route::post('/whatsapp-click', [VitrineController::class, 'logWhatsappClick']);
     });

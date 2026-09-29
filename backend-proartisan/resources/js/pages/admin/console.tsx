@@ -28,6 +28,7 @@ import { AiQuotaFormModal, CampagneParrainageFormModal, CommunicationFormModal, 
 import { KycPanel } from './panels/KycPanel';
 import { LitigesPanel } from './panels/LitigesPanel';
 import { MissionsPanel } from './panels/MissionsPanel';
+import { AppStoreLinksPanel } from './panels/AppStoreLinksPanel';
 import { ArtisanDirectoryPanel } from './panels/ArtisanDirectoryPanel';
 import { NotificationCampaignsPanel } from './panels/NotificationCampaignsPanel';
 import { NotificationMessagesPanel } from './panels/NotificationMessagesPanel';
@@ -168,6 +169,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         directoryArtisans = null,
         directoryStats = undefined,
         directoryOptions = undefined,
+        appStoreLinks = [],
+        appStoreLinkOptions = undefined,
         recruitmentOffersPage = undefined,
         recruitmentStats = { total: 0, pending_review: 0, active: 0, filled: 0 },
         recruitmentSettings = { client_posting_enabled: '1', fournisseur_posting_enabled: '1' },
@@ -1100,6 +1103,10 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
                             {activeTab === 'artisan_directory' && directoryOptions ? (
                                 <ArtisanDirectoryPanel artisans={directoryArtisans} stats={directoryStats} options={directoryOptions} />
+                            ) : null}
+
+                            {activeTab === 'app_links' && appStoreLinkOptions ? (
+                                <AppStoreLinksPanel links={appStoreLinks} options={appStoreLinkOptions} />
                             ) : null}
 
                             {activeTab === 'manual' ? <ManualPanel manual={userManual} /> : null}

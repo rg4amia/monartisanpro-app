@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { ArtisanCard } from '@/components/ArtisanCard';
+import AppDownloadSection from '@/components/AppDownloadSection';
 import Image from 'next/image';
 import { 
   ArrowRight, ShieldCheck, Award, Users, 
@@ -623,6 +624,9 @@ export default function HomePage() {
           </div>
         </section>
       )}
+
+      {/* Téléchargement de l'application : affiché seulement si un lien est validé (Chantier 16) */}
+      <AppDownloadSection />
 
       {/* 8. Call to Action Banner */}
       <section className="py-24 bg-[#241b16] text-[#efe6da] relative overflow-hidden border-t border-[#e6d3b2]/10">

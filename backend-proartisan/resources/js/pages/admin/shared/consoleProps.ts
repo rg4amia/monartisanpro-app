@@ -36,6 +36,8 @@ import type {
     NotificationDeliveryRow,
     DirectoryArtisanRow,
     DirectoryOptions,
+    AppStoreLinkItem,
+    AppStoreLinkOptions,
     DirectoryStats,
     NotificationCampaignItem,
     NotificationCampaignOptions,
@@ -186,6 +188,8 @@ export interface AdminPageProps {
     directoryArtisans?: Paginated<DirectoryArtisanRow> | null;
     directoryStats?: DirectoryStats;
     directoryOptions?: DirectoryOptions;
+    appStoreLinks?: AppStoreLinkItem[];
+    appStoreLinkOptions?: AppStoreLinkOptions;
     userManual?: UserManualSummary | null;
     recruitmentOffersPage?: Paginated<RecruitmentOfferItem> | null;
     recruitmentStats?: RecruitmentStats;

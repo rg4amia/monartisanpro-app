@@ -86,6 +86,31 @@ export interface Recrutement {
     contact_email: string | null;
 }
 
+/** Lien de téléchargement de l'application, validé depuis le backoffice (Chantier 16). */
+export interface AppStoreLink {
+    platform: 'android' | 'ios';
+    label: string;
+    url: string;
+}
+
+const APP_STORE_HOSTS: Record<AppStoreLink['platform'], string> = {
+    android: 'play.google.com',
+    ios: 'apps.apple.com',
+};
+
+function isAppStoreLink(value: unknown): value is AppStoreLink {
+    if (!value || typeof value !== 'object') return false;
+    const link = value as Partial<AppStoreLink>;
+    if (link.platform !== 'android' && link.platform !== 'ios') return false;
+    if (typeof link.url !== 'string') return false;
+    try {
+        const parsed = new URL(link.url);
+        return parsed.protocol === 'https:' && parsed.hostname === APP_STORE_HOSTS[link.platform];
+    } catch {
+        return false;
+    }
+}
+
 export interface Popup {
     id: number;
     titre: string;
@@ -364,6 +389,15 @@ export const api = {
     },
     async getSettings(): Promise<Record<string, string>> {
         return fetchFromApi<Record<string, string>>('/settings', MOCK_SETTINGS);
+    },
+    /**
+     * Liens Google Play / App Store publiés. Jamais de lien par défaut : sans
+     * réponse de l'API, la section de téléchargement reste masquée (Règle
+     * d'or 29) ; une adresse hors du magasin annoncé est écartée.
+     */
+    async getAppLinks(): Promise<AppStoreLink[]> {
+        const data = await fetchFromApi<unknown>('/app-links', []);
+        return Array.isArray(data) ? data.filter(isAppStoreLink) : [];
     },
     async logWhatsappClick(page: string): Promise<void> {
         try {

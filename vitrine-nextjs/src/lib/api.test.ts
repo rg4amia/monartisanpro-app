@@ -279,3 +279,36 @@ describe('api.getArtisans (annuaire, Chantier 15)', () => {
         await expect(api.getArtisansStars()).resolves.toEqual([]);
     });
 });
+
+describe("api.getAppLinks — liens des magasins d'applications", () => {
+    afterEach(() => {
+        vi.unstubAllGlobals();
+        vi.restoreAllMocks();
+    });
+
+    it('ne garde que les liens https menant au magasin annoncé', async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        mockFetchOnce({
+            json: async () => ({
+                success: true,
+                data: [
+                    { platform: 'android', label: 'Google Play', url: 'https://play.google.com/store/apps/details?id=com.prosartisan.app' },
+                    { platform: 'ios', label: 'App Store', url: 'https://exemple.com/app' },
+                    { platform: 'ios', label: 'App Store', url: 'javascript:alert(1)' },
+                    { platform: 'windows', label: 'Store', url: 'https://apps.apple.com/app/x/id1' },
+                ],
+            }),
+        });
+
+        expect(await api.getAppLinks()).toEqual([
+            { platform: 'android', label: 'Google Play', url: 'https://play.google.com/store/apps/details?id=com.prosartisan.app' },
+        ]);
+    });
+
+    it("ne renvoie aucun lien par défaut quand l'API est injoignable", async () => {
+        vi.spyOn(console, 'warn').mockImplementation(() => {});
+        vi.stubGlobal('fetch', vi.fn().mockRejectedValue(new Error('réseau')));
+
+        expect(await api.getAppLinks()).toEqual([]);
+    });
+});

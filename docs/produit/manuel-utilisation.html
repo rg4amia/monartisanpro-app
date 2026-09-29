@@ -592,6 +592,7 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
               <tr><td>Messages push &amp; SMS</td><td>Texte et canaux (application, push, SMS) de chaque notification envoyée par la plateforme, envoi de test, journal des envois. Droit <b>Modifier les messages push et SMS</b>.</td></tr>
               <tr><td>Campagnes push &amp; SMS</td><td>Envois ponctuels vers un public ciblé (information de service ou message promotionnel) : rédaction, test, programmation, annulation, suivi. Droit <b>Créer, programmer et annuler des campagnes push et SMS</b>, distinct du précédent.</td></tr>
               <tr><td>CMS Vitrine, WhatsApp, FAQ Aide &amp; Support</td><td>Contenu du site, bouton WhatsApp et suivi des clics, questions de l'écran d'aide par profil.</td></tr>
+              <tr><td>Applications mobiles</td><td>Liens Google Play et App Store de la section « Téléchargez l'application » de la page d'accueil du site : créer, valider, désactiver. Droit <b>Administrer le CMS de la vitrine et les contacts</b>.</td></tr>
               <tr><td>Recrutement</td><td>Modérer les offres, activer la publication par profil.</td></tr>
               <tr><td>Suivi &amp; Coûts IA</td><td>Quotas d'utilisation de l'assistant par utilisateur.</td></tr>
               <tr><td>Journal d'audit, Santé &amp; Observabilité</td><td>Trace de toutes les actions sensibles ; état technique et incidents.</td></tr>
@@ -618,6 +619,15 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
           <li><div><span class="ui">Désactiver</span> retire la fiche du site (motif obligatoire, communiqué à l'artisan) sans toucher au compte ni aux missions ; <span class="ui">Réactiver</span> la remet en ligne.</div></li>
         </ol>
         <p>Une fiche n'est visible que si l'artisan a un KYC validé, un compte actif et n'a pas été désactivé : la colonne <span class="ui">Annuaire</span> indique « Visible » ou la raison de l'absence. Sur le site, le filtre <b>Disponibles maintenant</b> ne montre que les artisans dont la disponibilité validée est « Disponible ». Chaque validation, refus, saisie, désactivation ou réactivation est inscrite au journal d'audit.</p>
+
+        <h3>Publier les liens Google Play et App Store <span class="tag">Nouveau</span></h3>
+        <ol class="steps">
+          <li><div>Ouvrez <span class="ui">Applications mobiles</span>. Deux encadrés indiquent, pour Google Play et pour l'App Store, le lien affiché sur le site ou « Aucun lien publié ».</div></li>
+          <li><div>Sous <span class="ui">Nouveau lien</span>, choisissez le magasin, collez l'adresse de la fiche de l'application puis touchez <span class="ui">Créer le brouillon</span>. L'adresse est contrôlée : <code>https://play.google.com/store/apps/details?id=…</code> pour Google Play, <code>https://apps.apple.com/…/app/…/id…</code> pour l'App Store. Toute autre adresse est refusée avec le format attendu.</div></li>
+          <li><div>Un brouillon n'apparaît pas sur le site. Ouvrez l'adresse depuis la liste pour la vérifier, corrigez-la au besoin avec <span class="ui">Modifier</span>, puis touchez <span class="ui">Valider</span> : le badge du magasin s'affiche sur la page d'accueil. Un seul lien est publié par magasin : valider un nouveau lien désactive l'ancien, ce que la confirmation vous rappelle.</div></li>
+          <li><div><span class="ui">Désactiver</span> retire le badge du site ; le lien reste dans la liste et peut être validé de nouveau. Un lien publié ne se modifie pas et ne se supprime pas : désactivez-le d'abord, ou créez puis validez son remplaçant. <span class="ui">Supprimer</span> efface un brouillon ou un lien désactivé.</div></li>
+        </ol>
+        <p>La section « Téléchargez l'application » de la page d'accueil n'apparaît que si au moins un lien est validé, et ne montre que les badges des magasins publiés. Chaque création, modification, validation, désactivation ou suppression est inscrite au journal d'audit.</p>
 
         <h3>Envoyer une campagne push ou SMS <span class="tag">Nouveau</span></h3>
         <ol class="steps">

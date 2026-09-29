@@ -883,6 +883,30 @@ export interface DirectoryStats {
     pending: number;
 }
 
+export type AppStorePlatform = 'android' | 'ios';
+export type AppStoreLinkStatus = 'brouillon' | 'publie' | 'desactive';
+
+/** Lien de téléchargement de l'application (Chantier 16). */
+export interface AppStoreLinkItem {
+    id: number;
+    platform: AppStorePlatform;
+    platform_label: string;
+    url: string;
+    status: AppStoreLinkStatus;
+    status_label: string;
+    created_by: string | null;
+    created_at: string | null;
+    published_by: string | null;
+    published_at: string | null;
+    disabled_by: string | null;
+    disabled_at: string | null;
+}
+
+export interface AppStoreLinkOptions {
+    platforms: Record<AppStorePlatform, string>;
+    statuses: Record<AppStoreLinkStatus, string>;
+}
+
 export interface DirectoryOptions {
     statuses: Record<AvailabilityStatus, string>;
     days: Record<string, string>;

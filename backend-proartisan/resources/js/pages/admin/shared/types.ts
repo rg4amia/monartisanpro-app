@@ -25,6 +25,7 @@ export type AdminTab =
     | 'notification_messages'
     | 'notification_campaigns'
     | 'artisan_directory'
+    | 'app_links'
     | 'recruitment'
     | 'manual';
 
