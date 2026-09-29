@@ -56,7 +56,8 @@ void main() {
       expect(controller.draftTotal, 13000);
     });
 
-    testWidgets('addCatalogProduct ajoute un nouvel article catalogue', (tester) async {
+    testWidgets('addCatalogProduct ajoute un nouvel article catalogue',
+        (tester) async {
       final controller = JcodeController();
 
       await runControllerAction(
@@ -69,7 +70,8 @@ void main() {
       expect(controller.draftItems.single.quantity, 1);
     });
 
-    testWidgets('addCatalogProduct incrémente la quantité si déjà présent', (tester) async {
+    testWidgets('addCatalogProduct incrémente la quantité si déjà présent',
+        (tester) async {
       final controller = JcodeController();
       final product = _product();
 
@@ -82,7 +84,8 @@ void main() {
       expect(controller.draftItems.single.quantity, 2);
     });
 
-    testWidgets('addCatalogProduct refuse un article en rupture de stock', (tester) async {
+    testWidgets('addCatalogProduct refuse un article en rupture de stock',
+        (tester) async {
       final controller = JcodeController();
 
       await runControllerAction(
@@ -93,7 +96,8 @@ void main() {
       expect(controller.draftItems, isEmpty);
     });
 
-    testWidgets('updateDraftQuantity retire l\'article à quantité nulle', (tester) async {
+    testWidgets('updateDraftQuantity retire l\'article à quantité nulle',
+        (tester) async {
       final controller = JcodeController()
         ..addCustomItem(name: 'Sable', quantity: 2, unitPrice: 3000);
       final item = controller.draftItems.single;
@@ -106,7 +110,8 @@ void main() {
       expect(controller.draftItems, isEmpty);
     });
 
-    testWidgets('updateDraftQuantity refuse de dépasser le stock catalogue', (tester) async {
+    testWidgets('updateDraftQuantity refuse de dépasser le stock catalogue',
+        (tester) async {
       final controller = JcodeController()
         ..supplierProducts.add(_product(stockQuantity: 3))
         ..addCatalogProduct(_product(stockQuantity: 3));
@@ -183,7 +188,8 @@ void main() {
   });
 
   group('JcodeController.selectSupplier', () {
-    testWidgets('vide le panier catalogue quand on désélectionne', (tester) async {
+    testWidgets('vide le panier catalogue quand on désélectionne',
+        (tester) async {
       final controller = JcodeController()..addCatalogProduct(_product());
 
       await runControllerAction(tester, () => controller.selectSupplier(null));
@@ -192,7 +198,8 @@ void main() {
       expect(controller.supplierProducts, isEmpty);
     });
 
-    testWidgets('charge les articles du fournisseur sélectionné', (tester) async {
+    testWidgets('charge les articles du fournisseur sélectionné',
+        (tester) async {
       adapter.on(
         'GET',
         '/fournisseurs/9/articles',
@@ -225,7 +232,8 @@ void main() {
       expect(controller.isCatalogLoading.value, isFalse);
     });
 
-    testWidgets('vide le catalogue et alerte en cas d\'échec réseau', (tester) async {
+    testWidgets('vide le catalogue et alerte en cas d\'échec réseau',
+        (tester) async {
       final controller = JcodeController();
 
       await runControllerAction(
@@ -243,21 +251,26 @@ void main() {
       final controller = JcodeController()
         ..addCustomItem(name: 'Sable', quantity: 1, unitPrice: 3000);
 
-      await runControllerAction(tester, () => controller.generateJcodeForDraft(1));
+      await runControllerAction(
+          tester, () => controller.generateJcodeForDraft(1),);
 
       expect(adapter.requests, isEmpty);
       expect(controller.activeJcode.value, isNull);
     });
 
     testWidgets('refuse un panier vide', (tester) async {
-      final controller = JcodeController()..selectedSupplier.value = _supplier(id: 1);
+      final controller = JcodeController()
+        ..selectedSupplier.value = _supplier(id: 1);
 
-      await runControllerAction(tester, () => controller.generateJcodeForDraft(1));
+      await runControllerAction(
+          tester, () => controller.generateJcodeForDraft(1),);
 
       expect(adapter.requests, isEmpty);
     });
 
-    testWidgets('génère le J-Code et réinitialise le composeur en cas de succès', (tester) async {
+    testWidgets(
+        'génère le J-Code et réinitialise le composeur en cas de succès',
+        (tester) async {
       adapter.on(
         'POST',
         '/jcodes',
@@ -281,7 +294,8 @@ void main() {
         ..selectedSupplier.value = _supplier(id: 1)
         ..addCustomItem(name: 'Sable', quantity: 1, unitPrice: 3000);
 
-      await runControllerAction(tester, () => controller.generateJcodeForDraft(1));
+      await runControllerAction(
+          tester, () => controller.generateJcodeForDraft(1),);
 
       expect(controller.activeJcode.value?.code, 'PA-AB12');
       expect(controller.draftItems, isEmpty);
@@ -293,7 +307,8 @@ void main() {
         ..selectedSupplier.value = _supplier(id: 1)
         ..addCustomItem(name: 'Sable', quantity: 1, unitPrice: 3000);
 
-      await runControllerAction(tester, () => controller.generateJcodeForDraft(1));
+      await runControllerAction(
+          tester, () => controller.generateJcodeForDraft(1),);
 
       expect(controller.activeJcode.value, isNull);
       expect(controller.isLoading.value, isFalse);
@@ -328,7 +343,8 @@ void main() {
       expect(controller.isLoading.value, isFalse);
     });
 
-    testWidgets('aucun J-Code actif ⇒ reste à null sans erreur', (tester) async {
+    testWidgets('aucun J-Code actif ⇒ reste à null sans erreur',
+        (tester) async {
       adapter.on(
         'GET',
         '/jcodes/active',
@@ -341,7 +357,8 @@ void main() {
       expect(controller.activeJcode.value, isNull);
     });
 
-    test('propage l\'erreur réseau (non interceptée par le contrôleur)', () async {
+    test('propage l\'erreur réseau (non interceptée par le contrôleur)',
+        () async {
       final controller = JcodeController();
 
       await expectLater(controller.loadActiveJcode(), throwsA(anything));
@@ -415,11 +432,15 @@ void main() {
       expect(tester.takeException(), isNull);
     });
 
-    testWidgets('scan bloqué à plus de 100m ⇒ alerte sans exception, statut inchangé', (tester) async {
+    testWidgets(
+        'scan bloqué à plus de 100m ⇒ alerte sans exception, statut inchangé',
+        (tester) async {
       adapter.on(
         'POST',
         '/jcodes/PA-AB12/scan',
-        const CannedResponse(statusCode: 422, body: {'message': 'Distance GPS > 100m : scan refusé.'}),
+        const CannedResponse(
+            statusCode: 422,
+            body: {'message': 'Distance GPS > 100m : scan refusé.'},),
       );
       final controller = JcodeController();
 
@@ -435,7 +456,8 @@ void main() {
   });
 
   group('JcodeController.submitPartialServe', () {
-    testWidgets('enregistre une livraison partielle en cas de succès', (tester) async {
+    testWidgets('enregistre une livraison partielle en cas de succès',
+        (tester) async {
       adapter.on(
         'POST',
         '/jcodes/PA-AB12/scan',
@@ -462,7 +484,8 @@ void main() {
       expect(controller.isScanning.value, isFalse);
     });
 
-    testWidgets('relance l\'exception au chemin appelant en cas d\'échec', (tester) async {
+    testWidgets('relance l\'exception au chemin appelant en cas d\'échec',
+        (tester) async {
       final controller = JcodeController();
 
       // `tester.runAsync` ne laisse jamais une exception de [action]
@@ -490,7 +513,9 @@ void main() {
   });
 
   group('JcodeController — catalogue fournisseur', () {
-    testWidgets('loadMyCatalogProducts charge les articles du fournisseur connecté', (tester) async {
+    testWidgets(
+        'loadMyCatalogProducts charge les articles du fournisseur connecté',
+        (tester) async {
       adapter.on(
         'GET',
         '/supplier-products',
@@ -518,7 +543,9 @@ void main() {
       expect(controller.isCatalogLoading.value, isFalse);
     });
 
-    testWidgets('saveSupplierProduct crée un nouvel article puis recharge le catalogue', (tester) async {
+    testWidgets(
+        'saveSupplierProduct crée un nouvel article puis recharge le catalogue',
+        (tester) async {
       adapter
         ..on(
           'POST',
@@ -571,7 +598,9 @@ void main() {
       expect(controller.isSavingProduct.value, isFalse);
     });
 
-    testWidgets('saveSupplierProduct relance l\'exception en cas d\'échec réseau', (tester) async {
+    testWidgets(
+        'saveSupplierProduct relance l\'exception en cas d\'échec réseau',
+        (tester) async {
       final controller = JcodeController();
 
       Object? caught;
@@ -592,9 +621,12 @@ void main() {
       expect(controller.isSavingProduct.value, isFalse);
     });
 
-    testWidgets('archiveSupplierProduct retire l\'article puis recharge le catalogue', (tester) async {
+    testWidgets(
+        'archiveSupplierProduct retire l\'article puis recharge le catalogue',
+        (tester) async {
       adapter
-        ..on('DELETE', '/supplier-products/1', const CannedResponse(statusCode: 200))
+        ..on('DELETE', '/supplier-products/1',
+            const CannedResponse(statusCode: 200),)
         ..on(
           'GET',
           '/supplier-products',
@@ -613,7 +645,8 @@ void main() {
   });
 
   group('JcodeController.importMaterialsFromMission', () {
-    testWidgets('importe les lignes matériaux du devis accepté', (tester) async {
+    testWidgets('importe les lignes matériaux du devis accepté',
+        (tester) async {
       adapter.on(
         'GET',
         '/missions/1/devis',
@@ -649,7 +682,8 @@ void main() {
       expect(controller.isImportingDevis.value, isFalse);
     });
 
-    testWidgets('devis sans ligne matériaux ⇒ alerte, panier inchangé', (tester) async {
+    testWidgets('devis sans ligne matériaux ⇒ alerte, panier inchangé',
+        (tester) async {
       adapter.on(
         'GET',
         '/missions/2/devis',
@@ -682,7 +716,8 @@ void main() {
       expect(controller.draftItems, isEmpty);
     });
 
-    testWidgets('aucun devis pour la mission ⇒ alerte sans planter', (tester) async {
+    testWidgets('aucun devis pour la mission ⇒ alerte sans planter',
+        (tester) async {
       adapter.on(
         'GET',
         '/missions/3/devis',
@@ -697,6 +732,146 @@ void main() {
 
       expect(controller.draftItems, isEmpty);
       expect(controller.isImportingDevis.value, isFalse);
+    });
+  });
+
+  group('JcodeController — bon à un ou plusieurs fournisseurs', () {
+    SupplierProductModel productOf(int supplierId, int id) =>
+        SupplierProductModel(
+          id: id,
+          supplierId: supplierId,
+          name: 'Article $id',
+          unitPrice: 2000,
+          stockQuantity: 10,
+          isActive: true,
+        );
+
+    void catalogOf(int supplierId) => adapter.on(
+          'GET',
+          '/fournisseurs/$supplierId/articles',
+          const CannedResponse(statusCode: 200, body: {'data': []}),
+        );
+
+    testWidgets(
+        'un bon mono-fournisseur signale la perte d\'articles avant de changer de fournisseur',
+        (tester) async {
+      catalogOf(1);
+      catalogOf(2);
+      final controller = JcodeController();
+      await runControllerAction(
+        tester,
+        () => controller.selectSupplier(_supplier(id: 1)),
+      );
+      controller.addCatalogProduct(productOf(1, 11));
+
+      expect(controller.draftItems.single.supplierId, 1);
+      expect(controller.switchingWouldDropItems(_supplier(id: 1)), isFalse);
+      expect(controller.switchingWouldDropItems(_supplier(id: 2)), isTrue);
+
+      await runControllerAction(
+        tester,
+        () => controller.selectSupplier(_supplier(id: 2)),
+      );
+      expect(controller.draftItems, isEmpty);
+    });
+
+    testWidgets(
+        'un bon multi-comptoirs réunit les articles de plusieurs catalogues',
+        (tester) async {
+      catalogOf(1);
+      catalogOf(2);
+      final controller = JcodeController();
+      await runControllerAction(
+        tester,
+        () => controller.setMultiSupplierMode(true),
+      );
+
+      await runControllerAction(
+        tester,
+        () => controller.selectSupplier(_supplier(id: 1)),
+      );
+      controller.addCatalogProduct(productOf(1, 11));
+      expect(controller.switchingWouldDropItems(_supplier(id: 2)), isFalse);
+      await runControllerAction(
+        tester,
+        () => controller.selectSupplier(_supplier(id: 2)),
+      );
+      controller.addCatalogProduct(productOf(2, 21));
+      controller.addCustomItem(name: 'Sable', quantity: 1, unitPrice: 3000);
+
+      expect(controller.draftItems, hasLength(3));
+      expect(controller.draftCatalogSupplierIds, {1, 2});
+      expect(controller.leavingMultiWouldDropItems, isTrue);
+
+      // Le bon multi-comptoirs ne désigne aucun fournisseur.
+      adapter.on(
+        'POST',
+        '/jcodes',
+        const CannedResponse(statusCode: 422, body: {'message': 'refus'}),
+      );
+      await runControllerAction(
+        tester,
+        () => controller.generateJcodeForDraft(5),
+      );
+      final body = adapter.requests.last.data as Map<String, dynamic>;
+      expect(body['fournisseur_id'], isNull);
+      expect(
+        (body['items'] as List).map((i) => (i as Map)['supplier_product_id']),
+        [11, 21, null],
+      );
+    });
+
+    testWidgets(
+        'quitter le multi-comptoirs garde les articles d\'un seul fournisseur et le désigne',
+        (tester) async {
+      catalogOf(1);
+      catalogOf(2);
+      final controller = JcodeController();
+      controller.suppliers.value = [_supplier(id: 1), _supplier(id: 2)];
+      await runControllerAction(
+        tester,
+        () => controller.setMultiSupplierMode(true),
+      );
+      await runControllerAction(
+        tester,
+        () => controller.selectSupplier(_supplier(id: 1)),
+      );
+      controller.addCatalogProduct(productOf(1, 11));
+      await runControllerAction(
+        tester,
+        () => controller.selectSupplier(_supplier(id: 2)),
+      );
+
+      expect(controller.leavingMultiWouldDropItems, isFalse);
+      await runControllerAction(
+        tester,
+        () => controller.setMultiSupplierMode(false),
+      );
+
+      expect(controller.draftItems.single.supplierProductId, 11);
+      expect(controller.selectedSupplier.value?.id, 1);
+    });
+
+    testWidgets(
+        'quitter le multi-comptoirs avec plusieurs fournisseurs retire les articles de catalogue',
+        (tester) async {
+      catalogOf(1);
+      catalogOf(2);
+      final controller = JcodeController();
+      await runControllerAction(
+        tester,
+        () => controller.setMultiSupplierMode(true),
+      );
+      controller.addCatalogProduct(productOf(1, 11));
+      controller.addCatalogProduct(productOf(2, 21));
+      controller.addCustomItem(name: 'Sable', quantity: 1, unitPrice: 3000);
+
+      await runControllerAction(
+        tester,
+        () => controller.setMultiSupplierMode(false),
+      );
+
+      expect(controller.draftItems.single.isCustom, isTrue);
     });
   });
 }

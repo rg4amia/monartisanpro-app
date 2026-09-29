@@ -3,7 +3,8 @@ import 'package:get/get.dart';
 
 import '../../../../app/routes/app_routes.dart';
 
-/// Bannière dégardée « Quincailleries Agréées » vers le réseau de fournisseurs.
+/// Bannière dégradée « Fournisseurs Agréés » vers les fournisseurs agréés,
+/// présentés par secteur d'activité.
 class SupplierBanner extends StatelessWidget {
   const SupplierBanner({super.key});
 
@@ -37,7 +38,7 @@ class SupplierBanner extends StatelessWidget {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Quincailleries Agréées',
+                    'Fournisseurs Agréés',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 18,
@@ -46,7 +47,7 @@ class SupplierBanner extends StatelessWidget {
                   ),
                   SizedBox(height: 6),
                   Text(
-                    'Consultez nos partenaires agréés et commandez vos matériaux en toute sécurité.',
+                    "Parcourez nos fournisseurs agréés par secteur d'activité et commandez matériaux et équipements en toute sécurité.",
                     style: TextStyle(
                       color: Colors.white70,
                       fontSize: 13,

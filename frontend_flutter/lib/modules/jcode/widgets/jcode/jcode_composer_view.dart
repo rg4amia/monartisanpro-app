@@ -3,10 +3,10 @@ import 'package:get/get.dart';
 
 import '../../../../core/theme/app_colors.dart';
 import '../../../../core/utils/formatters.dart';
-import '../../../../data/models/supplier_model.dart';
 import '../../controllers/jcode_controller.dart';
 import 'jcode_item_tiles.dart';
 import 'jcode_section_card.dart';
+import 'supplier_picker_sheet.dart';
 
 class JcodeComposerView extends StatefulWidget {
   final JcodeController controller;
@@ -32,6 +32,39 @@ class _ComposerViewState extends State<JcodeComposerView> {
   void dispose() {
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _pickSupplier(BuildContext context) async {
+    final controller = widget.controller;
+    final picked = await showSupplierPickerSheet(
+      context,
+      suppliers: controller.suppliers.toList(),
+      selectedId: controller.selectedSupplier.value?.id,
+    );
+    if (picked == null) return;
+
+    if (controller.switchingWouldDropItems(picked)) {
+      final ok = await confirmDropItems(
+        'Un bon destiné à un seul fournisseur ne contient que ses articles : '
+        'les articles de catalogue déjà ajoutés seront retirés. '
+        'Pour garder des articles de plusieurs fournisseurs, activez le bon multi-comptoirs.',
+      );
+      if (!ok) return;
+    }
+    await controller.selectSupplier(picked);
+  }
+
+  Future<void> _toggleMultiSupplier(bool enabled) async {
+    final controller = widget.controller;
+    if (!enabled && controller.leavingMultiWouldDropItems) {
+      final ok = await confirmDropItems(
+        'Vos articles viennent de plusieurs fournisseurs : un bon destiné à '
+        'un seul fournisseur ne peut pas tous les garder. Les articles de '
+        'catalogue seront retirés.',
+      );
+      if (!ok) return;
+    }
+    await controller.setMultiSupplierMode(enabled);
   }
 
   @override
@@ -61,7 +94,7 @@ class _ComposerViewState extends State<JcodeComposerView> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Choisissez une quincaillerie, ajoutez les articles nécessaires, puis générez le Bon Matériaux.',
+                  'Choisissez un fournisseur (ou un bon multi-comptoirs), ajoutez les articles nécessaires, puis générez le Bon Matériaux.',
                   style: TextStyle(color: AppColors.textSecondary, height: 1.4),
                 ),
                 const SizedBox(height: 16),
@@ -128,7 +161,7 @@ class _ComposerViewState extends State<JcodeComposerView> {
                     children: [
                       const Expanded(
                         child: Text(
-                          'Destination du J-Code',
+                          'Destination du bon',
                           style: TextStyle(
                             fontSize: 18,
                             fontWeight: FontWeight.w700,
@@ -144,7 +177,8 @@ class _ComposerViewState extends State<JcodeComposerView> {
                   ),
                   const SizedBox(height: 8),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                    padding:
+                        const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                     decoration: BoxDecoration(
                       color: isMulti
                           ? AppColors.secondary.withValues(alpha: 0.08)
@@ -159,59 +193,51 @@ class _ComposerViewState extends State<JcodeComposerView> {
                       value: isMulti,
                       activeThumbColor: AppColors.secondary,
                       title: const Text(
-                        'J-Code Multi-Comptoirs',
-                        style: TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+                        'Bon multi-comptoirs',
+                        style: TextStyle(
+                            fontWeight: FontWeight.bold, fontSize: 15,),
                       ),
                       subtitle: const Text(
-                        'Valable dans toutes les quincailleries agréées partenaires (débits partiels possibles).',
+                        'Valable chez tous les fournisseurs agréés (débits partiels possibles). Vous pouvez y réunir des articles de plusieurs catalogues.',
                         style: TextStyle(fontSize: 12),
                       ),
-                      onChanged: (val) {
-                        widget.controller.isMultiSupplierMode.value = val;
-                        if (val) {
-                          widget.controller.selectSupplier(null);
-                        }
-                      },
+                      onChanged: _toggleMultiSupplier,
                     ),
                   ),
-                  if (!isMulti) ...[
-                    const SizedBox(height: 12),
-                    if (widget.controller.isSuppliersLoading.value &&
-                        suppliers.isEmpty)
-                      const Center(child: CircularProgressIndicator())
-                    else if (suppliers.isEmpty)
-                      const Text(
-                        'Aucun fournisseur agréé disponible pour le moment.',
-                        style: TextStyle(color: AppColors.textSecondary),
-                      )
-                    else
-                      DropdownButtonFormField<int>(
-                        initialValue: selectedSupplier?.id,
-                        decoration: const InputDecoration(
-                          labelText: 'Sélectionnez un fournisseur',
-                          prefixIcon: Icon(Icons.storefront_outlined),
+                  const SizedBox(height: 12),
+                  if (widget.controller.isSuppliersLoading.value &&
+                      suppliers.isEmpty)
+                    const Center(child: CircularProgressIndicator())
+                  else if (suppliers.isEmpty)
+                    const Text(
+                      'Aucun fournisseur agréé disponible pour le moment.',
+                      style: TextStyle(color: AppColors.textSecondary),
+                    )
+                  else
+                    SizedBox(
+                      width: double.infinity,
+                      child: OutlinedButton.icon(
+                        onPressed: () => _pickSupplier(context),
+                        icon: const Icon(Icons.storefront_outlined),
+                        label: Text(
+                          selectedSupplier == null
+                              ? (isMulti
+                                  ? 'Parcourir le catalogue d\'un fournisseur'
+                                  : 'Choisir le fournisseur')
+                              : 'Fournisseur : ${selectedSupplier.shopName} (changer)',
                         ),
-                      items: suppliers
-                          .map(
-                            (supplier) => DropdownMenuItem<int>(
-                              value: supplier.id,
-                              child: Text(
-                                '${supplier.shopName} (${supplier.activeProductsCount} articles)',
-                              ),
-                            ),
-                          )
-                          .toList(),
-                      onChanged: (value) {
-                        SupplierModel? supplier;
-                        for (final candidate in suppliers) {
-                          if (candidate.id == value) {
-                            supplier = candidate;
-                            break;
-                          }
-                        }
-                        widget.controller.selectSupplier(supplier);
-                      },
+                      ),
                     ),
+                  if (isMulti) ...[
+                    const SizedBox(height: 8),
+                    const Text(
+                      'Les articles déjà ajoutés restent dans le bon quand vous passez d\'un catalogue à l\'autre.',
+                      style: TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                      ),
+                    ),
+                  ],
                   if (selectedSupplier != null) ...[
                     const SizedBox(height: 16),
                     Container(
@@ -230,6 +256,15 @@ class _ComposerViewState extends State<JcodeComposerView> {
                               color: AppColors.textPrimary,
                             ),
                           ),
+                          if (selectedSupplier.sector != null) ...[
+                            const SizedBox(height: 4),
+                            Text(
+                              selectedSupplier.sector!.name,
+                              style: const TextStyle(
+                                color: AppColors.textSecondary,
+                              ),
+                            ),
+                          ],
                           const SizedBox(height: 4),
                           Text(
                             Formatters.phone(selectedSupplier.phone),
@@ -248,7 +283,6 @@ class _ComposerViewState extends State<JcodeComposerView> {
                       ),
                     ),
                   ],
-                ],
                 ],
               );
             }),
@@ -285,8 +319,10 @@ class _ComposerViewState extends State<JcodeComposerView> {
                         ),
                       ),
                       TextButton.icon(
-                        onPressed:
-                            supplier == null ? null : widget.onAddCustomItem,
+                        onPressed: supplier == null &&
+                                !widget.controller.isMultiSupplierMode.value
+                            ? null
+                            : widget.onAddCustomItem,
                         icon: const Icon(Icons.add_circle_outline),
                         label: const Text('Article hors catalogue'),
                       ),

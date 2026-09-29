@@ -19,6 +19,15 @@ class FournisseurResource extends JsonResource
             'shopName' => $agree?->nom_boutique ?? $this->name,
             'status' => $agree?->statut,
             'location' => $coords,
+            // Secteur d'activité (taxonomie `sectors`, renseigné au backoffice) :
+            // le client parcourt les fournisseurs par secteur. Null si non classé.
+            'sector' => $agree?->sector ? [
+                'id' => $agree->sector->id,
+                'name' => $agree->sector->name,
+                'icon' => $agree->sector->icon,
+                'color' => $agree->sector->color,
+            ] : null,
+            'trade' => $agree?->trade?->name,
             'activeProductsCount' => $this->whenCounted('supplierProducts'),
             'createdAt' => $this->created_at?->toIso8601String(),
         ];

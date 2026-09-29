@@ -538,13 +538,9 @@ class _ClientCatalogScreenState extends State<ClientCatalogScreen> {
                           colorText: Colors.white,
                         );
                       } else {
-                        Get.toNamed(
-                          Routes.orderCheckout,
-                          arguments: {
-                            'supplier_id': supplier?.id,
-                            'items': controller.getCartItemsPayload(),
-                          },
-                        );
+                        // Le panier fait foi : le récapitulatif le découpe
+                        // par fournisseur, quel que soit le catalogue affiché.
+                        Get.toNamed(Routes.orderCheckout);
                       }
                     },
                     style: ElevatedButton.styleFrom(

@@ -15,7 +15,7 @@ class SupplierCatalogService
         return User::query()
             ->where('role', 'fournisseur')
             ->whereHas('fournisseurAgree', fn ($q) => $q->where('statut', 'agree'))
-            ->with(['fournisseurAgree'])
+            ->with(['fournisseurAgree.sector', 'fournisseurAgree.trade'])
             ->withCount(['supplierProducts' => fn ($q) => $q->where('is_active', true)])
             ->when($search, function ($query) use ($search) {
                 $term = '%'.trim($search).'%';

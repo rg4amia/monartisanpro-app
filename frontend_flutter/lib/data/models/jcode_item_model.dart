@@ -10,6 +10,12 @@ class JcodeItemModel {
   final int subtotal;
   final String? status;
 
+  /// Fournisseur dont vient un article de catalogue, pour l'affichage du
+  /// brouillon (bon multi-comptoirs). Jamais envoyé : le serveur le déduit
+  /// de l'article (`supplier_product_id`).
+  final int? supplierId;
+  final String? supplierName;
+
   const JcodeItemModel({
     required this.source,
     required this.name,
@@ -21,6 +27,8 @@ class JcodeItemModel {
     this.supplierProductId,
     this.sku,
     this.status,
+    this.supplierId,
+    this.supplierName,
   });
 
   bool get isServed => status == 'served';
@@ -87,6 +95,8 @@ class JcodeItemModel {
     int? unitPrice,
     int? subtotal,
     String? status,
+    int? supplierId,
+    String? supplierName,
   }) {
     final nextQuantity = quantity ?? this.quantity;
     final nextQuantityServed = quantityServed ?? this.quantityServed;
@@ -103,6 +113,8 @@ class JcodeItemModel {
       unitPrice: nextUnitPrice,
       subtotal: subtotal ?? (nextQuantity * nextUnitPrice),
       status: status ?? this.status,
+      supplierId: supplierId ?? this.supplierId,
+      supplierName: supplierName ?? this.supplierName,
     );
   }
 

@@ -77,21 +77,68 @@ class JcodeController extends GetxController {
     }
   }
 
+  /// Vrai si choisir [next] retirerait des articles de catalogue du
+  /// brouillon : un bon destiné à un seul fournisseur ne peut contenir que
+  /// ses articles. L'écran demande alors confirmation avant d'appeler
+  /// [selectSupplier]. Un bon multi-comptoirs ne perd jamais rien.
+  bool switchingWouldDropItems(SupplierModel? next) {
+    if (isMultiSupplierMode.value) return false;
+    final current = selectedSupplier.value;
+    if (next != null && current != null && next.id == current.id) return false;
+    return draftItems.any((item) => item.isCatalog);
+  }
+
   Future<void> selectSupplier(SupplierModel? supplier) async {
     final previousSupplierId = selectedSupplier.value?.id;
     selectedSupplier.value = supplier;
+    // Bon multi-comptoirs : les articles de plusieurs catalogues coexistent.
+    final keepItems = isMultiSupplierMode.value;
 
     if (supplier == null) {
       supplierProducts.clear();
-      draftItems.removeWhere((item) => item.isCatalog);
+      if (!keepItems) draftItems.removeWhere((item) => item.isCatalog);
       return;
     }
 
-    if (previousSupplierId != supplier.id) {
+    if (!keepItems && previousSupplierId != supplier.id) {
       draftItems.removeWhere((item) => item.isCatalog);
     }
 
     await loadSupplierProducts(supplier.id);
+  }
+
+  /// Fournisseurs dont viennent les articles de catalogue du brouillon.
+  Set<int> get draftCatalogSupplierIds => draftItems
+      .where((item) => item.isCatalog && item.supplierId != null)
+      .map((item) => item.supplierId!)
+      .toSet();
+
+  /// Revenir à un bon mono-fournisseur retirerait des articles si ceux-ci
+  /// viennent de plusieurs fournisseurs.
+  bool get leavingMultiWouldDropItems =>
+      isMultiSupplierMode.value && draftCatalogSupplierIds.length > 1;
+
+  /// Active ou désactive le bon multi-comptoirs. L'activer conserve tous les
+  /// articles et le catalogue affiché. Le désactiver garde les articles s'ils
+  /// viennent d'un seul fournisseur (qui devient le destinataire), sinon
+  /// retire les articles de catalogue — l'écran l'a fait confirmer.
+  Future<void> setMultiSupplierMode(bool enabled) async {
+    if (enabled == isMultiSupplierMode.value) return;
+    isMultiSupplierMode.value = enabled;
+    if (enabled) return;
+
+    final ids = draftCatalogSupplierIds;
+    if (ids.length > 1) {
+      draftItems.removeWhere((item) => item.isCatalog);
+      return;
+    }
+    if (ids.length == 1 && selectedSupplier.value?.id != ids.single) {
+      final owner = suppliers.firstWhereOrNull((s) => s.id == ids.single);
+      if (owner != null) {
+        selectedSupplier.value = owner;
+        await loadSupplierProducts(owner.id);
+      }
+    }
   }
 
   Future<void> loadSupplierProducts(int supplierId) async {
@@ -129,9 +176,14 @@ class JcodeController extends GetxController {
       return;
     }
 
+    final supplier = selectedSupplier.value;
     draftItems.add(
       JcodeItemModel(
         supplierProductId: product.id,
+        supplierId: product.supplierId,
+        supplierName: supplier != null && supplier.id == product.supplierId
+            ? supplier.shopName
+            : null,
         source: 'catalog',
         name: product.name,
         sku: product.sku,
@@ -210,7 +262,7 @@ class JcodeController extends GetxController {
     if (!isMulti && supplier == null) {
       Get.snackbar(
         'Fournisseur requis',
-        'Choisissez un fournisseur ou activez le mode Multi-Comptoirs.',
+        'Choisissez un fournisseur ou activez le bon multi-comptoirs.',
         snackPosition: SnackPosition.TOP,
       );
       return;
@@ -238,7 +290,7 @@ class JcodeController extends GetxController {
       Get.snackbar(
         'J-Code généré',
         isMulti
-            ? 'J-Code Multi-Comptoirs créé avec succès (utilisable dans toute quincaillerie agréée).'
+            ? 'Bon multi-comptoirs créé : utilisable chez tout fournisseur agréé.'
             : 'Commande matériaux créée pour ${supplier?.shopName}.',
         snackPosition: SnackPosition.TOP,
       );

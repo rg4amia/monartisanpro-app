@@ -144,7 +144,7 @@ class _ExplorationView extends StatelessWidget {
         const SizedBox(height: 12),
         const CategoriesGrid(),
         const SizedBox(height: 24),
-        const SectionHeader(title: 'Matériaux & Quincailleries'),
+        const SectionHeader(title: 'Matériaux & Equipements'),
         const SizedBox(height: 12),
         const SupplierBanner(),
         const SizedBox(height: 12),

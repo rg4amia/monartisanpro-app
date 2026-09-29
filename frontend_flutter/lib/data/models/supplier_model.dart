@@ -1,3 +1,40 @@
+import '../../core/utils/json_readers.dart';
+
+/// Secteur d'activité d'un fournisseur (taxonomie `sectors` du backoffice).
+class SupplierSector {
+  const SupplierSector({
+    required this.id,
+    required this.name,
+    this.icon,
+    this.color,
+  });
+
+  final int id;
+  final String name;
+
+  /// Clé d'icône du backoffice (`zap`, `droplets`…).
+  final String? icon;
+
+  /// Couleur hexadécimale (`#3498DB`).
+  final String? color;
+
+  static SupplierSector? fromJson(dynamic value) {
+    final json = readMap(value);
+    final id = readInt(json?['id']);
+    final name = readString(json?['name']);
+    if (id == null || name == null || name.trim().isEmpty) return null;
+    return SupplierSector(
+      id: id,
+      name: name,
+      icon: readString(json?['icon']),
+      color: readString(json?['color']),
+    );
+  }
+
+  Map<String, dynamic> toJson() =>
+      {'id': id, 'name': name, 'icon': icon, 'color': color};
+}
+
 class SupplierModel {
   final int id;
   final String name;
@@ -8,6 +45,12 @@ class SupplierModel {
   final int activeProductsCount;
   final String? createdAt;
 
+  /// Secteur d'activité ; null tant que le backoffice ne l'a pas renseigné.
+  final SupplierSector? sector;
+
+  /// Métier ou spécialité, facultatif.
+  final String? trade;
+
   const SupplierModel({
     required this.id,
     required this.name,
@@ -17,6 +60,8 @@ class SupplierModel {
     this.status,
     this.location,
     this.createdAt,
+    this.sector,
+    this.trade,
   });
 
   factory SupplierModel.fromJson(Map<String, dynamic> json) {
@@ -32,6 +77,8 @@ class SupplierModel {
         json['activeProductsCount'] ?? json['active_products_count'],
       ),
       createdAt: json['createdAt']?.toString(),
+      sector: SupplierSector.fromJson(json['sector']),
+      trade: readString(json['trade']),
     );
   }
 
@@ -44,6 +91,8 @@ class SupplierModel {
         'location': location,
         'activeProductsCount': activeProductsCount,
         'createdAt': createdAt,
+        'sector': sector?.toJson(),
+        'trade': trade,
       };
 
   static int _parseInt(dynamic value) {

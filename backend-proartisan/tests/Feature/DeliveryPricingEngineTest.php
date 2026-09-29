@@ -23,6 +23,7 @@ class DeliveryPricingEngineTest extends TestCase
     protected function tearDown(): void
     {
         Mockery::close();
+        Carbon::setTestNow();
         parent::tearDown();
     }
 
@@ -162,6 +163,11 @@ class DeliveryPricingEngineTest extends TestCase
 
     public function test_estimate_delivery_api_endpoints(): void
     {
+        // Midi à Abidjan : hors heure de pointe. La majoration est fixée par le
+        // serveur (la valeur postée est ignorée, Règle d'or 36) : sans heure
+        // figée, le résultat dépendait de l'heure d'exécution du test.
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Africa/Abidjan'));
+
         $client = User::factory()->create([
             'role' => 'client',
             'kyc_status' => 'actif',

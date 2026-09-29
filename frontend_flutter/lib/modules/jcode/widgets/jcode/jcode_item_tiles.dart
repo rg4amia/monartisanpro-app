@@ -197,6 +197,15 @@ class JcodeDraftItemTile extends StatelessWidget {
               ),
             ],
           ),
+          // Bon multi-comptoirs : le fournisseur dont vient chaque article.
+          if ((item.supplierName ?? '').isNotEmpty)
+            Text(
+              'Catalogue de ${item.supplierName}',
+              style: const TextStyle(
+                color: AppColors.textSecondary,
+                fontSize: 12,
+              ),
+            ),
           if ((item.sku ?? '').isNotEmpty)
             Padding(
               padding: const EdgeInsets.only(bottom: 8),

@@ -146,6 +146,52 @@ class OrderController extends GetxController {
 
   int get totalTtc => subtotal + platformFee;
 
+  /// Panier découpé par fournisseur : une commande (et une course) par
+  /// fournisseur. Chaque article est rattaché au fournisseur qui le vend,
+  /// jamais au fournisseur affiché à l'écran.
+  List<CartSupplierGroup> get cartGroups {
+    final bySupplier = <int, List<CartLine>>{};
+    for (final entry in cart.entries) {
+      final product = cartProducts[entry.key] ??
+          supplierProducts.firstWhereOrNull((p) => p.id == entry.key);
+      if (product == null || product.supplierId <= 0) continue;
+      bySupplier
+          .putIfAbsent(product.supplierId, () => [])
+          .add(CartLine(product: product, quantity: entry.value));
+    }
+
+    return bySupplier.entries
+        .map(
+          (e) => CartSupplierGroup(
+            supplierId: e.key,
+            shopName: shopNameFor(e.key),
+            lines: e.value,
+          ),
+        )
+        .toList(growable: false);
+  }
+
+  int get cartSupplierCount => cartGroups.length;
+
+  /// Enseigne d'un fournisseur d'après les listes chargées.
+  String shopNameFor(int supplierId) {
+    final selected = selectedSupplier.value;
+    if (selected != null && selected.id == supplierId) return selected.shopName;
+    final known = approvedSuppliers.firstWhereOrNull((s) => s.id == supplierId);
+    return known?.shopName ?? 'Fournisseur n° $supplierId';
+  }
+
+  /// « 3 articles chez 2 fournisseurs », pour les barres de panier.
+  String get cartSummaryLabel {
+    final articles = '$cartCount article${cartCount > 1 ? 's' : ''}';
+    final suppliers = cartSupplierCount;
+    if (suppliers <= 1) {
+      final group = cartGroups.firstOrNull;
+      return group == null ? articles : '$articles chez ${group.shopName}';
+    }
+    return '$articles chez $suppliers fournisseurs';
+  }
+
   List<Map<String, dynamic>> getCartItemsPayload() {
     final payload = <Map<String, dynamic>>[];
     for (var entry in cart.entries) {
@@ -237,7 +283,6 @@ class OrderController extends GetxController {
     required String deliveryMode,
     required List<Map<String, dynamic>> items,
     String? vehicleClass,
-    double? surgeMultiplier,
     String? promoCode,
     int? addressId,
     String paymentProvider = 'wave',
@@ -252,7 +297,6 @@ class OrderController extends GetxController {
         deliveryMode: deliveryMode,
         items: items,
         vehicleClass: vehicleClass,
-        surgeMultiplier: surgeMultiplier,
         promoCode: promoCode,
         addressId: addressId,
         paymentProvider: paymentProvider,
@@ -337,4 +381,38 @@ class OrderController extends GetxController {
     }
     return 'Erreur de connexion';
   }
+}
+
+/// Une ligne du panier.
+class CartLine {
+  const CartLine({required this.product, required this.quantity});
+
+  final SupplierProductModel product;
+  final int quantity;
+
+  int get total => product.unitPrice * quantity;
+}
+
+/// Articles d'un même fournisseur : ils forment une commande distincte.
+class CartSupplierGroup {
+  const CartSupplierGroup({
+    required this.supplierId,
+    required this.shopName,
+    required this.lines,
+  });
+
+  final int supplierId;
+  final String shopName;
+  final List<CartLine> lines;
+
+  int get subtotal => lines.fold(0, (sum, line) => sum + line.total);
+
+  List<Map<String, dynamic>> get itemsPayload => lines
+      .map(
+        (line) => {
+          'supplier_product_id': line.product.id,
+          'quantity': line.quantity,
+        },
+      )
+      .toList();
 }

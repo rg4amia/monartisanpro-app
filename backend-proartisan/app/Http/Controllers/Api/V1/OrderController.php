@@ -101,7 +101,8 @@ class OrderController extends Controller
                 $request->items,
                 $request->delivery_mode,
                 $request->input('vehicle_class', 'moto'),
-                (float) $request->input('surge_multiplier', 1.0),
+                // Majoration établie par le serveur, jamais postée par le client (Règle d'or 36).
+                $this->pricingService->calculateSurgeMultiplier(),
                 $request->input('promo_code'),
                 $address,
                 $request->filled('mission_id') ? (int) $request->input('mission_id') : null
@@ -503,7 +504,8 @@ class OrderController extends Controller
             'from' => $from,
             'to' => $to,
             'vehicle_class' => $request->input('vehicle_class'),
-            'surge_multiplier' => $request->filled('surge_multiplier') ? (float) $request->surge_multiplier : null,
+            // Null : le moteur tarifaire calcule lui-même la majoration.
+            'surge_multiplier' => null,
             'items' => $formattedItems,
         ]);
 
@@ -659,9 +661,17 @@ class OrderController extends Controller
                 }
             }
 
+            // Majoration établie par le serveur pour chaque colis, quelle que
+            // soit la valeur postée (Règle d'or 36).
+            $surge = $this->pricingService->calculateSurgeMultiplier();
+            $packages = array_map(
+                fn (array $package) => ['surge_multiplier' => $surge] + $package,
+                array_map(fn (array $package) => array_diff_key($package, ['surge_multiplier' => true]), $request->packages),
+            );
+
             $result = $this->orderService->createMultiSupplierOrders(
                 $client,
-                $request->packages,
+                $packages,
                 $request->input('promo_code'),
                 $address
             );

@@ -23,12 +23,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   final AddressController addressController = Get.find<AddressController>();
   final TextEditingController _promoController = TextEditingController();
 
-  late int supplierId;
-  late List<Map<String, dynamic>> items;
-
   String deliveryMode = 'delivery';
   String vehicleClass = 'moto';
-  double surgeMultiplier = 1.0;
 
   double _promoDiscount = 0.0;
   String? _appliedPromoCode;
@@ -49,10 +45,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   @override
   void initState() {
     super.initState();
-    final args = Get.arguments as Map<String, dynamic>? ?? {};
-    supplierId = args['supplier_id'] ?? 0;
-    items = List<Map<String, dynamic>>.from(args['items'] ?? []);
-
+    // Le panier fait foi : chaque article part vers le fournisseur qui le
+    // vend, jamais vers le fournisseur affiché à l'écran.
     WidgetsBinding.instance.addPostFrameCallback((_) {
       _fetchDeliveryEstimate();
     });
@@ -65,17 +59,20 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   }
 
   Future<void> _fetchDeliveryEstimate() async {
-    if (deliveryMode != 'delivery') return;
+    // Une course par fournisseur : l'estimation n'a de sens que pour un
+    // panier mono-fournisseur (chaque course est calculée à la livraison).
+    final groups = controller.cartGroups;
+    if (deliveryMode != 'delivery' || groups.length != 1) return;
+    final group = groups.single;
     setState(() => _isEstimatingFare = true);
     try {
       final client = ApiClient();
       final res = await client.post(
         ApiEndpoints.deliveriesEstimate,
         data: {
-          'supplier_id': effectiveSupplierId,
+          'supplier_id': group.supplierId,
           'vehicle_class': vehicleClass,
-          'surge_multiplier': surgeMultiplier,
-          'items': items,
+          'items': group.itemsPayload,
           if (addressController.selectedAddressId.value != null)
             'address_id': addressController.selectedAddressId.value,
         },
@@ -99,17 +96,12 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                   data['recommended_vehicle_class']?.toString();
               _serverDistanceKm = (data['distance_km'] as num?)?.toDouble();
               _serverDurationMin = (data['duration_min'] as num?)?.toDouble();
-              if (data['surge_multiplier'] != null && surgeMultiplier == 1.0) {
-                surgeMultiplier = (data['surge_multiplier'] as num)
-                    .toDouble()
-                    .clamp(1.0, 3.0);
-              }
             });
           }
         }
       }
     } catch (_) {
-      // Repli fluide sur l'estimation locale
+      // Estimation indisponible : le récapitulatif annonce une course calculée à la livraison.
     } finally {
       if (mounted) {
         setState(() => _isEstimatingFare = false);
@@ -117,40 +109,82 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     }
   }
 
-  int get effectiveSupplierId {
-    if (supplierId > 1) return supplierId;
-    if (controller.selectedSupplier.value != null &&
-        controller.selectedSupplier.value!.id > 0) {
-      return controller.selectedSupplier.value!.id;
+  /// Estimation indicative de la course (un seul fournisseur) : jamais
+  /// encaissée à la commande, le montant réel est révélé et réglé à la
+  /// livraison (Chantier 10). Null si inconnue ou plusieurs fournisseurs.
+  int? get estimatedFare {
+    if (deliveryMode != 'delivery' || controller.cartSupplierCount != 1) {
+      return null;
     }
-    if (controller.supplierProducts.isNotEmpty) {
-      final firstWithSupplier = controller.supplierProducts
-          .where((p) => p.supplierId > 0)
-          .firstOrNull;
-      if (firstWithSupplier != null) return firstWithSupplier.supplierId;
-    }
-    return supplierId > 0 ? supplierId : 1;
+    return _serverDeliveryCost;
   }
 
-  int get deliveryCost {
-    if (deliveryMode != 'delivery') return 0;
-    if (_serverDeliveryCost != null) return _serverDeliveryCost!;
-    int base = 1250;
-    int addon = 0;
-    if (vehicleClass == 'voiture') {
-      addon = 1500;
-    } else if (vehicleClass == 'cargo') {
-      addon = 3000;
-    }
-    return ((base + addon) * surgeMultiplier).round();
-  }
-
-  int get totalOrderAmount {
-    int total = controller.subtotal +
-        controller.platformFee +
-        deliveryCost -
-        _promoDiscount.round();
+  /// Montant réellement encaissé maintenant : articles + frais de service −
+  /// remise, comme le calcule le serveur (sans la course).
+  int get amountDueNow {
+    final total =
+        controller.subtotal + controller.platformFee - _promoDiscount.round();
     return total < 0 ? 0 : total;
+  }
+
+  static String _fcfa(int amount) =>
+      '${amount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA';
+
+  Widget _buildInfoNote(String text) {
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: AppColors.primary.withValues(alpha: 0.06),
+        borderRadius: BorderRadius.circular(10),
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Icon(Icons.info_outline, size: 16, color: AppColors.primary),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              text,
+              style: const TextStyle(
+                fontSize: 12,
+                color: AppColors.textSecondary,
+                height: 1.4,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _amountRow(String label, String value,
+      {Color? color, bool strong = false,}) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Flexible(
+            child: Text(
+              label,
+              style: TextStyle(
+                color: color ?? AppColors.textSecondary,
+                fontSize: strong ? 15 : 13,
+                fontWeight: strong ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+          ),
+          Text(
+            value,
+            style: TextStyle(
+              color: color ?? AppColors.textPrimary,
+              fontSize: strong ? 17 : 13,
+              fontWeight: strong ? FontWeight.w900 : FontWeight.w600,
+            ),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _applyPromo() async {
@@ -271,30 +305,39 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
     _orderSubmitted.value = true;
 
-    final addressId =
-        deliveryMode == 'delivery' ? addressController.selectedAddressId.value : null;
+    final addressId = deliveryMode == 'delivery'
+        ? addressController.selectedAddressId.value
+        : null;
 
-    final multiPackages = controller.getMultiCartPackagesPayload(
-      defaultDeliveryMode: deliveryMode,
-      defaultVehicleClass: vehicleClass,
-    );
+    // Une commande par fournisseur : chaque colis part vers le fournisseur
+    // qui vend ses articles. La majoration de course n'est jamais envoyée :
+    // le serveur la fixe seul (Règle d'or 36).
+    final groups = controller.cartGroups;
+    if (groups.isEmpty) {
+      _orderSubmitted.value = false;
+      Get.snackbar(
+        'Panier vide',
+        'Ajoutez des articles avant de passer commande.',
+        snackPosition: SnackPosition.TOP,
+      );
+      return;
+    }
 
-    final bool isMulti = multiPackages.length > 1;
-
-    final success = isMulti
+    final success = groups.length > 1
         ? await controller.createMultiOrders(
-            packages: multiPackages,
+            packages: controller.getMultiCartPackagesPayload(
+              defaultDeliveryMode: deliveryMode,
+              defaultVehicleClass: vehicleClass,
+            ),
             promoCode: _appliedPromoCode,
             addressId: addressId,
             paymentProvider: _paymentProvider,
           )
         : await controller.createOrder(
-            supplierId: effectiveSupplierId,
+            supplierId: groups.single.supplierId,
             deliveryMode: deliveryMode,
-            items: items.isNotEmpty ? items : controller.getCartItemsPayload(),
+            items: groups.single.itemsPayload,
             vehicleClass: deliveryMode == 'delivery' ? vehicleClass : null,
-            surgeMultiplier:
-                deliveryMode == 'delivery' ? surgeMultiplier : null,
             promoCode: _appliedPromoCode,
             addressId: addressId,
             paymentProvider: _paymentProvider,
@@ -305,11 +348,11 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
       final paid = outcome == OperatorPaymentOutcome.confirmed;
       final detail = switch (outcome) {
         OperatorPaymentOutcome.confirmed =>
-          'Les fonds sont sécurisés en compte séquestre et la quincaillerie a été notifiée. Vous recevrez des SMS de suivi.',
+          'Les fonds sont sécurisés en compte séquestre et chaque fournisseur a été notifié. Vous recevrez des SMS de suivi.',
         OperatorPaymentOutcome.failed =>
           "Le paiement n'a pas abouti. Réglez la commande depuis « Mes commandes » avant l'échéance : sans paiement, elle sera annulée et les articles remis en vente.",
         _ => controller.lastOrderMessage.value ??
-            'Le paiement est en attente de confirmation. Suivez-le depuis « Mes commandes » : la quincaillerie est prévenue dès sa confirmation.',
+            'Le paiement est en attente de confirmation. Suivez-le depuis « Mes commandes » : chaque fournisseur est prévenu dès sa confirmation.',
       };
 
       unawaited(
@@ -323,9 +366,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                   paid
                       ? Icons.check_circle_rounded
                       : Icons.hourglass_top_rounded,
-                  color: paid
-                      ? const Color(0xFF10B981)
-                      : const Color(0xFFF59E0B),
+                  color:
+                      paid ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
                   size: 28,
                 ),
                 const SizedBox(width: 10),
@@ -553,8 +595,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final shopName =
-        controller.selectedSupplier.value?.shopName ?? 'Quincaillerie';
+    final groups = controller.cartGroups;
 
     return Scaffold(
       backgroundColor: const Color(0xFFF8FAFC),
@@ -759,75 +800,39 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                       ),
                     ],
 
-                    const SizedBox(height: 16),
+                    if (groups.length > 1) ...[
+                      const SizedBox(height: 12),
+                      _buildInfoNote(
+                        'Votre panier compte ${groups.length} fournisseurs : chacun est livré par sa propre course. '
+                        'Le prix de chaque course est calculé à la livraison, selon le trajet réel, et réglé à ce moment-là.',
+                      ),
+                    ],
+                  ],
 
-                    // Surge Pricing
-                    const Text(
-                      'Majoration de course (Surge Pricing)',
-                      style: TextStyle(
+                  const Divider(height: 32, color: Color(0xFFEDF2F7)),
+
+                  // Une expédition par fournisseur, avec tous ses articles.
+                  for (var i = 0; i < groups.length; i++) ...[
+                    if (i > 0)
+                      const Divider(height: 24, color: Color(0xFFEDF2F7)),
+                    Text(
+                      'Expédition ${i + 1}/${groups.length} — Vendu par ${groups[i].shopName}',
+                      style: const TextStyle(
                         fontSize: 13,
                         fontWeight: FontWeight.bold,
                         color: AppColors.textPrimary,
                       ),
                     ),
-                    Slider(
-                      value: surgeMultiplier,
-                      min: 1.0,
-                      max: 3.0,
-                      divisions: 20,
-                      activeColor: AppColors.primary,
-                      inactiveColor: const Color(0xFFE2E8F0),
-                      label: '${surgeMultiplier.toStringAsFixed(1)}x',
-                      onChanged: (val) => setState(() => surgeMultiplier = val),
-                      onChangeEnd: (val) => _fetchDeliveryEstimate(),
-                    ),
-                    Text(
-                      'Multiplicateur appliqué : ${surgeMultiplier.toStringAsFixed(1)}x${surgeMultiplier > 1.0 ? ' (Heure de pointe / Affluence)' : ''}',
-                      style: TextStyle(
-                        color: surgeMultiplier > 1.0
-                            ? const Color(0xFFC55E50)
-                            : AppColors.textSecondary,
-                        fontSize: 12,
-                        fontWeight: surgeMultiplier > 1.0
-                            ? FontWeight.w600
-                            : FontWeight.normal,
-                      ),
-                    ),
-                  ],
-
-                  const Divider(height: 32, color: Color(0xFFEDF2F7)),
-
-                  // Liste d'expédition
-                  Text(
-                    'Expédition 1/1 — Vendu par $shopName',
-                    style: const TextStyle(
-                      fontSize: 13,
-                      fontWeight: FontWeight.bold,
-                      color: AppColors.textPrimary,
-                    ),
-                  ),
-                  const SizedBox(height: 12),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: controller.cart.length,
-                    itemBuilder: (context, index) {
-                      final productId = controller.cart.keys.elementAt(index);
-                      final qty = controller.cart.values.elementAt(index);
-                      final product = controller.supplierProducts
-                          .firstWhereOrNull((p) => p.id == productId);
-
-                      if (product == null) return const SizedBox.shrink();
-                      final itemPrice = (product.unitPrice * qty);
-
-                      return Padding(
+                    const SizedBox(height: 12),
+                    for (final line in groups[i].lines)
+                      Padding(
                         padding: const EdgeInsets.only(bottom: 8.0),
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
                             Expanded(
                               child: Text(
-                                '${product.name} (x$qty)',
+                                '${line.product.name} (x${line.quantity})',
                                 style: const TextStyle(
                                   fontSize: 13,
                                   color: AppColors.textSecondary,
@@ -835,7 +840,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                               ),
                             ),
                             Text(
-                              '${itemPrice.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
+                              _fcfa(line.total),
                               style: const TextStyle(
                                 fontSize: 13,
                                 fontWeight: FontWeight.w600,
@@ -844,13 +849,26 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                             ),
                           ],
                         ),
-                      );
-                    },
-                  ),
+                      ),
+                    if (groups.length > 1)
+                      Align(
+                        alignment: Alignment.centerRight,
+                        child: Text(
+                          'Sous-total : ${_fcfa(groups[i].subtotal)}',
+                          style: const TextStyle(
+                            fontSize: 12,
+                            fontWeight: FontWeight.bold,
+                            color: AppColors.textPrimary,
+                          ),
+                        ),
+                      ),
+                  ],
                 ],
               ),
             ),
             const SizedBox(height: 16),
+
+            // ÉTAPE 3 : MODE DE PAIEMENT            const SizedBox(height: 16),
 
             // ÉTAPE 3 : MODE DE PAIEMENT
             Container(
@@ -865,7 +883,6 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                 children: [
                   _buildStepHeader('3', 'MODE DE PAIEMENT'),
                   const Divider(height: 24, color: Color(0xFFEDF2F7)),
-
                   _paymentOption(
                     provider: 'wave',
                     label: 'Wave',
@@ -879,7 +896,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                   ),
                   const SizedBox(height: 10),
                   const Text(
-                    'Le montant est encaissé en compte séquestre et reversé à la quincaillerie au retrait ou à la livraison. La course se règle à la livraison.',
+                    'Le montant est encaissé en compte séquestre et reversé à chaque fournisseur au retrait ou à la livraison. La course se règle à la livraison.',
                     style: TextStyle(
                       fontSize: 11,
                       color: AppColors.textSecondary,
@@ -1101,7 +1118,8 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
             ),
             const SizedBox(height: 20),
 
-            // RÉCAPITULATIF FINANCIER
+            // RÉCAPITULATIF FINANCIER — le montant affiché est celui encaissé :
+            // la course n'est jamais prélevée à la commande (Chantier 10).
             Container(
               padding: const EdgeInsets.all(16),
               decoration: BoxDecoration(
@@ -1121,99 +1139,42 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
                     ),
                   ),
                   const Divider(height: 24, color: Color(0xFFEDF2F7)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total Articles',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                        ),
-                      ),
-                      Text(
-                        '${controller.subtotal.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
+                  _amountRow('Total articles', _fcfa(controller.subtotal)),
+                  _amountRow('Frais de service', _fcfa(controller.platformFee)),
+                  if (_promoDiscount > 0)
+                    _amountRow(
+                      'Remise code promo',
+                      '-${_fcfa(_promoDiscount.round())}',
+                      color: const Color(0xFF24734F),
+                    ),
+                  const Divider(height: 24, color: Color(0xFFEDF2F7)),
+                  _amountRow(
+                    'À payer maintenant',
+                    _fcfa(amountDueNow),
+                    color: AppColors.primary,
+                    strong: true,
                   ),
-                  const SizedBox(height: 8),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Frais de Livraison',
-                        style: TextStyle(
-                          color: AppColors.textSecondary,
-                          fontSize: 13,
-                        ),
+                  if (deliveryMode == 'delivery') ...[
+                    const SizedBox(height: 4),
+                    Text(
+                      groups.length > 1
+                          ? '+ ${groups.length} courses (une par fournisseur), calculées et réglées à la livraison.'
+                          : estimatedFare != null
+                              ? '+ course estimée à ${_fcfa(estimatedFare!)}, montant exact calculé et réglé à la livraison.'
+                              : '+ course calculée et réglée à la livraison.',
+                      style: const TextStyle(
+                        fontSize: 12,
+                        color: AppColors.textSecondary,
+                        height: 1.4,
                       ),
-                      Text(
-                        '${deliveryCost.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
-                        style: const TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 13,
-                          fontWeight: FontWeight.w600,
-                        ),
-                      ),
-                    ],
-                  ),
-                  if (_promoDiscount > 0) ...[
-                    const SizedBox(height: 8),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'Remise Code Promo',
-                          style: TextStyle(
-                            color: Color(0xFF24734F),
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        Text(
-                          '-${_promoDiscount.round().toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
-                          style: const TextStyle(
-                            color: Color(0xFF24734F),
-                            fontSize: 13,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      ],
                     ),
                   ],
-                  const Divider(height: 24, color: Color(0xFFEDF2F7)),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      const Text(
-                        'Total Général',
-                        style: TextStyle(
-                          color: AppColors.textPrimary,
-                          fontSize: 15,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                      Text(
-                        '${totalOrderAmount.toString().replaceAllMapped(RegExp(r'(\d{1,3})(?=(\d{3})+(?!\d))'), (Match m) => '${m[1]} ')} FCFA',
-                        style: const TextStyle(
-                          color: AppColors.primary,
-                          fontSize: 17,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ],
-                  ),
                 ],
               ),
             ),
             const SizedBox(height: 24),
 
-            // CONFIRMER LA COMMANDE BUTTON
+            // CONFIRMER LA COMMANDE BUTTON            // CONFIRMER LA COMMANDE BUTTON
             Obx(
               () => ElevatedButton(
                 onPressed:

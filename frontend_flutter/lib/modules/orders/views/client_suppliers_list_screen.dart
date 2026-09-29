@@ -1,7 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../data/models/supplier_model.dart';
+import '../../services/utils/service_icon_helper.dart';
 import '../controllers/order_controller.dart';
+import '../utils/supplier_grouping.dart';
 import 'client_catalog_screen.dart';
 
 class ClientSuppliersListScreen extends StatefulWidget {
@@ -15,6 +19,10 @@ class ClientSuppliersListScreen extends StatefulWidget {
 class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
   final OrderController controller = Get.put(OrderController());
   final TextEditingController _searchController = TextEditingController();
+
+  /// Secteur affiché : null = tous ; [_unclassifiedKey] = « Autres fournisseurs ».
+  int? _selectedSector;
+  static const int _unclassifiedKey = -1;
 
   @override
   void initState() {
@@ -36,13 +44,15 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
     super.dispose();
   }
 
+  int _keyOf(SupplierSectorGroup group) => group.sectorId ?? _unclassifiedKey;
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: AppColors.background,
       appBar: AppBar(
         title: const Text(
-          'Partenaires Fournisseurs',
+          'Fournisseurs Agréés',
           style: TextStyle(fontWeight: FontWeight.w700, fontSize: 20),
         ),
         backgroundColor: Colors.white,
@@ -96,7 +106,7 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
               controller: _searchController,
               onChanged: (val) => controller.loadApprovedSuppliers(search: val),
               decoration: InputDecoration(
-                hintText: 'Rechercher une quincaillerie...',
+                hintText: 'Rechercher un fournisseur...',
                 prefixIcon:
                     const Icon(Icons.search, color: AppColors.textSecondary),
                 suffixIcon: IconButton(
@@ -123,7 +133,7 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
             ),
           ),
 
-          // Liste des quincailleries agréées
+          // Fournisseurs agréés regroupés par secteur d'activité
           Expanded(
             child: Obx(() {
               if (controller.isLoading.value) {
@@ -152,113 +162,55 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                 );
               }
 
-              return ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 16),
-                itemCount: controller.approvedSuppliers.length,
-                itemBuilder: (context, index) {
-                  final supplier = controller.approvedSuppliers[index];
-                  final shopName = supplier.shopName;
+              final groups =
+                  groupSuppliersBySector(controller.approvedSuppliers);
+              // Un secteur choisi puis absent des résultats revient à « Tous ».
+              final selected = groups.any((g) => _keyOf(g) == _selectedSector)
+                  ? _selectedSector
+                  : null;
+              final visible = selected == null
+                  ? groups
+                  : groups.where((g) => _keyOf(g) == selected).toList();
 
-                  return Card(
-                    margin: const EdgeInsets.only(bottom: 16),
-                    elevation: 0,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                      side: const BorderSide(color: Color(0xFFF1F5F9)),
+              return Column(
+                children: [
+                  _SectorChips(
+                    groups: groups,
+                    total: controller.approvedSuppliers.length,
+                    selected: selected,
+                    keyOf: _keyOf,
+                    onSelected: (key) => setState(() => _selectedSector = key),
+                  ),
+                  Expanded(
+                    child: ListView(
+                      padding: const EdgeInsets.fromLTRB(16, 8, 16, 16),
+                      children: [
+                        for (final group in visible) ...[
+                          _SectorHeader(group: group),
+                          for (final supplier in group.suppliers)
+                            _SupplierCard(
+                              supplier: supplier,
+                              onTap: () => controller.selectSupplier(
+                                supplier,
+                                onConfirmed: () =>
+                                    Get.to(() => const ClientCatalogScreen()),
+                              ),
+                            ),
+                          const SizedBox(height: 8),
+                        ],
+                      ],
                     ),
-                    color: Colors.white,
-                    child: InkWell(
-                      borderRadius: BorderRadius.circular(16),
-                      onTap: () {
-                        controller.selectSupplier(
-                          supplier,
-                          onConfirmed: () {
-                            Get.to(() => const ClientCatalogScreen());
-                          },
-                        );
-                      },
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Row(
-                          children: [
-                            Container(
-                              height: 64,
-                              width: 64,
-                              decoration: BoxDecoration(
-                                color: AppColors.primary.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(12),
-                              ),
-                              child: const Icon(
-                                Icons.store,
-                                size: 32,
-                                color: AppColors.primary,
-                              ),
-                            ),
-                            const SizedBox(width: 16),
-                            Expanded(
-                              child: Column(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  Text(
-                                    shopName,
-                                    style: const TextStyle(
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      color: AppColors.textPrimary,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    supplier.name,
-                                    style: const TextStyle(
-                                      color: AppColors.textSecondary,
-                                      fontSize: 14,
-                                    ),
-                                  ),
-                                  const SizedBox(height: 6),
-                                  Row(
-                                    children: [
-                                      const Icon(
-                                        Icons.phone,
-                                        size: 14,
-                                        color: AppColors.textSecondary,
-                                      ),
-                                      const SizedBox(width: 4),
-                                      Flexible(
-                                        child: Text(
-                                          'Contact masqué (disponible après validation)',
-                                          overflow: TextOverflow.ellipsis,
-                                          style: TextStyle(
-                                            color: Colors.grey[500],
-                                            fontSize: 12,
-                                            fontStyle: FontStyle.italic,
-                                            fontWeight: FontWeight.w500,
-                                          ),
-                                        ),
-                                      ),
-                                    ],
-                                  ),
-                                ],
-                              ),
-                            ),
-                            const Icon(
-                              Icons.chevron_right,
-                              color: AppColors.textSecondary,
-                            ),
-                          ],
-                        ),
-                      ),
-                    ),
-                  );
-                },
+                  ),
+                ],
               );
             }),
           ),
         ],
       ),
       bottomNavigationBar: Obx(() {
-        if (controller.cartCount == 0 ||
-            controller.selectedSupplier.value == null) {
+        // Le panier peut réunir plusieurs fournisseurs : la barre reste
+        // visible quel que soit le fournisseur affiché.
+        if (controller.cartCount == 0) {
           return const SizedBox.shrink();
         }
         final totalTtc = controller.totalTtc;
@@ -302,7 +254,7 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        'Panier : ${controller.selectedSupplier.value?.shopName ?? "Quincaillerie"}',
+                        'Panier : ${controller.cartSummaryLabel}',
                         style: const TextStyle(
                           fontWeight: FontWeight.bold,
                           fontSize: 13,
@@ -331,7 +283,7 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
                 // connu de Flutter sur les boutons Material dans ce contexte.
                 IntrinsicWidth(
                   child: ElevatedButton(
-                    onPressed: () => Get.to(() => const ClientCatalogScreen()),
+                    onPressed: () => Get.toNamed(Routes.orderCheckout),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppColors.primary,
                       foregroundColor: Colors.white,
@@ -358,3 +310,201 @@ class _ClientSuppliersListScreenState extends State<ClientSuppliersListScreen> {
     );
   }
 }
+
+/// Pastilles de filtre : « Tous » puis chaque secteur avec son effectif.
+class _SectorChips extends StatelessWidget {
+  const _SectorChips({
+    required this.groups,
+    required this.total,
+    required this.selected,
+    required this.keyOf,
+    required this.onSelected,
+  });
+
+  final List<SupplierSectorGroup> groups;
+  final int total;
+  final int? selected;
+  final int Function(SupplierSectorGroup) keyOf;
+  final ValueChanged<int?> onSelected;
+
+  @override
+  Widget build(BuildContext context) {
+    return SizedBox(
+      height: 44,
+      child: ListView(
+        scrollDirection: Axis.horizontal,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        children: [
+          Padding(
+            padding: const EdgeInsets.only(right: 8),
+            child: ChoiceChip(
+              label: Text('Tous ($total)'),
+              selected: selected == null,
+              onSelected: (_) => onSelected(null),
+            ),
+          ),
+          for (final group in groups)
+            Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: ChoiceChip(
+                avatar: Icon(_iconOf(group), size: 16, color: _colorOf(group)),
+                label: Text('${group.label} (${group.suppliers.length})'),
+                selected: selected == keyOf(group),
+                onSelected: (_) => onSelected(keyOf(group)),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+/// En-tête d'un secteur dans la liste.
+class _SectorHeader extends StatelessWidget {
+  const _SectorHeader({required this.group});
+
+  final SupplierSectorGroup group;
+
+  @override
+  Widget build(BuildContext context) {
+    final color = _colorOf(group);
+    final count = group.suppliers.length;
+    return Padding(
+      padding: const EdgeInsets.only(top: 8, bottom: 10),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(8),
+            decoration: BoxDecoration(
+              color: color.withValues(alpha: 0.12),
+              borderRadius: BorderRadius.circular(10),
+            ),
+            child: Icon(_iconOf(group), size: 18, color: color),
+          ),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              group.label,
+              style: const TextStyle(
+                fontWeight: FontWeight.w800,
+                fontSize: 16,
+                color: AppColors.textPrimary,
+              ),
+            ),
+          ),
+          Text(
+            '$count fournisseur${count > 1 ? 's' : ''}',
+            style:
+                const TextStyle(color: AppColors.textSecondary, fontSize: 12),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+/// Carte d'un fournisseur agréé.
+class _SupplierCard extends StatelessWidget {
+  const _SupplierCard({required this.supplier, required this.onTap});
+
+  final SupplierModel supplier;
+  final VoidCallback onTap;
+
+  @override
+  Widget build(BuildContext context) {
+    final products = supplier.activeProductsCount;
+    final details = [
+      if (supplier.trade != null) supplier.trade!,
+      if (products > 0) '$products article${products > 1 ? 's' : ''}',
+    ].join(' · ');
+
+    return Card(
+      margin: const EdgeInsets.only(bottom: 12),
+      elevation: 0,
+      shape: RoundedRectangleBorder(
+        borderRadius: BorderRadius.circular(16),
+        side: const BorderSide(color: Color(0xFFF1F5F9)),
+      ),
+      color: Colors.white,
+      child: InkWell(
+        borderRadius: BorderRadius.circular(16),
+        onTap: onTap,
+        child: Padding(
+          padding: const EdgeInsets.all(16),
+          child: Row(
+            children: [
+              Container(
+                height: 56,
+                width: 56,
+                decoration: BoxDecoration(
+                  color: AppColors.primary.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(12),
+                ),
+                child:
+                    const Icon(Icons.store, size: 28, color: AppColors.primary),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      supplier.shopName,
+                      style: const TextStyle(
+                        fontWeight: FontWeight.bold,
+                        fontSize: 16,
+                        color: AppColors.textPrimary,
+                      ),
+                    ),
+                    if (details.isNotEmpty) ...[
+                      const SizedBox(height: 4),
+                      Text(
+                        details,
+                        style: const TextStyle(
+                          color: AppColors.textSecondary,
+                          fontSize: 13,
+                        ),
+                      ),
+                    ],
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        const Icon(
+                          Icons.phone,
+                          size: 14,
+                          color: AppColors.textSecondary,
+                        ),
+                        const SizedBox(width: 4),
+                        Flexible(
+                          child: Text(
+                            'Contact masqué (disponible après validation)',
+                            overflow: TextOverflow.ellipsis,
+                            style: TextStyle(
+                              color: Colors.grey[500],
+                              fontSize: 12,
+                              fontStyle: FontStyle.italic,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const Icon(Icons.chevron_right, color: AppColors.textSecondary),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+}
+
+IconData _iconOf(SupplierSectorGroup group) => group.sector == null
+    ? Icons.storefront_rounded
+    : ServiceIconHelper.getSectorIcon(group.sector!.name, group.sector!.icon);
+
+Color _colorOf(SupplierSectorGroup group) => group.sector == null
+    ? AppColors.textSecondary
+    : ServiceIconHelper.getSectorColor(group.sector!.name, group.sector!.color);

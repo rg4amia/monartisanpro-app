@@ -148,7 +148,7 @@ void main() {
       await pump(tester, TopSuppliersSection(controller: controller));
 
       expect(tester.takeException(), isNull);
-      expect(find.text('Quincaillerie'), findsOneWidget);
+      expect(find.text('Fournisseur'), findsOneWidget);
     });
   });
 }

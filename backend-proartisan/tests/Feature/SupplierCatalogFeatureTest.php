@@ -3,7 +3,9 @@
 namespace Tests\Feature;
 
 use App\Models\FournisseurAgree;
+use App\Models\Sector;
 use App\Models\SupplierProduct;
+use App\Models\Trade;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
@@ -249,6 +251,24 @@ class SupplierCatalogFeatureTest extends TestCase
     /**
      * @return array{0: User, 1: FournisseurAgree}
      */
+    public function test_chaque_fournisseur_expose_son_secteur_d_activite_pour_le_regroupement(): void
+    {
+        $sector = Sector::create(['name' => 'Plomberie', 'icon' => 'droplets', 'color' => '#3498DB']);
+        $trade = Trade::create(['name' => 'Plombier sanitaire', 'sector_id' => $sector->id]);
+        [$plumbing, $agreement] = $this->makeApprovedSupplier(name: 'Fournisseur Eau', shopName: 'Eau Pro');
+        $agreement->update(['sector_id' => $sector->id, 'trade_id' => $trade->id]);
+        [$unclassified] = $this->makeApprovedSupplier(name: 'Fournisseur Divers', shopName: 'Divers');
+
+        $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        $data = collect($this->actingAs($client)->getJson('/api/v1/fournisseurs')->assertOk()->json('data'))->keyBy('id');
+
+        $this->assertSame(['id' => $sector->id, 'name' => 'Plomberie', 'icon' => 'droplets', 'color' => '#3498DB'], $data[$plumbing->id]['sector']);
+        $this->assertSame('Plombier sanitaire', $data[$plumbing->id]['trade']);
+        // Aucun secteur inventé pour un fournisseur non classé.
+        $this->assertNull($data[$unclassified->id]['sector']);
+        $this->assertNull($data[$unclassified->id]['trade']);
+    }
+
     private function makeApprovedSupplier(
         string $name = 'Fournisseur Agree',
         string $shopName = 'Boutique Agree'

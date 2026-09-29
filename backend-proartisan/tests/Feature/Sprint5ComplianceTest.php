@@ -4,10 +4,12 @@ namespace Tests\Feature;
 
 use App\Models\Address;
 use App\Models\Order;
+use App\Models\Setting;
 use App\Models\SupplierProduct;
 use App\Models\User;
 use App\Services\GoogleMapsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Carbon;
 use Tests\Support\Geo;
 use Tests\Support\PaysOrders;
 use Tests\TestCase;
@@ -19,6 +21,10 @@ class Sprint5ComplianceTest extends TestCase
 
     public function test_surge_pricing_and_vehicle_multipliers(): void
     {
+        // Midi à Abidjan : hors heure de pointe, la majoration serveur vaut 1,0.
+        // Sans heure figée, le résultat dépendait de l'heure d'exécution.
+        Carbon::setTestNow(Carbon::parse('2026-09-29 12:00:00', 'Africa/Abidjan'));
+
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $client->setPosition(5.3484, -4.0305); // Abidjan Cocody
 
@@ -126,7 +132,11 @@ class Sprint5ComplianceTest extends TestCase
         $this->assertSame(3375, $order2->fresh()->delivery_cost);
 
         // 3. Order with Cargo (2.5x) and Surge = 2.0
+        // La majoration vient du réglage plateforme, jamais du client : la
+        // valeur postée (1,0) est ignorée (Règle d'or 36).
         // Expected: 2250 * 2.5 * 2.0 = 11250 FCFA
+        Setting::create(['key' => 'delivery_surge_multiplier', 'value' => '2.0', 'type' => 'float', 'group' => 'livraison']);
+
         $response3 = $this->actingAs($client)
             ->postJson('/api/v1/orders', [
                 'supplier_id' => $supplier->id,
@@ -139,7 +149,7 @@ class Sprint5ComplianceTest extends TestCase
                     ],
                 ],
                 'vehicle_class' => 'cargo',
-                'surge_multiplier' => 2.0,
+                'surge_multiplier' => 1.0,
             ]);
 
         $response3->assertCreated();
@@ -151,5 +161,7 @@ class Sprint5ComplianceTest extends TestCase
         $this->assertSame(11250, $order3->fresh()->delivery_cost);
         $this->assertSame('cargo', $order3->fresh()->vehicle_class);
         $this->assertSame(2.0, (float) $order3->fresh()->surge_multiplier);
+
+        Carbon::setTestNow();
     }
 }
