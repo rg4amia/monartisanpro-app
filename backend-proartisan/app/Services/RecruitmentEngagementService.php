@@ -102,11 +102,10 @@ class RecruitmentEngagementService
             return $engagement;
         });
 
-        $this->notifications->send(
+        $this->notifications->notify(
             $engagement->artisan,
-            'recruitment',
-            'Proposition de mission',
-            "{$recruiter->name} vous propose un engagement sur « {$offer->title} » — {$dailyRate} FCFA/jour sur {$totalDays} jour(s). Acceptez-le pour démarrer.",
+            'recrutement.proposition.artisan',
+            ['recruteur' => $recruiter->name, 'offre' => $offer->title, 'tarif' => $dailyRate, 'jours' => $totalDays],
             ['recruitment_engagement_id' => $engagement->id],
         );
 
@@ -164,37 +163,33 @@ class RecruitmentEngagementService
                 ],
             );
 
-            $this->notifications->send(
+            $this->notifications->notify(
                 $engagement->recruiter,
-                'payment',
-                'Trop-perçu remboursé',
-                "Le trop-perçu de {$surplus} FCFA sur le séquestre d'accès aux candidatures a été crédité sur votre portefeuille.",
+                'recrutement.trop_percu.recruteur',
+                ['montant' => $surplus],
                 ['recruitment_engagement_id' => $engagement->id],
             );
         }
 
         if ($activatedImmediately) {
-            $this->notifications->send(
+            $this->notifications->notify(
                 $engagement->recruiter,
-                'recruitment',
-                'Engagement accepté',
-                "{$engagement->artisan->name} a accepté votre proposition. Le séquestre déjà payé couvre l'intégralité de la mission : elle démarre immédiatement.",
+                'recrutement.engagement_accepte_finance.recruteur',
+                ['artisan' => $engagement->artisan->name],
                 ['recruitment_engagement_id' => $engagement->id],
             );
 
-            $this->notifications->send(
+            $this->notifications->notify(
                 $engagement->artisan,
-                'payment',
-                'Séquestre payé',
-                "Le séquestre de votre mission « {$engagement->offer->title} » est déjà réglé. Vous pouvez commencer à travailler.",
+                'recrutement.sequestre_deja_regle.artisan',
+                ['offre' => $engagement->offer->title],
                 ['recruitment_engagement_id' => $engagement->id],
             );
         } else {
-            $this->notifications->send(
+            $this->notifications->notify(
                 $engagement->recruiter,
-                'recruitment',
-                'Engagement accepté',
-                "{$engagement->artisan->name} a accepté votre proposition. Payez le séquestre pour démarrer la mission.",
+                'recrutement.engagement_accepte.recruteur',
+                ['artisan' => $engagement->artisan->name],
                 ['recruitment_engagement_id' => $engagement->id],
             );
         }
@@ -222,11 +217,10 @@ class RecruitmentEngagementService
             }
         });
 
-        $this->notifications->send(
+        $this->notifications->notify(
             $engagement->recruiter,
-            'recruitment',
-            'Engagement refusé',
-            "{$engagement->artisan->name} a refusé la proposition d'engagement.",
+            'recrutement.engagement_refuse.recruteur',
+            ['artisan' => $engagement->artisan->name],
             ['recruitment_engagement_id' => $engagement->id],
         );
 
@@ -327,11 +321,10 @@ class RecruitmentEngagementService
         });
 
         if ($applied) {
-            $this->notifications->send(
+            $this->notifications->notify(
                 $engagement->artisan,
-                'payment',
-                'Séquestre payé',
-                "Le recruteur a payé le séquestre de votre mission « {$engagement->offer->title} ». Vous pouvez commencer à travailler.",
+                'recrutement.sequestre_paye.artisan',
+                ['offre' => $engagement->offer->title],
                 ['recruitment_engagement_id' => $engagement->id],
             );
         }
@@ -389,12 +382,10 @@ class RecruitmentEngagementService
             }
         });
 
-        $this->notifications->send(
+        $this->notifications->notify(
             $engagement->artisan,
-            'payment',
-            $completed ? 'Mission terminée — dernier paiement reçu' : 'Journée payée',
-            "Le jour {$workday->day_number} a été validé : {$net} FCFA versés sur votre portefeuille."
-                .($completed ? ' Cette mission est maintenant terminée.' : ''),
+            $completed ? 'recrutement.mission_terminee.artisan' : 'recrutement.journee_payee.artisan',
+            ['jour' => $workday->day_number, 'montant' => $net],
             ['recruitment_engagement_id' => $engagement->id, 'recruitment_workday_id' => $workday->id],
         );
 
@@ -440,11 +431,10 @@ class RecruitmentEngagementService
             ]);
         });
 
-        $this->notifications->send(
+        $this->notifications->notify(
             $engagement->artisan,
-            'recruitment',
-            'Contrat prolongé',
-            "Le recruteur a ajouté {$additionalDays} jour(s) à votre mission « {$engagement->offer->title} ». Le paiement du complément est en attente.",
+            'recrutement.contrat_prolonge.artisan',
+            ['jours' => $additionalDays, 'offre' => $engagement->offer->title],
             ['recruitment_engagement_id' => $engagement->id],
         );
 

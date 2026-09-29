@@ -130,11 +130,10 @@ class RecruitmentService
             TranscribeRecruitmentVoiceNote::dispatchAfterResponse($application->id);
         }
 
-        $this->notifications->send(
+        $this->notifications->notify(
             $offer->creator,
-            'recruitment',
-            'Nouvelle candidature',
-            "{$artisan->name} a postulé à votre offre « {$offer->title} ».",
+            'recrutement.candidature.recruteur',
+            ['artisan' => $artisan->name, 'offre' => $offer->title],
             ['recruitment_offer_id' => $offer->id, 'recruitment_application_id' => $application->id],
         );
 
@@ -184,11 +183,10 @@ class RecruitmentService
                 'voice_status' => 'contact_detected',
             ]);
 
-            $this->notifications->send(
+            $this->notifications->notify(
                 $application->artisan,
-                'recruitment',
-                'Note vocale non transmise',
-                "Votre note vocale pour « {$application->offer->title} » contenait des coordonnées : elle n'a pas été transmise au recruteur. Votre candidature reste valable.",
+                'recrutement.note_vocale_retenue.artisan',
+                ['offre' => $application->offer->title],
                 ['recruitment_application_id' => $application->id],
             );
 
@@ -232,11 +230,10 @@ class RecruitmentService
             'confirmed' => 'retenue',
         ];
 
-        $this->notifications->send(
+        $this->notifications->notify(
             $application->artisan,
-            'recruitment',
-            'Candidature mise à jour',
-            "Votre candidature à « {$offer->title} » a été {$labels[$status]}.",
+            'recrutement.candidature_maj.artisan',
+            ['offre' => $offer->title, 'statut' => $labels[$status]],
             ['recruitment_offer_id' => $offer->id, 'recruitment_application_id' => $application->id],
         );
 
@@ -264,11 +261,10 @@ class RecruitmentService
             ]);
         }
 
-        $this->notifications->send(
+        $this->notifications->notify(
             $application->artisan,
-            'recruitment',
-            'Demande de rappel',
-            "{$client->name} recrute pour « {$offer->title} » et souhaite que vous le rappeliez au {$client->phone}.",
+            'recrutement.demande_rappel.artisan',
+            ['recruteur' => $client->name, 'offre' => $offer->title, 'telephone' => $client->phone],
             ['recruitment_offer_id' => $offer->id, 'recruitment_application_id' => $application->id],
         );
     }
@@ -277,11 +273,10 @@ class RecruitmentService
     {
         $offer->update(['status' => 'active']);
 
-        $this->notifications->send(
+        $this->notifications->notify(
             $offer->creator,
-            'recruitment',
-            'Offre publiée',
-            "Votre offre « {$offer->title} » a été validée et est maintenant visible par les artisans.",
+            'recrutement.offre_publiee.recruteur',
+            ['offre' => $offer->title],
             ['recruitment_offer_id' => $offer->id],
         );
 
@@ -295,13 +290,10 @@ class RecruitmentService
             'metadata' => array_merge($offer->metadata ?? [], ['moderation_note' => $reason]),
         ]);
 
-        $this->notifications->send(
+        $this->notifications->notify(
             $offer->creator,
-            'recruitment',
-            'Offre rejetée',
-            $reason
-                ? "Votre offre « {$offer->title} » a été rejetée : {$reason}"
-                : "Votre offre « {$offer->title} » a été rejetée par l'équipe ProsArtisan.",
+            $reason ? 'recrutement.offre_rejetee_motif.recruteur' : 'recrutement.offre_rejetee.recruteur',
+            ['offre' => $offer->title, 'motif' => $reason],
             ['recruitment_offer_id' => $offer->id],
         );
 

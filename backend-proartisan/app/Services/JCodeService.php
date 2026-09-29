@@ -159,8 +159,7 @@ class JCodeService
         float $lng,
         array $servedItems = [],
         ?string $recuPhotoUrl = null
-    ): array
-    {
+    ): array {
         $jcode->loadMissing(['artisan', 'items.supplierProduct']);
 
         if (! $jcode->isActif()) {
@@ -185,10 +184,9 @@ class JCodeService
                 (float) $gpsCheck['distance']
             );
 
-            $this->notificationService->sendAdmin(
-                'alert',
-                'Tentative de fraude J-Code',
-                "J-Code {$jcode->code} scanné à {$gpsCheck['distance']} m de la boutique (max {$gpsCheck['max']} m).",
+            $this->notificationService->notifyAdmins(
+                'jcode.fraude_gps.admin',
+                ['code' => $jcode->code, 'distance' => $gpsCheck['distance'], 'max' => $gpsCheck['max']],
                 ['jcode_id' => $jcode->id, 'fournisseur_id' => $fournisseur->id]
             );
 
@@ -320,13 +318,10 @@ class JCodeService
             $montantServiCeScan
         )->delay(now()->addDay());
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $jcode->artisan,
-            'validation',
-            $scanResult['fully_consumed'] ? 'Matériaux entièrement livrés' : 'Matériaux partiellement livrés',
-            $scanResult['fully_consumed']
-                ? "Le fournisseur a validé votre J-Code {$jcode->code}. Tous les matériaux sont livrés. Paiement J+1 garanti."
-                : "Le fournisseur a servi une partie de votre J-Code {$jcode->code} ({$montantServiCeScan} FCFA). Solde restant : {$jcode->montant_restant} FCFA.",
+            $scanResult['fully_consumed'] ? 'jcode.materiaux_livres.artisan' : 'jcode.materiaux_partiels.artisan',
+            ['code' => $jcode->code, 'montant' => $montantServiCeScan, 'restant' => $jcode->montant_restant],
             ['jcode_id' => $jcode->id, 'mission_id' => $jcode->mission_id]
         );
 
@@ -433,11 +428,10 @@ class JCodeService
             ],
         ]);
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $fournisseur,
-            'payment',
-            'Paiement J-Code recu',
-            "Vous avez recu {$gainNetSupplier} FCFA pour le J-Code {$jcode->code}.",
+            'jcode.paiement_fournisseur',
+            ['montant' => $gainNetSupplier, 'code' => $jcode->code],
             ['jcode_id' => $jcode->id, 'montant' => $gainNetSupplier]
         );
 

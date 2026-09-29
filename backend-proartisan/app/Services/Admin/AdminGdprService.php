@@ -6,6 +6,7 @@ use App\Models\AdminActivityLog;
 use App\Models\Evaluation;
 use App\Models\KycDocument;
 use App\Models\Notification;
+use App\Models\NotificationDelivery;
 use App\Models\Parrainage;
 use App\Models\Transaction;
 use App\Models\User;
@@ -112,7 +113,8 @@ class AdminGdprService
                 Storage::disk('local')->delete($user->photo_path);
             }
 
-            // Purge des notifications personnelles.
+            // Purge des notifications personnelles et de leur journal d'envoi.
+            NotificationDelivery::where('user_id', $user->id)->delete();
             Notification::where('user_id', $user->id)->delete();
 
             $placeholderPhone = '+22599'.str_pad((string) $user->id, 8, '0', STR_PAD_LEFT);

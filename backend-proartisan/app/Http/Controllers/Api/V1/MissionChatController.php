@@ -156,11 +156,10 @@ class MissionChatController extends Controller
             try {
                 $senderName = $user->name ?? 'Votre interlocuteur';
                 $snippet = $type === 'text' ? Str::limit($message->content, 60) : ($type === 'audio' ? '🎙️ Message vocal' : '📷 Photo de chantier');
-                $this->notificationService->send(
+                $this->notificationService->notify(
                     $recipient,
-                    'chat_message',
-                    "Nouveau message de {$senderName}",
-                    $snippet,
+                    'chat.nouveau_message',
+                    ['expediteur' => $senderName, 'extrait' => $snippet],
                     ['mission_id' => $mission->id, 'message_id' => $message->id]
                 );
             } catch (\Throwable $e) {

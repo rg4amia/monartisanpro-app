@@ -97,11 +97,10 @@ class DeliveryFareCollectionService
             : "Au-delà de {$max} rappels, votre compte sera restreint.";
 
         if ($order->client) {
-            $this->notifications->send(
+            $this->notifications->notify(
                 $order->client,
-                'payment',
-                "Course à régler — rappel {$count}/{$max}",
-                "La course de votre commande #{$order->id} ({$amount}) reste à régler depuis l'application (Wave ou Orange Money). Régler une course en dehors de ProsArtisan enfreint les conditions d'utilisation. {$warning}",
+                'course.rappel_paiement.client',
+                ['rappel' => $count, 'max' => $max, 'commande' => $order->id, 'montant' => $amount, 'avertissement' => $warning],
                 ['order_id' => $order->id, 'action' => 'pay_delivery_fare']
             );
         }
@@ -131,20 +130,18 @@ class DeliveryFareCollectionService
 
         $amount = number_format($order->deliveryFareDue(), 0, ',', ' ').' FCFA';
 
-        $this->notifications->send(
+        $this->notifications->notify(
             $client,
-            'payment',
-            'Compte restreint',
-            "La course de votre commande #{$order->id} ({$amount}) n'a pas été réglée malgré nos rappels. Vous ne pouvez plus commander ni publier de mission jusqu'à son paiement depuis l'application.",
+            'course.compte_restreint.client',
+            ['commande' => $order->id, 'montant' => $amount],
             ['order_id' => $order->id, 'action' => 'pay_delivery_fare']
         );
 
         try {
             // Type non critique : notification et push aux admins, sans SMS.
-            $this->notifications->sendAdmin(
-                'delivery_fare_unpaid',
-                'Client restreint pour course impayée',
-                "{$client->name} (#{$client->id}) : course de la commande #{$order->id} ({$amount}) impayée après {$order->delivery_fare_reminders_count} relances.",
+            $this->notifications->notifyAdmins(
+                'course.impayee.admin',
+                ['client' => $client->name, 'client_id' => $client->id, 'commande' => $order->id, 'montant' => $amount, 'relances' => $order->delivery_fare_reminders_count],
                 ['order_id' => $order->id, 'user_id' => $client->id]
             );
         } catch (\Throwable $e) {
@@ -169,12 +166,7 @@ class DeliveryFareCollectionService
 
         $client->update(['payment_restricted_at' => null, 'payment_restriction_reason' => null]);
 
-        $this->notifications->send(
-            $client,
-            'payment',
-            'Restriction levée',
-            'Merci pour votre paiement. Vous pouvez de nouveau commander et publier des missions.'
-        );
+        $this->notifications->notify($client, 'course.restriction_levee_paiement.client');
 
         return true;
     }
@@ -196,12 +188,7 @@ class DeliveryFareCollectionService
             'previous_reason' => $previous,
         ], $client->name, $admin);
 
-        $this->notifications->send(
-            $client,
-            'payment',
-            'Restriction levée',
-            'La restriction de votre compte a été levée par le support ProsArtisan.'
-        );
+        $this->notifications->notify($client, 'course.restriction_levee_support.client');
     }
 
     /**
@@ -286,6 +273,7 @@ class DeliveryFareCollectionService
             ];
         } catch (\Throwable $e) {
             Log::warning('[DeliveryFareCollectionService] adminOverview failed: '.$e->getMessage());
+
             return [
                 'unpaid' => [],
                 'restricted' => [],

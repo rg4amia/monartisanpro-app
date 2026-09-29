@@ -7,7 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 class Notification extends Model
 {
     protected $fillable = [
-        'user_id', 'type', 'title', 'body', 'data_json', 'read_at',
+        'user_id', 'type', 'event_key', 'title', 'body', 'data_json', 'read_at',
     ];
 
     protected function casts(): array

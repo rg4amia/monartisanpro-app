@@ -134,13 +134,10 @@ class AdminService
             ]);
         });
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $user,
-            'kyc',
-            'Statut KYC mis à jour',
-            $decision === 'approuve'
-                ? 'Votre dossier KYC est validé. Vous pouvez maintenant effectuer des transactions.'
-                : 'Votre dossier KYC a été rejeté. Merci de vérifier vos documents et de recommencer.',
+            $decision === 'approuve' ? 'kyc.valide.utilisateur' : 'kyc.rejete.utilisateur',
+            [],
             ['decision' => $decision]
         );
 
@@ -391,13 +388,10 @@ class AdminService
         $fournisseur = $fournisseurAgree->user;
 
         if ($fournisseur) {
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $fournisseur,
-                'fournisseur',
-                'Décision sur votre agrément',
-                $decision === 'agree'
-                    ? 'Votre boutique est agréée. Vous pouvez scanner les J-Codes.'
-                    : 'Votre agrément fournisseur est suspendu. Contactez le support.',
+                $decision === 'agree' ? 'fournisseur.agree' : 'fournisseur.agrement_suspendu',
+                [],
                 ['decision' => $decision, 'admin_id' => $admin->id]
             );
         }

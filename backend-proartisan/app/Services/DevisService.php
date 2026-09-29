@@ -221,13 +221,10 @@ class DevisService
             'parent_devis_id' => $isAvenant ? $initialDevis->id : null,
         ]);
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $mission->client,
-            $isAvenant ? 'devis_avenant' : 'devis',
-            $isAvenant ? 'Nouvel avenant de devis reçu' : 'Nouveau devis reçu',
-            $isAvenant
-                ? "L'artisan {$artisan->name} a soumis un avenant pour la mission #{$mission->id}."
-                : "L'artisan {$artisan->name} vous a transmis un devis pour la mission #{$mission->id}.",
+            $isAvenant ? 'devis.avenant_recu.client' : 'devis.recu.client',
+            ['artisan' => $artisan->name, 'mission' => $mission->id],
             ['mission_id' => $mission->id, 'devis_id' => $devis->id]
         );
 
@@ -362,13 +359,10 @@ class DevisService
             }
 
             // 6. Notifier l'artisan
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $devis->artisan,
-                'payment',
-                $devis->is_avenant ? 'Avenant validé et fonds séquestrés !' : 'Devis validé et fonds séquestrés !',
-                $devis->is_avenant
-                    ? "Votre avenant pour la mission #{$devis->mission_id} a été approuvé. Les fonds supplémentaires sont disponibles et sécurisés en séquestre."
-                    : "Votre devis pour la mission #{$devis->mission_id} a été approuvé. Les fonds sont disponibles et sécurisés en séquestre.",
+                $devis->is_avenant ? 'devis.avenant_accepte.artisan' : 'devis.accepte.artisan',
+                ['mission' => $devis->mission_id],
                 ['mission_id' => $devis->mission_id]
             );
         });
@@ -387,11 +381,10 @@ class DevisService
             $devis->mission->update(['artisan_id' => null]);
         }
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $devis->artisan,
-            'devis',
-            'Devis refusé',
-            "Le client a refusé votre devis pour la mission #{$devis->mission_id}.",
+            'devis.refuse.artisan',
+            ['mission' => $devis->mission_id],
             ['mission_id' => $devis->mission_id, 'devis_id' => $devis->id]
         );
     }

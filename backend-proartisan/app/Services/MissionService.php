@@ -118,11 +118,10 @@ class MissionService
                 $artisan = User::find($data['artisan_id']);
                 if ($artisan) {
                     $clientName = $client->name ?? 'Client';
-                    $this->notificationService->send(
+                    $this->notificationService->notify(
                         $artisan,
-                        'mission',
-                        'Nouvelle demande de devis',
-                        "Le client {$clientName} vous a envoyé une demande de devis.",
+                        'mission.demande_devis.artisan',
+                        ['client' => $clientName],
                         ['mission_id' => $mission->id]
                     );
                 }

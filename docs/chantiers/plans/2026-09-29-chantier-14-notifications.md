@@ -2,7 +2,7 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | en cours (lot A livré le 2026-09-29) |
+| Statut | en cours (lots A et B livrés le 2026-09-29) |
 | Créé le | 2026-09-29 |
 | Mis à jour le | 2026-09-29 |
 | Auteur | Claude Code |
@@ -130,3 +130,13 @@ Sous l'onglet « Notifications & Alertes » existant, nouveaux sous-onglets **Mo
 - `NotificationService::sendPush()` (code mort) supprimé dès le lot A au lieu du lot E.
 - Le push porte aussi `notification_id`, en vue du marquage comme lue au toucher (lot E).
 - Manuel d'utilisation : section « Notifications » ajoutée (chapitre commun).
+
+### Lot B (29/09/2026)
+
+- **Inventaire** : 91 points d'émission (et non 86) — un appel à type ternaire (`DevisService`, devis ou avenant reçu) et une notification in-app créée directement (`AuthService`, changement d'appareil suspect) échappaient au premier recensement. Le catalogue compte 97 événements : les messages à alternative (KYC validé/rejeté, agrément/suspension, devis/avenant, J-Code complet/partiel, journée payée/mission terminée, offre rejetée avec/sans motif, échec de virement portefeuille/remboursement) deviennent des événements distincts.
+- **Type historique conservé** : chaque événement garde le `type` enregistré jusqu'ici (`payment`, `litige`…), dont dépendent le routage et les onglets mobiles ; la clé d'événement est ajoutée (`notifications.event_key`, donnée `event` du push). La donnée `type: delivery_request` de la course disponible, qui écrasait le type, est supprimée.
+- **SMS par défaut** : appliqués selon la décision n° 1, avec trois précisions — la relance du livreur sans signal GPS garde le SMS (Règle d'or 53, qu'elle n'appliquait pas : le type `delivery_alert` n'en envoyait aucun) ; l'alerte de changement d'appareil suspect, jusque-là in-app seulement, part désormais en push et SMS (alerte de sécurité visant l'utilisateur) ; les notifications contenant un code (retrait, réception, prise en charge) et les rappels de course impayée perdent le SMS — à réactiver au lot C si nécessaire. Liste figée par `NotificationCatalogTest::EXPECTED_SMS_EVENTS`.
+- **Anti-doublon KYC** : `AuthService` et `KycService` détectaient une notification déjà envoyée par son **titre**, modifiable au lot C ; remplacé par `NotificationService::alreadyNotified()` (clé d'événement, repli sur le titre d'origine pour les notifications antérieures).
+- **Journal des envois** : seules les tentatives sont consignées (`envoye` / `echoue` / `ignore` pour OneSignal non configuré ou numéro absent) — un canal désactivé ne produit pas de ligne, pour ne pas doubler le volume. Pas de réponse brute du fournisseur, seulement le motif d'échec. Journal non modifiable, mais effacé par l'anonymisation RGPD. Les échecs sur 24 h entrent dans les compteurs critiques (`admin:health-check`, alerte Telegram) et l'écran Santé & Observabilité.
+- **Envoi différé** : `DeliverNotificationJob::dispatchAfterResponse` ; un envoi dont la notification in-app a disparu (transaction annulée) est abandonné. En test, `TestCase` désactive le différé (`withoutDispatchingAfterResponses`).
+- **Hors lot** : l'OTP (`SmsService::sendOtp`) n'est pas encore dans le catalogue ; il y entrera au lot C avec son verrouillage. SMS par défaut atteignant 3 segments : relance du livreur sans signal, escalade de commande sans livreur, mission de recrutement terminée — candidats à un texte SMS plus court au lot C.

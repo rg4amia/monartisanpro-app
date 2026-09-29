@@ -8,6 +8,8 @@ use App\Http\Resources\MissionResource;
 use App\Models\Mission;
 use App\Models\User;
 use App\Services\Admin\AdminActivityLogger;
+use App\Services\AiMonitoringService;
+use App\Services\GeminiService;
 use App\Services\MissionService;
 use App\Services\NotificationService;
 use App\States\Mission\CancelledState;
@@ -16,14 +18,13 @@ use App\States\Mission\DisputedState;
 use App\States\Mission\DraftState;
 use App\States\Mission\FundedLockedState;
 use App\States\Mission\InProgressState;
+use App\States\Mission\MissionState;
 use App\States\Mission\PendingApprovalState;
 use App\States\Mission\PendingArtisanAcceptanceState;
 use App\States\Mission\PendingFundingState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
-use App\Services\AiMonitoringService;
-use App\Services\GeminiService;
 use Illuminate\Support\Facades\Log;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
@@ -456,11 +457,10 @@ class MissionController extends Controller
         $mission->status->transitionTo(DraftState::class);
 
         if ($mission->client) {
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $mission->client,
-                'mission',
-                'Demande de devis acceptée',
-                "L'artisan a accepté votre demande et prépare le devis.",
+                'mission.demande_acceptee.client',
+                [],
                 ['mission_id' => $mission->id]
             );
         }
@@ -518,11 +518,10 @@ class MissionController extends Controller
         $mission->status->transitionTo(DraftState::class);
 
         if ($client) {
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $client,
-                'mission',
-                'Demande de devis refusée',
-                "L'artisan a refusé votre demande de devis. Vous pouvez sélectionner un autre artisan.",
+                'mission.demande_refusee.client',
+                [],
                 ['mission_id' => $mission->id]
             );
         }
@@ -592,11 +591,10 @@ class MissionController extends Controller
         }
 
         $clientName = $user->name ?? 'Client';
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $artisan,
-            'mission',
-            'Nouvelle demande de devis',
-            "Le client {$clientName} vous a envoyé une demande de devis.",
+            'mission.demande_devis.artisan',
+            ['client' => $clientName],
             ['mission_id' => $mission->id]
         );
 
@@ -632,9 +630,9 @@ class MissionController extends Controller
                 return [
                     'id' => $t->id,
                     'from_state' => $t->from_state,
-                    'from_state_label' => \App\States\Mission\MissionState::labelFor($t->from_state),
+                    'from_state_label' => MissionState::labelFor($t->from_state),
                     'to_state' => $t->to_state,
-                    'to_state_label' => \App\States\Mission\MissionState::labelFor($t->to_state),
+                    'to_state_label' => MissionState::labelFor($t->to_state),
                     'user' => $t->user ? [
                         'id' => $t->user->id,
                         'name' => $t->user->name,
@@ -651,7 +649,7 @@ class MissionController extends Controller
             'data' => [
                 'mission_id' => $mission->id,
                 'current_state' => $mission->status->getValue(),
-                'current_state_label' => \App\States\Mission\MissionState::labelFor($mission->status->getValue()),
+                'current_state_label' => MissionState::labelFor($mission->status->getValue()),
                 'transitions' => $transitions,
             ],
         ]);

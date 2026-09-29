@@ -57,11 +57,10 @@ class JalonService
         }
 
         // Notifier le client
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $jalon->mission->client,
-            'validation',
-            'Jalon à valider',
-            "L'artisan a soumis le jalon #{$jalon->ordre}. Validez avec le code OTP.",
+            'jalon.a_valider.client',
+            ['etape' => $jalon->ordre],
             ['mission_id' => $jalon->mission_id, 'jalon_id' => $jalon->id]
         );
     }
@@ -146,11 +145,10 @@ class JalonService
             $jalon->update(['statut' => 'valide_suspendu']);
             Log::warning("[FRAUD PAYMENT HOLD] Jalon #{$jalon->id} suspendu suite à l'alerte #{$effectiveAlert->reference}");
 
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $jalon->mission->artisan,
-                'fraud_alert',
-                'Contrôle de sécurité en cours',
-                "La validation du jalon #{$jalon->ordre} fait l'objet d'une vérification de sécurité avant libération des fonds.",
+                'jalon.controle_securite.artisan',
+                ['etape' => $jalon->ordre],
                 ['mission_id' => $jalon->mission_id, 'jalon_id' => $jalon->id]
             );
 
@@ -169,11 +167,10 @@ class JalonService
         // Libération immédiate des fonds
         $this->walletService->releaseJalon($jalon);
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $jalon->mission->artisan,
-            'payment',
-            'Paiement reçu !',
-            "Le jalon #{$jalon->ordre} a été validé. Paiement en cours.",
+            'jalon.paye.artisan',
+            ['etape' => $jalon->ordre],
             ['mission_id' => $jalon->mission_id]
         );
 
@@ -227,11 +224,10 @@ class JalonService
 
         $this->walletService->releaseJalon($jalon);
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $jalon->mission->artisan,
-            'payment',
-            'Paiement automatique reçu',
-            "Le jalon #{$jalon->ordre} a été libéré automatiquement (le client n'a pas répondu sous 72h).",
+            'jalon.libere_auto.artisan',
+            ['etape' => $jalon->ordre],
             ['mission_id' => $jalon->mission_id, 'jalon_id' => $jalon->id]
         );
     }
@@ -263,11 +259,10 @@ class JalonService
 
         $this->walletService->releaseJalon($jalon);
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $jalon->mission->artisan,
-            'payment',
-            'Preuves acceptées !',
-            "Le client a accepté vos preuves pour le jalon #{$jalon->ordre}. Paiement en cours.",
+            'jalon.preuves_acceptees.artisan',
+            ['etape' => $jalon->ordre],
             ['mission_id' => $jalon->mission_id]
         );
     }

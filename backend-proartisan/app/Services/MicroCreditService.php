@@ -183,11 +183,10 @@ class MicroCreditService
             ]);
         }
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $artisan,
-            'credit',
-            'Demande de crédit soumise',
-            "Votre demande de crédit de {$amount} FCFA a été approuvée et débloquée sous 2h sur votre compte Mobile Money.",
+            'credit.accorde.artisan',
+            ['montant' => $amount],
             ['application_id' => $application->id]
         );
 
@@ -238,11 +237,10 @@ class MicroCreditService
             'reference_externe' => 'REPAY-JALON-'.$jalon->id,
         ]);
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $artisan,
-            'credit',
-            'Amortissement micro-crédit',
-            "Une retenue de {$repaymentAmount} FCFA a été prélevée sur votre jalon #{$jalon->ordre} au titre du remboursement de votre micro-crédit. Solde restant : {$activeCredit->remaining_amount} FCFA.",
+            'credit.retenue_jalon.artisan',
+            ['montant' => $repaymentAmount, 'etape' => $jalon->ordre, 'restant' => $activeCredit->remaining_amount],
             ['credit_application_id' => $activeCredit->id, 'jalon_id' => $jalon->id]
         );
 
@@ -287,11 +285,10 @@ class MicroCreditService
             'reference_externe' => 'VOLUNTARY-REPAY-'.$activeCredit->id.'-'.time(),
         ]);
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $artisan,
-            'credit',
-            'Remboursement micro-crédit validé',
-            "Votre remboursement de {$actualRepayment} FCFA a été enregistré avec succès. Solde restant dû : {$activeCredit->remaining_amount} FCFA.",
+            'credit.remboursement.artisan',
+            ['montant' => $actualRepayment, 'restant' => $activeCredit->remaining_amount],
             ['credit_application_id' => $activeCredit->id]
         );
 

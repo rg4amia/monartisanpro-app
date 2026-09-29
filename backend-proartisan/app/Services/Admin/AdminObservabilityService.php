@@ -5,8 +5,11 @@ namespace App\Services\Admin;
 use App\Models\FraudAlert;
 use App\Models\Mission;
 use App\Models\Notification;
+use App\Models\NotificationDelivery;
 use App\Models\ScoreLedgerEntry;
 use App\Models\Transaction;
+use App\Services\Notifications\NotificationCatalog;
+use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Str;
@@ -14,9 +17,9 @@ use Illuminate\Support\Str;
 /**
  * Chantier C7 (P2-12) — santé opérationnelle du backoffice.
  *
- * Agrège quatre signaux critiques : files d'attente en échec, webhooks de
- * paiement KO, tentatives de fraude GPS J-Code (> 100 m) et missions bloquées
- * au seuil Référent (> 2 000 000 FCFA).
+ * Agrège cinq signaux critiques : files d'attente en échec, webhooks de
+ * paiement KO, tentatives de fraude GPS J-Code (> 100 m), missions bloquées
+ * au seuil Référent (> 2 000 000 FCFA) et envois push/SMS échoués.
  */
 class AdminObservabilityService
 {
@@ -33,6 +36,7 @@ class AdminObservabilityService
             'payments' => $this->payments(),
             'fraud' => $this->fraud(),
             'referent' => $this->referent(),
+            'notifications' => $this->notifications(),
             'generated_at' => now()->toIso8601String(),
         ];
     }
@@ -40,7 +44,7 @@ class AdminObservabilityService
     /**
      * Compteurs critiques uniquement (pour la décision d'alerte Telegram).
      *
-     * @return array{failed_jobs: int, failed_payments_24h: int, gps_fraud_7d: int, referent_blocked: int}
+     * @return array{failed_jobs: int, failed_payments_24h: int, gps_fraud_7d: int, referent_blocked: int, failed_notifications_24h: int}
      */
     public function criticalCounts(): array
     {
@@ -55,7 +59,46 @@ class AdminObservabilityService
             'referent_blocked' => Mission::where('referent_required', true)
                 ->whereIn('status', self::REFERENT_BLOCKED_STATUSES)
                 ->count(),
+            'failed_notifications_24h' => $this->failedNotifications()
+                ->where('created_at', '>=', now()->subDay())
+                ->count(),
         ];
+    }
+
+    /**
+     * Envois push et SMS échoués (Chantier 14, lot B). Un canal ignoré
+     * (OneSignal non configuré, numéro absent) n'est pas une panne.
+     *
+     * @return array<string, mixed>
+     */
+    private function notifications(): array
+    {
+        return [
+            'failed_24h' => $this->failedNotifications()->where('created_at', '>=', now()->subDay())->count(),
+            'sent_24h' => NotificationDelivery::where('status', NotificationDelivery::STATUS_SENT)
+                ->where('created_at', '>=', now()->subDay())
+                ->count(),
+            'recent' => $this->failedNotifications()
+                ->latest('created_at')
+                ->limit(15)
+                ->get(['id', 'event_key', 'channel', 'provider', 'reason', 'created_at'])
+                ->map(fn (NotificationDelivery $delivery) => [
+                    'id' => $delivery->id,
+                    'event' => NotificationCatalog::has((string) $delivery->event_key)
+                        ? NotificationCatalog::get($delivery->event_key)['label']
+                        : $delivery->event_key,
+                    'channel' => $delivery->channel,
+                    'provider' => $delivery->provider,
+                    'reason' => $delivery->reason,
+                    'created_at' => optional($delivery->created_at)->toIso8601String(),
+                ])
+                ->all(),
+        ];
+    }
+
+    private function failedNotifications(): Builder
+    {
+        return NotificationDelivery::where('status', NotificationDelivery::STATUS_FAILED);
     }
 
     /**

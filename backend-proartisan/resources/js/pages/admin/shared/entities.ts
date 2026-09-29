@@ -312,6 +312,19 @@ export interface ObservabilitySnapshot {
             created_at: string | null;
         }>;
     };
+    /** Envois push et SMS (Chantier 14, lot B). */
+    notifications?: {
+        failed_24h: number;
+        sent_24h: number;
+        recent: Array<{
+            id: number;
+            event: string | null;
+            channel: 'push' | 'sms';
+            provider: string | null;
+            reason: string | null;
+            created_at: string | null;
+        }>;
+    };
     generated_at: string;
 }
 

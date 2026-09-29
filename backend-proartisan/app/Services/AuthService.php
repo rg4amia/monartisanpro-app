@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\ArtisanProfile;
-use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Validation\ValidationException;
 
@@ -55,29 +54,21 @@ class AuthService
         $user = $user->fresh();
 
         if ($user->kyc_status === 'en_attente') {
-            $hasPendingNotif = Notification::where('user_id', $user->id)
-                ->where('type', 'kyc')
-                ->where('title', 'Compte en attente de validation')
-                ->exists();
+            $notifications = app(NotificationService::class);
+            $hasPendingNotif = $notifications->alreadyNotified(
+                $user,
+                ['kyc.documents_attendus.utilisateur', 'kyc.en_examen.utilisateur']
+            );
 
             if (! $hasPendingNotif) {
-                app(NotificationService::class)->send(
-                    $user,
-                    'kyc',
-                    'Compte en attente de validation',
-                    'Votre compte est en attente de validation KYC. Veuillez uploader vos documents (CNI et Selfie) dans l\'application.'
-                );
+                $notifications->notify($user, 'kyc.documents_attendus.utilisateur');
 
                 // Notification pour les administrateurs
-                $admins = User::where('role', 'admin')->get();
-                foreach ($admins as $admin) {
-                    app(NotificationService::class)->send(
-                        $admin,
-                        'admin_alert',
-                        'Nouveau profil en attente KYC',
-                        "Le profil de {$user->name} ({$user->role}) nécessite une vérification KYC."
-                    );
-                }
+                $notifications->notifyAdmins(
+                    'kyc.nouveau_profil.admin',
+                    ['nom' => $user->name, 'role' => $user->role],
+                    ['user_id' => $user->id]
+                );
             }
         }
 
@@ -117,15 +108,11 @@ class AuthService
                 ]);
 
                 try {
-                    $admins = User::where('role', 'admin')->get();
-                    foreach ($admins as $admin) {
-                        app(NotificationService::class)->send(
-                            $admin,
-                            'fraud_alert',
-                            'Tentative de contournement de bannissement détectée',
-                            "Le compte #{$user->id} ({$user->phone}) a été bloqué automatiquement : appareil déjà associé à un compte précédemment banni."
-                        );
-                    }
+                    app(NotificationService::class)->notifyAdmins(
+                        'securite.contournement_bannissement.admin',
+                        ['compte' => $user->id, 'telephone' => $user->phone],
+                        ['user_id' => $user->id]
+                    );
                 } catch (\Throwable $e) {
                     // Best-effort : l'échec de la notification ne doit jamais bloquer le blocage du compte.
                 }
@@ -140,12 +127,9 @@ class AuthService
             if ($user->device_fingerprint === null) {
                 $user->update(['device_fingerprint' => $deviceFingerprint]);
             } elseif ($user->device_fingerprint !== $deviceFingerprint) {
-                Notification::create([
-                    'user_id' => $user->id,
-                    'title' => 'Alerte sécurité : Changement d\'appareil suspect',
-                    'body' => 'Un changement suspect d\'appareil (IMEI) a été détecté. Votre Score ProsArtisan est gelé par mesure de sécurité.',
-                    'type' => 'security_alert',
-                ]);
+                // Push et SMS atteignent aussi l'ancien appareil : le titulaire
+                // est prévenu si quelqu'un d'autre se connecte à son compte.
+                app(NotificationService::class)->notify($user, 'securite.changement_appareil.artisan');
 
                 $user->update([
                     'score_frozen' => true,

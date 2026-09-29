@@ -574,18 +574,14 @@ class MobileMoneyPayoutService
 
         if ($firstFailure) {
             $amount = number_format($payout->transferAmount(), 0, ',', ' ');
-            // Un client remboursé n'a pas de portefeuille ProsArtisan : les
-            // fonds restent réservés chez l'artisan, pas « sur son portefeuille ».
-            $message = $payout->source_user_id
-                ? "Le virement de {$amount} FCFA ({$payout->contextLabel()}) n'a pas abouti. La somme vous reste due et le virement sera relancé automatiquement. Vérifiez votre numéro de paiement."
-                : "Le virement de {$amount} FCFA ({$payout->contextLabel()}) n'a pas abouti. Les fonds restent sur votre portefeuille et le virement sera relancé automatiquement. Vérifiez votre numéro de paiement.";
-
             try {
-                $this->notifications->send(
+                // Un client remboursé n'a pas de portefeuille ProsArtisan : les
+                // fonds restent réservés chez l'artisan, pas « sur son portefeuille ».
+                $this->notifications->notify(
                     $payout->user,
-                    'payment',
-                    'Virement Mobile Money en attente',
-                    $message
+                    $payout->source_user_id ? 'versement.echec.rembourse' : 'versement.echec.beneficiaire',
+                    ['montant' => $amount, 'contexte' => $payout->contextLabel()],
+                    ['payout_id' => $payout->id]
                 );
             } catch (\Throwable $e) {
                 Log::warning('[Versements] Notification d\'échec non envoyée : '.$e->getMessage());

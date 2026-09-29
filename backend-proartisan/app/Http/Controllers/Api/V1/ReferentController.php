@@ -146,11 +146,10 @@ class ReferentController extends Controller
             $this->walletService->releaseJalon($jalon);
         }
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $mission->artisan,
-            'validation',
-            'Mission validée par le référent',
-            "La mission #{$mission->id} a été validée sur site par le référent. Les paiements en attente ont été libérés.",
+            'mission.validee_referent.artisan',
+            ['mission' => $mission->id],
             ['mission_id' => $mission->id]
         );
 

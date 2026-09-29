@@ -3,7 +3,6 @@
 namespace App\Services;
 
 use App\Models\KycDocument;
-use App\Models\Notification;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -69,18 +68,13 @@ class KycService
 
         // Notification d'attente si le compte n'est pas immédiatement validé par l'IA
         if ($user->kyc_status !== 'actif') {
-            $hasPendingNotif = Notification::where('user_id', $user->id)
-                ->where('type', 'kyc')
-                ->where('title', 'Compte en attente de validation')
-                ->exists();
+            $hasPendingNotif = $this->notificationService->alreadyNotified(
+                $user,
+                ['kyc.documents_attendus.utilisateur', 'kyc.en_examen.utilisateur']
+            );
 
             if (! $hasPendingNotif) {
-                $this->notificationService->send(
-                    $user,
-                    'kyc',
-                    'Compte en attente de validation',
-                    'Votre compte est en attente de validation KYC. Nos équipes étudient actuellement vos pièces justificatives.'
-                );
+                $this->notificationService->notify($user, 'kyc.en_examen.utilisateur');
             }
         }
 
@@ -200,11 +194,10 @@ class KycService
             $user->update(['kyc_status' => 'actif']);
         });
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $user,
-            'kyc',
-            'Compte validé',
-            'Votre identité a été vérifiée automatiquement. Vous pouvez désormais effectuer vos transactions en toute sécurité.',
+            'kyc.valide_auto.utilisateur',
+            [],
             ['auto_verified' => true, 'score' => $selfieDoc->ai_confidence_score]
         );
 

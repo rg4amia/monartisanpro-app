@@ -157,11 +157,10 @@ class ParrainageClientService
                 'recompense_at' => now(),
             ]);
 
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $parrainage->parrain,
-                'referral_reward',
-                'Récompense de parrainage',
-                "Félicitations ! Votre filleul a financé sa première mission. Voici votre code promo : {$promoCode->code}",
+                'parrainage.recompense',
+                ['code' => $promoCode->code],
                 ['promo_code' => $promoCode->code]
             );
         });

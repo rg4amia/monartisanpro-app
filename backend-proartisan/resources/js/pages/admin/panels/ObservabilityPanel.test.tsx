@@ -165,4 +165,51 @@ describe('ObservabilityPanel', () => {
         expect(screen.getByText('Webhook non reçu')).toBeInTheDocument();
         expect(screen.getByText('Mission #77')).toBeInTheDocument();
     });
+
+    it('liste les envois push et SMS en échec', () => {
+        render(
+            <ObservabilityPanel
+                snapshot={makeSnapshot({
+                    notifications: {
+                        failed_24h: 1,
+                        sent_24h: 42,
+                        recent: [
+                            {
+                                id: 9,
+                                event: 'Étape validée : paiement de l\'artisan',
+                                channel: 'sms',
+                                provider: 'orange',
+                                reason: 'Failed to send SMS',
+                                created_at: '2026-09-29T08:00:00Z',
+                            },
+                        ],
+                    },
+                })}
+                canManage
+                actionLoading={false}
+                onRetryJobs={vi.fn()}
+                onFlushJobs={vi.fn()}
+            />,
+        );
+
+        expect(screen.getByText('Notifications push et SMS en échec')).toBeInTheDocument();
+        expect(screen.getByText('1 échec(s) et 42 envoi(s) réussi(s) sur 24 h.')).toBeInTheDocument();
+        expect(screen.getByText('Étape validée : paiement de l\'artisan')).toBeInTheDocument();
+        expect(screen.getByText('SMS')).toBeInTheDocument();
+        expect(screen.getByText('Failed to send SMS')).toBeInTheDocument();
+    });
+
+    it('n\'affiche pas de section d\'envois quand le serveur ne la fournit pas', () => {
+        render(
+            <ObservabilityPanel
+                snapshot={makeSnapshot()}
+                canManage
+                actionLoading={false}
+                onRetryJobs={vi.fn()}
+                onFlushJobs={vi.fn()}
+            />,
+        );
+
+        expect(screen.queryByText('Notifications push et SMS en échec')).not.toBeInTheDocument();
+    });
 });

@@ -18,7 +18,9 @@ use App\States\Mission\CancelledState;
 use App\States\Mission\CompletedState;
 use App\States\Mission\DisputedState;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class LitigeService
@@ -109,19 +111,17 @@ class LitigeService
 
         $counterparty = $mission->client_id === $user->id ? $mission->artisan : $mission->client;
         if ($counterparty) {
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $counterparty,
-                'litige',
-                'Alerte litige',
-                'Un litige a été ouvert sur votre mission. Les fonds sont gelés jusqu’à décision.',
+                'litige.ouvert.partie',
+                [],
                 ['litige_id' => $litige->id, 'mission_id' => $mission->id]
             );
         }
 
-        $this->notificationService->sendAdmin(
-            'litige',
-            'Nouveau litige à instruire',
-            "Le litige #{$litige->id} a été ouvert sur la mission #{$mission->id}.",
+        $this->notificationService->notifyAdmins(
+            'litige.ouvert.admin',
+            ['litige' => $litige->id, 'mission' => $mission->id],
             ['litige_id' => $litige->id, 'mission_id' => $mission->id]
         );
 
@@ -232,10 +232,9 @@ class LitigeService
         $litige->refresh()->load(['mission.client', 'mission.artisan', 'declencheur', 'preuves.user']);
 
         if ($litige->workflow_step === 'arbitrage') {
-            $this->notificationService->sendAdmin(
-                'litige',
-                'Litige prêt pour arbitrage',
-                "Le litige #{$litige->id} dispose désormais des preuves des deux parties.",
+            $this->notificationService->notifyAdmins(
+                'litige.pret_arbitrage.admin',
+                ['litige' => $litige->id],
                 ['litige_id' => $litige->id, 'mission_id' => $litige->mission_id]
             );
         }
@@ -691,29 +690,26 @@ class LitigeService
         };
 
         if ($litige->mission->client) {
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $litige->mission->client,
-                'litige',
-                'Décision de litige rendue',
-                "Le litige #{$litige->id} a été traité: {$label}.",
+                'litige.decision.partie',
+                ['litige' => $litige->id, 'decision' => $label],
                 ['litige_id' => $litige->id, 'decision' => $litige->decision]
             );
         }
 
         if ($litige->mission->artisan) {
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $litige->mission->artisan,
-                'litige',
-                'Décision de litige rendue',
-                "Le litige #{$litige->id} a été traité: {$label}.",
+                'litige.decision.partie',
+                ['litige' => $litige->id, 'decision' => $label],
                 ['litige_id' => $litige->id, 'decision' => $litige->decision]
             );
         }
 
-        $this->notificationService->sendAdmin(
-            'litige',
-            'Litige mis à jour',
-            "Le litige #{$litige->id} est désormais au statut {$litige->statut}.",
+        $this->notificationService->notifyAdmins(
+            'litige.statut.admin',
+            ['litige' => $litige->id, 'statut' => $litige->statut],
             ['litige_id' => $litige->id, 'decision' => $litige->decision]
         );
     }
@@ -757,12 +753,12 @@ class LitigeService
         if ($jurors->count() < self::JURY_SIZE) {
             $litige->update(['jury_status' => 'jury_indisponible']);
 
-            $this->alertAdminsJuryUnavailable(
-                $litige,
-                'Jury ProsArtisan impossible à réunir',
-                "Le litige #{$litige->id} ne compte que {$jurors->count()} juré(s) éligible(s) sur ".self::JURY_SIZE
-                .' (même métier, score ≥ '.$minScore.', KYC actif) : aucun jury n\'a été convoqué, l\'arbitrage revient à l\'administrateur.'
-            );
+            $this->alertAdminsJuryUnavailable($litige, 'jury.impossible.admin', [
+                'litige' => $litige->id,
+                'jures' => $jurors->count(),
+                'taille' => self::JURY_SIZE,
+                'score' => $minScore,
+            ]);
 
             throw new \DomainException(
                 'Jury impossible à réunir : '.$jurors->count().' juré(s) éligible(s) sur '.self::JURY_SIZE
@@ -780,11 +776,10 @@ class LitigeService
                 'expires_at' => now()->addHours(48),
             ]);
 
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $juror,
-                'jury_assignment',
-                'Arbitrage ProsArtisan requis',
-                "Vous avez été sélectionné comme juré pour évaluer de manière anonyme le litige #{$litige->id}.",
+                'jury.convocation.artisan',
+                ['litige' => $litige->id],
                 ['litige_id' => $litige->id]
             );
         }
@@ -805,9 +800,9 @@ class LitigeService
      * serveur au moment de la décision).
      *
      * @param  list<int>  $excludedIds
-     * @return \Illuminate\Support\Collection<int, User>
+     * @return Collection<int, User>
      */
-    private function eligibleJurors(Litige $litige, array $excludedIds, int $needed): \Illuminate\Support\Collection
+    private function eligibleJurors(Litige $litige, array $excludedIds, int $needed): Collection
     {
         $mission = $litige->mission;
         $tradeId = $mission->artisan?->artisanProfile?->trade_id;
@@ -844,15 +839,18 @@ class LitigeService
         return $eligible;
     }
 
-    private function alertAdminsJuryUnavailable(Litige $litige, string $title, string $body): void
+    /**
+     * @param  array<string, scalar|null>  $vars
+     */
+    private function alertAdminsJuryUnavailable(Litige $litige, string $event, array $vars): void
     {
         try {
-            $this->notificationService->sendAdmin('litige', $title, $body, [
+            $this->notificationService->notifyAdmins($event, $vars, [
                 'litige_id' => $litige->id,
                 'mission_id' => $litige->mission_id,
             ]);
         } catch (\Throwable $e) {
-            \Illuminate\Support\Facades\Log::warning('[Jury] Alerte admin non envoyée : '.$e->getMessage());
+            Log::warning('[Jury] Alerte admin non envoyée : '.$e->getMessage());
         }
     }
 
@@ -965,7 +963,7 @@ class LitigeService
                 $this->arbitrate(null, $litige, [
                     'decision' => 'mixte',
                     'split_artisan_percentage' => $avgSplit,
-                    'notes' => "Résolution par consensus du Jury ProsArtisan : Responsabilité partagée ({$avgSplit}% artisan / ".(100 - $avgSplit)."% client).",
+                    'notes' => "Résolution par consensus du Jury ProsArtisan : Responsabilité partagée ({$avgSplit}% artisan / ".(100 - $avgSplit).'% client).',
                     'resolution_reason' => 'jury_consensual_partage',
                 ]);
             }
@@ -977,10 +975,9 @@ class LitigeService
                 'workflow_step' => 'arbitrage',
             ]);
 
-            $this->notificationService->sendAdmin(
-                'litige',
-                'Arbitrage Jury sans consensus',
-                "Le jury du litige #{$litige->id} n'a pas atteint de majorité qualifiée 2/3. Dossier escaladé à l'administrateur.",
+            $this->notificationService->notifyAdmins(
+                'jury.sans_consensus.admin',
+                ['litige' => $litige->id],
                 ['litige_id' => $litige->id]
             );
         }
@@ -1031,12 +1028,10 @@ class LitigeService
         $minScore = $this->jurorMinScore();
 
         if (! $newJuror) {
-            $this->alertAdminsJuryUnavailable(
-                $litige,
-                'Juré non remplacé',
-                "Un juré du litige #{$litige->id} n'a pas voté dans les 48 h et aucun artisan éligible (même métier, score ≥ "
-                .$minScore.', KYC actif) ne peut le remplacer : le collège reste incomplet, arbitrage administrateur à prévoir si le consensus n\'est pas atteint.'
-            );
+            $this->alertAdminsJuryUnavailable($litige, 'jury.jure_non_remplace.admin', [
+                'litige' => $litige->id,
+                'score' => $minScore,
+            ]);
 
             return null;
         }
@@ -1050,11 +1045,10 @@ class LitigeService
             'expires_at' => now()->addHours(48),
         ]);
 
-        $this->notificationService->send(
+        $this->notificationService->notify(
             $newJuror,
-            'jury_assignment',
-            'Arbitrage ProsArtisan requis (Remplacement)',
-            "Vous avez été sélectionné en remplacement comme juré pour évaluer de manière anonyme le litige #{$litige->id}.",
+            'jury.remplacement.artisan',
+            ['litige' => $litige->id],
             ['litige_id' => $litige->id]
         );
 
@@ -1067,11 +1061,10 @@ class LitigeService
             ->where('role', 'referent')
             ->get()
             ->each(function (User $referent) use ($litige): void {
-                $this->notificationService->send(
+                $this->notificationService->notify(
                     $referent,
-                    'litige',
-                    'Visite référent requise',
-                    "Le litige #{$litige->id} nécessite une visite terrain avant clôture.",
+                    'litige.visite_referent.referent',
+                    ['litige' => $litige->id],
                     ['litige_id' => $litige->id, 'mission_id' => $litige->mission_id]
                 );
             });

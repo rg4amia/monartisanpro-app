@@ -32,10 +32,27 @@ class OneSignalService
      */
     public function sendToUser(string $userId, string $heading, string $content, array $data = [], ?string $androidSound = null): bool
     {
-        if (empty($this->appId) || empty($this->restApiKey)) {
+        return $this->deliver($userId, $heading, $content, $data, $androidSound)['status'] === 'envoye';
+    }
+
+    public function isConfigured(): bool
+    {
+        return $this->appId !== '' && $this->restApiKey !== '';
+    }
+
+    /**
+     * Même envoi que {@see sendToUser()}, avec l'issue détaillée pour le
+     * journal des envois : `envoye`, `echoue` (motif) ou `ignore` (OneSignal
+     * non configuré).
+     *
+     * @return array{status: 'envoye'|'echoue'|'ignore', reason: ?string}
+     */
+    public function deliver(string $userId, string $heading, string $content, array $data = [], ?string $androidSound = null): array
+    {
+        if (! $this->isConfigured()) {
             Log::warning('OneSignal non configuré. Notification ignorée.', ['user_id' => $userId]);
 
-            return false;
+            return ['status' => 'ignore', 'reason' => 'OneSignal non configuré'];
         }
 
         try {
@@ -49,7 +66,8 @@ class OneSignalService
                 'channel_for_external_user_ids' => 'push',
                 'headings' => ['en' => $heading, 'fr' => $heading],
                 'contents' => ['en' => $content, 'fr' => $content],
-                'data' => $data,
+                // Objet JSON attendu : un tableau vide se sérialiserait en [].
+                'data' => (object) $data,
             ];
 
             if ($androidSound !== null) {
@@ -66,7 +84,7 @@ class OneSignalService
             if ($response->successful()) {
                 Log::info("Notification OneSignal envoyée avec succès à l'utilisateur $userId");
 
-                return true;
+                return ['status' => 'envoye', 'reason' => null];
             }
 
             Log::error("Erreur d'envoi OneSignal", [
@@ -74,11 +92,16 @@ class OneSignalService
                 'response' => $response->json(),
             ]);
 
-            return false;
-        } catch (\Exception $e) {
+            $errors = $response->json('errors');
+
+            return [
+                'status' => 'echoue',
+                'reason' => mb_substr('HTTP '.$response->status().(is_array($errors) ? ' : '.implode(' ; ', array_map('strval', $errors)) : ''), 0, 500),
+            ];
+        } catch (\Throwable $e) {
             Log::error("Exception lors de l'envoi de la notification OneSignal : ".$e->getMessage());
 
-            return false;
+            return ['status' => 'echoue', 'reason' => mb_substr($e->getMessage(), 0, 500)];
         }
     }
 }

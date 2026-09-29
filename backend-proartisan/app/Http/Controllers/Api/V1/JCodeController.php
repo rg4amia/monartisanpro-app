@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\JCode\GenerateJCodeRequest;
 use App\Http\Requests\JCode\ScanJCodeRequest;
 use App\Http\Requests\UploadJCodePhotoRequest;
+use App\Http\Resources\JCodeRedemptionResource;
 use App\Http\Resources\JCodeResource;
 use App\Models\JCode;
 use App\Models\Mission;
@@ -235,11 +236,10 @@ class JCodeController extends Controller
 
             // Notifier le client
             $client = $jcode->mission->client;
-            $this->notificationService->send(
+            $this->notificationService->notify(
                 $client,
-                'materials',
-                'Vos matériaux sont arrivés !',
-                "L'artisan {$jcode->artisan->name} a reçu les matériaux pour votre mission #{$jcode->mission_id}. Photo géolocalisée disponible.",
+                'jcode.materiaux_arrives.client',
+                ['artisan' => $jcode->artisan->name, 'mission' => $jcode->mission_id],
                 [
                     'mission_id' => $jcode->mission_id,
                     'jcode_id' => $jcode->id,
@@ -305,7 +305,7 @@ class JCodeController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => \App\Http\Resources\JCodeRedemptionResource::collection($redemptions),
+            'data' => JCodeRedemptionResource::collection($redemptions),
         ]);
     }
 }

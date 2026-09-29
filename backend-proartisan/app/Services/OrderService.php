@@ -395,10 +395,10 @@ class OrderService
                 $payment->update(['metadata' => array_merge($payment->metadata ?? [], ['refund_required' => true])]);
 
                 try {
-                    app(NotificationService::class)->sendAdmin(
-                        'payment',
-                        'Paiement reçu pour une commande annulée',
-                        "Le paiement #{$payment->id} (".number_format($expected, 0, ',', ' ').' FCFA) est arrivé après l\'annulation des commandes #'.implode(', #', $ids).' et le stock ne permet plus de les honorer : remboursement du client à effectuer.'
+                    app(NotificationService::class)->notifyAdmins(
+                        'commande.paiement_apres_annulation.admin',
+                        ['paiement' => $payment->id, 'montant' => number_format($expected, 0, ',', ' '), 'commandes' => implode(', #', $ids)],
+                        ['payment_id' => $payment->id]
                     );
                 } catch (\Throwable $e) {
                     Log::warning('[Commande] Alerte admin non envoyée : '.$e->getMessage());
@@ -500,6 +500,7 @@ class OrderService
                 ->all();
         } catch (\Throwable $e) {
             Log::warning('[OrderService] pendingBankTransferPayments failed: '.$e->getMessage());
+
             return [];
         }
     }
@@ -560,11 +561,11 @@ class OrderService
         }
 
         try {
-            app(NotificationService::class)->send(
+            app(NotificationService::class)->notify(
                 $orders->first()->client,
-                'payment',
-                'Commande annulée',
-                'Votre commande #'.implode(', #', $cancelledIds)." n'a pas été réglée dans le délai imparti : elle est annulée et les articles sont remis en vente."
+                'commande.annulee_non_payee.client',
+                ['commandes' => implode(', #', $cancelledIds)],
+                ['order_id' => $cancelledIds[0]]
             );
         } catch (\Throwable $e) {
             Log::warning('[Commande] Notification d\'annulation non envoyée : '.$e->getMessage());
@@ -610,11 +611,11 @@ class OrderService
 
         foreach ($orders as $order) {
             try {
-                $notifications->send(
+                $notifications->notify(
                     $order->supplier,
-                    'payment',
-                    'Nouvelle commande reçue',
-                    "La commande #{$order->id} d'un montant de {$fmt((int) $order->subtotal)} a été payée et est en attente de préparation."
+                    'commande.nouvelle.fournisseur',
+                    ['commande' => $order->id, 'montant' => $fmt((int) $order->subtotal)],
+                    ['order_id' => $order->id]
                 );
             } catch (\Throwable $e) {
                 Log::warning('Notification fournisseur non bloquante : '.$e->getMessage());
@@ -622,11 +623,11 @@ class OrderService
         }
 
         try {
-            $notifications->send(
+            $notifications->notify(
                 $orders->first()->client,
-                'payment',
-                'Paiement commande confirmé',
-                "Votre paiement de {$fmt($amount)} pour la commande #".implode(', #', $orders->pluck('id')->all()).' est sécurisé en compte séquestre.'
+                'commande.paiement_confirme.client',
+                ['montant' => $fmt($amount), 'commandes' => implode(', #', $orders->pluck('id')->all())],
+                ['order_id' => $orders->first()->id]
             );
         } catch (\Throwable $e) {
             Log::warning('Notification client non bloquante : '.$e->getMessage());
@@ -648,18 +649,18 @@ class OrderService
         if ($nextStatus === 'prepared') {
             // Retrait direct : le client vient lui-même chercher sa commande.
             // Il reçoit le code, le fournisseur le contrôle au comptoir.
-            app(NotificationService::class)->send(
+            app(NotificationService::class)->notify(
                 $order->client,
-                'payment',
-                'Commande prête pour retrait',
-                "Votre commande #{$order->id} est prête. Code de retrait à présenter au comptoir : {$order->pickup_code}."
+                'commande.prete_retrait.client',
+                ['commande' => $order->id, 'code' => $order->pickup_code],
+                ['order_id' => $order->id]
             );
 
-            app(NotificationService::class)->send(
+            app(NotificationService::class)->notify(
                 $order->supplier,
-                'payment',
-                'Commande à remettre au client',
-                "La commande #{$order->id} attend son retrait. Code à vérifier auprès du client : {$order->pickup_code}."
+                'commande.a_remettre.fournisseur',
+                ['commande' => $order->id, 'code' => $order->pickup_code],
+                ['order_id' => $order->id]
             );
         } else {
             // Livraison : Notifier les livreurs de la zone de couverture
@@ -709,28 +710,28 @@ class OrderService
 
         // Notification Livreur : la localisation, mais pas le code. Le livreur
         // doit le demander au comptoir — c'est ce qui atteste sa présence.
-        app(NotificationService::class)->send(
+        app(NotificationService::class)->notify(
             $driver,
-            'payment',
-            'Course acceptée',
-            "Rendez-vous chez {$supplierAddress} pour récupérer la marchandise. Demandez le code de prise en charge au fournisseur."
+            'course.acceptee.livreur',
+            ['adresse_fournisseur' => $supplierAddress],
+            ['order_id' => $order->id]
         );
 
         // Notification Fournisseur : il détient le code et contrôle qui se
         // présente. Sans cela, il n'avait aucun moyen de vérifier le livreur.
-        app(NotificationService::class)->send(
+        app(NotificationService::class)->notify(
             $order->supplier,
-            'payment',
-            'Livreur en route',
-            "Un livreur vient récupérer la commande #{$order->id}. Code de prise en charge à lui communiquer après contrôle : {$order->pickup_code}."
+            'course.livreur_en_route.fournisseur',
+            ['commande' => $order->id, 'code' => $order->pickup_code],
+            ['order_id' => $order->id]
         );
 
         // Notification Client
-        app(NotificationService::class)->send(
+        app(NotificationService::class)->notify(
             $order->client,
-            'payment',
-            'Livreur en route',
-            "Le livreur {$driver->name} a accepté votre livraison et se rend chez le fournisseur."
+            'course.livreur_en_route.client',
+            ['livreur' => $driver->name],
+            ['order_id' => $order->id]
         );
 
         return $order;
@@ -778,11 +779,11 @@ class OrderService
 
                 // 3. Notification au livreur retiré
                 try {
-                    app(NotificationService::class)->send(
+                    app(NotificationService::class)->notify(
                         $previousDriver,
-                        'fraud_alert',
-                        'Course retirée',
-                        "Votre course #{$order->id} vous a été retirée pour {$reason}. Veuillez être plus réactif."
+                        'course.retiree.livreur',
+                        ['commande' => $order->id, 'motif' => $reason],
+                        ['order_id' => $order->id]
                     );
                 } catch (\Throwable $e) {
                     Log::warning(
@@ -793,11 +794,11 @@ class OrderService
 
             // 4. Notification au client
             try {
-                app(NotificationService::class)->send(
+                app(NotificationService::class)->notify(
                     $order->client,
-                    'payment',
-                    'Changement de livreur',
-                    "Un nouveau livreur est recherché pour votre commande #{$order->id}. Nous nous excusons pour le délai."
+                    'course.changement_livreur.client',
+                    ['commande' => $order->id],
+                    ['order_id' => $order->id]
                 );
             } catch (\Throwable $e) {
                 Log::warning(
@@ -807,10 +808,9 @@ class OrderService
 
             // 5. Alerte admin
             try {
-                app(NotificationService::class)->sendAdmin(
-                    'fraud_alert',
-                    'Réaffectation livreur automatique',
-                    "La commande #{$order->id} a été réaffectée (tentative {$order->driver_reassignment_count}). Livreur retiré : #{$previousDriverId} — Motif : {$reason}.",
+                app(NotificationService::class)->notifyAdmins(
+                    'course.reaffectation.admin',
+                    ['commande' => $order->id, 'tentative' => $order->driver_reassignment_count, 'livreur_id' => $previousDriverId, 'motif' => $reason],
                     ['order_id' => $order->id, 'previous_driver_id' => $previousDriverId]
                 );
             } catch (\Throwable $e) {
@@ -920,19 +920,19 @@ class OrderService
                 $this->releaseSupplierFunds($order);
 
                 // Notification Client
-                app(NotificationService::class)->send(
+                app(NotificationService::class)->notify(
                     $order->client,
-                    'payment',
-                    'Commande récupérée',
-                    "Votre commande #{$order->id} a été retirée en magasin. Merci de votre confiance !"
+                    'commande.retiree.client',
+                    ['commande' => $order->id],
+                    ['order_id' => $order->id]
                 );
 
                 // Notification Fournisseur
-                app(NotificationService::class)->send(
+                app(NotificationService::class)->notify(
                     $order->supplier,
-                    'payment',
-                    'Retrait validé',
-                    "Le retrait de la commande #{$order->id} a été validé. Votre compte a été crédité."
+                    'commande.retrait_valide.fournisseur',
+                    ['commande' => $order->id],
+                    ['order_id' => $order->id]
                 );
             } else {
                 // Prise en charge par le livreur
@@ -948,19 +948,19 @@ class OrderService
 
                 // Notification Livreur (reçoit code de réception et localisation client)
                 $clientAddress = $order->client->commune ? $order->client->commune->name : 'adresse du client';
-                app(NotificationService::class)->send(
+                app(NotificationService::class)->notify(
                     $order->driver,
-                    'payment',
-                    'Colis récupéré',
-                    "Colis récupéré. Livrez à : {$clientAddress}. Le client vous remettra son code de réception une fois le colis en main."
+                    'course.colis_recupere.livreur',
+                    ['adresse_client' => $clientAddress],
+                    ['order_id' => $order->id]
                 );
 
                 // Notification Client
-                app(NotificationService::class)->send(
+                app(NotificationService::class)->notify(
                     $order->client,
-                    'payment',
-                    'Colis récupéré par le livreur',
-                    "Le livreur {$order->driver->name} a récupéré votre colis chez le fournisseur. Code de réception secret : {$order->reception_code}."
+                    'course.colis_recupere.client',
+                    ['livreur' => $order->driver->name, 'code' => $order->reception_code],
+                    ['order_id' => $order->id]
                 );
             }
 
@@ -1044,20 +1044,20 @@ class OrderService
             ]);
 
             // Notification Fournisseur
-            app(NotificationService::class)->send(
+            app(NotificationService::class)->notify(
                 $order->supplier,
-                'payment',
-                'Litige ouvert sur la commande',
-                "Un litige a été ouvert par le client sur la commande #{$order->id} : {$reason}."
+                'commande.litige.fournisseur',
+                ['commande' => $order->id, 'motif' => $reason],
+                ['order_id' => $order->id]
             );
 
             if ($order->driver) {
                 // Notification Livreur
-                app(NotificationService::class)->send(
+                app(NotificationService::class)->notify(
                     $order->driver,
-                    'payment',
-                    'Litige ouvert sur la livraison',
-                    "Un litige a été signalé pour la livraison de la commande #{$order->id}."
+                    'commande.litige.livreur',
+                    ['commande' => $order->id],
+                    ['order_id' => $order->id]
                 );
             }
 
@@ -1213,19 +1213,19 @@ class OrderService
         if ($due === 0) {
             $this->releaseDriverFunds($order);
 
-            $notifications->send($order->client, 'payment', 'Livraison effectuée',
-                "Votre commande #{$order->id} a été livrée par {$order->driver->name}.");
-            $notifications->send($order->driver, 'payment', 'Course terminée',
-                "Montant de la course #{$order->id} : {$fmt($total)}{$bonus}. Vos gains ont été crédités.");
+            $notifications->notify($order->client, 'course.livree.client',
+                ['commande' => $order->id, 'livreur' => $order->driver->name], ['order_id' => $order->id]);
+            $notifications->notify($order->driver, 'course.terminee_creditee.livreur',
+                ['commande' => $order->id, 'montant' => $fmt($total), 'bonus' => $bonus], ['order_id' => $order->id]);
 
             return $order;
         }
 
-        $notifications->send($order->client, 'payment', 'Livraison effectuée — course à régler',
-            "Votre commande #{$order->id} a été livrée. Montant de la course : {$fmt($due)}{$bonus}. Réglez-la depuis l'application (Wave ou Orange Money).",
+        $notifications->notify($order->client, 'course.livree_a_regler.client',
+            ['commande' => $order->id, 'montant' => $fmt($due), 'bonus' => $bonus],
             ['order_id' => $order->id, 'action' => 'pay_delivery_fare']);
-        $notifications->send($order->driver, 'payment', 'Course terminée',
-            "Montant de la course #{$order->id} : {$fmt($total)}{$bonus}. Vos gains seront crédités dès le paiement du client.");
+        $notifications->notify($order->driver, 'course.terminee_attente_paiement.livreur',
+            ['commande' => $order->id, 'montant' => $fmt($total), 'bonus' => $bonus], ['order_id' => $order->id]);
 
         return $order;
     }
@@ -1388,8 +1388,8 @@ class OrderService
 
             if ($order->driver) {
                 ['net' => $net] = $this->driverShare($order->deliveryFareTotal());
-                app(NotificationService::class)->send($order->driver, 'payment', 'Course réglée',
-                    "Le client a réglé la course #{$order->id}. ".number_format($net, 0, ',', ' ').' FCFA ont été crédités sur votre portefeuille.');
+                app(NotificationService::class)->notify($order->driver, 'course.reglee.livreur',
+                    ['commande' => $order->id, 'montant' => number_format($net, 0, ',', ' ')], ['order_id' => $order->id]);
             }
 
             // Dernière course due réglée : la restriction du client tombe.
@@ -1512,12 +1512,11 @@ class OrderService
 
         foreach ($drivers as $driver) {
             try {
-                app(NotificationService::class)->send(
+                app(NotificationService::class)->notify(
                     $driver,
-                    'payment',
-                    'Course de livraison disponible',
-                    "Une nouvelle livraison de {$costFormatted} FCFA est disponible chez {$supplierName} (Commande #{$order->id}).",
-                    ['order_id' => $order->id, 'type' => 'delivery_request']
+                    'course.disponible.livreur',
+                    ['montant' => $costFormatted, 'fournisseur' => $supplierName, 'commande' => $order->id],
+                    ['order_id' => $order->id]
                 );
             } catch (\Throwable $e) {
                 Log::warning("Notification livreur échouée pour user {$driver->id}: ".$e->getMessage());

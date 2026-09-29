@@ -29,7 +29,7 @@ export function ObservabilityPanel({
     onRetryJobs,
     onFlushJobs,
 }: ObservabilityPanelProps) {
-    const { queue, payments, fraud, referent } = snapshot;
+    const { queue, payments, fraud, referent, notifications } = snapshot;
 
     return (
         <section className="mt-5 space-y-6">
@@ -159,6 +159,45 @@ export function ObservabilityPanel({
                     </tbody>
                 </DataTable>
             </Surface>
+
+            {notifications ? (
+                <Surface className="rounded-[32px] p-5 lg:p-6">
+                    <SectionTitle
+                        description={`${numberFormat.format(notifications.failed_24h)} échec(s) et ${numberFormat.format(notifications.sent_24h)} envoi(s) réussi(s) sur 24 h.`}
+                        title="Notifications push et SMS en échec"
+                    />
+                    <DataTable className="mt-5">
+                        <thead>
+                            <tr>
+                                <th>Message</th>
+                                <th>Canal</th>
+                                <th>Fournisseur</th>
+                                <th>Motif</th>
+                                <th>Date</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {notifications.recent.length === 0 ? (
+                                <tr>
+                                    <td colSpan={5}>
+                                        <EmptyState description="Aucun envoi push ou SMS en échec." title="Envois sains" />
+                                    </td>
+                                </tr>
+                            ) : (
+                                notifications.recent.map((delivery) => (
+                                    <tr key={delivery.id}>
+                                        <td className="text-xs">{delivery.event ?? '—'}</td>
+                                        <td className="text-xs">{delivery.channel === 'sms' ? 'SMS' : 'Push'}</td>
+                                        <td className="text-xs">{delivery.provider ?? '—'}</td>
+                                        <td className="text-xs text-[var(--admin-text-soft)] break-all">{delivery.reason ?? '—'}</td>
+                                        <td className="text-xs text-[var(--admin-muted)]">{delivery.created_at ? dateTimeShort(delivery.created_at) : '—'}</td>
+                                    </tr>
+                                ))
+                            )}
+                        </tbody>
+                    </DataTable>
+                </Surface>
+            ) : null}
 
             {/* 3. CENTRE DE DÉTECTION DES FRAUDES & COLLUSIONS (LOT 3) */}
             <FraudAlertsSection fraudData={fraud as any} canManage={canManage} />

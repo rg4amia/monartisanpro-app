@@ -75,7 +75,8 @@ class NotificationDeliveryTest extends TestCase
         return Http::recorded()
             ->map(fn (array $pair) => $pair[0])
             ->filter(fn (Request $request) => str_contains($request->url(), 'onesignal.com'))
-            ->map(fn (Request $request) => $request->data())
+            // Corps JSON réellement envoyé (les données partent en objet JSON).
+            ->map(fn (Request $request) => json_decode($request->body(), true))
             ->filter(fn (array $payload) => ($payload['include_aliases']['external_id'][0] ?? null) === (string) $user->id)
             ->values()
             ->all();
@@ -132,11 +133,10 @@ class NotificationDeliveryTest extends TestCase
         $this->fakeOneSignal();
         $artisan = $this->user('artisan');
 
-        app(NotificationService::class)->send(
+        app(NotificationService::class)->notify(
             $artisan,
-            'devis',
-            'Devis refusé',
-            'Le client a refusé votre devis.',
+            'devis.refuse.artisan',
+            ['mission' => 42],
             ['mission_id' => 42, 'devis_id' => 7]
         );
 
@@ -144,6 +144,7 @@ class NotificationDeliveryTest extends TestCase
         $payload = $this->oneSignalPayloadsFor($artisan)[0];
 
         $this->assertSame('devis', $payload['data']['type']);
+        $this->assertSame('devis.refuse.artisan', $payload['data']['event']);
         $this->assertSame($notification->id, $payload['data']['notification_id']);
         $this->assertSame(42, $payload['data']['mission_id']);
         $this->assertSame(7, $payload['data']['devis_id']);
@@ -161,7 +162,7 @@ class NotificationDeliveryTest extends TestCase
         app(AdminService::class)->reviewKyc($admin, $artisan, 'approuve');
 
         // Le service poussait une seconde notification, au texte différent,
-        // en plus de celle de NotificationService::send().
+        // en plus de celle de NotificationService.
         $payloads = $this->oneSignalPayloadsFor($artisan);
         $this->assertCount(1, $payloads);
         $this->assertSame('kyc', $payloads[0]['data']['type']);
@@ -172,7 +173,7 @@ class NotificationDeliveryTest extends TestCase
         $this->fakeOneSignal();
         $client = $this->user('client');
 
-        app(NotificationService::class)->send($client, 'mission', 'Mission terminée', 'Votre chantier est terminé.');
+        app(NotificationService::class)->notify($client, 'mission.demande_acceptee.client');
 
         $this->assertSame('mission', $this->oneSignalPayloadsFor($client)[0]['data']['type']);
     }

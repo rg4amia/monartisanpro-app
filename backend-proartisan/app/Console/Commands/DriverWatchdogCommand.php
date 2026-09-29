@@ -99,10 +99,9 @@ class DriverWatchdogCommand extends Command
                 $this->warn("  ⚠️ Max réaffectations atteint, escalade admin : {$label}");
 
                 try {
-                    app(NotificationService::class)->sendAdmin(
-                        'fraud_alert',
-                        'Commande sans livreur — escalade requise',
-                        "La commande #{$order->id} a atteint {$maxReassignments} réaffectations sans succès. Intervention manuelle requise.",
+                    app(NotificationService::class)->notifyAdmins(
+                        'livraison.escalade_sans_livreur.admin',
+                        ['commande' => $order->id, 'reaffectations' => $maxReassignments],
                         ['order_id' => $order->id, 'reassignment_count' => $order->driver_reassignment_count]
                     );
                 } catch (\Throwable $e) {
@@ -206,11 +205,11 @@ class DriverWatchdogCommand extends Command
             // 1. Relance Livreur par notification / SMS
             try {
                 if ($order->driver) {
-                    app(NotificationService::class)->send(
+                    app(NotificationService::class)->notify(
                         $order->driver,
-                        'delivery_alert',
-                        'Confirmation de livraison requise',
-                        "Commande #{$order->id} : votre position GPS n'a pas été actualisée depuis plus de {$timeoutMinutes} minutes. Veuillez confirmer que vous êtes en route vers le chantier."
+                        'livraison.confirmation_requise.livreur',
+                        ['commande' => $order->id, 'minutes' => $timeoutMinutes],
+                        ['order_id' => $order->id]
                     );
                 }
             } catch (\Throwable $e) {
@@ -219,10 +218,9 @@ class DriverWatchdogCommand extends Command
 
             // 2. Alerte Admin pour supervision (sans détruire le séquestre)
             try {
-                app(NotificationService::class)->sendAdmin(
-                    'delivery_stalled',
-                    'Livreur immobile en cours de livraison',
-                    "Le livreur #{$order->driver_id} ({$driverName}) avec les matériaux de la commande #{$order->id} n'a pas actualisé sa position depuis {$minutesInactive} minutes. Séquestre préservé.",
+                app(NotificationService::class)->notifyAdmins(
+                    'livraison.livreur_immobile.admin',
+                    ['livreur_id' => $order->driver_id, 'livreur' => $driverName, 'commande' => $order->id, 'minutes' => $minutesInactive],
                     [
                         'order_id' => $order->id,
                         'driver_id' => $order->driver_id,

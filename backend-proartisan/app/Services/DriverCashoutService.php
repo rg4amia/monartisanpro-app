@@ -245,11 +245,11 @@ class DriverCashoutService
             }
 
             try {
-                $this->notifications->send(
+                $this->notifications->notify(
                     $cashout->driver,
-                    'payment',
-                    'Retrait versé',
-                    'Votre retrait '.$cashout->reference.' de '.number_format($cashout->montant_net, 0, ',', ' ').' FCFA a été versé.'
+                    'retrait_livreur.verse',
+                    ['reference' => $cashout->reference, 'montant' => number_format($cashout->montant_net, 0, ',', ' ')],
+                    ['driver_cashout_id' => $cashout->id]
                 );
             } catch (\Throwable) {
                 // Notification best-effort : le versement est acquis.
@@ -288,11 +288,11 @@ class DriverCashoutService
             $this->audit->log('driver_cashout.rejected', $cashout, ['reason' => $reason], $cashout->reference, $admin);
 
             try {
-                $this->notifications->send(
+                $this->notifications->notify(
                     $cashout->driver,
-                    'payment',
-                    'Retrait refusé',
-                    "Votre demande de retrait {$cashout->reference} a été refusée : {$reason}. Le montant reste disponible sur votre portefeuille."
+                    'retrait_livreur.refuse',
+                    ['reference' => $cashout->reference, 'motif' => $reason],
+                    ['driver_cashout_id' => $cashout->id]
                 );
             } catch (\Throwable) {
             }
