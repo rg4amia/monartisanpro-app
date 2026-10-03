@@ -245,8 +245,6 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
           devis: controller.latestDevis,
           nextPendingJalon: controller.nextPendingJalon,
           nextSubmittedJalon: controller.nextSubmittedJalon,
-          onStartMission: () =>
-              controller.updateMissionStatus(mission.id, 'en_cours'),
         );
       }),
     );

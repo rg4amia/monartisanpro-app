@@ -25,12 +25,16 @@ use Illuminate\Validation\ValidationException;
 
 class LitigeService
 {
+    /** Décisions qui versent des fonds à l'artisan : soumises au seuil Référent (Règle d'or 5). */
+    private const RULINGS_PAYING_ARTISAN = ['artisan', 'mixte'];
+
     public function __construct(
         private NotificationService $notificationService,
         private WalletService $walletService,
         private PhotoService $photoService,
         private JCodeService $jCodeService,
         private PdfService $pdfService,
+        private MissionLifecycleService $missionLifecycle,
         private ?EvidenceVaultService $evidenceVaultService = null,
         private ?DoubleEntryLedgerService $doubleEntryLedgerService = null,
     ) {
@@ -87,10 +91,8 @@ class LitigeService
         }
 
         $litige = DB::transaction(function () use ($user, $mission, $data) {
-            $mission->update([
-                'status' => DisputedState::class,
-                'funds_frozen' => true,
-            ]);
+            // Le gel des fonds est posé par la transition elle-même.
+            $this->missionLifecycle->transition($mission, DisputedState::class, $user, 'Litige ouvert');
 
             return Litige::create([
                 'mission_id' => $mission->id,
@@ -381,6 +383,9 @@ class LitigeService
 
         $decision = $payload['decision'];
         $mission = $litige->mission;
+
+        $this->assertReferentVisitBeforeArtisanRuling($litige, $mission, $decision);
+
         $remainingMateriaux = $this->walletService->getMissionEscrowBalance($mission, WalletType::WALLET_MATERIAUX);
         $remainingMo = $this->walletService->getMissionEscrowBalance($mission, WalletType::WALLET_MO);
 
@@ -408,19 +413,22 @@ class LitigeService
             $resolutionReason,
             $invoicePath
         ): void {
+            // Un litige créé sans passer par l'ouverture (reprise, saisie
+            // administrative) laisse la mission dans son état précédent.
+            $this->missionLifecycle->transition($mission, DisputedState::class, $admin, "Litige en cours d'arbitrage");
+
+            // L'arbitrage répartit lui-même les fonds : la clôture n'attend pas les étapes restantes.
+            $arbitrage = ['arbitrage' => true, 'litige_id' => $litige->id, 'decision' => $decision];
+
             if ($decision === 'client') {
                 $this->walletService->refundClientFromDispute($mission, $refundMateriaux, $refundMo, $litige);
-                $mission->update([
-                    'status' => CancelledState::class,
-                    'funds_frozen' => false,
-                ]);
+                $mission->update(['funds_frozen' => false]);
+                $this->missionLifecycle->transition($mission, CancelledState::class, $admin, 'Litige arbitré en faveur du client', $arbitrage);
             } elseif ($decision === 'artisan') {
                 $this->walletService->releaseLaborEscrowToArtisan($mission, $releaseMo, $litige, true);
                 $this->walletService->releaseMaterialEscrowToArtisan($mission, $releaseMateriaux, $litige);
-                $mission->update([
-                    'status' => CompletedState::class,
-                    'funds_frozen' => false,
-                ]);
+                $mission->update(['funds_frozen' => false]);
+                $this->missionLifecycle->transition($mission, CompletedState::class, $admin, "Litige arbitré en faveur de l'artisan", $arbitrage);
             } elseif ($decision === 'mixte') {
                 $this->settleSupplierPaymentsForMission($mission);
                 $this->walletService->refundClientFromDispute($mission, $refundMateriaux, $refundMo, $litige);
@@ -430,15 +438,11 @@ class LitigeService
                     $this->walletService->releaseMaterialEscrowToArtisan($mission, $remainingMateriauxAfterRefund, $litige);
                 }
 
-                $mission->update([
-                    'status' => CompletedState::class,
-                    'funds_frozen' => false,
-                ]);
+                $mission->update(['funds_frozen' => false]);
+                $this->missionLifecycle->transition($mission, CompletedState::class, $admin, 'Litige arbitré : responsabilité partagée', $arbitrage);
             } else {
-                $mission->update([
-                    'status' => DisputedState::class,
-                    'funds_frozen' => true,
-                ]);
+                $mission->update(['funds_frozen' => true]);
+                $this->missionLifecycle->transition($mission, DisputedState::class, $admin, 'Litige maintenu');
             }
 
             $litige->update([
@@ -472,6 +476,38 @@ class LitigeService
         $this->notifyDecision($litige);
 
         return $litige->fresh(['mission.client', 'mission.artisan', 'declencheur', 'preuves.user', 'resolvedBy']);
+    }
+
+    /**
+     * Règle d'or 5 : au-delà du seuil Référent, un litige ne se tranche en
+     * faveur de l'artisan, ou en responsabilité partagée, qu'après la visite du Référent sur le chantier.
+     * Le refus inscrit la mission parmi celles que le Référent doit visiter
+     * et prévient les Référents (une seule fois).
+     */
+    private function assertReferentVisitBeforeArtisanRuling(Litige $litige, Mission $mission, string $decision): void
+    {
+        if (! in_array($decision, self::RULINGS_PAYING_ARTISAN, true)) {
+            return;
+        }
+
+        $seuil = (int) config('prosartisan.mission.referent_threshold', 2000000);
+
+        if ((int) $mission->montant_total <= $seuil || $mission->referent_validated_at !== null) {
+            return;
+        }
+
+        if (! $mission->referent_required) {
+            $mission->update(['referent_required' => true]);
+            $this->notifyReferents($litige);
+        }
+
+        throw ValidationException::withMessages([
+            'decision' => [
+                'Cette mission dépasse '.number_format($seuil, 0, ',', ' ')
+                ." FCFA : le litige ne peut être tranché en faveur de l'artisan, ni en responsabilité partagée, qu'après la visite du Référent sur le chantier. "
+                .'Les Référents ont été prévenus ; reprenez l\'arbitrage une fois la visite enregistrée.',
+            ],
+        ]);
     }
 
     private function ensureMissionParticipant(Mission $mission, User $user): void

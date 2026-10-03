@@ -13,10 +13,10 @@ use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Models\WalletTransaction;
-use App\States\Mission\CompletedState;
 use App\States\Mission\FundedLockedState;
 use App\States\Mission\InProgressState;
 use App\States\Mission\PendingApprovalState;
+use App\States\Mission\PendingFundingState;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -25,7 +25,8 @@ class WalletService
 {
     public function __construct(
         private WaveService $waveService,
-        private OrangeMoneyService $orangeMoneyService
+        private OrangeMoneyService $orangeMoneyService,
+        private MissionLifecycleService $missionLifecycle,
     ) {}
 
     /**
@@ -223,9 +224,18 @@ class WalletService
                 'montant_materiaux' => $montantMat,
                 'montant_mo' => $montantMo,
                 'ratio_materiaux' => $ratioMat,
-                'status' => 'funded_locked',
                 'payment_type' => $isHybrid ? 'hybrid' : 'total',
             ]);
+
+            // Financement : par la machine à états, qui exige un devis accepté
+            // et un paiement confirmé, et l'inscrit dans l'historique.
+            $this->missionLifecycle->transitionThrough(
+                $mission,
+                [PendingFundingState::class, FundedLockedState::class],
+                $mission->client,
+                'Acompte confirmé',
+                ['transaction_id' => $paiementTransaction->id],
+            );
 
             // Crédit du wallet_materiaux de l'artisan
             if ($montantMat > 0) {
@@ -570,55 +580,33 @@ class WalletService
             $remainingJalons = $mission->jalons()
                 ->whereIn('statut', ['en_attente', 'soumis', 'valide'])
                 ->count();
-            if ($remainingJalons === 0) {
-                if ($mission->status instanceof PendingApprovalState) {
-                    $mission->status->transitionTo(CompletedState::class);
-                } else {
-                    $mission->update(['status' => CompletedState::class]);
+            if ($mission->status instanceof FundedLockedState) {
+                $this->missionLifecycle->transition($mission, InProgressState::class, null, 'Première étape payée');
+            }
+
+            // Toutes les étapes payées : la mission attend la validation
+            // finale du client (ou la clôture automatique), elle ne se
+            // clôt plus d'elle-même (Chantier 19).
+            if ($remainingJalons === 0 && $mission->status instanceof InProgressState) {
+                $this->missionLifecycle->transition(
+                    $mission,
+                    PendingApprovalState::class,
+                    null,
+                    'Dernière étape payée',
+                    ['jalon_id' => $jalon->id],
+                );
+                $mission->update(['completion_requested_at' => now()]);
+
+                if ($mission->client) {
+                    app(NotificationService::class)->notify(
+                        $mission->client,
+                        'mission.validation_finale.client',
+                        ['mission' => $mission->id, 'heures' => max(1, (int) Setting::getValueByKey('mission_final_approval_hours', 72))],
+                        ['mission_id' => $mission->id]
+                    );
                 }
-            } elseif ($mission->status instanceof FundedLockedState) {
-                $mission->status->transitionTo(InProgressState::class);
             }
         });
-    }
-
-    /**
-     * Rembourser le client suite à un litige.
-     */
-    public function refundClient(Mission $mission): void
-    {
-        $this->refundClientFromDispute(
-            $mission,
-            $this->getMissionEscrowBalance($mission, WalletType::WALLET_MATERIAUX),
-            $this->getMissionEscrowBalance($mission, WalletType::WALLET_MO),
-        );
-
-        $mission->update([
-            'status' => 'annulee',
-            'funds_frozen' => false,
-        ]);
-    }
-
-    /**
-     * Payer l'artisan suite à un litige (débloquer les jalons restants).
-     */
-    public function payArtisan(Mission $mission): void
-    {
-        $this->releaseLaborEscrowToArtisan(
-            $mission,
-            $this->getMissionEscrowBalance($mission, WalletType::WALLET_MO),
-            null,
-            true
-        );
-        $this->releaseMaterialEscrowToArtisan(
-            $mission,
-            $this->getMissionEscrowBalance($mission, WalletType::WALLET_MATERIAUX),
-        );
-
-        $mission->update([
-            'status' => 'completed',
-            'funds_frozen' => false,
-        ]);
     }
 
     public function getMissionEscrowBalance(Mission $mission, WalletType $walletType): int
@@ -738,6 +726,77 @@ class WalletService
                         'wallet_type' => WalletType::WALLET_MO,
                         'montant' => $refundMo,
                         'metadata' => ['type' => 'litige_refund_mo'],
+                    ],
+                ],
+            );
+
+            return $payout->transaction->fresh();
+        });
+    }
+
+    /**
+     * Annulation d'une mission financée par son client (Chantier 19) : la
+     * pénalité quitte le séquestre pour la plateforme, le reste est rendu au
+     * client par le circuit des versements (débit au seul virement réussi,
+     * relance en cas d'échec — Règle d'or 74).
+     *
+     * @param  array{penalty: int, penalty_materiaux: int, penalty_mo: int, refund: int, refund_materiaux: int, refund_mo: int, penalty_rate: float}  $amounts  Montants établis par `MissionCancellationService`.
+     */
+    public function refundClientOnCancellation(Mission $mission, array $amounts): ?Transaction
+    {
+        $client = $mission->client;
+        $artisan = $mission->artisan;
+
+        return DB::transaction(function () use ($mission, $client, $artisan, $amounts) {
+            $ledger = ['mission_id' => $mission->id, 'type' => 'penalite_annulation', 'taux' => $amounts['penalty_rate']];
+
+            foreach ([[WalletType::WALLET_MO, $amounts['penalty_mo']], [WalletType::WALLET_MATERIAUX, $amounts['penalty_materiaux']]] as [$wallet, $montant]) {
+                if ($montant > 0) {
+                    $this->debit($artisan, $wallet, $montant, "Pénalité d'annulation - Mission #{$mission->id}", $ledger);
+                }
+            }
+
+            $this->creditPlatformFinancialAccount(
+                $amounts['penalty'],
+                "Pénalité d'annulation mission #{$mission->id}",
+                ['mission_id' => $mission->id, 'origine' => 'penalite_annulation'],
+            );
+
+            if ($amounts['refund'] <= 0) {
+                return null;
+            }
+
+            $payout = $this->payouts()->dispatch(
+                $client,
+                $amounts['refund_mo'] > 0 ? WalletType::WALLET_MO : WalletType::WALLET_MATERIAUX,
+                $amounts['refund'],
+                MobileMoneyPayout::CONTEXT_REMBOURSEMENT_CLIENT,
+                $this->resolveMissionProvider($mission, $client),
+                "Remboursement annulation mission #{$mission->id}",
+                [
+                    'mission_id' => $mission->id,
+                    'type' => 'remboursement',
+                    'wallet_source' => 'escrow_mission_'.$mission->id,
+                    'wallet_dest' => 'client_mobile_money_'.$client->id,
+                    'metadata' => [
+                        'origine' => 'annulation',
+                        'refund_materiaux' => $amounts['refund_materiaux'],
+                        'refund_mo' => $amounts['refund_mo'],
+                        'penalite' => $amounts['penalty'],
+                    ],
+                ],
+                ['mission_id' => $mission->id],
+                source: $artisan,
+                debits: [
+                    [
+                        'wallet_type' => WalletType::WALLET_MATERIAUX,
+                        'montant' => $amounts['refund_materiaux'],
+                        'metadata' => ['type' => 'annulation_refund_materiaux'],
+                    ],
+                    [
+                        'wallet_type' => WalletType::WALLET_MO,
+                        'montant' => $amounts['refund_mo'],
+                        'metadata' => ['type' => 'annulation_refund_mo'],
                     ],
                 ],
             );

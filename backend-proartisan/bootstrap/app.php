@@ -1,5 +1,6 @@
 <?php
 
+use App\Exceptions\MissionTransitionException;
 use App\Http\Middleware\AccountActive;
 use App\Http\Middleware\AdminOnly;
 use App\Http\Middleware\EnforceAdminIdleTimeout;
@@ -116,6 +117,19 @@ return Application::configure(basePath: dirname(__DIR__))
                     'message' => 'Ressource introuvable.',
                 ], 404);
             }
+        });
+
+        // Changement d'état de mission refusé (transition absente, garde non
+        // satisfaite) : refus métier expliqué, pas une erreur serveur.
+        $exceptions->render(function (MissionTransitionException $e, Request $request) {
+            if ($request->expectsJson() || $request->is('api/*')) {
+                return response()->json([
+                    'success' => false,
+                    'message' => $e->getMessage(),
+                ], 422);
+            }
+
+            return back()->with('error', $e->getMessage());
         });
 
         $exceptions->render(function (AuthorizationException $e, Request $request) {

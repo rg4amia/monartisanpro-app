@@ -93,7 +93,7 @@ void main() {
     });
 
     testWidgets(
-        'DevisSection et BottomActions masquent "Creer le devis" tant que l\'artisan n\'a pas accepté la demande',
+        'DevisSection et BottomActions masquent "Créer le devis" tant que l\'artisan n\'a pas accepté la demande',
         (tester) async {
       final unacceptedMission = MissionModel.fromJson({
         'id': 1,
@@ -115,7 +115,7 @@ void main() {
           devis: null,
         ),
       );
-      expect(find.text('Creer le devis'), findsNothing);
+      expect(find.text('Créer le devis'), findsNothing);
       expect(find.textContaining('En attente de votre acceptation'), findsOneWidget);
 
       // 2. BottomActions quand non accepté
@@ -127,12 +127,11 @@ void main() {
           devis: null,
           nextPendingJalon: null,
           nextSubmittedJalon: null,
-          onStartMission: () async => true,
         ),
       );
-      expect(find.text('Creer le devis'), findsNothing);
+      expect(find.text('Créer le devis'), findsNothing);
 
-      // 3. Après acceptation (statut draft / en_attente normalisé) : "Creer le devis" devient visible
+      // 3. Après acceptation (statut draft / en_attente normalisé) : "Créer le devis" devient visible
       final acceptedMission = MissionModel.fromJson({
         'id': 1,
         'client_id': 10,
@@ -152,7 +151,7 @@ void main() {
           devis: null,
         ),
       );
-      expect(find.text('Creer le devis'), findsOneWidget);
+      expect(find.text('Créer le devis'), findsOneWidget);
 
       await _pump(
         tester,
@@ -162,10 +161,9 @@ void main() {
           devis: null,
           nextPendingJalon: null,
           nextSubmittedJalon: null,
-          onStartMission: () async => true,
         ),
       );
-      expect(find.text('Creer le devis'), findsOneWidget);
+      expect(find.text('Créer le devis'), findsOneWidget);
     });
   });
 }

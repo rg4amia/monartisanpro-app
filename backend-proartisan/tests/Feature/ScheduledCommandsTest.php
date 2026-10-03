@@ -15,6 +15,8 @@ it('planifie les commandes de maintenance métier', function (string $signature)
         ->toBeTrue("« {$signature} » n'est pas planifiée dans routes/console.php");
 })->with([
     'jury:expire-overdue',
+    'missions:expire-artisan-requests',
+    'missions:auto-approve-completion',
     'prosartisan:retry-failed-payouts',
     'prosartisan:expire-unpaid-orders',
     'prosartisan:remind-unpaid-delivery-fares',

@@ -6,6 +6,7 @@ use App\Models\DriverCashout;
 use App\Models\Jalon;
 use App\Models\Litige;
 use App\Models\Mission;
+use App\Models\MissionStateTransition;
 use App\Models\Order;
 use App\Models\SupplierCashout;
 use App\Models\SupplierProduct;
@@ -272,8 +273,25 @@ class EcosystemJourneyTest extends TestCase
             $this->step("   {$jalon->montant} FCFA versés à l'artisan par Mobile Money");
         }
 
-        $this->assertSame('completed', (string) $mission->fresh()->status);
+        $this->assertSame('pending_approval', (string) $mission->fresh()->status);
         $this->assertSame(0, $this->artisanB->fresh()->wallet_mo, 'Toute la main d\'œuvre a été libérée.');
+
+        $this->step('Artisan B tente de valider lui-même la fin du chantier → refusé');
+        $this->actingAs($this->artisanB)
+            ->postJson("/api/v1/missions/{$mission->id}/approve-completion")
+            ->assertForbidden();
+
+        $this->step('Client : validation finale du chantier → mission clôturée');
+        $this->actingAs($this->client)
+            ->postJson("/api/v1/missions/{$mission->id}/approve-completion")
+            ->assertOk();
+        $this->assertSame('completed', (string) $mission->fresh()->status);
+
+        $this->step('Historique de la mission : chaque changement d\'état y figure');
+        $etats = MissionStateTransition::where('mission_id', $mission->id)->orderBy('id')->pluck('to_state')->all();
+        foreach (['pending_funding', 'funded_locked', 'in_progress', 'pending_approval', 'completed'] as $etat) {
+            $this->assertContains($etat, $etats, "L'historique ne contient pas le passage à « {$etat} ».");
+        }
 
         $this->step('Client : évaluation de l\'artisan (4 piliers)');
         $this->actingAs($this->client)->postJson('/api/v1/evaluations', [

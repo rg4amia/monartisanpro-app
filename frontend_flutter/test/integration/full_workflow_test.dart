@@ -90,7 +90,6 @@ void main() {
 
           if (missions.isNotEmpty) {
             final mission = missions.first;
-            await missionRepo.updateStatus(mission.id, 'en_cours');
 
             // V23 : fournisseurId + items sont requis
             final jcode = await jcodeRepo.createJcode(

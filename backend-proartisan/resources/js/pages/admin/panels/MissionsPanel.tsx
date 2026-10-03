@@ -21,6 +21,7 @@ import {
 } from '../shared';
 import type { AdminMission, AdminOrder, DeliveryStats, MetricItem, MissionStats, Paginated } from '../shared';
 import { DeliveriesTrackingSection } from './DeliveriesTrackingSection';
+import { MissionHistoryControl } from './MissionHistory';
 
 type MissionSubTab = 'chantiers' | 'livraisons';
 
@@ -47,6 +48,7 @@ interface MissionsPanelProps {
     renderOrderPagination: (links: Paginated<AdminOrder>['links'] | undefined) => ReactNode;
     onSelectMission: (mission: AdminMission) => void;
     onSelectOrder: (order: AdminOrder) => void;
+    canManageMissions?: boolean;
 }
 
 export function MissionsPanel({
@@ -72,6 +74,7 @@ export function MissionsPanel({
     renderOrderPagination,
     onSelectMission,
     onSelectOrder,
+    canManageMissions = false,
 }: MissionsPanelProps) {
     const filteredMissions = missionsPage?.data ?? [];
     const filteredOrders = ordersPage?.data ?? [];
@@ -297,6 +300,8 @@ export function MissionsPanel({
 
                         {renderMissionPagination(missionsPage?.links)}
                     </Surface>
+
+                    <MissionHistoryControl canRebuild={canManageMissions} />
                 </>
             ) : (
                 <>

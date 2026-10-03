@@ -238,8 +238,17 @@ class FullMissionWorkflowTest extends TestCase
         $mission->refresh();
         $artisan->refresh();
 
-        $this->assertSame('completed', (string) $mission->status);
+        // Toutes les étapes payées : la mission attend la validation finale du client.
+        $this->assertSame('pending_approval', (string) $mission->status);
         $this->assertSame(0, $artisan->wallet_mo);
+
+        $this->actingAs($client)
+            ->postJson("/api/v1/missions/{$mission->id}/approve-completion")
+            ->assertOk()
+            ->assertJsonPath('data.status', 'completed');
+
+        $mission->refresh();
+        $this->assertSame('completed', (string) $mission->status);
         $this->assertTrue($mission->jalons()->where('statut', 'paye')->count() === 2);
 
         $this->actingAs($client)

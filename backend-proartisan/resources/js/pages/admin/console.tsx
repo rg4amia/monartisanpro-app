@@ -798,6 +798,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     renderMissionPagination={(links) => renderPagination(links as any[], ['missionsPage'])}
                                     renderOrderPagination={(links) => renderPagination(links as any[], ['ordersPage'])}
                                     onSelectMission={setSelectedMissionForDetails}
+                                    canManageMissions={can(permissions, 'admin.missions.manage')}
                                     onSelectOrder={setSelectedOrderForDetails}
                                 />
                             ) : null}

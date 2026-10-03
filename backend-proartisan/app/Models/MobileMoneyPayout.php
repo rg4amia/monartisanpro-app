@@ -49,7 +49,7 @@ class MobileMoneyPayout extends Model
         self::CONTEXT_LITIGE_MO => 'Règlement de litige (main-d\'œuvre)',
         self::CONTEXT_LITIGE_MATERIAUX => 'Règlement de litige (matériaux)',
         self::CONTEXT_RETRAIT_LIVREUR => 'Retrait des gains livreur',
-        self::CONTEXT_REMBOURSEMENT_CLIENT => 'Remboursement après litige',
+        self::CONTEXT_REMBOURSEMENT_CLIENT => 'Remboursement au client (litige ou annulation)',
     ];
 
     protected $fillable = [

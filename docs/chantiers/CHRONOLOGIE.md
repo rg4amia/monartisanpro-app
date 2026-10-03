@@ -8,6 +8,9 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-10-03 | Plan | [Chantier 20 — Historiques dans chaque espace de l'application mobile](plans/2026-10-03-chantier-20-historiques-mobile.md) | en cours | — |
+| 2026-10-03 | Plan | [Chantier 19 — Cycle de vie des missions : machine à états fiable, validation finale, annulation, délai de réponse](plans/2026-10-03-chantier-19-cycle-de-vie-mission.md) | livré (contrôle manuel à faire) | — |
+| 2026-10-03 | Analyse | [Module mission : machine à états, logique métier, contrat mobile](analyses/2026-10-03-analyse-module-mission.md) | — | — |
 | 2026-10-03 | Plan | [Chantier 18 — Fermeture de session du backoffice après inactivité, et Cartographie & Territoires](plans/2026-10-03-chantier-18-session-inactivite-cartographie.md) | livré (contrôle dans le navigateur à faire) | — |
 | 2026-10-03 | Plan | [Chantier 17 — Saisie automatique du code OTP reçu par SMS](plans/2026-10-03-chantier-17-saisie-automatique-otp.md) | livré (contrôle sur appareil réel à faire) | — |
 | 2026-09-29 | Plan | [Chantier 16 — Liens Google Play et App Store pilotés depuis le backoffice](plans/2026-09-29-chantier-16-liens-applications-mobiles.md) | livré | — |

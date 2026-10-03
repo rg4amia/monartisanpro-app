@@ -2,6 +2,10 @@
 
 namespace App\States\Mission;
 
+use App\States\Mission\Transitions\ToCompletedTransition;
+use App\States\Mission\Transitions\ToDisputedTransition;
+use App\States\Mission\Transitions\ToFundedLockedTransition;
+use App\States\Mission\Transitions\ToInProgressTransition;
 use Spatie\ModelStates\State;
 use Spatie\ModelStates\StateConfig;
 
@@ -43,21 +47,30 @@ abstract class MissionState extends State
             ->allowTransition(DraftState::class, PendingArtisanAcceptanceState::class)
             ->allowTransition(PendingArtisanAcceptanceState::class, DraftState::class)
             ->allowTransition(PendingArtisanAcceptanceState::class, CancelledState::class)
-            ->allowTransition(PendingFundingState::class, FundedLockedState::class, \App\States\Mission\Transitions\ToFundedLockedTransition::class)
-            ->allowTransition(FundedLockedState::class, InProgressState::class, \App\States\Mission\Transitions\ToInProgressTransition::class)
+            ->allowTransition(PendingFundingState::class, FundedLockedState::class, ToFundedLockedTransition::class)
+            ->allowTransition(FundedLockedState::class, InProgressState::class, ToInProgressTransition::class)
             ->allowTransition(InProgressState::class, PendingApprovalState::class)
-            ->allowTransition(PendingApprovalState::class, InProgressState::class, \App\States\Mission\Transitions\ToInProgressTransition::class)   // Nouveau jalon
-            ->allowTransition(PendingApprovalState::class, CompletedState::class, \App\States\Mission\Transitions\ToCompletedTransition::class)
+            ->allowTransition(PendingApprovalState::class, InProgressState::class, ToInProgressTransition::class)   // Nouveau jalon
+            ->allowTransition(PendingApprovalState::class, CompletedState::class, ToCompletedTransition::class)
+
+            // Paiement d'acompte abandonné ou devis refusé : retour à la négociation
+            ->allowTransition(PendingFundingState::class, DraftState::class)
+
+            // Annulation par le client (Chantier 19) : sans frais avant tout
+            // paiement, avec pénalité tant que le chantier n'a pas commencé.
+            ->allowTransition(DraftState::class, CancelledState::class)
+            ->allowTransition(PendingFundingState::class, CancelledState::class)
+            ->allowTransition(FundedLockedState::class, CancelledState::class)
 
             // Transition d'urgence : tout état actif → DISPUTED
-            ->allowTransition(PendingFundingState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
-            ->allowTransition(FundedLockedState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
-            ->allowTransition(InProgressState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
-            ->allowTransition(PendingApprovalState::class, DisputedState::class, \App\States\Mission\Transitions\ToDisputedTransition::class)
+            ->allowTransition(PendingFundingState::class, DisputedState::class, ToDisputedTransition::class)
+            ->allowTransition(FundedLockedState::class, DisputedState::class, ToDisputedTransition::class)
+            ->allowTransition(InProgressState::class, DisputedState::class, ToDisputedTransition::class)
+            ->allowTransition(PendingApprovalState::class, DisputedState::class, ToDisputedTransition::class)
 
             // Reprise après litige résolu
-            ->allowTransition(DisputedState::class, InProgressState::class, \App\States\Mission\Transitions\ToInProgressTransition::class)
-            ->allowTransition(DisputedState::class, CompletedState::class, \App\States\Mission\Transitions\ToCompletedTransition::class)
+            ->allowTransition(DisputedState::class, InProgressState::class, ToInProgressTransition::class)
+            ->allowTransition(DisputedState::class, CompletedState::class, ToCompletedTransition::class)
             ->allowTransition(DisputedState::class, CancelledState::class)
 
             // Transitions d'idempotence (soi-même)

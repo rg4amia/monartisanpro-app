@@ -96,16 +96,6 @@ void main() {
       }
     });
 
-    test('should update mission status', () async {
-      try {
-        await missionRepository.updateStatus(1, 'en_cours');
-        // Si pas d'exception, le test passe
-        expect(true, true);
-      } on DioException catch (e) {
-        expect(e.response?.statusCode, isIn([401, 404, 422]));
-      }
-    });
-
     test('should get mission jalons', () async {
       try {
         final jalons = await missionRepository.getJalons(1);

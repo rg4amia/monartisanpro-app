@@ -2,40 +2,52 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\MissionActionException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Mission\CreateMissionRequest;
 use App\Http\Resources\MissionResource;
 use App\Models\Mission;
-use App\Models\User;
-use App\Services\Admin\AdminActivityLogger;
 use App\Services\AiMonitoringService;
 use App\Services\GeminiService;
+use App\Services\MissionCancellationService;
+use App\Services\MissionHistoryService;
 use App\Services\MissionService;
-use App\Services\NotificationService;
-use App\States\Mission\CancelledState;
-use App\States\Mission\CompletedState;
-use App\States\Mission\DisputedState;
-use App\States\Mission\DraftState;
-use App\States\Mission\FundedLockedState;
-use App\States\Mission\InProgressState;
-use App\States\Mission\MissionState;
-use App\States\Mission\PendingApprovalState;
-use App\States\Mission\PendingArtisanAcceptanceState;
-use App\States\Mission\PendingFundingState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Log;
+use Illuminate\Validation\Rule;
 use Symfony\Component\HttpKernel\Exception\HttpExceptionInterface;
 
 class MissionController extends Controller
 {
+    private const RELATIONS = ['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade', 'interventionType'];
+
     public function __construct(
         private MissionService $missionService,
-        private NotificationService $notificationService,
-        private AdminActivityLogger $audit,
+        private MissionCancellationService $cancellations,
         private GeminiService $geminiService,
     ) {}
+
+    /**
+     * Exécute une action métier et traduit son refus en réponse JSON.
+     *
+     * @param  \Closure(): Mission  $action
+     */
+    private function respond(\Closure $action, string $message): JsonResponse
+    {
+        try {
+            $mission = $action();
+        } catch (MissionActionException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], $e->status);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => $message,
+            'data' => new MissionResource($mission->load(self::RELATIONS)),
+        ]);
+    }
 
     /**
      * Liste des missions de l'utilisateur connecté.
@@ -48,7 +60,7 @@ class MissionController extends Controller
         $query = match ($user->role) {
             'client' => Mission::where('client_id', $user->id),
             'artisan' => Mission::where('artisan_id', $user->id),
-            default => Mission::where('client_id', $user->id)->orWhere('artisan_id', $user->id),
+            default => Mission::where(fn ($q) => $q->where('client_id', $user->id)->orWhere('artisan_id', $user->id)),
         };
 
         if ($status) {
@@ -117,6 +129,8 @@ class MissionController extends Controller
                 ], 403);
             }
 
+            // Coordonnées de paiement : celles que le client fournit, sinon son
+            // numéro de compte (comportement couvert par MobileMoneyValidationTest).
             try {
                 if ($request->filled('payment_phone')) {
                     $user->update([
@@ -142,14 +156,17 @@ class MissionController extends Controller
         } catch (HttpExceptionInterface $e) {
             throw $e;
         } catch (\Throwable $e) {
+            // Ni le contenu de la demande (adresse, numéro de paiement) dans le
+            // journal, ni le message interne dans la réponse.
             Log::error('Erreur lors de la création de la mission: '.$e->getMessage(), [
+                'user_id' => $request->user()?->id,
+                'exception' => $e::class,
                 'trace' => $e->getTraceAsString(),
-                'payload' => $request->all(),
             ]);
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de la création: '.$e->getMessage(),
+                'message' => 'La demande n\'a pas pu être enregistrée. Veuillez réessayer dans quelques instants.',
             ], 500);
         }
     }
@@ -208,17 +225,9 @@ class MissionController extends Controller
 
         // La position exacte du client n'est révélée à l'artisan qu'une fois la
         // mission financée (séquestre constitué) — cohérent avec MissionResource.
-        $paidStatuses = [
-            'funded_locked', 'financee',
-            'in_progress', 'en_cours',
-            'pending_approval',
-            'completed', 'terminee',
-            'disputed', 'litige',
-        ];
         $revealClient = $user->role === 'admin'
             || $user->id === $mission->client_id
-            || ($user->id === $mission->artisan_id
-                && in_array((string) $mission->status, $paidStatuses, true));
+            || ($user->id === $mission->artisan_id && $mission->isFunded());
 
         $mission->load('client');
 
@@ -360,7 +369,7 @@ class MissionController extends Controller
     }
 
     /**
-     * Met à jour le statut d'une mission.
+     * Force l'état d'une mission (administrateur uniquement).
      */
     public function updateStatus(Request $request, Mission $mission): JsonResponse
     {
@@ -376,52 +385,16 @@ class MissionController extends Controller
             ], 403);
         }
 
-        if ($mission->hasPendingDevis()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cette mission a un devis en cours d\'examen et ne peut pas être modifiée.',
-            ], 422);
-        }
-
         $data = $request->validate([
-            'status' => [
-                'required',
-                'in:en_attente,financee,en_cours,terminee,litige,annulee,draft,pending_funding,funded_locked,in_progress,pending_approval,completed,disputed,cancelled',
-            ],
+            'status' => ['required', Rule::in(array_keys(MissionService::FORCEABLE_STATES))],
             'reason' => ['required', 'string', 'min:10', 'max:500'],
         ]);
 
-        $previousStatus = (string) $mission->status;
-        $status = $data['status'];
-        $stateClass = match ($status) {
-            'draft', 'en_attente' => DraftState::class,
-            'pending_funding' => PendingFundingState::class,
-            'funded_locked', 'financee' => FundedLockedState::class,
-            'in_progress', 'en_cours' => InProgressState::class,
-            'pending_approval' => PendingApprovalState::class,
-            'completed', 'terminee' => CompletedState::class,
-            'disputed', 'litige' => DisputedState::class,
-            'cancelled', 'annulee' => CancelledState::class,
-            default => $status,
-        };
-
-        $mission->status->transitionTo($stateClass);
-
-        $this->audit->log(
-            'mission.status.forced',
-            $mission,
-            [
-                'before' => $previousStatus,
-                'after' => (string) $mission->fresh()->status,
-                'reason' => $data['reason'],
-            ],
-            actor: $user,
+        // Une transition refusée par la machine à états répond 422 (bootstrap/app.php).
+        return $this->respond(
+            fn () => $this->missionService->forceStatus($mission, $data['status'], $user, $data['reason']),
+            'Statut de la mission mis à jour.',
         );
-
-        return response()->json([
-            'success' => true,
-            'data' => new MissionResource($mission->fresh()),
-        ]);
     }
 
     /**
@@ -429,50 +402,10 @@ class MissionController extends Controller
      */
     public function acceptRequest(Request $request, Mission $mission): JsonResponse
     {
-        if ($mission->hasPendingDevis()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cette mission a un devis en cours d\'examen et ne peut pas être traitée.',
-            ], 422);
-        }
-
-        $user = $request->user();
-
-        if (! $user->isKycActif()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Votre KYC doit être validé pour accepter cette mission.',
-            ], 403);
-        }
-
-        if ((int) $mission->artisan_id !== (int) $user->id) {
-            return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
-        }
-
-        if (! $mission->status instanceof PendingArtisanAcceptanceState) {
-            return response()->json(['success' => false, 'message' => 'Statut invalide.'], 400);
-        }
-
-        $mission->update(['artisan_rejected_at' => null]);
-        $mission->status->transitionTo(DraftState::class);
-
-        if ($mission->client) {
-            $this->notificationService->notify(
-                $mission->client,
-                'mission.demande_acceptee.client',
-                [],
-                ['mission_id' => $mission->id]
-            );
-        }
-
-        $mission->refresh();
-        $mission->load(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade', 'interventionType']);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Demande acceptée.',
-            'data' => new MissionResource($mission),
-        ]);
+        return $this->respond(
+            fn () => $this->missionService->acceptRequest($mission, $request->user()),
+            'Demande acceptée.',
+        );
     }
 
     /**
@@ -480,60 +413,10 @@ class MissionController extends Controller
      */
     public function rejectRequest(Request $request, Mission $mission): JsonResponse
     {
-        if ($mission->hasPendingDevis()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cette mission a un devis en cours d\'examen et ne peut pas être traitée.',
-            ], 422);
-        }
-
-        $user = $request->user();
-
-        if ((int) $mission->artisan_id !== (int) $user->id) {
-            return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
-        }
-
-        if (! $mission->status instanceof PendingArtisanAcceptanceState) {
-            return response()->json(['success' => false, 'message' => 'Statut invalide.'], 400);
-        }
-
-        // Éviter les conflits/litiges si un paiement est en cours ou déjà effectué
-        $hasActiveTransaction = $mission->transactions()
-            ->whereIn('statut', ['en_attente', 'confirme'])
-            ->exists();
-
-        if ($hasActiveTransaction) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Impossible de refuser la demande : un paiement est en cours d\'initiation ou a déjà été validé.',
-            ], 400);
-        }
-
-        $client = $mission->client;
-
-        $mission->update([
-            'artisan_id' => null,
-            'artisan_rejected_at' => now(),
-        ]);
-        $mission->status->transitionTo(DraftState::class);
-
-        if ($client) {
-            $this->notificationService->notify(
-                $client,
-                'mission.demande_refusee.client',
-                [],
-                ['mission_id' => $mission->id]
-            );
-        }
-
-        $mission->refresh();
-        $mission->load(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade', 'interventionType']);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Demande refusée, mission remise en recherche d\'artisan.',
-            'data' => new MissionResource($mission),
-        ]);
+        return $this->respond(
+            fn () => $this->missionService->rejectRequest($mission, $request->user()),
+            'Demande refusée, mission remise en recherche d\'artisan.',
+        );
     }
 
     /**
@@ -541,77 +424,64 @@ class MissionController extends Controller
      */
     public function assignArtisan(Request $request, Mission $mission): JsonResponse
     {
-        $user = $request->user();
-
-        if ((int) $mission->client_id !== (int) $user->id) {
+        // La propriété passe avant la validation : un tiers reçoit 403, pas le détail des champs.
+        if ((int) $mission->client_id !== (int) $request->user()->id) {
             return response()->json(['success' => false, 'message' => 'Accès refusé.'], 403);
-        }
-
-        if (! ($mission->status instanceof DraftState || $mission->status instanceof PendingArtisanAcceptanceState)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Impossible de modifier l\'artisan pour une mission déjà financée ou en cours.',
-            ], 400);
-        }
-
-        if ($mission->hasPendingDevis()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Cette mission a un devis en cours d\'examen et ne peut pas être réassignée.',
-            ], 422);
         }
 
         $validated = $request->validate([
             'artisan_id' => ['required', 'integer', 'exists:users,id'],
         ]);
 
-        $artisan = User::findOrFail($validated['artisan_id']);
-
-        if ($artisan->role !== 'artisan') {
-            return response()->json([
-                'success' => false,
-                'message' => 'L\'utilisateur sélectionné n\'est pas un artisan.',
-            ], 422);
-        }
-
-        if (! $artisan->isKycActif()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Le profil de cet artisan n\'est pas encore validé.',
-            ], 422);
-        }
-
-        $mission->update([
-            'artisan_id' => $artisan->id,
-            'artisan_rejected_at' => null,
-        ]);
-
-        if ($mission->status instanceof DraftState) {
-            $mission->status->transitionTo(PendingArtisanAcceptanceState::class);
-        }
-
-        $clientName = $user->name ?? 'Client';
-        $this->notificationService->notify(
-            $artisan,
-            'mission.demande_devis.artisan',
-            ['client' => $clientName],
-            ['mission_id' => $mission->id]
+        return $this->respond(
+            fn () => $this->missionService->assignArtisan($mission, $request->user(), (int) $validated['artisan_id']),
+            'Demande de devis transmise au nouvel artisan.',
         );
+    }
 
-        $mission->refresh();
-        $mission->load(['client', 'artisan', 'jalons', 'requestedSector', 'requestedTrade', 'interventionType']);
+    /**
+     * Le client valide la fin du chantier (Chantier 19).
+     */
+    public function approveCompletion(Request $request, Mission $mission): JsonResponse
+    {
+        return $this->respond(
+            fn () => $this->missionService->approveCompletion($mission, $request->user()),
+            'Fin du chantier validée. La mission est clôturée.',
+        );
+    }
 
-        return response()->json([
-            'success' => true,
-            'message' => 'Demande de devis transmise au nouvel artisan.',
-            'data' => new MissionResource($mission),
-        ]);
+    /**
+     * Ce que coûterait l'annulation : séquestre, pénalité, remboursement,
+     * calculés par le serveur.
+     */
+    public function cancellationPreview(Request $request, Mission $mission): JsonResponse
+    {
+        try {
+            $preview = $this->cancellations->preview($mission, $request->user());
+        } catch (MissionActionException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], $e->status);
+        }
+
+        return response()->json(['success' => true, 'data' => $preview]);
+    }
+
+    /**
+     * Le client annule sa mission.
+     */
+    public function cancel(Request $request, Mission $mission): JsonResponse
+    {
+        $data = $request->validate(['reason' => ['nullable', 'string', 'max:255']]);
+
+        return $this->respond(
+            fn () => $this->cancellations->cancel($mission, $request->user(), $data['reason'] ?? null),
+            'Mission annulée.',
+        );
     }
 
     /**
      * Historique chronologique et inaltérable des transitions d'états de la mission (Chantier 13).
      */
-    public function stateHistory(Request $request, Mission $mission): JsonResponse
+    public function stateHistory(Request $request, Mission $mission, MissionHistoryService $history): JsonResponse
     {
         $user = $request->user();
 
@@ -623,35 +493,9 @@ class MissionController extends Controller
             ], 403);
         }
 
-        $transitions = $mission->stateTransitions()
-            ->with('user:id,name,phone,role')
-            ->get()
-            ->map(function ($t) {
-                return [
-                    'id' => $t->id,
-                    'from_state' => $t->from_state,
-                    'from_state_label' => MissionState::labelFor($t->from_state),
-                    'to_state' => $t->to_state,
-                    'to_state_label' => MissionState::labelFor($t->to_state),
-                    'user' => $t->user ? [
-                        'id' => $t->user->id,
-                        'name' => $t->user->name,
-                        'role' => $t->user->role,
-                    ] : null,
-                    'reason' => $t->reason,
-                    'metadata' => $t->metadata_json,
-                    'transitioned_at' => $t->created_at->toIso8601String(),
-                ];
-            });
-
         return response()->json([
             'success' => true,
-            'data' => [
-                'mission_id' => $mission->id,
-                'current_state' => $mission->status->getValue(),
-                'current_state_label' => MissionState::labelFor($mission->status->getValue()),
-                'transitions' => $transitions,
-            ],
+            'data' => $history->timeline($mission),
         ]);
     }
 }

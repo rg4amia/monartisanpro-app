@@ -247,6 +247,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/missions/{mission}/accept-request', [MissionController::class, 'acceptRequest']);
         Route::post('/missions/{mission}/reject-request', [MissionController::class, 'rejectRequest']);
         Route::post('/missions/{mission}/assign-artisan', [MissionController::class, 'assignArtisan'])->middleware('kyc.verified');
+        Route::post('/missions/{mission}/approve-completion', [MissionController::class, 'approveCompletion']);
+        Route::get('/missions/{mission}/cancellation-preview', [MissionController::class, 'cancellationPreview']);
+        Route::post('/missions/{mission}/cancel', [MissionController::class, 'cancel']);
         Route::get('/referent/missions', [ReferentController::class, 'index'])->middleware('kyc.verified');
         Route::post('/missions/{mission}/referent-validate', [ReferentController::class, 'validateMission'])->middleware(['can:mission.referent-validate', 'kyc.verified']);
 

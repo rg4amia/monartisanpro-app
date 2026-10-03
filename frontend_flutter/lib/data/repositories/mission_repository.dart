@@ -9,6 +9,7 @@ import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/network/sync_service.dart';
 import '../../modules/services/models/intervention_type_model.dart';
+import '../models/cancellation_preview.dart';
 import '../models/jalon_model.dart';
 import '../models/mission_model.dart';
 import '../models/mission_site_map.dart';
@@ -261,8 +262,7 @@ class MissionRepository {
     final Map<String, dynamic> formMap = {
       if (description != null && description.isNotEmpty)
         'description': description,
-      if (category != null && category.isNotEmpty)
-        'category': category,
+      if (category != null && category.isNotEmpty) 'category': category,
     };
 
     if (photoPaths != null && photoPaths.isNotEmpty) {
@@ -300,39 +300,6 @@ class MissionRepository {
     return {};
   }
 
-  /// Met à jour le statut d'une mission
-  Future<void> updateStatus(int id, String status) async {
-    try {
-      await _client
-          .put(ApiEndpoints.missionStatus(id), data: {'status': status});
-    } on DioException catch (e) {
-      if (e.type == DioExceptionType.connectionTimeout ||
-          e.type == DioExceptionType.receiveTimeout ||
-          e.type == DioExceptionType.connectionError) {
-        final syncService = Get.find<SyncService>();
-        await syncService.enqueueRequest(
-          'PUT',
-          ApiEndpoints.missionStatus(id),
-          data: {'status': status},
-        );
-
-        // Mettre à jour localement la mission en cache en attendant la synchro
-        final cached = _cache.getCachedMission(id, ignoreExpiration: true);
-        if (cached != null) {
-          // Astuce : on modifie le JSON et on recache (simplification)
-          final json = cached.toJson();
-          json['status'] = status;
-          await _cache.cacheMission(MissionModel.fromJson(json));
-          await _cache.invalidate(
-            'all',
-          ); // Pour forcer la vue liste à se rafraîchir localement
-        }
-      } else {
-        rethrow;
-      }
-    }
-  }
-
   /// Artisan accepte une demande de devis directe
   Future<MissionModel> acceptRequest(int missionId) async {
     final res = await _client.post('/missions/$missionId/accept-request');
@@ -360,6 +327,46 @@ class MissionRepository {
   }
 
   /// Client assigne ou réassigne un artisan pour une demande de devis
+  /// Le client valide la fin du chantier : la mission est clôturée.
+  Future<MissionModel> approveCompletion(int missionId) async {
+    final res =
+        await _client.post(ApiEndpoints.missionApproveCompletion(missionId));
+    return MissionModel.fromJson(_missionPayload(res.data));
+  }
+
+  /// Ce que coûterait l'annulation (séquestre, pénalité, remboursement),
+  /// calculé par le serveur.
+  Future<CancellationPreview> cancellationPreview(int missionId) async {
+    final res =
+        await _client.get(ApiEndpoints.missionCancellationPreview(missionId));
+    final body = readMap(res.data);
+    final data = readMap(body?['data']);
+    if (data == null) {
+      throw const FormatException('Réponse d\'annulation illisible.');
+    }
+    return CancellationPreview.fromJson(data);
+  }
+
+  /// Le client annule sa mission.
+  Future<MissionModel> cancel(int missionId, {String? reason}) async {
+    final res = await _client.post(
+      ApiEndpoints.missionCancel(missionId),
+      data: {
+        if (reason != null && reason.trim().isNotEmpty) 'reason': reason.trim(),
+      },
+    );
+    return MissionModel.fromJson(_missionPayload(res.data));
+  }
+
+  Map<String, dynamic> _missionPayload(dynamic body) {
+    final map = readMap(body);
+    final data = readMap(map?['data']) ?? map;
+    if (data == null) {
+      throw const FormatException('Réponse de mission illisible.');
+    }
+    return data;
+  }
+
   Future<MissionModel> assignArtisan(int missionId, int artisanId) async {
     final res = await _client.post(
       '/missions/$missionId/assign-artisan',

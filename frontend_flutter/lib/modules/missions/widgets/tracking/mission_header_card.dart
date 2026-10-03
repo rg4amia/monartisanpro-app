@@ -38,13 +38,14 @@ class MissionHeaderCard extends StatelessWidget {
           Row(
             children: [
               StatusPill(
-                label: Formatters.missionStatus(mission.status),
+                label: mission.statusLabel ??
+                    Formatters.missionStatus(mission.status),
                 color: statusColor,
               ),
               const SizedBox(width: 8),
               if (mission.needsReferent)
                 const StatusPill(
-                  label: 'Referent obligatoire',
+                  label: 'Référent obligatoire',
                   color: AppColors.accent,
                 ),
               const Spacer(),

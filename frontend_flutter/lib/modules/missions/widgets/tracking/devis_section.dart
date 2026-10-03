@@ -87,7 +87,7 @@ class _EmptyDevis extends StatelessWidget {
           ElevatedButton.icon(
             onPressed: () => openDevisCreation(mission),
             icon: const Icon(Icons.receipt_long_outlined, size: 18),
-            label: const Text('Creer le devis'),
+            label: const Text('Créer le devis'),
             style: ElevatedButton.styleFrom(
               backgroundColor: AppColors.accent,
               foregroundColor: Colors.white,

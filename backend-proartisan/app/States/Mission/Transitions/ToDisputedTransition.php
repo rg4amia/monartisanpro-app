@@ -2,9 +2,9 @@
 
 namespace App\States\Mission\Transitions;
 
+use App\Exceptions\MissionTransitionException;
 use App\States\Mission\CancelledState;
 use App\States\Mission\CompletedState;
-use DomainException;
 use Spatie\ModelStates\DefaultTransition;
 
 class ToDisputedTransition extends DefaultTransition
@@ -14,11 +14,11 @@ class ToDisputedTransition extends DefaultTransition
         $mission = $this->model;
 
         if ($mission->status instanceof CompletedState) {
-            throw new DomainException("Impossible de placer en litige une mission déjà clôturée.");
+            throw new MissionTransitionException('Impossible de placer en litige une mission déjà clôturée.');
         }
 
         if ($mission->status instanceof CancelledState) {
-            throw new DomainException("Impossible de placer en litige une mission déjà annulée.");
+            throw new MissionTransitionException('Impossible de placer en litige une mission déjà annulée.');
         }
 
         // Verrouillage automatique des fonds sous séquestre

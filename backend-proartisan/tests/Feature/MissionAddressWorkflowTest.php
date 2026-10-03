@@ -8,6 +8,7 @@ use App\Models\User;
 use App\States\Mission\FundedLockedState;
 use App\States\Mission\PendingFundingState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\MissionFunding;
 use Tests\TestCase;
 
 class MissionAddressWorkflowTest extends TestCase
@@ -196,6 +197,7 @@ class MissionAddressWorkflowTest extends TestCase
         $clientResponse->assertJsonPath('data.clientAddress', 'Boulevard Mitterrand, Cocody');
 
         // Passage au statut financé via pending_funding
+        MissionFunding::prove($mission);
         $mission->status->transitionTo(PendingFundingState::class);
         $mission->status->transitionTo(FundedLockedState::class);
 

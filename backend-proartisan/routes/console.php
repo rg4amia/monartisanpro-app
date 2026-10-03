@@ -1,9 +1,11 @@
 <?php
 
 use App\Console\Commands\AdminHealthCheckCommand;
+use App\Console\Commands\AutoApproveMissionCompletionCommand;
 use App\Console\Commands\AutoReleaseJalonsCommand;
 use App\Console\Commands\DecayScoreCommand;
 use App\Console\Commands\DriverWatchdogCommand;
+use App\Console\Commands\ExpireArtisanRequestsCommand;
 use App\Console\Commands\ExpireJuryReviewsCommand;
 use App\Console\Commands\ExpireRecruitmentOffersCommand;
 use App\Console\Commands\ExpireUnpaidOrdersCommand;
@@ -76,6 +78,20 @@ Schedule::command(ExpireJuryReviewsCommand::class)
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/jury-expire-overdue.log'));
+
+// Chantier 19 — demandes de devis sans réponse de l'artisan (relance à mi-délai, retrait à l'échéance)
+Schedule::command(ExpireArtisanRequestsCommand::class)
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/missions-expire-artisan-requests.log'));
+
+// Chantier 19 — clôture automatique des missions sans validation finale du client
+Schedule::command(AutoApproveMissionCompletionCommand::class)
+    ->hourly()
+    ->withoutOverlapping()
+    ->runInBackground()
+    ->appendOutputTo(storage_path('logs/missions-auto-approve-completion.log'));
 
 // Module Recrutement — clôture automatique des offres expirées
 Schedule::command(ExpireRecruitmentOffersCommand::class)

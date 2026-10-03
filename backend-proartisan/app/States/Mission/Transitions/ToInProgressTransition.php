@@ -2,7 +2,7 @@
 
 namespace App\States\Mission\Transitions;
 
-use DomainException;
+use App\Exceptions\MissionTransitionException;
 use Spatie\ModelStates\DefaultTransition;
 
 class ToInProgressTransition extends DefaultTransition
@@ -12,7 +12,7 @@ class ToInProgressTransition extends DefaultTransition
         $mission = $this->model;
 
         if ($mission->funds_frozen) {
-            throw new DomainException("Impossible de passer la mission en cours : les fonds sont actuellement gelés.");
+            throw new MissionTransitionException('Impossible de passer la mission en cours : les fonds sont actuellement gelés.');
         }
 
         return parent::handle();

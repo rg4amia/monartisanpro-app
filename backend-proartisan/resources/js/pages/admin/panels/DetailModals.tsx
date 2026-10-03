@@ -15,6 +15,7 @@ import {
     transactionTypeLabels,
 } from '../shared';
 import type { AdminMission, AdminOrder, AdminTransaction, ArtisanScoreItem, ScoreLedgerEntryItem } from '../shared';
+import { MissionStateHistory } from './MissionHistory';
 
 function CloseButton({ onClose }: { onClose: () => void }) {
     return (
@@ -188,6 +189,8 @@ export function MissionDetailModal({
                             )}
                         </div>
                     </div>
+
+                    <MissionStateHistory missionId={mission.id} />
 
                     <div className="space-y-2.5">
                         <h3 className="text-sm font-bold text-[var(--admin-text)] uppercase tracking-wider">Historique des Jalons</h3>

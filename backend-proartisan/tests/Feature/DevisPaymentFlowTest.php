@@ -70,7 +70,8 @@ class DevisPaymentFlowTest extends TestCase
         $transaction = Transaction::findOrFail($transactionId);
 
         $this->assertTrue($transaction->statut->isSuccessful());
-        $this->assertSame('draft', (string) $mission->fresh()->status);
+        // Paiement de l'acompte initié : la mission attend son financement.
+        $this->assertSame('pending_funding', (string) $mission->fresh()->status);
         $this->assertSame('soumis', $devis->fresh()->statut);
         $this->assertSame(0, $artisan->fresh()->wallet_materiaux);
         $this->assertSame(0, $artisan->fresh()->wallet_mo);

@@ -6,7 +6,6 @@ use App\Models\Jalon;
 use App\Models\Mission;
 use App\Models\MissionStateTransition;
 use App\Models\User;
-use App\States\Mission\CancelledState;
 use App\States\Mission\CompletedState;
 use App\States\Mission\DisputedState;
 use App\States\Mission\DraftState;
@@ -16,6 +15,7 @@ use App\States\Mission\PendingApprovalState;
 use App\States\Mission\PendingFundingState;
 use DomainException;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Support\MissionFunding;
 use Tests\TestCase;
 
 class Chantier13MissionFsmGuardsTest extends TestCase
@@ -23,6 +23,7 @@ class Chantier13MissionFsmGuardsTest extends TestCase
     use RefreshDatabase;
 
     private User $client;
+
     private User $artisan;
 
     protected function setUp(): void
@@ -75,7 +76,7 @@ class Chantier13MissionFsmGuardsTest extends TestCase
         ]);
 
         $this->expectException(DomainException::class);
-        $this->expectExceptionMessage('reste(nt) non validé(s) ou impayé(s)');
+        $this->expectExceptionMessage('reste(nt) non validée(s) ou impayée(s)');
 
         $mission->status->transitionTo(CompletedState::class);
     }
@@ -209,6 +210,9 @@ class Chantier13MissionFsmGuardsTest extends TestCase
             'montant_materiaux' => 30000,
             'ratio_materiaux' => 0.30,
         ]);
+
+        // Le financement exige un devis accepté et un paiement confirmé.
+        MissionFunding::prove($mission);
 
         // Transition 1 : Draft -> PendingFunding
         $mission->status->transitionTo(PendingFundingState::class);

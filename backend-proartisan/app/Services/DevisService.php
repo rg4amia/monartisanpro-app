@@ -17,6 +17,7 @@ use App\States\Mission\FundedLockedState;
 use App\States\Mission\InProgressState;
 use App\States\Mission\PendingApprovalState;
 use App\States\Mission\PendingArtisanAcceptanceState;
+use App\States\Mission\PendingFundingState;
 use Illuminate\Support\Facades\DB;
 
 class DevisService
@@ -24,6 +25,7 @@ class DevisService
     public function __construct(
         private WalletService $walletService,
         private NotificationService $notificationService,
+        private MissionLifecycleService $missionLifecycle,
     ) {}
 
     /**
@@ -204,7 +206,7 @@ class DevisService
         }
 
         if ($mission->status instanceof PendingArtisanAcceptanceState) {
-            $mission->status->transitionTo(DraftState::class);
+            $this->missionLifecycle->transition($mission, DraftState::class, $artisan, 'Demande acceptée par la rédaction du devis');
             $mission->refresh();
         }
 
@@ -379,6 +381,11 @@ class DevisService
 
         if ($devis->mission) {
             $devis->mission->update(['artisan_id' => null]);
+
+            // Un paiement d'acompte avait pu être initié : la mission revient à la négociation.
+            if ($devis->mission->status instanceof PendingFundingState) {
+                $this->missionLifecycle->transition($devis->mission, DraftState::class, $devis->mission->client, 'Devis refusé');
+            }
         }
 
         $this->notificationService->notify(

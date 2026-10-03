@@ -2,6 +2,9 @@
 
 namespace App\Http\Resources;
 
+use App\Models\Setting;
+use App\States\Mission\MissionState;
+use Carbon\CarbonInterface;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -28,6 +31,12 @@ class MissionResource extends JsonResource
             'unreadMessagesCount' => $this->whenCounted('unread_messages_count'),
             'photos' => $this->photos_json ?? [],
             'status' => (string) $this->status,
+            'statusLabel' => MissionState::labelFor((string) $this->status),
+            'artisanResponseDeadline' => $this->artisanResponseDeadline()?->toIso8601String(),
+            'finalApprovalDeadline' => $this->finalApprovalDeadline()?->toIso8601String(),
+            'cancelledAt' => $this->cancelled_at?->toIso8601String(),
+            'cancellationPenalty' => $this->cancellation_penalty,
+            'cancellationRefund' => $this->cancellation_refund,
             'statusGemini' => $this->mapMissionStatusToGemini($this->status),
             'geminiCategory' => $this->gemini_category,
             'geminiUrgency' => $this->gemini_urgency,
@@ -87,15 +96,11 @@ class MissionResource extends JsonResource
                 'materiaux' => $this->montant_materiaux,
                 'mo' => $this->montant_mo,
             ],
+            // Montants réels uniquement : les frais de plateforme, jamais calculés
+            // ici, ne sont plus renvoyés à zéro (Règle d'or 29).
             'financials' => [
-                'tokenCode' => null,
                 'tokenAmount' => $this->montant_materiaux,
                 'laborCost' => $this->montant_mo,
-                'platformFeesBreakdown' => [
-                    'labor' => 0,
-                    'material' => 0,
-                    'delivery' => 0,
-                ],
             ],
             'mention' => $this->hasFlag('pending_devis_count', fn () => $this->hasPendingDevis())
                 ? 'En attente de validation du devis'
@@ -136,6 +141,7 @@ class MissionResource extends JsonResource
             'pending_funding' => 'sent',
             'funded_locked', 'financee' => 'funded',
             'in_progress', 'en_cours' => 'work_done',
+            'pending_approval' => 'pending_approval',
             'completed', 'terminee' => 'completed',
             'disputed', 'litige' => 'disputed',
             'cancelled', 'annulee' => 'cancelled',
@@ -157,11 +163,36 @@ class MissionResource extends JsonResource
         $statusStr = (string) $this->status;
 
         return match ($statusStr) {
-            'funded_locked', 'financee', 'in_progress', 'en_cours', 'completed', 'terminee' => 'funded',
-            'disputed', 'litige' => $this->funds_frozen ? 'blocked' : 'funded',
-            'cancelled', 'annulee' => 'refunded',
+            'funded_locked', 'in_progress', 'pending_approval', 'completed' => 'funded',
+            'disputed' => $this->resource->isFunded() ? ($this->funds_frozen ? 'blocked' : 'funded') : 'pending',
+            // « Remboursée » seulement si un séquestre avait été constitué.
+            'cancelled' => (int) $this->montant_total > 0 ? 'refunded' : 'cancelled',
             default => 'pending',
         };
+    }
+
+    /**
+     * Échéance de réponse de l'artisan à la demande de devis.
+     */
+    private function artisanResponseDeadline(): ?CarbonInterface
+    {
+        if ((string) $this->status !== 'pending_artisan_acceptance' || ! $this->artisan_assigned_at) {
+            return null;
+        }
+
+        return $this->artisan_assigned_at->copy()->addHours(max(1, (int) Setting::getValueByKey('mission_artisan_response_hours', 24)));
+    }
+
+    /**
+     * Date de clôture automatique faute de validation finale du client.
+     */
+    private function finalApprovalDeadline(): ?CarbonInterface
+    {
+        if ((string) $this->status !== 'pending_approval' || ! $this->completion_requested_at) {
+            return null;
+        }
+
+        return $this->completion_requested_at->copy()->addHours(max(1, (int) Setting::getValueByKey('mission_final_approval_hours', 72)));
     }
 
     /**
@@ -184,18 +215,9 @@ class MissionResource extends JsonResource
             return true;
         }
 
-        // L'artisan affecté a accès si la mission est financée/payée
+        // L'artisan affecté a accès une fois la mission financée.
         if ($user->id === $this->artisan_id) {
-            $statusStr = (string) $this->status;
-            $paidStatuses = [
-                'funded_locked', 'financee',
-                'in_progress', 'en_cours',
-                'pending_approval',
-                'completed', 'terminee',
-                'disputed', 'litige',
-            ];
-
-            return in_array($statusStr, $paidStatuses, true);
+            return $this->resource->isFunded();
         }
 
         return false;

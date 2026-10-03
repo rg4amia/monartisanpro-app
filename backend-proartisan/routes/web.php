@@ -4,6 +4,7 @@ use App\Http\Controllers\Admin\AdminCashoutController;
 use App\Http\Controllers\Admin\AdminCollectionController;
 use App\Http\Controllers\Admin\AdminDocumentController;
 use App\Http\Controllers\Admin\AdminFraudController;
+use App\Http\Controllers\Admin\AdminMissionHistoryController;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminSessionController;
 use App\Http\Controllers\Admin\AdminTerritoryController;
@@ -131,6 +132,9 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Missions & Cartographie
         Route::get('/missions', [BackofficeController::class, 'missions'])->middleware('can:admin.missions.view')->name('missions');
+        Route::get('/missions/historique/controle', [AdminMissionHistoryController::class, 'check'])->middleware('can:admin.missions.view')->name('missions.history.check');
+        Route::post('/missions/historique/reconstituer', [AdminMissionHistoryController::class, 'rebuild'])->middleware('can:admin.missions.manage')->name('missions.history.rebuild');
+        Route::get('/missions/{mission}/historique', [AdminMissionHistoryController::class, 'show'])->middleware('can:admin.missions.view')->name('missions.history');
         Route::get('/cartographie', [BackofficeController::class, 'cartography'])->middleware('can:admin.territory.view')->name('cartography');
         Route::get('/cartographie/stats', [AdminTerritoryController::class, 'stats'])->middleware('can:admin.territory.view')->name('cartography.stats');
         Route::get('/cartographie/export', [AdminTerritoryController::class, 'export'])->middleware(['can:admin.territory.view', 'can:admin.exports'])->name('cartography.export');

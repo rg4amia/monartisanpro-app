@@ -121,6 +121,12 @@ describe('ArtisanLedgerModal', () => {
 });
 
 describe('MissionDetailModal', () => {
+    beforeEach(() => {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok: true, status: 200, json: async () => ({ transitions: [] }) }));
+    });
+
+    afterEach(() => vi.unstubAllGlobals());
+
     it('affiche les informations clés de la mission', () => {
         render(<MissionDetailModal mission={makeMission()} orders={[]} onClose={vi.fn()} onSelectOrder={vi.fn()} />);
 

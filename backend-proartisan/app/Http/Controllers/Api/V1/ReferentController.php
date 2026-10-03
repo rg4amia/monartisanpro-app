@@ -40,12 +40,14 @@ class ReferentController extends Controller
         $query = Mission::query()
             ->where(function ($q) {
                 $q->where('referent_required', true)
-                    ->orWhere('montant_total', '>', 2000000);
+                    ->orWhere('montant_total', '>', (int) config('prosartisan.mission.referent_threshold', 2000000));
             })
             ->whereIn('status', [
                 'funded_locked',
                 'in_progress',
                 'pending_approval',
+                // Litige à trancher : la visite précède l'arbitrage en faveur de l'artisan.
+                'disputed',
                 FundedLockedState::class,
                 InProgressState::class,
                 PendingApprovalState::class,
@@ -136,26 +138,42 @@ class ReferentController extends Controller
             'referent_validated_by' => $user->id,
         ]);
 
+        // Fonds gelés par un litige : la visite est enregistrée, la répartition
+        // des fonds revient à l'arbitrage. Aucune étape n'est payée ici.
+        $gelLitige = $mission->isFundsFrozen();
+
         // Libérer tous les jalons validés en attente de paiement
-        $jalonsEnAttente = $mission->jalons()
-            ->where('statut', 'valide')
-            ->whereNull('paye_at')
-            ->get();
+        $jalonsEnAttente = $gelLitige
+            ? collect()
+            : $mission->jalons()
+                ->where('statut', 'valide')
+                ->whereNull('paye_at')
+                ->get();
 
         foreach ($jalonsEnAttente as $jalon) {
             $this->walletService->releaseJalon($jalon);
         }
 
-        $this->notificationService->notify(
-            $mission->artisan,
-            'mission.validee_referent.artisan',
-            ['mission' => $mission->id],
-            ['mission_id' => $mission->id]
-        );
+        if ($gelLitige) {
+            $this->notificationService->notifyAdmins(
+                'litige.visite_referent_faite.admin',
+                ['mission' => $mission->id],
+                ['mission_id' => $mission->id]
+            );
+        } else {
+            $this->notificationService->notify(
+                $mission->artisan,
+                'mission.validee_referent.artisan',
+                ['mission' => $mission->id],
+                ['mission_id' => $mission->id]
+            );
+        }
 
         return response()->json([
             'success' => true,
-            'message' => 'Mission validée. Paiements libérés.',
+            'message' => $gelLitige
+                ? 'Visite enregistrée. Le litige peut maintenant être arbitré.'
+                : 'Mission validée. Paiements libérés.',
             'data' => [
                 'mission_id' => $mission->id,
                 'jalons_liberes' => $jalonsEnAttente->count(),

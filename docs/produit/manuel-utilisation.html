@@ -337,7 +337,17 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
           <li><div>Quand l'artisan termine une étape, il envoie des photos géolocalisées. Vérifiez le travail.</div></li>
           <li><div>S'il est conforme, validez l'étape avec le code reçu par SMS : la part correspondante est versée à l'artisan.</div></li>
           <li><div>Sans réponse de votre part pendant 72 heures, l'étape est payée automatiquement. Si le travail ne vous convient pas, ouvrez un litige avant ce délai.</div></li>
+          <li><div>Quand toutes les étapes sont payées, touchez <span class="ui">Valider la fin du chantier</span> : la mission est clôturée et vous pouvez noter l'artisan. Sans réponse de votre part pendant 72 heures, la mission est clôturée automatiquement.</div></li>
         </ol>
+        <h3>Annuler une mission <span class="tag">Nouveau</span></h3>
+        <ol class="steps">
+          <li><div>Ouvrez la mission et touchez <span class="ui">Annuler</span>. Une fenêtre vous indique ce que l'annulation coûte avant de confirmer.</div></li>
+          <li><div><b>Avant tout paiement</b> (demande envoyée, devis non payé) : l'annulation est sans frais. L'artisan sollicité est prévenu.</div></li>
+          <li><div><b>Mission payée, chantier non commencé</b> : le montant en séquestre vous est remboursé, après une pénalité d'annulation de 7 %. La fenêtre affiche le montant en séquestre, la pénalité et le montant remboursé.</div></li>
+          <li><div><b>Chantier commencé</b> (une étape envoyée par l'artisan, ou du matériel déjà retiré) : l'annulation n'est plus possible. En cas de désaccord, ouvrez un litige.</div></li>
+        </ol>
+        <p>Si l'artisan choisi ne répond pas à votre demande de devis sous 24 heures, la demande lui est retirée : vous êtes prévenu et pouvez sélectionner un autre artisan.</p>
+
         <div class="callout note">
           <strong>Chantiers de plus de 2 000 000 FCFA</strong>
           <p>Un référent de zone vient contrôler le chantier sur place avant tout paiement d'étape.</p>
@@ -410,8 +420,11 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
         <ol class="steps">
           <li><div>À la fin d'une étape, envoyez les photos géolocalisées du travail. Elles sont analysées automatiquement.</div></li>
           <li><div>Le client valide avec son code SMS ; sans réponse de sa part sous 72 heures, l'étape est payée automatiquement.</div></li>
+          <li><div>Quand toutes les étapes sont payées, le client valide la fin du chantier ; sans réponse de sa part sous 72 heures, la mission est clôturée automatiquement.</div></li>
           <li><div>Au-delà de 2 000 000 FCFA, un référent contrôle le chantier avant chaque paiement.</div></li>
         </ol>
+        <p><b>Demande de devis :</b> vous avez 24 heures pour accepter ou refuser une demande. Un rappel vous est envoyé à mi-délai ; passé ce délai, la demande vous est retirée. Le chantier démarre quand vous envoyez les photos de la première étape.</p>
+        <p><b>Annulation par le client :</b> tant que le chantier n'a pas commencé, le client peut annuler la mission ; vous en êtes prévenu. Une fois une étape envoyée ou du matériel retiré, l'annulation n'est plus possible.</p>
         <p><b>Mode chantier hors ligne :</b> sans réseau, les photos sont mises en attente et envoyées dès le retour de la connexion. Un message vous le confirme.</p>
         <p>Statuts d'une étape : <b>À réaliser</b>, <b>Preuves envoyées</b>, <b>Étape validée</b>, <b>Paiement versé</b>.</p>
 
@@ -561,7 +574,7 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
       <div class="prose">
         <ul>
           <li><b>Inspections</b> : pour les chantiers de plus de 2 000 000 FCFA, rendez-vous sur place avant chaque paiement d'étape et validez le contrôle depuis le chantier (la position GPS est vérifiée). Sans votre validation, l'étape reste impayée, même validée par le client.</li>
-          <li><b>Litiges</b> : certains litiges demandent une visite de terrain avant la décision ; vous êtes notifié et votre rapport est joint au dossier.</li>
+          <li><b>Litiges</b> : certains litiges demandent une visite de terrain avant la décision ; vous êtes notifié et votre rapport est joint au dossier. Pour un chantier de plus de 2 000 000 FCFA, le litige ne peut être tranché en faveur de l'artisan, ni en responsabilité partagée, qu'après votre visite : le chantier apparaît dans vos inspections, et votre validation sur place ne déclenche aucun paiement tant que le litige n'est pas arbitré.</li>
           <li><b>Carte Zone</b> : vue des chantiers de votre secteur.</li>
         </ul>
       </div>
@@ -583,11 +596,11 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
               <tr><td>KYC &amp; Vérifications</td><td>Valider ou rejeter les dossiers d'identité, un par un ou par lot. L'analyse automatique s'affiche en aide à la décision : <b>IA favorable</b>, <b>Revue conseillée</b>, <b>Risque élevé</b>.</td></tr>
               <tr><td>Utilisateurs</td><td>Rechercher, suspendre, réactiver, exporter ; données personnelles et anonymisation (RGPD).</td></tr>
               <tr><td>Annuaire artisans</td><td>Valider ou refuser les disponibilités déclarées par les artisans, saisir une disponibilité, activer ou désactiver un artisan dans l'annuaire du site. Droit <b>Valider les disponibilités des artisans et gérer leur présence dans l'annuaire du site</b>.</td></tr>
-              <tr><td>Missions</td><td>Suivi de chaque chantier, historique de ses états, supervision de la flotte de livreurs sur la carte d'Abidjan.</td></tr>
+              <tr><td>Missions</td><td>Suivi de chaque chantier, supervision de la flotte de livreurs sur la carte d'Abidjan. La fiche d'une mission affiche l'<b>Historique des états</b> : chaque changement avec sa date, son auteur et son motif ; une ligne <b>Reconstitué</b> a été déduite après coup des paiements, étapes et litiges enregistrés, et <b>Date non conservée</b> signale un changement dont la date n'a pas été gardée. Sous la liste, <span class="ui">Contrôler l'historique</span> recherche les missions dont l'historique est incomplet et <span class="ui">Reconstituer l'historique</span> ajoute les lignes manquantes (droit <b>Forcer une transition administrative de mission</b>).</td></tr>
               <tr><td>Cartographie &amp; Territoires</td><td>Situation de l'écosystème par district et par commune du Grand Abidjan : clients, artisans, livreurs, quincailleries et missions, sur la carte et dans le tableau récapitulatif. Droit <b>Consulter la cartographie interactive et les statistiques territoriales</b>.</td></tr>
-              <tr><td>Litiges</td><td>Arbitrer, demander une télé-expertise IA, convoquer le <b>Jury ProsArtisan</b>.</td></tr>
+              <tr><td>Litiges</td><td>Arbitrer, demander une télé-expertise IA, convoquer le <b>Jury ProsArtisan</b>. Pour une mission de plus de 2 000 000 FCFA, la décision en faveur de l'artisan et la responsabilité partagée sont refusées tant que le Référent n'a pas visité le chantier : les Référents sont prévenus au premier refus, et vous êtes notifié dès la visite enregistrée.</td></tr>
               <tr><td>Transactions</td><td>Paiements, virements sortants (relancer, marquer versé sur référence), retraits livreurs et quincailleries, sous-onglet <b>Encaissements</b>.</td></tr>
-              <tr><td>Paramètres</td><td>Commissions, délais, coordonnées de virement bancaire, seuils (dont le score minimal d'un juré).</td></tr>
+              <tr><td>Paramètres</td><td>Commissions, délais, coordonnées de virement bancaire, seuils (dont le score minimal d'un juré). Pour les missions : pénalité d'annulation d'une mission financée (7 % par défaut), délai de réponse de l'artisan (24 heures), délai de validation finale du chantier (72 heures).</td></tr>
               <tr><td>Évaluations &amp; Scores</td><td>Consulter les notes, geler un score en cas d'abus.</td></tr>
               <tr><td>Communications, Notifications &amp; Alertes</td><td>Messages aux utilisateurs, alertes internes.</td></tr>
               <tr><td>Messages push &amp; SMS</td><td>Texte et canaux (application, push, SMS) de chaque notification envoyée par la plateforme, envoi de test, journal des envois. Droit <b>Modifier les messages push et SMS</b>.</td></tr>

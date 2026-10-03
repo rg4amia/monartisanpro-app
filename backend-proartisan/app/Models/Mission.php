@@ -7,6 +7,7 @@ use App\States\Mission\DisputedState;
 use App\States\Mission\FundedLockedState;
 use App\States\Mission\InProgressState;
 use App\States\Mission\MissionState;
+use App\States\Mission\PendingApprovalState;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
@@ -28,6 +29,9 @@ class Mission extends Model
         'payment_type',
         'client_device_fingerprint', 'artisan_device_fingerprint',
         'client_ip', 'artisan_ip',
+        'artisan_assigned_at', 'artisan_reminded_at', 'completion_requested_at',
+        'cancelled_at', 'cancelled_by', 'cancellation_reason',
+        'cancellation_penalty', 'cancellation_refund', 'cancellation_penalty_rate',
     ];
 
     protected $appends = [
@@ -52,6 +56,13 @@ class Mission extends Model
             'gemini_estimation_max' => 'integer',
             'referent_validated_at' => 'datetime',
             'artisan_rejected_at' => 'datetime',
+            'artisan_assigned_at' => 'datetime',
+            'artisan_reminded_at' => 'datetime',
+            'completion_requested_at' => 'datetime',
+            'cancelled_at' => 'datetime',
+            'cancellation_penalty' => 'integer',
+            'cancellation_refund' => 'integer',
+            'cancellation_penalty_rate' => 'float',
             'client_latitude' => 'float',
             'client_longitude' => 'float',
         ];
@@ -214,10 +225,20 @@ class Mission extends Model
         return $this->hasMany(MissionMessage::class)->orderBy('created_at', 'asc');
     }
 
+    /**
+     * Définition unique de « mission financée » : le séquestre a été
+     * constitué. Un litige peut s'ouvrir avant le financement ; il ne vaut
+     * financement que si un montant a été consigné.
+     */
     public function isFunded(): bool
     {
+        if ($this->status instanceof DisputedState) {
+            return (int) $this->montant_total > 0;
+        }
+
         return $this->status instanceof FundedLockedState
             || $this->status instanceof InProgressState
+            || $this->status instanceof PendingApprovalState
             || $this->status instanceof CompletedState;
     }
 }

@@ -10,6 +10,7 @@ import '../../../../data/models/jalon_model.dart';
 import '../../../../data/models/mission_model.dart';
 import '../../controllers/missions_controller.dart';
 import '../../views/jalon_submit_screen.dart';
+import 'cancel_mission_dialog.dart';
 import 'open_devis_creation.dart';
 import 'otp_validation_dialog.dart';
 
@@ -23,7 +24,6 @@ class BottomActions extends StatelessWidget {
     required this.devis,
     required this.nextPendingJalon,
     required this.nextSubmittedJalon,
-    required this.onStartMission,
     super.key,
   });
 
@@ -32,7 +32,6 @@ class BottomActions extends StatelessWidget {
   final DevisModel? devis;
   final JalonModel? nextPendingJalon;
   final JalonModel? nextSubmittedJalon;
-  final Future<bool> Function() onStartMission;
 
   @override
   Widget build(BuildContext context) {
@@ -66,7 +65,7 @@ class BottomActions extends StatelessWidget {
       }
       return _ActionRow(
         primary: _ActionButtonConfig(
-          label: 'Creer le devis',
+          label: 'Créer le devis',
           icon: Icons.receipt_long_outlined,
           color: AppColors.accent,
           onTap: () => openDevisCreation(mission),
@@ -78,10 +77,22 @@ class BottomActions extends StatelessWidget {
     if (mission.status == 'en_attente' && devis?.statut == 'soumis') {
       return _ActionRow(
         primary: const _ActionButtonConfig(
-          label: 'Devis envoye',
+          label: 'Devis envoyé',
           icon: Icons.schedule_outlined,
           color: AppColors.primary,
           onTap: null,
+        ),
+        secondary: _signalConfig(),
+      );
+    }
+
+    if (mission.status == 'financee' && nextPendingJalon == null) {
+      return _ActionRow(
+        primary: _ActionButtonConfig(
+          label: 'Voir les étapes',
+          icon: Icons.rule_folder_outlined,
+          color: AppColors.primary,
+          onTap: () {},
         ),
         secondary: _signalConfig(),
       );
@@ -102,11 +113,15 @@ class BottomActions extends StatelessWidget {
           : _signalConfig();
 
       return _ActionRow(
+        // Le chantier démarre à la soumission de la première étape.
         primary: _ActionButtonConfig(
-          label: 'Demarrer',
-          icon: Icons.play_arrow_rounded,
-          color: AppColors.success,
-          onTap: () => onStartMission(),
+          label: 'Valider l\'étape',
+          icon: Icons.camera_alt_outlined,
+          color: AppColors.primary,
+          onTap: () => Get.to(
+            () => const JalonSubmitScreen(),
+            arguments: nextPendingJalon,
+          ),
         ),
         secondary: secondary,
       );
@@ -160,7 +175,28 @@ class BottomActions extends StatelessWidget {
           color: AppColors.primary,
           onTap: () => Get.toNamed(Routes.devisReview, arguments: devis!.id),
         ),
+        secondary: _cancelConfig(),
       );
+    }
+
+    // Toutes les étapes sont payées : le client valide la fin du chantier.
+    if (mission.awaitsFinalApproval) {
+      return _ActionRow(
+        primary: _ActionButtonConfig(
+          label: 'Valider la fin du chantier',
+          icon: Icons.verified_outlined,
+          color: AppColors.success,
+          onTap: () => Get.find<MissionsController>().approveCompletion(
+            mission.id,
+          ),
+        ),
+        secondary: _signalConfig(),
+      );
+    }
+
+    // Demande sans devis à examiner : seule l'annulation est proposée.
+    if (mission.status == 'en_attente' && mission.canBeCancelled) {
+      return _ActionRow(primary: _cancelConfig(filled: true));
     }
 
     if ((mission.status == 'financee' || mission.status == 'en_cours') &&
@@ -187,6 +223,8 @@ class BottomActions extends StatelessWidget {
             arguments: {'missionId': mission.id},
           ),
         ),
+        // Annulation avec pénalité tant que le chantier n'a pas commencé.
+        secondary: mission.canBeCancelled ? _cancelConfig() : null,
       );
     }
 
@@ -231,6 +269,28 @@ class BottomActions extends StatelessWidget {
     }
 
     return const SizedBox.shrink();
+  }
+
+  /// Annulation par le client : l'aperçu du serveur (séquestre, pénalité,
+  /// remboursement) est affiché avant toute confirmation.
+  _ActionButtonConfig _cancelConfig({bool filled = false}) =>
+      _ActionButtonConfig(
+        label: 'Annuler',
+        icon: Icons.cancel_outlined,
+        color: AppColors.danger,
+        filled: filled,
+        onTap: () => _confirmCancellation(),
+      );
+
+  Future<void> _confirmCancellation() async {
+    final controller = Get.find<MissionsController>();
+    final preview = await controller.loadCancellationPreview(mission.id);
+    if (preview == null) return;
+
+    final reason = await CancelMissionDialog.show(preview);
+    if (reason == null) return;
+
+    await controller.cancelMission(mission.id, reason: reason);
   }
 
   _ActionButtonConfig _signalConfig() => _ActionButtonConfig(

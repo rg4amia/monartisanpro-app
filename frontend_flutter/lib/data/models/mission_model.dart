@@ -38,6 +38,22 @@ class MissionModel {
   final int unreadMessagesCount;
   final Map<String, dynamic>? diagnosticMediaAnalysis;
 
+  /// État de la machine à états du serveur (`draft`, `funded_locked`…), non
+  /// ramené aux six libellés hérités de [status].
+  final String fsmStatus;
+
+  /// Libellé français de l'état, fourni par le serveur.
+  final String? statusLabel;
+
+  /// Échéance de réponse de l'artisan à la demande de devis.
+  final DateTime? artisanResponseDeadline;
+
+  /// Date de clôture automatique faute de validation finale du client.
+  final DateTime? finalApprovalDeadline;
+
+  final int? cancellationPenalty;
+  final int? cancellationRefund;
+
   const MissionModel({
     required this.id,
     required this.clientId,
@@ -72,7 +88,29 @@ class MissionModel {
     this.hasArtisan = true,
     this.unreadMessagesCount = 0,
     this.diagnosticMediaAnalysis,
+    this.fsmStatus = '',
+    this.statusLabel,
+    this.artisanResponseDeadline,
+    this.finalApprovalDeadline,
+    this.cancellationPenalty,
+    this.cancellationRefund,
   });
+
+  /// États où le client peut encore annuler sa mission hors litige. Le
+  /// serveur reste seul juge (étape soumise, matériel retiré…).
+  static const cancellableStates = {
+    'draft',
+    'pending_artisan_acceptance',
+    'pending_funding',
+    'funded_locked',
+  };
+
+  bool get canBeCancelled => cancellableStates.contains(fsmStatus);
+
+  /// Toutes les étapes sont payées : le client doit valider la fin du chantier.
+  bool get awaitsFinalApproval => fsmStatus == 'pending_approval';
+
+  bool get isCancelled => fsmStatus == 'cancelled' || status == 'annulee';
 
   bool get needsReferent => montantTotal > 2000000;
 
@@ -211,6 +249,12 @@ class MissionModel {
       diagnosticMediaAnalysis: readMap(
         json['diagnosticMediaAnalysis'] ?? json['diagnostic_media_analysis'],
       ),
+      fsmStatus: readString(json['fsmStatus'] ?? json['status']) ?? '',
+      statusLabel: readString(json['statusLabel'] ?? json['status_label']),
+      artisanResponseDeadline: _parseDate(json['artisanResponseDeadline']),
+      finalApprovalDeadline: _parseDate(json['finalApprovalDeadline']),
+      cancellationPenalty: readInt(json['cancellationPenalty']),
+      cancellationRefund: readInt(json['cancellationRefund']),
     );
   }
 
@@ -271,6 +315,12 @@ class MissionModel {
         'interventionTypeId': interventionTypeId,
         'interventionTypeName': interventionTypeName,
         'unreadMessagesCount': unreadMessagesCount,
+        'fsmStatus': fsmStatus,
+        'statusLabel': statusLabel,
+        'artisanResponseDeadline': artisanResponseDeadline?.toIso8601String(),
+        'finalApprovalDeadline': finalApprovalDeadline?.toIso8601String(),
+        'cancellationPenalty': cancellationPenalty,
+        'cancellationRefund': cancellationRefund,
       };
 
   MissionModel copyWith({
@@ -328,7 +378,18 @@ class MissionModel {
       clientLongitude: clientLongitude ?? this.clientLongitude,
       supplierLatitude: supplierLatitude ?? this.supplierLatitude,
       supplierLongitude: supplierLongitude ?? this.supplierLongitude,
+      fsmStatus: fsmStatus,
+      statusLabel: statusLabel,
+      artisanResponseDeadline: artisanResponseDeadline,
+      finalApprovalDeadline: finalApprovalDeadline,
+      cancellationPenalty: cancellationPenalty,
+      cancellationRefund: cancellationRefund,
     );
+  }
+
+  static DateTime? _parseDate(dynamic value) {
+    final raw = readString(value);
+    return raw == null ? null : DateTime.tryParse(raw)?.toLocal();
   }
 
   static String? _parseLocation(Map<String, dynamic> json) {

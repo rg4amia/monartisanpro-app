@@ -9,6 +9,8 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/network/realtime_stream_service.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/formatters.dart';
+import '../../../data/models/cancellation_preview.dart';
 import '../../../data/models/devis_model.dart';
 import '../../../data/models/jalon_model.dart';
 import '../../../data/models/mission_model.dart';
@@ -278,9 +280,11 @@ class MissionsController extends GetxController {
       );
       preDiagnosticResult.value = result;
 
-      final pricing = result['pricing'] is Map ? result['pricing'] as Map : null;
+      final pricing =
+          result['pricing'] is Map ? result['pricing'] as Map : null;
       estimateResult.value = {
-        'category': result['recommended_trade'] ?? result['category'] ?? category,
+        'category':
+            result['recommended_trade'] ?? result['category'] ?? category,
         'urgency': result['severity'] ?? 'moyen',
         'explanation': result['diagnostic_summary'],
         'price_min': pricing?['total_min'] ?? 25000,
@@ -706,18 +710,20 @@ class MissionsController extends GetxController {
     }
   }
 
-  Future<bool> updateMissionStatus(int missionId, String status) async {
+  /// Le client valide la fin du chantier : la mission est clôturée et la
+  /// notation s'ouvre.
+  Future<bool> approveCompletion(int missionId) async {
     isLoading.value = true;
     errorMsg.value = null;
 
     try {
-      await _repo.updateStatus(missionId, status);
+      currentMission.value = await _repo.approveCompletion(missionId);
       await loadMission(missionId, showLoader: false, forceRefresh: true);
-      await loadMissions(status: selectedFilter.value, isRefresh: true);
+      unawaited(loadMissions(status: selectedFilter.value, isRefresh: true));
 
       Get.snackbar(
-        'Mission mise a jour',
-        'Le statut de la mission a ete actualise.',
+        'Chantier clôturé',
+        'Vous avez validé la fin du chantier. Vous pouvez maintenant noter l\'artisan.',
         snackPosition: SnackPosition.TOP,
         duration: const Duration(seconds: 3),
       );
@@ -728,7 +734,53 @@ class MissionsController extends GetxController {
       _showErrorSnackbar(errorMsg.value!);
       return false;
     } catch (_) {
-      _showErrorSnackbar('Impossible de mettre a jour la mission');
+      _showErrorSnackbar('Impossible de valider la fin du chantier');
+      return false;
+    } finally {
+      isLoading.value = false;
+    }
+  }
+
+  /// Coût de l'annulation, calculé par le serveur. `null` si la demande échoue.
+  Future<CancellationPreview?> loadCancellationPreview(int missionId) async {
+    try {
+      return await _repo.cancellationPreview(missionId);
+    } on DioException catch (e) {
+      _showErrorSnackbar(_handleDioError(e));
+      return null;
+    } catch (_) {
+      _showErrorSnackbar('Impossible de préparer l\'annulation');
+      return null;
+    }
+  }
+
+  /// Le client annule sa mission.
+  Future<bool> cancelMission(int missionId, {String? reason}) async {
+    isLoading.value = true;
+    errorMsg.value = null;
+
+    try {
+      final cancelled = await _repo.cancel(missionId, reason: reason);
+      currentMission.value = cancelled;
+      unawaited(loadMissions(status: selectedFilter.value, isRefresh: true));
+
+      final refund = cancelled.cancellationRefund;
+      Get.snackbar(
+        'Mission annulée',
+        refund != null && refund > 0
+            ? '${Formatters.fcfa(refund)} vous sont remboursés.'
+            : 'Votre demande a été annulée.',
+        snackPosition: SnackPosition.TOP,
+        duration: const Duration(seconds: 4),
+      );
+
+      return true;
+    } on DioException catch (e) {
+      errorMsg.value = _handleDioError(e);
+      _showErrorSnackbar(errorMsg.value!);
+      return false;
+    } catch (_) {
+      _showErrorSnackbar('Impossible d\'annuler la mission');
       return false;
     } finally {
       isLoading.value = false;

@@ -14,6 +14,8 @@ use App\Models\RecruitmentEngagement;
 use App\Models\RecruitmentOffer;
 use App\Models\Transaction;
 use App\Models\User;
+use App\States\Mission\DraftState;
+use App\States\Mission\PendingFundingState;
 use Illuminate\Support\Facades\Log;
 
 /**
@@ -31,6 +33,7 @@ class PaymentService
         private WalletService $walletService,
         private DevisService $devisService,
         private BankTransferSettingsService $bankTransfer,
+        private MissionLifecycleService $missionLifecycle,
     ) {}
 
     /**
@@ -74,6 +77,11 @@ class PaymentService
 
         $phone = (string) ($phone ?? $client->phone ?? '');
         $metadataMatch = ['devis_id' => $devis->id, 'payment_type' => $paymentType];
+
+        // Acompte du devis initial : la mission passe « en attente de financement ».
+        if ($mission->status instanceof DraftState && ! $devis->is_avenant) {
+            $this->missionLifecycle->transition($mission, PendingFundingState::class, $client, "Paiement de l'acompte initié", ['devis_id' => $devis->id]);
+        }
 
         $existing = $this->findPendingTransaction($mission, $client, $montant, $provider, $metadataMatch);
         if ($existing && ($reused = $this->reusePendingTransaction($existing, $provider, 'Paiement', ['devis_id' => $devis->id]))) {

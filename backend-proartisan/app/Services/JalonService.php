@@ -15,6 +15,7 @@ class JalonService
         private OtpService $otpService,
         private WalletService $walletService,
         private NotificationService $notificationService,
+        private MissionLifecycleService $missionLifecycle,
         private ?FraudDetectionService $fraudService = null,
         private ?GeminiService $geminiService = null,
     ) {
@@ -53,7 +54,7 @@ class JalonService
         ]);
 
         if ($jalon->mission->status instanceof FundedLockedState) {
-            $jalon->mission->status->transitionTo(InProgressState::class);
+            $this->missionLifecycle->transition($jalon->mission, InProgressState::class, $jalon->mission->artisan, 'Première étape soumise', ['jalon_id' => $jalon->id]);
         }
 
         // Notifier le client
