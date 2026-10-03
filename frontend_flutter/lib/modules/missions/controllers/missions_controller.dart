@@ -21,9 +21,16 @@ import '../../../data/repositories/mission_repository.dart';
 /// utilisés pour précharger silencieusement le cache de chaque onglet en
 /// arrière-plan afin que le basculement entre statuts soit instantané.
 const Map<String, List<String>> _statusTabsByRole = {
-  'artisan': ['en_attente', 'financee', 'en_cours', 'terminee', 'litige'],
+  'artisan': [
+    'en_attente',
+    'financee',
+    'en_cours',
+    'terminee',
+    'litige',
+    'annulee',
+  ],
   'fournisseur': ['validee', 'en_attente', 'payee'],
-  'client': ['en_cours', 'refusee', 'terminee', 'litige'],
+  'client': ['en_cours', 'refusee', 'terminee', 'litige', 'annulee'],
 };
 
 class MissionsController extends GetxController {

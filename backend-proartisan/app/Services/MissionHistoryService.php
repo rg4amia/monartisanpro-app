@@ -12,15 +12,25 @@ use App\States\Mission\MissionState;
  */
 class MissionHistoryService
 {
+    private const ROLE_LABELS = [
+        'client' => 'Client',
+        'artisan' => 'Artisan',
+        'admin' => 'Administrateur',
+        'referent' => 'Référent',
+        'fournisseur' => 'Fournisseur',
+        'livreur' => 'Livreur',
+    ];
+
     /**
      * @return array{mission_id: int, current_state: string, current_state_label: string, transitions: list<array<string, mixed>>}
      */
-    public function timeline(Mission $mission): array
+    public function timeline(Mission $mission, bool $maskStaff = false): array
     {
         $transitions = $mission->stateTransitions()
             ->with('user:id,name,phone,role')
             ->get()
             ->map(fn (MissionStateTransition $t) => [
+                'role_label' => $t->user ? (self::ROLE_LABELS[$t->user->role] ?? $t->user->role) : null,
                 'id' => $t->id,
                 'from_state' => $t->from_state,
                 'from_state_label' => MissionState::labelFor($t->from_state),
@@ -28,7 +38,8 @@ class MissionHistoryService
                 'to_state_label' => MissionState::labelFor($t->to_state),
                 'user' => $t->user ? [
                     'id' => $t->user->id,
-                    'name' => $t->user->name,
+                    // Le client et l'artisan voient le rôle, jamais le nom d'un agent ProsArtisan.
+                    'name' => $maskStaff && in_array($t->user->role, ['admin', 'referent'], true) ? null : $t->user->name,
                     'role' => $t->user->role,
                 ] : null,
                 'reason' => $t->reason,

@@ -5,6 +5,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../data/services/app_settings_service.dart';
 import '../../../shared/widgets/maintenance_overlay.dart';
 import '../../../shared/widgets/offline_banner.dart';
+import '../../history/views/history_screens.dart';
 import '../../home/views/artisan_home_screen.dart';
 import '../../home/views/artisan_map_screen.dart';
 import '../../home/views/client_home_screen.dart';
@@ -15,9 +16,9 @@ import '../../ia/views/ia_assistant_screen.dart';
 import '../../jcode/views/jcode_screen.dart';
 import '../../jcode/views/scanner_screen.dart';
 import '../../jcode/views/supplier_catalog_screen.dart';
-import '../../litige/views/litige_screen.dart';
 import '../../missions/views/missions_screen.dart';
 import '../../orders/views/client_suppliers_list_screen.dart';
+import '../../orders/views/supplier_orders_screen.dart';
 import '../../settings/views/settings_screen.dart';
 import '../../wallet/views/wallet_screen.dart';
 import '../controllers/main_tab_controller.dart';
@@ -176,7 +177,7 @@ class MainTabScreen extends StatelessWidget {
           SupplierHomeScreen(),
           ScannerScreen(),
           SupplierCatalogScreen(),
-          MissionsScreen(),
+          SupplierOrdersScreen(),
           SettingsScreen(),
         ],
         items: const [
@@ -212,7 +213,7 @@ class MainTabScreen extends StatelessWidget {
   _TabConfig _driverTabs() => _TabConfig(
         screens: const [
           DriverHomeScreen(),
-          MissionsScreen(),
+          DriverDeliveriesScreen(),
           ScannerScreen(),
           WalletScreen(),
           SettingsScreen(),
@@ -226,7 +227,7 @@ class MainTabScreen extends StatelessWidget {
           _NavItem(
             icon: Icons.local_shipping_outlined,
             activeIcon: Icons.local_shipping_rounded,
-            label: 'Livraisons',
+            label: 'Mes courses',
           ),
           _NavItem(
             icon: Icons.qr_code_scanner_outlined,
@@ -250,9 +251,9 @@ class MainTabScreen extends StatelessWidget {
   _TabConfig _referentTabs() => _TabConfig(
         screens: const [
           ReferentHomeScreen(),
-          MissionsScreen(),
+          ReferentInspectionsScreen(),
           ArtisanMapScreen(),
-          LitigeScreen(),
+          ReferentLitigesScreen(),
           SettingsScreen(),
         ],
         items: const [
@@ -262,9 +263,9 @@ class MainTabScreen extends StatelessWidget {
             label: 'Inspections',
           ),
           _NavItem(
-            icon: Icons.assignment_outlined,
-            activeIcon: Icons.assignment_rounded,
-            label: 'Missions',
+            icon: Icons.fact_check_outlined,
+            activeIcon: Icons.fact_check_rounded,
+            label: 'Réalisées',
           ),
           _NavItem(
             icon: Icons.map_outlined,

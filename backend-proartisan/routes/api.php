@@ -251,6 +251,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/missions/{mission}/cancellation-preview', [MissionController::class, 'cancellationPreview']);
         Route::post('/missions/{mission}/cancel', [MissionController::class, 'cancel']);
         Route::get('/referent/missions', [ReferentController::class, 'index'])->middleware('kyc.verified');
+        Route::get('/referent/inspections', [ReferentController::class, 'inspections']);
+        Route::get('/referent/litiges', [ReferentController::class, 'litiges']);
         Route::post('/missions/{mission}/referent-validate', [ReferentController::class, 'validateMission'])->middleware(['can:mission.referent-validate', 'kyc.verified']);
 
         // ── Recrutement BTP & Métiers (admin/client/fournisseur → artisan) ──────

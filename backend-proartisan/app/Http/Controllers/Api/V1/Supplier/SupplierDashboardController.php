@@ -82,9 +82,12 @@ class SupplierDashboardController extends Controller
 
         // 2. Litiges sur les chantiers/missions où il a fourni des matériaux via JCode
         $missionIds = JCode::where('fournisseur_id', $supplier->id)->pluck('mission_id')->unique();
+        // Tout chantier ayant connu un litige, résolu ou non : l'ancien filtre
+        // sur l'état « litige », disparu avec la machine à états, ne renvoyait rien.
         $missionLitiges = Mission::whereIn('id', $missionIds)
-            ->where('status', 'litige')
-            ->with(['client', 'artisan', 'litiges'])
+            ->whereHas('litiges')
+            ->with(['client', 'artisan', 'litiges' => fn ($q) => $q->orderByDesc('created_at')])
+            ->orderByDesc('updated_at')
             ->get();
 
         return response()->json([

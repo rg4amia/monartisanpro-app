@@ -179,4 +179,93 @@ void main() {
       },
     );
   });
+
+  group('Historique paginé et filtré (Chantier 20)', () {
+    Map<String, dynamic> transaction(int id) => {
+          'id': id,
+          'type': 'acompte',
+          'montant': 1000 * id,
+          'wallet_source': 'client_mobile_money',
+          'wallet_dest': 'escrow',
+          'provider': 'wave',
+          'statut': 'confirme',
+          'created_at': '2026-01-10T10:00:00Z',
+        };
+
+    void serve({required int currentPage, required List<int> ids}) {
+      adapter
+        ..on(
+          'GET',
+          '/wallets/balance',
+          const CannedResponse(
+            statusCode: 200,
+            body: {
+              'data': {'wallet_materiaux': 0, 'wallet_mo': 0},
+            },
+          ),
+        )
+        ..on(
+          'GET',
+          '/transactions',
+          CannedResponse(
+            statusCode: 200,
+            body: {
+              'data': ids.map(transaction).toList(),
+              'meta': {'current_page': currentPage, 'last_page': 2},
+            },
+          ),
+        );
+    }
+
+    Iterable<Map<String, dynamic>> transactionQueries() => adapter.requests
+        .where((r) => r.path.endsWith('transactions'))
+        .map((r) => r.queryParameters);
+
+    test('« Voir plus » ajoute la page suivante aux lignes affichées',
+        () async {
+      serve(currentPage: 1, ids: [1, 2]);
+      final controller = WalletController();
+      await controller.fetchData();
+
+      expect(controller.hasMoreTransactions.value, isTrue);
+
+      serve(currentPage: 2, ids: [3]);
+      final error = await controller.loadMoreTransactions();
+
+      expect(error, isNull);
+      expect(controller.transactions.map((t) => t.id), [1, 2, 3]);
+      expect(controller.hasMoreTransactions.value, isFalse);
+      expect(transactionQueries().last['page'], 2);
+    });
+
+    test('le filtre par statut recharge l\'historique depuis la première page',
+        () async {
+      serve(currentPage: 1, ids: [1, 2]);
+      final controller = WalletController();
+      await controller.fetchData();
+
+      await controller.setStatusFilter('echoue');
+
+      expect(transactionQueries().last['status'], 'echoue');
+      expect(transactionQueries().last['page'], 1);
+    });
+
+    test('une page suivante en panne garde les lignes et renvoie le message',
+        () async {
+      serve(currentPage: 1, ids: [1, 2]);
+      final controller = WalletController();
+      await controller.fetchData();
+
+      adapter.on(
+        'GET',
+        '/transactions',
+        const CannedResponse(statusCode: 500, body: {'message': 'Erreur'}),
+      );
+      final error = await controller.loadMoreTransactions();
+
+      expect(error, isNotNull);
+      expect(controller.transactions.map((t) => t.id), [1, 2]);
+      expect(controller.isLoadingMore.value, isFalse);
+    });
+  });
 }

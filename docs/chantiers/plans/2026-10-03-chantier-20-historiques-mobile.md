@@ -2,7 +2,7 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | en cours |
+| Statut | livré (contrôle manuel sur appareil à faire) |
 | Créé le | 2026-10-03 |
 | Mis à jour le | 2026-10-03 |
 | Auteur | Claude Code |
@@ -100,6 +100,21 @@ Défauts relevés au passage (à confirmer par un test avant correction) :
 - Flutter : tests de contrôleurs et de rendu par écran, charges utiles incomplètes comprises ; `flutter analyze`.
 - Contrôle manuel sur un appareil, un compte par rôle.
 
+## Décisions validées (03/10/2026)
+
+- L'auteur d'un changement d'état est affiché par son rôle, jamais par le nom d'un administrateur ou d'un Référent.
+- Le Référent voit le motif, la description, l'adresse du chantier, le montant et la décision d'un litige, sans téléphone ni coordonnées des parties.
+
 ## Écarts
 
-À renseigner à la livraison.
+- **Liste des litiges et jurés** : `GET /litiges` renvoyait aussi les dossiers où l'utilisateur est juré, avec les noms et téléphones des parties. Ces dossiers en sont retirés ; l'espace juré, anonymisé, reste la seule voie (Règle d'or 76). Défaut découvert en écrivant « Mes litiges », non prévu au plan.
+- **Litiges du fournisseur** : le filtre `statut` prévu n'a pas été ajouté ; la liste renvoie tous les chantiers fournis ayant connu un litige, et l'écran affiche l'état et la décision de chacun. Les commandes en litige restent celles actuellement contestées : l'issue d'une contestation de commande n'est pas conservée.
+- **Litiges du livreur** : même limite, seules les courses actuellement en litige sont listées (filtre « En litige » de « Mes courses »).
+- **Onglet du Référent** : « Missions » devient « Réalisées » (inspections réalisées) ; l'onglet « Inspections » garde les inspections à faire. L'écran unique « Mes inspections » à deux volets n'a pas été créé.
+- **Routes nommées des retraits** (lot G) : non créées ; les écrans de retrait du livreur et des litiges du fournisseur s'ouvrent depuis « Mon historique » sans route nommée, comme ailleurs dans l'application.
+- **`GET /driver/cashouts`** : inchangé. Le rôle `driver` est converti en `livreur` à l'enregistrement du compte (Règle d'or 63), le refus redouté ne peut pas se produire.
+- **Filtre `type` des paiements** : accepté par l'API, non proposé à l'écran (filtre par statut seulement).
+- **Pagination de la liste des missions** : non faite ; la liste reste limitée à la première page du serveur.
+- **Versements reçus** : limités aux 50 derniers versements renvoyés par `GET /payouts`, sans pagination.
+- **Commandes du fournisseur et du client** : écrans existants repris tels quels, sans pagination.
+- **Contrôle manuel** : non effectué (un compte par rôle sur un appareil).

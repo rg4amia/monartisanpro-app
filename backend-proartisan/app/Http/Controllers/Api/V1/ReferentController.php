@@ -7,12 +7,14 @@ use App\Http\Resources\MissionResource;
 use App\Models\Mission;
 use App\Services\GeoService;
 use App\Services\NotificationService;
+use App\Services\ReferentHistoryService;
 use App\Services\WalletService;
 use App\States\Mission\FundedLockedState;
 use App\States\Mission\InProgressState;
 use App\States\Mission\PendingApprovalState;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class ReferentController extends Controller
 {
@@ -74,6 +76,49 @@ class ReferentController extends Controller
                 'current_page' => $missions->currentPage(),
                 'last_page' => $missions->lastPage(),
             ],
+        ]);
+    }
+
+    /**
+     * Inspections réalisées par le Référent connecté.
+     * GET /api/v1/referent/inspections
+     */
+    public function inspections(Request $request, ReferentHistoryService $history): JsonResponse
+    {
+        if ($request->user()->role !== 'referent') {
+            return response()->json(['success' => false, 'message' => 'Seul un référent de zone peut consulter ses inspections.'], 403);
+        }
+
+        $data = $request->validate(['per_page' => ['nullable', 'integer', 'min:1', 'max:100']]);
+        $page = $history->inspections($request->user(), (int) ($data['per_page'] ?? 20));
+
+        return response()->json([
+            'success' => true,
+            'data' => $page->items(),
+            'meta' => ['total' => $page->total(), 'current_page' => $page->currentPage(), 'last_page' => $page->lastPage()],
+        ]);
+    }
+
+    /**
+     * Litiges des chantiers que le Référent doit visiter ou a visités.
+     * GET /api/v1/referent/litiges
+     */
+    public function litiges(Request $request, ReferentHistoryService $history): JsonResponse
+    {
+        if ($request->user()->role !== 'referent') {
+            return response()->json(['success' => false, 'message' => 'Seul un référent de zone peut consulter ces litiges.'], 403);
+        }
+
+        $data = $request->validate([
+            'statut' => ['nullable', Rule::in(array_keys(ReferentHistoryService::LITIGE_STATUS_LABELS))],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+        $page = $history->litiges($request->user(), $data['statut'] ?? null, (int) ($data['per_page'] ?? 20));
+
+        return response()->json([
+            'success' => true,
+            'data' => $page->items(),
+            'meta' => ['total' => $page->total(), 'current_page' => $page->currentPage(), 'last_page' => $page->lastPage()],
         ]);
     }
 

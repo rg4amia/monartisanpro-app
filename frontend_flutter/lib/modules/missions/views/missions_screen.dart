@@ -227,6 +227,7 @@ class _FilterTabs extends StatelessWidget {
         ('en_cours', 'En cours'),
         ('terminee', 'Terminées'),
         ('litige', 'Litiges'),
+        ('annulee', 'Annulées'),
       ];
     }
 
@@ -245,6 +246,7 @@ class _FilterTabs extends StatelessWidget {
       ('refusee', 'Refusées'),
       ('terminee', 'Terminées'),
       ('litige', 'Litiges'),
+      ('annulee', 'Annulées'),
     ];
   }
 }

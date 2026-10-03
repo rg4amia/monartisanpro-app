@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Enums\PaymentStatus;
 use App\Http\Controllers\Controller;
 use App\Http\Resources\TransactionResource;
 use App\Models\Transaction;
@@ -9,6 +10,7 @@ use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
+use Illuminate\Validation\Rule;
 
 class TransactionController extends Controller
 {
@@ -17,7 +19,14 @@ class TransactionController extends Controller
     public function index(Request $request): JsonResponse
     {
         $user = $request->user();
-        $status = $request->query('status');
+        // Une valeur inconnue est refusée (422) plutôt que de renvoyer une liste vide.
+        $filters = $request->validate([
+            'status' => ['nullable', Rule::enum(PaymentStatus::class)],
+            'type' => ['nullable', 'string', 'max:60', 'regex:/^[a-z_]+$/'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+        $status = $filters['status'] ?? null;
+        $type = $filters['type'] ?? null;
 
         $query = Transaction::with(['mission.client'])
             ->where(function ($q) use ($user) {
@@ -31,7 +40,11 @@ class TransactionController extends Controller
             $query->where('statut', $status);
         }
 
-        $transactions = $query->orderBy('created_at', 'desc')->paginate(30);
+        if ($type) {
+            $query->where('type', $type);
+        }
+
+        $transactions = $query->orderBy('created_at', 'desc')->paginate((int) ($filters['per_page'] ?? 30));
 
         return response()->json([
             'success' => true,
@@ -39,6 +52,7 @@ class TransactionController extends Controller
             'meta' => [
                 'total' => $transactions->total(),
                 'current_page' => $transactions->currentPage(),
+                'last_page' => $transactions->lastPage(),
             ],
         ]);
     }

@@ -187,11 +187,44 @@ class OrderController extends Controller
             ], 403);
         }
 
-        $orders = $query->orderBy('created_at', 'desc')->get();
+        // Filtre par statut (liste séparée par des virgules) ; une valeur inconnue est refusée.
+        $filters = $request->validate([
+            'status' => ['nullable', 'string', 'max:200'],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        if (! empty($filters['status'])) {
+            $statuses = array_filter(array_map('trim', explode(',', $filters['status'])));
+            $unknown = array_diff($statuses, array_keys(Order::STATUS_LABELS));
+
+            if ($unknown !== []) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Statut de commande inconnu : '.implode(', ', $unknown).'.',
+                    'errors' => ['status' => ['Statut de commande inconnu.']],
+                ], 422);
+            }
+
+            $query->whereIn('status', $statuses);
+        }
+
+        $query->orderBy('created_at', 'desc');
+
+        // Sans `per_page`, la liste complète est renvoyée, comme l'attendent
+        // les versions déjà installées de l'application.
+        if (empty($filters['per_page'])) {
+            return response()->json([
+                'success' => true,
+                'data' => $query->get(),
+            ]);
+        }
+
+        $page = $query->paginate((int) $filters['per_page']);
 
         return response()->json([
             'success' => true,
-            'data' => $orders,
+            'data' => $page->items(),
+            'meta' => ['total' => $page->total(), 'current_page' => $page->currentPage(), 'last_page' => $page->lastPage()],
         ]);
     }
 

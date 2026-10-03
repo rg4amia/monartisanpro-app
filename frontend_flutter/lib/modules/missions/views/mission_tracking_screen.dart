@@ -16,6 +16,7 @@ import '../widgets/tracking/jalons_section.dart';
 import '../widgets/tracking/jcode_section.dart';
 import '../widgets/tracking/mission_evaluations_section.dart';
 import '../widgets/tracking/mission_header_card.dart';
+import '../widgets/tracking/mission_state_history_section.dart';
 import '../widgets/tracking/pending_acceptance_card.dart';
 import '../widgets/tracking/workflow_card.dart';
 
@@ -215,6 +216,11 @@ class _MissionTrackingScreenState extends State<MissionTrackingScreen> {
                   role: role,
                   mission: mission,
                   jalons: controller.jalons,
+                ),
+                const SizedBox(height: 16),
+                MissionStateHistorySection(
+                  key: ValueKey('history-${mission.id}'),
+                  missionId: mission.id,
                 ),
                 if (!isArtisan &&
                     (mission.status == 'terminee' ||

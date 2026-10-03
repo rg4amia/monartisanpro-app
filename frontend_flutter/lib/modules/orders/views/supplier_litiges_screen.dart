@@ -3,6 +3,8 @@ import 'package:get/get.dart';
 
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/json_readers.dart';
+import '../../../data/models/history_models.dart';
 import '../controllers/supplier_litiges_controller.dart';
 import '../widgets/order_status_badge.dart';
 
@@ -75,7 +77,7 @@ class _SupplierLitigesScreenState extends State<SupplierLitigesScreen> {
                 ],
                 if (missionLitiges.isNotEmpty) ...[
                   const SizedBox(height: 12),
-                  const _SectionLabel('Chantiers en litige'),
+                  const _SectionLabel('Litiges de chantiers fournis'),
                   const SizedBox(height: 10),
                   ...missionLitiges.map(
                     (mission) => Padding(
@@ -194,6 +196,19 @@ class _MissionLitigeCard extends StatelessWidget {
         : 'Artisan';
   }
 
+  /// État du litige le plus récent du chantier, décision comprise.
+  String? get _litigeState {
+    final litige = readMapList(mission['litiges']).firstOrNull;
+    if (litige == null) return null;
+
+    final statut = litigeStatusLabel(readString(litige['statut']) ?? 'ouvert');
+    final decision = litigeDecisionLabel(readString(litige['decision']));
+
+    return decision == null
+        ? 'Litige : $statut'
+        : 'Litige : $statut · $decision';
+  }
+
   @override
   Widget build(BuildContext context) {
     return Container(
@@ -239,6 +254,17 @@ class _MissionLitigeCard extends StatelessWidget {
                     color: AppColors.textSecondary,
                   ),
                 ),
+                if (_litigeState != null) ...[
+                  const SizedBox(height: 4),
+                  Text(
+                    _litigeState!,
+                    style: const TextStyle(
+                      fontSize: 13,
+                      fontWeight: FontWeight.w700,
+                      color: AppColors.textPrimary,
+                    ),
+                  ),
+                ],
               ],
             ),
           ),
@@ -316,7 +342,7 @@ class _EmptyState extends StatelessWidget {
           ),
           const SizedBox(height: 12),
           const Text(
-            'Aucun litige en cours',
+            'Aucun litige',
             style: TextStyle(
               fontSize: 14,
               fontWeight: FontWeight.w700,

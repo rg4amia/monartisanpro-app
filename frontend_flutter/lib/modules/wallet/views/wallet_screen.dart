@@ -45,16 +45,19 @@ class WalletScreen extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: [
-                      _BalanceCards(controller: controller),
-                      const SizedBox(height: 16),
+                      // Le client et le Référent n'ont pas de portefeuille :
+                      // seul l'historique de leurs opérations est affiché.
+                      if (!_withoutWallet) ...[
+                        _BalanceCards(controller: controller),
+                        const SizedBox(height: 16),
+                      ],
                       PendingPayoutsSection(
                         payouts: controller.pendingPayouts.toList(),
                         retryingPayoutId: controller.retryingPayoutId.value,
                         updatingDestinationPayoutId:
                             controller.updatingDestinationPayoutId.value,
                         onChangeDestination: (payout) async {
-                          final destination =
-                              await showRefundDestinationDialog(
+                          final destination = await showRefundDestinationDialog(
                             context,
                             initialProvider: payout.provider,
                             initialPhone: payout.phone,
@@ -90,6 +93,20 @@ class WalletScreen extends StatelessWidget {
                           fontWeight: FontWeight.w700,
                           color: AppColors.textPrimary,
                         ),
+                      ),
+                      const SizedBox(height: 8),
+                      Wrap(
+                        spacing: 8,
+                        children: [
+                          for (final filter in _statusFilters)
+                            ChoiceChip(
+                              label: Text(filter.$2),
+                              selected:
+                                  controller.statusFilter.value == filter.$1,
+                              onSelected: (_) =>
+                                  controller.setStatusFilter(filter.$1),
+                            ),
+                        ],
                       ),
                       const SizedBox(height: 16),
                     ],
@@ -137,6 +154,28 @@ class WalletScreen extends StatelessWidget {
                         ),
                       ),
               ),
+              if (controller.hasMoreTransactions.value)
+                SliverToBoxAdapter(
+                  child: Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 12, 20, 0),
+                    child: controller.isLoadingMore.value
+                        ? const Center(child: CircularProgressIndicator())
+                        : OutlinedButton(
+                            onPressed: () async {
+                              final error =
+                                  await controller.loadMoreTransactions();
+                              if (error != null) {
+                                Get.snackbar(
+                                  'Historique',
+                                  error,
+                                  snackPosition: SnackPosition.BOTTOM,
+                                );
+                              }
+                            },
+                            child: const Text('Voir plus'),
+                          ),
+                  ),
+                ),
               const SliverToBoxAdapter(child: SizedBox(height: 40)),
             ],
           ),
@@ -144,6 +183,19 @@ class WalletScreen extends StatelessWidget {
       }),
     );
   }
+}
+
+/// Filtres de l'historique : statut de l'opération, `null` = tout.
+const List<(String?, String)> _statusFilters = [
+  (null, 'Toutes'),
+  ('confirme', 'Confirmées'),
+  ('en_attente', 'En attente'),
+  ('echoue', 'Échouées'),
+];
+
+bool get _withoutWallet {
+  final role = StorageService.getRole();
+  return role == 'client' || role == 'referent';
 }
 
 class _BalanceCards extends StatelessWidget {

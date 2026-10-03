@@ -5,6 +5,7 @@ import '../../../core/network/api_endpoints.dart';
 import '../../../core/payments/receipt_opener.dart';
 import '../../../core/utils/error_handler.dart';
 import '../../../core/utils/json_readers.dart';
+import '../../../data/models/history_models.dart';
 import '../../../data/models/payout_model.dart';
 import '../../../data/models/transaction_model.dart';
 import '../../../data/repositories/payout_repository.dart';
@@ -25,6 +26,12 @@ class WalletController extends GetxController {
   final walletMo = 0.obs;
   final walletEscrowLivreur = 0.obs;
   final transactions = <TransactionModel>[].obs;
+
+  /// Statut affiché dans l'historique ; `null` = toutes les opérations.
+  final statusFilter = RxnString();
+  final hasMoreTransactions = false.obs;
+  final isLoadingMore = false.obs;
+  int _page = 1;
 
   /// Virements Mobile Money non aboutis (échoués ou en cours) : les fonds
   /// restent sur le portefeuille et le virement peut être relancé.
@@ -61,12 +68,10 @@ class WalletController extends GetxController {
       walletEscrowLivreur.value =
           readInt(balanceData['wallet_escrow_livreur']) ?? 0;
 
-      final transactionsResponse =
-          await _apiClient.get(ApiEndpoints.transactions);
-      final List<dynamic> data =
-          (transactionsResponse.data as Map<String, dynamic>)['data'] ?? [];
-      transactions.value =
-          data.map((e) => TransactionModel.fromJson(e)).toList();
+      final page = await _fetchTransactions(1);
+      _page = 1;
+      transactions.value = page.items;
+      hasMoreTransactions.value = page.hasMore;
     } catch (e) {
       Get.snackbar(
         'Erreur',
@@ -78,6 +83,50 @@ class WalletController extends GetxController {
     }
 
     await loadPayouts();
+  }
+
+  Future<HistoryPage<TransactionModel>> _fetchTransactions(int page) async {
+    final response = await _apiClient.get(
+      ApiEndpoints.transactions,
+      params: {
+        'page': page,
+        if (statusFilter.value != null) 'status': statusFilter.value,
+      },
+    );
+
+    return HistoryPage<TransactionModel>.fromResponse(
+      response.data,
+      TransactionModel.fromJson,
+    );
+  }
+
+  /// Page suivante de l'historique ; renvoie le message d'erreur à afficher,
+  /// `null` si elle est chargée. Les lignes déjà affichées sont conservées.
+  Future<String?> loadMoreTransactions() async {
+    if (!hasMoreTransactions.value || isLoadingMore.value) return null;
+
+    isLoadingMore.value = true;
+    try {
+      final page = await _fetchTransactions(_page + 1);
+      _page += 1;
+      transactions.addAll(page.items);
+      hasMoreTransactions.value = page.hasMore;
+
+      return null;
+    } catch (e) {
+      return ErrorHandler.getErrorMessage(e);
+    } finally {
+      isLoadingMore.value = false;
+    }
+  }
+
+  /// Filtre l'historique par statut (`confirme`, `en_attente`, `echoue`),
+  /// `null` pour tout afficher.
+  Future<void> setStatusFilter(String? status) async {
+    if (statusFilter.value == status) return;
+
+    statusFilter.value = status;
+    await fetchData();
   }
 
   /// Bloc indépendant : une panne de ce seul point d'accès ne doit pas

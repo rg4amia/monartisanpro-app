@@ -300,6 +300,15 @@ class SettingsMenuList extends StatelessWidget {
             onTap: () => Get.toNamed(Routes.wallet),
           ),
           const SizedBox(height: 12),
+          SettingsMenuItem(
+            icon: Icons.history_rounded,
+            iconBg: const Color(0xFFEEF2FF),
+            iconColor: const Color(0xFF4F46E5),
+            title: 'Mon historique',
+            subtitle: 'Paiements, missions, litiges et autres opérations',
+            onTap: () => Get.toNamed(Routes.history),
+          ),
+          const SizedBox(height: 12),
           Obx(
             () => SettingsMenuItem(
               icon: Icons.shield_outlined,

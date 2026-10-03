@@ -124,6 +124,10 @@ class ApiEndpoints {
   static String missionReferentValidate(int id) =>
       '/missions/$id/referent-validate';
   static const String referentMissions = '/referent/missions';
+  static const String referentInspections = '/referent/inspections';
+  static const String referentLitiges = '/referent/litiges';
+  static String missionStateHistory(int id) =>
+      '/missions/$id/state-history';
 
   // Devis
   static String devis(int id) => '/devis/$id';

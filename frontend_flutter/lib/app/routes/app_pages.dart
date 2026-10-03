@@ -16,6 +16,8 @@ import '../../modules/clients/parrainage/views/parrainage_client_screen.dart';
 import '../../modules/devis/bindings/devis_binding.dart';
 import '../../modules/devis/views/quote_builder_screen.dart';
 import '../../modules/devis/views/quote_screen.dart';
+import '../../modules/history/views/history_hub_screen.dart';
+import '../../modules/history/views/history_screens.dart';
 import '../../modules/home/bindings/home_binding.dart';
 import '../../modules/home/views/artisan_map_screen.dart';
 import '../../modules/jcode/bindings/jcode_binding.dart';
@@ -381,6 +383,26 @@ class AppPages {
       name: Routes.wallet,
       page: () => const WalletScreen(),
       binding: WalletBinding(),
+    ),
+
+    // Historiques par rôle (Chantier 20) : chaque écran possède son contrôleur.
+    GetPage(name: Routes.history, page: () => const HistoryHubScreen()),
+    GetPage(name: Routes.myLitiges, page: () => const MyLitigesScreen()),
+    GetPage(
+      name: Routes.receivedPayouts,
+      page: () => const ReceivedPayoutsScreen(),
+    ),
+    GetPage(
+      name: Routes.driverDeliveries,
+      page: () => const DriverDeliveriesScreen(),
+    ),
+    GetPage(
+      name: Routes.referentInspections,
+      page: () => const ReferentInspectionsScreen(),
+    ),
+    GetPage(
+      name: Routes.referentLitiges,
+      page: () => const ReferentLitigesScreen(),
     ),
     GetPage(
       name: Routes.legalTerms,

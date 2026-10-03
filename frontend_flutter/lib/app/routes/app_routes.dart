@@ -76,6 +76,14 @@ abstract class Routes {
   static const supplierCashouts = '/supplier-cashouts';
   static const wallet = '/wallet';
 
+  // Historiques (Chantier 20)
+  static const history = '/history';
+  static const myLitiges = '/my-litiges';
+  static const receivedPayouts = '/received-payouts';
+  static const driverDeliveries = '/driver-deliveries';
+  static const referentInspections = '/referent-inspections';
+  static const referentLitiges = '/referent-litiges';
+
   // Legal
   static const legalTerms = '/legal-terms';
   static const cgu = '/cgu';

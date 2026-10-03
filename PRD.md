@@ -639,6 +639,14 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Historique des états dans le backoffice** : frise dans la fiche de chaque mission (acteur, motif, lignes reconstituées signalées), contrôle des historiques incomplets et reconstitution à la demande, auditée.
     * **Défauts corrigés** : bouton « Demarrer » du mobile (appelait une route réservée à l'administrateur), message d'exception renvoyé à la création, valeurs factices de la ressource, estimation inventée sans retour de l'IA, seuil Référent en dur.
     * **Tests automatisés** : `Chantier19MissionLifecycleTest.php` (30 tests), `Chantier19ReferentArbitrationAndHistoryAdminTest.php` (10 tests), `MissionHistory.test.tsx` (9 tests), `MissionStatusWriteGuardTest.php` (2 tests), `mission_lifecycle_test.dart` (21 tests) ; suite Pest rejouée sur MariaDB 11.8.
+46. **Chantier 20 — Historiques dans chaque espace de l'application mobile :** [COMPLÉTÉ — contrôle manuel sur appareil à faire]
+    * **« Mon historique »** dans le Profil des cinq espaces : paiements, missions, litiges, commandes ou courses, retraits, inspections, selon le rôle.
+    * **Paiements** chargés page par page et filtrés par statut ; versements reçus de l'artisan.
+    * **Missions** : onglet « Annulées » et frise « Historique de la mission » (le rôle de l'auteur d'un changement, jamais le nom d'un agent ProsArtisan).
+    * **Litiges** : « Mes litiges » pour le client et l'artisan ; litiges résolus pour le fournisseur ; litiges à visiter et visités pour le Référent, sans coordonnées des parties.
+    * **Courses passées du livreur** et **inspections réalisées du Référent**.
+    * **Défauts corrigés** : liste des litiges qui exposait les parties à un juré, litiges de chantier du fournisseur toujours vides, onglets « Commandes », « Livraisons », « Missions » et « Litiges » inutilisables pour le fournisseur, le livreur et le Référent.
+    * **Tests automatisés** : `Chantier20HistoryEndpointsTest.php` (11 tests), `history_test.dart` (16 tests), `wallet_controller_test.dart` (3 tests ajoutés) ; suite Pest rejouée sur MariaDB 11.8.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

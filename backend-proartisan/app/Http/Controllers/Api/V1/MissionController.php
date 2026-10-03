@@ -495,7 +495,7 @@ class MissionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $history->timeline($mission),
+            'data' => $history->timeline($mission, maskStaff: $user->role !== 'admin'),
         ]);
     }
 }

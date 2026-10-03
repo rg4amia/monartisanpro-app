@@ -58,12 +58,13 @@ class LitigeService
 
         if ($user->role !== 'admin') {
             $query->where(function ($outer) use ($user): void {
+                // Les dossiers d'un juré se consultent dans l'espace juré,
+                // anonymisés : cette liste expose les noms et téléphones des
+                // parties (Règle d'or 76).
                 $outer->whereHas('mission', function ($missionQuery) use ($user): void {
                     $missionQuery
                         ->where('client_id', $user->id)
                         ->orWhere('artisan_id', $user->id);
-                })->orWhereHas('juryReviews', function ($juryQuery) use ($user): void {
-                    $juryQuery->where('jure_id', $user->id);
                 });
             });
         }

@@ -533,7 +533,7 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
       <div class="chapter-head">
         <div class="badge">L</div>
         <h2>Espace Livreur</h2>
-        <p>Onglets : <span class="ui">Tableau Bord</span>, <span class="ui">Livraisons</span>, <span class="ui">Code Retrait</span>, <span class="ui">Gains</span>, <span class="ui">Profil</span>.</p>
+        <p>Onglets : <span class="ui">Tableau Bord</span>, <span class="ui">Mes courses</span>, <span class="ui">Code Retrait</span>, <span class="ui">Gains</span>, <span class="ui">Profil</span>.</p>
       </div>
       <div class="prose">
         <h3>Accepter une course</h3>
@@ -569,12 +569,14 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
       <div class="chapter-head">
         <div class="badge">R</div>
         <h2>Espace Référent de zone</h2>
-        <p>Onglets : <span class="ui">Inspections</span>, <span class="ui">Missions</span>, <span class="ui">Carte Zone</span>, <span class="ui">Litiges</span>, <span class="ui">Profil</span>. Comptes créés par ProsArtisan.</p>
+        <p>Onglets : <span class="ui">Inspections</span>, <span class="ui">Réalisées</span>, <span class="ui">Carte Zone</span>, <span class="ui">Litiges</span>, <span class="ui">Profil</span>. Comptes créés par ProsArtisan.</p>
       </div>
       <div class="prose">
         <ul>
           <li><b>Inspections</b> : pour les chantiers de plus de 2 000 000 FCFA, rendez-vous sur place avant chaque paiement d'étape et validez le contrôle depuis le chantier (la position GPS est vérifiée). Sans votre validation, l'étape reste impayée, même validée par le client.</li>
           <li><b>Litiges</b> : certains litiges demandent une visite de terrain avant la décision ; vous êtes notifié et votre rapport est joint au dossier. Pour un chantier de plus de 2 000 000 FCFA, le litige ne peut être tranché en faveur de l'artisan, ni en responsabilité partagée, qu'après votre visite : le chantier apparaît dans vos inspections, et votre validation sur place ne déclenche aucun paiement tant que le litige n'est pas arbitré.</li>
+          <li><b>Réalisées</b> : les chantiers dont vous avez validé le contrôle, avec la date de votre visite.</li>
+          <li><b>Litiges</b> (onglet) : les litiges des chantiers à visiter (<b>Visite à faire</b>) et de ceux que vous avez visités, avec leur état et la décision rendue. Les coordonnées du client et de l'artisan n'y figurent pas.</li>
           <li><b>Carte Zone</b> : vue des chantiers de votre secteur.</li>
         </ul>
       </div>
@@ -692,8 +694,30 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
         <p>Fonctions communes à tous les profils.</p>
       </div>
       <div class="prose" style="--c: var(--ink)">
+        <h3 id="historique">Mon historique <span class="tag">Nouveau</span></h3>
+        <p><span class="ui">Profil › Mon historique</span> réunit tout ce qui vous concerne, selon votre espace :</p>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Espace</th><th>Rubriques</th></tr></thead>
+            <tbody>
+              <tr><td>Client</td><td>Paiements, Missions, Litiges, Commandes de matériaux.</td></tr>
+              <tr><td>Artisan</td><td>Paiements, Versements reçus, Chantiers, Litiges, Bons matériels.</td></tr>
+              <tr><td>Fournisseur</td><td>Paiements, Commandes, Virements, Litiges.</td></tr>
+              <tr><td>Livreur</td><td>Gains, Courses, Retraits, Courses en litige.</td></tr>
+              <tr><td>Référent</td><td>Inspections réalisées, Litiges.</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <ul>
+          <li><b>Litiges</b> (client, artisan) : la liste <span class="ui">Mes litiges</span> se filtre par état (<b>Ouverts</b>, <b>En cours</b>, <b>Résolus</b>) et affiche la décision rendue ; touchez un litige pour ouvrir sa fiche.</li>
+          <li><b>Missions</b> : l'onglet <span class="ui">Annulées</span> retrouve les missions annulées. Dans le suivi d'une mission, <span class="ui">Historique de la mission</span> déroule chaque changement d'état avec sa date, son auteur et son motif. Une intervention de ProsArtisan est signée « Administrateur » ou « Référent ». Une ligne reconstituée après coup est signalée, et « Date non conservée » indique un changement dont la date n'a pas été gardée.</li>
+          <li><b>Courses</b> (livreur) : vos courses livrées, annulées ou en litige, avec le montant de la course.</li>
+          <li><b>Versements reçus</b> (artisan) : les virements Mobile Money aboutis ; les virements en attente restent dans le portefeuille.</li>
+          <li>Les listes longues se complètent avec <span class="ui">Voir plus</span>. Si un historique ne se charge pas, un message l'indique avec <span class="ui">Réessayer</span> : une liste vide signifie qu'il n'y a réellement rien.</li>
+        </ul>
+
         <h3 id="portefeuille">Portefeuille et historique</h3>
-        <p><span class="ui">Profil › Historique des Paiements</span> affiche vos soldes et toutes vos opérations. Chaque ligne indique son sens : <b>entrée</b> (en vert, avec +), <b>sortie</b> (en rouge, avec −) ou <b>fonds sécurisés</b> (le coffre d'une mission, qui n'est ni un gain ni une dépense).</p>
+        <p><span class="ui">Profil › Historique des Paiements</span> affiche vos soldes et toutes vos opérations. Chaque ligne indique son sens : <b>entrée</b> (en vert, avec +), <b>sortie</b> (en rouge, avec −) ou <b>fonds sécurisés</b> (le coffre d'une mission, qui n'est ni un gain ni une dépense). L'historique se filtre par statut (<b>Confirmées</b>, <b>En attente</b>, <b>Échouées</b>) et se complète avec <span class="ui">Voir plus</span>.</p>
 
         <h3 id="recus">Reçus PDF <span class="tag">Nouveau</span></h3>
         <p>Toute opération confirmée dont vous êtes titulaire propose un bouton <span class="ui">Reçu PDF</span> : paiement de devis, d'étape, de commande, de course, retrait. Le reçu s'ouvre dans votre navigateur ; le lien est valable 15 minutes, touchez de nouveau le bouton si besoin.</p>
