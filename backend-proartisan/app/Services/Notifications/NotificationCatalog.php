@@ -472,6 +472,30 @@ class NotificationCatalog
             'body' => 'Un litige a été signalé pour la livraison de la commande #{commande}.',
             'sms' => true,
         ],
+        'commande.litige_clos.client' => [
+            'label' => 'Litige de commande clos (client)',
+            'domain' => 'litiges', 'audience' => 'client', 'type' => 'payment',
+            'variables' => ['commande' => 'Numéro de la commande', 'issue' => 'Décision rendue'],
+            'title' => 'Litige clos sur votre commande',
+            'body' => 'Le litige de la commande #{commande} est clos : {issue}.',
+            'sms' => false,
+        ],
+        'commande.litige_clos.fournisseur' => [
+            'label' => 'Litige de commande clos (fournisseur)',
+            'domain' => 'litiges', 'audience' => 'fournisseur', 'type' => 'payment',
+            'variables' => ['commande' => 'Numéro de la commande', 'issue' => 'Décision rendue'],
+            'title' => 'Litige clos sur la commande',
+            'body' => 'Le litige de la commande #{commande} est clos : {issue}.',
+            'sms' => false,
+        ],
+        'commande.litige_clos.livreur' => [
+            'label' => 'Litige de commande clos (livreur)',
+            'domain' => 'litiges', 'audience' => 'livreur', 'type' => 'payment',
+            'variables' => ['commande' => 'Numéro de la commande', 'issue' => 'Décision rendue'],
+            'title' => 'Litige clos sur la livraison',
+            'body' => 'Le litige de la commande #{commande} est clos : {issue}.',
+            'sms' => false,
+        ],
 
         // ─── Livraisons et courses ──────────────────────────────────────────
         'course.disponible.livreur' => [

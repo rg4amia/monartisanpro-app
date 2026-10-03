@@ -405,6 +405,14 @@ class AppPages {
       page: () => const ReferentLitigesScreen(),
     ),
     GetPage(
+      name: Routes.orderDisputes,
+      page: () => const OrderDisputesScreen(),
+    ),
+    GetPage(
+      name: Routes.missionHistory,
+      page: () => const MissionHistoryScreen(),
+    ),
+    GetPage(
       name: Routes.legalTerms,
       page: () => const LegalTermsScreen(),
     ),

@@ -29,6 +29,11 @@ class WalletController extends GetxController {
 
   /// Statut affiché dans l'historique ; `null` = toutes les opérations.
   final statusFilter = RxnString();
+
+  /// Type d'opération affiché ; `null` = tous. Les types proposés sont ceux
+  /// que le serveur annonce pour cet utilisateur.
+  final typeFilter = RxnString();
+  final availableTypes = <(String, String)>[].obs;
   final hasMoreTransactions = false.obs;
   final isLoadingMore = false.obs;
   int _page = 1;
@@ -91,8 +96,24 @@ class WalletController extends GetxController {
       params: {
         'page': page,
         if (statusFilter.value != null) 'status': statusFilter.value,
+        if (typeFilter.value != null) 'type': typeFilter.value,
       },
     );
+
+    // Types d'opération présents dans l'historique, annoncés par le serveur.
+    final types = readMapList(
+      readMap(readMap(response.data)?['meta'])?['types'],
+    );
+    if (types.isNotEmpty) {
+      availableTypes.value = [
+        for (final type in types)
+          if (readString(type['value']) != null)
+            (
+              readString(type['value'])!,
+              readString(type['label']) ?? readString(type['value'])!,
+            ),
+      ];
+    }
 
     return HistoryPage<TransactionModel>.fromResponse(
       response.data,
@@ -126,6 +147,14 @@ class WalletController extends GetxController {
     if (statusFilter.value == status) return;
 
     statusFilter.value = status;
+    await fetchData();
+  }
+
+  /// Filtre l'historique par type d'opération, `null` pour tout afficher.
+  Future<void> setTypeFilter(String? type) async {
+    if (typeFilter.value == type) return;
+
+    typeFilter.value = type;
     await fetchData();
   }
 

@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminCollectionController;
 use App\Http\Controllers\Admin\AdminDocumentController;
 use App\Http\Controllers\Admin\AdminFraudController;
 use App\Http\Controllers\Admin\AdminMissionHistoryController;
+use App\Http\Controllers\Admin\AdminOrderDisputeController;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminSessionController;
 use App\Http\Controllers\Admin\AdminTerritoryController;
@@ -141,6 +142,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/deliveries/fleet-map', [DeliveryTrackingController::class, 'getFleetOverview'])->middleware('can:admin.missions.view')->name('deliveries.fleet-map');
 
         // Litiges
+        Route::post('/orders/{order}/dispute/resolve', [AdminOrderDisputeController::class, 'resolve'])->middleware('can:admin.litiges.arbitrate')->name('orders.dispute.resolve');
         Route::get('/litiges', [BackofficeController::class, 'litiges'])->middleware('can:admin.litiges.view')->name('litiges');
         Route::get('/litiges/{litige}/invoice', [BackofficeController::class, 'downloadInvoice'])->middleware('can:admin.litiges.view')->name('litiges.invoice');
         Route::post('/litiges/{litige}/resolve', [BackofficeController::class, 'resolveLitige'])->middleware('can:admin.litiges.arbitrate')->name('litiges.resolve');

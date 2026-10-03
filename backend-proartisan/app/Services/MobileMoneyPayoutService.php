@@ -10,6 +10,7 @@ use App\Models\MobileMoneyPayoutEvent;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\Admin\AdminActivityLogger;
+use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 
@@ -349,6 +350,22 @@ class MobileMoneyPayoutService
             ->map(fn (MobileMoneyPayout $payout) => $this->present($payout))
             ->values()
             ->all();
+    }
+
+    /**
+     * Historique complet des versements d'un utilisateur, du plus récent au
+     * plus ancien, page par page.
+     */
+    public function historyFor(User $user, ?string $statut, int $perPage): LengthAwarePaginator
+    {
+        $page = MobileMoneyPayout::where('user_id', $user->id)
+            ->when($statut, fn ($q) => $q->where('statut', $statut))
+            ->latest('id')
+            ->paginate($perPage);
+
+        $page->getCollection()->transform(fn (MobileMoneyPayout $payout) => $this->present($payout));
+
+        return $page;
     }
 
     /**

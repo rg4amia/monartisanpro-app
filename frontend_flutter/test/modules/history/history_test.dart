@@ -306,7 +306,8 @@ void main() {
       expect(find.text('Aucun litige'), findsOneWidget);
     });
 
-    testWidgets('une panne s\'annonce avec « Réessayer », jamais « Aucun litige »',
+    testWidgets(
+        'une panne s\'annonce avec « Réessayer », jamais « Aucun litige »',
         (tester) async {
       await tester.pumpWidget(
         _host(MyLitigesScreen(repository: _FakeHistoryRepository(fail: true))),
@@ -389,26 +390,142 @@ void main() {
     });
   });
 
+  group('Compléments (Chantier 21)', () {
+    late FakeHttpClientAdapter adapter;
+
+    setUp(() {
+      adapter = FakeHttpClientAdapter();
+      ApiClient().dio.httpClientAdapter = adapter;
+    });
+
+    testWidgets('un litige de commande affiche sa décision et son motif',
+        (tester) async {
+      adapter.on(
+        'GET',
+        '/orders/disputes',
+        const CannedResponse(
+          statusCode: 200,
+          body: {
+            'data': [
+              {
+                'id': 3,
+                'order_id': 100,
+                'reason': 'Colis incomplet',
+                'statut': 'resolu',
+                'statut_label': 'Résolu',
+                'outcome_label': 'Réclamation du client acceptée',
+                'resolution_note': 'Sacs manquants confirmés.',
+                'opened_at': '2026-10-01T09:00:00Z',
+                'resolved_at': '2026-10-02T09:00:00Z',
+                'order_total': 20000,
+              },
+            ],
+            'meta': {'current_page': 1, 'last_page': 1, 'total': 1},
+          },
+        ),
+      );
+
+      await tester.runAsync(() async {
+        await tester.pumpWidget(_host(const OrderDisputesScreen()));
+        await Future<void>.delayed(const Duration(milliseconds: 200));
+      });
+      await tester.pumpAndSettle();
+
+      expect(find.text('Commande #100'), findsOneWidget);
+      expect(find.text('Motif : Colis incomplet'), findsOneWidget);
+      expect(
+        find.text('Décision : Réclamation du client acceptée'),
+        findsOneWidget,
+      );
+      expect(find.text('Sacs manquants confirmés.'), findsOneWidget);
+    });
+
+    test('l\'historique des versements est demandé par statut et par page',
+        () async {
+      adapter.on(
+        'GET',
+        '/payouts',
+        const CannedResponse(
+          statusCode: 200,
+          body: {
+            'data': [
+              {
+                'id': 8,
+                'reference': 'PAY-8',
+                'montant': 25000,
+                'statut': 'verse',
+                'statut_label': 'Versé',
+                'paid_at': '2026-10-02T09:00:00Z',
+              },
+            ],
+            'meta': {'current_page': 1, 'last_page': 4, 'total': 70},
+          },
+        ),
+      );
+
+      final page = await HistoryRepository().payouts(statut: 'verse');
+
+      expect(page.items.single.isPaid, isTrue);
+      expect(page.items.single.paidAt, isNotNull);
+      expect(page.hasMore, isTrue);
+      final query = adapter.requests.single.queryParameters;
+      expect(query['statut'], 'verse');
+      expect(query['per_page'], HistoryRepository.pageSize);
+    });
+
+    testWidgets('le Référent ouvre directement l\'historique d\'un chantier',
+        (tester) async {
+      final repo = _FakeHistoryRepository(
+        timeline: const [
+          MissionStateLine(
+            id: 1,
+            fromLabel: 'Financée',
+            toLabel: 'En cours',
+            actorRole: 'Client',
+            reconstituted: false,
+            unknownDate: true,
+          ),
+        ],
+      );
+
+      await tester.pumpWidget(
+        _host(MissionHistoryScreen(missionId: 12, repository: repo)),
+      );
+      await tester.pumpAndSettle();
+
+      expect(find.text('Chantier #12'), findsOneWidget);
+      expect(find.text('Financée → En cours'), findsOneWidget);
+      // Le Référent voit le rôle, jamais le nom d'une partie.
+      expect(find.text('Date non conservée · Client'), findsOneWidget);
+    });
+  });
+
   group('« Mon historique »', () {
     List<String> titles(String role) =>
         historyEntriesFor(role).map((e) => e.title).toList();
 
     test('chaque rôle a ses rubriques', () {
-      expect(
-        titles('client'),
-        ['Paiements', 'Missions', 'Litiges', 'Commandes de matériaux'],
-      );
+      expect(titles('client'), [
+        'Paiements',
+        'Missions',
+        'Litiges',
+        'Commandes de matériaux',
+        'Litiges de commandes',
+      ]);
       expect(titles('artisan'), [
         'Paiements',
-        'Versements reçus',
+        'Versements',
         'Chantiers',
         'Litiges',
         'Bons matériels',
       ]);
-      expect(
-        titles('fournisseur'),
-        ['Paiements', 'Commandes', 'Virements', 'Litiges'],
-      );
+      expect(titles('fournisseur'), [
+        'Paiements',
+        'Commandes',
+        'Virements',
+        'Litiges de commandes',
+        'Litiges de chantiers',
+      ]);
       expect(
         titles('livreur'),
         ['Gains', 'Courses', 'Retraits', 'Courses en litige'],
@@ -418,8 +535,7 @@ void main() {
     });
 
     testWidgets('l\'écran affiche les rubriques du rôle', (tester) async {
-      await tester
-          .pumpWidget(_host(const HistoryHubScreen(role: 'referent')));
+      await tester.pumpWidget(_host(const HistoryHubScreen(role: 'referent')));
 
       expect(find.text('Mon historique'), findsOneWidget);
       expect(find.text('Inspections réalisées'), findsOneWidget);

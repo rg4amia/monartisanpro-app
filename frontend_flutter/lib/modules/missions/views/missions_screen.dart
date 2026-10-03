@@ -67,12 +67,24 @@ class MissionsScreen extends StatelessWidget {
                       top: 16,
                       bottom: role == 'client' ? 92 : 16,
                     ),
-                    itemCount: controller.missions.length,
+                    itemCount: controller.missions.length +
+                        (controller.hasMoreMissions.value ? 1 : 0),
                     separatorBuilder: (_, __) => const SizedBox(height: 14),
-                    itemBuilder: (_, index) => _MissionCard(
-                      role: role,
-                      mission: controller.missions[index],
-                    ),
+                    itemBuilder: (_, index) {
+                      if (index >= controller.missions.length) {
+                        return controller.isLoadingMoreMissions.value
+                            ? const Center(child: CircularProgressIndicator())
+                            : OutlinedButton(
+                                onPressed: controller.loadMoreMissions,
+                                child: const Text('Voir plus'),
+                              );
+                      }
+
+                      return _MissionCard(
+                        role: role,
+                        mission: controller.missions[index],
+                      );
+                    },
                   ),
                 );
               }),

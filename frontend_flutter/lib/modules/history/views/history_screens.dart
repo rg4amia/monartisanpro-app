@@ -8,7 +8,7 @@ import '../../../core/utils/formatters.dart';
 import '../../../data/models/history_models.dart';
 import '../../../data/models/payout_model.dart';
 import '../../../data/repositories/history_repository.dart';
-import '../../../data/repositories/payout_repository.dart';
+import '../../missions/widgets/tracking/mission_state_history_section.dart';
 import '../widgets/paged_history_view.dart';
 
 final DateFormat _day = DateFormat('dd/MM/yyyy', 'fr_FR');
@@ -97,6 +97,9 @@ class ReferentLitigesScreen extends StatelessWidget {
           ],
           trailing:
               mission == null ? null : Formatters.fcfa(mission.montantTotal),
+          onTap: mission == null
+              ? null
+              : () => Get.toNamed(Routes.missionHistory, arguments: mission.id),
         );
       },
     );
@@ -132,6 +135,8 @@ class ReferentInspectionsScreen extends StatelessWidget {
               'Visite du ${_on(inspection.inspectedAt)}',
           ],
           trailing: Formatters.fcfa(mission.montantTotal),
+          onTap: () =>
+              Get.toNamed(Routes.missionHistory, arguments: mission.id),
         );
       },
     );
@@ -202,52 +207,121 @@ class DriverDeliveriesScreen extends StatelessWidget {
   }
 }
 
-/// Versements Mobile Money aboutis (paiements d'étape, règlements de litige).
+/// Historique complet des versements Mobile Money : aboutis, en cours,
+/// échoués. La relance d'un virement échoué reste dans le portefeuille.
 class ReceivedPayoutsScreen extends StatelessWidget {
   const ReceivedPayoutsScreen({this.repository, super.key});
 
-  final PayoutRepository? repository;
+  final HistoryRepository? repository;
 
   @override
   Widget build(BuildContext context) {
-    final repo = repository ?? PayoutRepository();
+    final repo = repository ?? HistoryRepository();
 
     return PagedHistoryView<PayoutModel>(
-      title: 'Versements reçus',
-      fetch: (_, __) async {
-        final paid = (await repo.getPayouts(forceRefresh: true))
-            .where((payout) => payout.isPaid)
-            .toList();
-
-        return HistoryPage<PayoutModel>(
-          items: paid,
-          currentPage: 1,
-          lastPage: 1,
-          total: paid.length,
-        );
-      },
-      emptyTitle: 'Aucun versement reçu',
+      title: 'Historique des versements',
+      filters: const [
+        HistoryFilter(null, 'Tous'),
+        HistoryFilter('verse', 'Versés'),
+        HistoryFilter('en_cours', 'En cours'),
+        HistoryFilter('echoue', 'Échoués'),
+      ],
+      fetch: (filter, page) => repo.payouts(statut: filter, page: page),
+      emptyTitle: 'Aucun versement',
       emptyMessage:
-          'Les virements Mobile Money aboutis apparaîtront ici. Les virements en attente restent dans le portefeuille.',
-      itemBuilder: (context, payout) {
-        final lastEvent =
-            payout.events.isEmpty ? null : payout.events.first.createdAt;
+          'Les virements Mobile Money qui vous sont destinés apparaîtront ici, aboutis ou non.',
+      itemBuilder: (context, payout) => HistoryCard(
+        title: payout.contextLabel,
+        badge: payout.statutLabel,
+        badgeColor: payout.isPaid
+            ? AppColors.success
+            : (payout.isFailed ? AppColors.danger : AppColors.warning),
+        lines: [
+          'Référence ${payout.reference}',
+          [
+            payout.provider,
+            if (payout.phone != null) payout.phone!,
+          ].join(' · '),
+          if (payout.paidAt != null) 'Versé le ${_on(payout.paidAt)}',
+          if (payout.isFailed && payout.lastError != null) payout.lastError!,
+        ],
+        trailing: Formatters.fcfa(payout.montant),
+      ),
+    );
+  }
+}
 
-        return HistoryCard(
-          title: payout.contextLabel,
-          badge: payout.statutLabel,
-          badgeColor: AppColors.success,
-          lines: [
-            'Référence ${payout.reference}',
-            [
-              payout.provider,
-              if (payout.phone != null) payout.phone!,
-            ].join(' · '),
-            _on(lastEvent),
-          ],
-          trailing: Formatters.fcfa(payout.montant),
-        );
-      },
+/// Litiges des commandes de l'utilisateur (client, fournisseur, livreur),
+/// avec la décision rendue.
+class OrderDisputesScreen extends StatelessWidget {
+  const OrderDisputesScreen({this.repository, super.key});
+
+  final HistoryRepository? repository;
+
+  @override
+  Widget build(BuildContext context) {
+    final repo = repository ?? HistoryRepository();
+
+    return PagedHistoryView<OrderDisputeRecord>(
+      title: 'Litiges de commandes',
+      filters: const [
+        HistoryFilter(null, 'Tous'),
+        HistoryFilter('ouvert', 'En cours'),
+        HistoryFilter('resolu', 'Résolus'),
+      ],
+      fetch: (filter, page) => repo.orderDisputes(statut: filter, page: page),
+      emptyTitle: 'Aucun litige de commande',
+      emptyMessage:
+          'Les commandes contestées apparaîtront ici, avec la décision rendue.',
+      itemBuilder: (context, dispute) => HistoryCard(
+        title: 'Commande #${dispute.orderId}',
+        badge: dispute.statutLabel,
+        badgeColor: dispute.isResolved ? AppColors.success : AppColors.danger,
+        lines: [
+          if (dispute.reason != null) 'Motif : ${dispute.reason}',
+          'Ouvert le ${_on(dispute.openedAt)}',
+          if (dispute.outcomeLabel != null)
+            'Décision : ${dispute.outcomeLabel}',
+          if (dispute.resolutionNote != null) dispute.resolutionNote!,
+          if (dispute.resolvedAt != null) 'Clos le ${_on(dispute.resolvedAt)}',
+        ],
+        trailing: dispute.orderTotal > 0
+            ? 'Articles : ${Formatters.fcfa(dispute.orderTotal)}'
+            : null,
+      ),
+    );
+  }
+}
+
+/// Historique des états d'un chantier, ouvert par le Référent depuis ses
+/// inspections et ses litiges. Argument de route : l'identifiant de la mission.
+class MissionHistoryScreen extends StatelessWidget {
+  const MissionHistoryScreen({this.missionId, this.repository, super.key});
+
+  final int? missionId;
+  final HistoryRepository? repository;
+
+  @override
+  Widget build(BuildContext context) {
+    final argument = Get.arguments;
+    final id = missionId ?? (argument is int ? argument : 0);
+
+    return Scaffold(
+      backgroundColor: AppColors.background,
+      appBar: AppBar(
+        title: Text('Chantier #$id'),
+        backgroundColor: AppColors.surface,
+        foregroundColor: AppColors.textPrimary,
+        elevation: 0,
+      ),
+      body: SingleChildScrollView(
+        padding: const EdgeInsets.all(16),
+        child: MissionStateHistorySection(
+          missionId: id,
+          repository: repository,
+          initiallyOpen: true,
+        ),
+      ),
     );
   }
 }

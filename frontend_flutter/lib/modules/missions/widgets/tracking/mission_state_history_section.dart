@@ -13,11 +13,15 @@ class MissionStateHistorySection extends StatefulWidget {
   const MissionStateHistorySection({
     required this.missionId,
     this.repository,
+    this.initiallyOpen = false,
     super.key,
   });
 
   final int missionId;
   final HistoryRepository? repository;
+
+  /// Ouvre la section et charge l'historique dès l'affichage.
+  final bool initiallyOpen;
 
   @override
   State<MissionStateHistorySection> createState() =>
@@ -30,7 +34,14 @@ class _MissionStateHistorySectionState
 
   late final HistoryRepository _repo = widget.repository ?? HistoryRepository();
 
-  bool _open = false;
+  late bool _open = widget.initiallyOpen;
+
+  @override
+  void initState() {
+    super.initState();
+    if (_open) _load();
+  }
+
   bool _loading = false;
   String? _error;
   List<MissionStateLine>? _lines;

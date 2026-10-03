@@ -1,4 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:frontend_flutter/data/models/history_models.dart';
 import 'package:frontend_flutter/data/repositories/order_repository.dart';
 import 'package:frontend_flutter/modules/orders/controllers/order_follow_up_controller.dart';
 import 'package:frontend_flutter/modules/orders/widgets/order_status_badge.dart';
@@ -6,18 +7,34 @@ import 'package:frontend_flutter/modules/orders/widgets/order_status_badge.dart'
 /// Dépôt simulé : on veut éprouver le tri et la gestion d'erreur du
 /// contrôleur, pas la couche réseau.
 class _FakeOrderRepository extends OrderRepository {
-  _FakeOrderRepository(
-      {this.supplierOrders = const [], this.shouldFail = false,});
+  _FakeOrderRepository({
+    this.supplierOrders = const [],
+    this.shouldFail = false,
+  });
 
   final List<Map<String, dynamic>> supplierOrders;
   final bool shouldFail;
   int revealCalls = 0;
 
+  /// Pages servies après la première, dans l'ordre des demandes.
+  final List<List<Map<String, dynamic>>> nextPages = [];
+  final requestedPages = <int>[];
+
   @override
-  Future<List<Map<String, dynamic>>> getSupplierOrders() async {
+  Future<HistoryPage<Map<String, dynamic>>> getOrdersPage({
+    required bool asSupplier,
+    int page = 1,
+    int perPage = 20,
+  }) async {
+    requestedPages.add(page);
     if (shouldFail) throw Exception('réseau indisponible');
 
-    return supplierOrders;
+    return HistoryPage<Map<String, dynamic>>(
+      items: page == 1 ? supplierOrders : nextPages[page - 2],
+      currentPage: page,
+      lastPage: nextPages.length + 1,
+      total: supplierOrders.length,
+    );
   }
 
   @override
@@ -57,6 +74,29 @@ void main() {
       {'id': 3, 'status': 'delivered'},
       {'id': 4, 'status': 'cancelled'},
     ];
+
+    test('« Voir plus » ajoute la page suivante aux commandes affichées',
+        () async {
+      final repo = _FakeOrderRepository(supplierOrders: sample)
+        ..nextPages.add([
+          {'id': 5, 'status': 'delivered'},
+        ]);
+      final controller = OrderFollowUpController(repository: repo)
+        ..asSupplier = true;
+
+      await controller.load();
+      expect(controller.hasMore.value, isTrue);
+
+      await controller.loadMore();
+
+      expect(controller.orders.map((o) => o['id']), [1, 2, 3, 4, 5]);
+      expect(controller.hasMore.value, isFalse);
+      expect(repo.requestedPages, [1, 2]);
+
+      // Plus rien à charger : aucune demande supplémentaire.
+      await controller.loadMore();
+      expect(repo.requestedPages, [1, 2]);
+    });
 
     test('sépare les commandes à traiter de l historique', () async {
       final controller = OrderFollowUpController(

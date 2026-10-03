@@ -91,6 +91,16 @@ class _ClientOrdersScreenState extends State<ClientOrdersScreen> {
                     ),
                   ),
                 ],
+                if (controller.hasMore.value)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: controller.isLoadingMore.value
+                        ? const Center(child: CircularProgressIndicator())
+                        : OutlinedButton(
+                            onPressed: controller.loadMore,
+                            child: const Text('Voir plus'),
+                          ),
+                  ),
               ],
             ],
           ),
@@ -375,32 +385,33 @@ class _ClientOrderCard extends StatelessWidget {
               mainAxisSize: MainAxisSize.min,
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-              const Text(
-                'Décrivez le problème rencontré avec cette commande '
-                '(matériaux manquants, colis endommagé...). Un litige bloque '
-                'temporairement les paiements le temps de l\'examen.',
-                style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
-              ),
-              const SizedBox(height: 14),
-              TextFormField(
-                controller: reasonController,
-                maxLines: 4,
-                autofocus: true,
-                decoration: InputDecoration(
-                  labelText: 'Motif du litige',
-                  hintText: 'Décrivez précisément le problème rencontré',
-                  border: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
+                const Text(
+                  'Décrivez le problème rencontré avec cette commande '
+                  '(matériaux manquants, colis endommagé...). Un litige bloque '
+                  'temporairement les paiements le temps de l\'examen.',
+                  style:
+                      TextStyle(fontSize: 13, color: AppColors.textSecondary),
                 ),
-                validator: (value) {
-                  final v = (value ?? '').trim();
-                  if (v.length < 5) {
-                    return 'Merci de préciser le motif (5 caractères minimum).';
-                  }
-                  return null;
-                },
-              ),
+                const SizedBox(height: 14),
+                TextFormField(
+                  controller: reasonController,
+                  maxLines: 4,
+                  autofocus: true,
+                  decoration: InputDecoration(
+                    labelText: 'Motif du litige',
+                    hintText: 'Décrivez précisément le problème rencontré',
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                  validator: (value) {
+                    final v = (value ?? '').trim();
+                    if (v.length < 5) {
+                      return 'Merci de préciser le motif (5 caractères minimum).';
+                    }
+                    return null;
+                  },
+                ),
               ],
             ),
           ),

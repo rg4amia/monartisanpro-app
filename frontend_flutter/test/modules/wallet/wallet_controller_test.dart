@@ -250,6 +250,51 @@ void main() {
       expect(transactionQueries().last['page'], 1);
     });
 
+    test('les types d\'opération viennent du serveur et filtrent l\'historique',
+        () async {
+      adapter
+        ..on(
+          'GET',
+          '/wallets/balance',
+          const CannedResponse(
+            statusCode: 200,
+            body: {
+              'data': {'wallet_materiaux': 0, 'wallet_mo': 0},
+            },
+          ),
+        )
+        ..on(
+          'GET',
+          '/transactions',
+          CannedResponse(
+            statusCode: 200,
+            body: {
+              'data': [transaction(1)],
+              'meta': {
+                'current_page': 1,
+                'last_page': 1,
+                'types': [
+                  {'value': 'acompte', 'label': 'Paiements au coffre'},
+                  {'value': 'paiement_livraison', 'label': 'Courses'},
+                ],
+              },
+            },
+          ),
+        );
+      final controller = WalletController();
+      await controller.fetchData();
+
+      expect(controller.availableTypes, [
+        ('acompte', 'Paiements au coffre'),
+        ('paiement_livraison', 'Courses'),
+      ]);
+
+      await controller.setTypeFilter('paiement_livraison');
+
+      expect(transactionQueries().last['type'], 'paiement_livraison');
+      expect(transactionQueries().last['page'], 1);
+    });
+
     test('une page suivante en panne garde les lignes et renvoie le message',
         () async {
       serve(currentPage: 1, ids: [1, 2]);

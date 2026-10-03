@@ -4,6 +4,7 @@ namespace App\Services;
 
 use App\Models\Mission;
 use App\Models\MissionStateTransition;
+use App\Models\User;
 use App\States\Mission\MissionState;
 
 /**
@@ -22,9 +23,20 @@ class MissionHistoryService
     ];
 
     /**
+     * Un chantier relève du Référent s'il doit le visiter, l'a visité, ou si
+     * son montant dépasse le seuil de contrôle (Règle d'or 5).
+     */
+    public function concernsReferent(Mission $mission, User $referent): bool
+    {
+        return (bool) $mission->referent_required
+            || (int) $mission->referent_validated_by === (int) $referent->id
+            || (int) $mission->montant_total > (int) config('prosartisan.mission.referent_threshold', 2000000);
+    }
+
+    /**
      * @return array{mission_id: int, current_state: string, current_state_label: string, transitions: list<array<string, mixed>>}
      */
-    public function timeline(Mission $mission, bool $maskStaff = false): array
+    public function timeline(Mission $mission, bool $maskStaff = false, bool $maskParties = false): array
     {
         $transitions = $mission->stateTransitions()
             ->with('user:id,name,phone,role')
@@ -39,7 +51,8 @@ class MissionHistoryService
                 'user' => $t->user ? [
                     'id' => $t->user->id,
                     // Le client et l'artisan voient le rôle, jamais le nom d'un agent ProsArtisan.
-                    'name' => $maskStaff && in_array($t->user->role, ['admin', 'referent'], true) ? null : $t->user->name,
+                    // Le Référent instruit un chantier : il ne voit le nom d'aucune des parties.
+                    'name' => $maskParties || ($maskStaff && in_array($t->user->role, ['admin', 'referent'], true)) ? null : $t->user->name,
                     'role' => $t->user->role,
                 ] : null,
                 'reason' => $t->reason,

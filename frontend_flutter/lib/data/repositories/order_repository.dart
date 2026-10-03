@@ -7,6 +7,7 @@ import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/network/sync_service.dart';
 import '../../core/storage/storage_service.dart';
+import '../models/history_models.dart';
 
 class OrderRepository {
   final ApiClient _client = ApiClient();
@@ -140,7 +141,6 @@ class OrderRepository {
     } catch (_) {}
     return null;
   }
-
 
   Future<List<Map<String, dynamic>>> getMyOrders({
     bool forceRefresh = false,
@@ -304,6 +304,24 @@ class OrderRepository {
   ///
   /// Non mise en cache : le fournisseur agit sur cette liste (préparation,
   /// remise) et une vue périmée l'induirait en erreur au comptoir.
+  /// Une page des commandes du client ou du fournisseur. Le serveur place
+  /// les commandes à suivre avant les commandes closes. Un échec remonte :
+  /// une panne ne passe jamais pour une liste vide.
+  Future<HistoryPage<Map<String, dynamic>>> getOrdersPage({
+    required bool asSupplier,
+    int page = 1,
+    int perPage = 20,
+  }) async {
+    final res = await NetworkExecutor.run(
+      () => _client.get(
+        asSupplier ? ApiEndpoints.supplierOrders : ApiEndpoints.orders,
+        params: {'page': page, 'per_page': perPage},
+      ),
+    );
+
+    return HistoryPage<Map<String, dynamic>>.fromResponse(res.data, (j) => j);
+  }
+
   Future<List<Map<String, dynamic>>> getSupplierOrders() async {
     final res = await _client.get(ApiEndpoints.supplierOrders);
 

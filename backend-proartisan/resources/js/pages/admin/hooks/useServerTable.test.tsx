@@ -65,6 +65,15 @@ describe('useServerTable', () => {
         );
     });
 
+    it('ne restaure pas les filtres d’une liste depuis la page d’un autre onglet', () => {
+        window.localStorage.setItem('admin_table_filters:users', JSON.stringify({ search_users: 'stored', role_users: '' }));
+        window.history.replaceState({}, '', '/admin/kyc');
+
+        renderHook(() => useServerTable(opts));
+
+        expect(routerGet).not.toHaveBeenCalled();
+    });
+
     it('reset vide les filtres et purge le stockage', () => {
         window.localStorage.setItem('admin_table_filters:users', JSON.stringify({ search_users: 'x', role_users: '' }));
         const { result } = renderHook(() => useServerTable(opts));

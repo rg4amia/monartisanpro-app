@@ -1211,6 +1211,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                     <OrderDetailModal
                         order={selectedOrderForDetails}
                         onClose={() => setSelectedOrderForDetails(null)}
+                        canResolveDispute={canArbitrateLitiges}
                     />
                 )}
 

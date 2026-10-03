@@ -49,6 +49,9 @@ class PayoutModel {
   final int attempts;
   final String? lastError;
   final DateTime? nextRetryAt;
+
+  /// Date du virement abouti, `null` tant qu'il ne l'est pas.
+  final DateTime? paidAt;
   final bool canRetry;
   final List<PayoutEventModel> events;
 
@@ -66,6 +69,7 @@ class PayoutModel {
     this.phone,
     this.lastError,
     this.nextRetryAt,
+    this.paidAt,
     this.events = const [],
   });
 
@@ -98,6 +102,7 @@ class PayoutModel {
       attempts: readInt(json['attempts']) ?? 0,
       lastError: readString(json['last_error']),
       nextRetryAt: DateTime.tryParse(readString(json['next_retry_at']) ?? ''),
+      paidAt: DateTime.tryParse(readString(json['paid_at']) ?? '')?.toLocal(),
       canRetry: readBool(json['can_retry']) ?? false,
       events: readMapList(json['events'])
           .map(PayoutEventModel.fromJson)

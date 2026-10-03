@@ -56,14 +56,29 @@ class SupplierDashboardController extends Controller
     public function orders(Request $request): JsonResponse
     {
         $supplier = $request->user();
-        $orders = Order::visibleToSupplier()->where('supplier_id', $supplier->id)
-            ->with(['client', 'items.product', 'driver'])
+        $filters = $request->validate(['per_page' => ['nullable', 'integer', 'min:1', 'max:100']]);
+
+        $query = Order::visibleToSupplier()->where('supplier_id', $supplier->id)
+            ->with(['client', 'items.product', 'driver']);
+
+        // Sans `per_page`, la liste complète est renvoyée (versions installées).
+        if (empty($filters['per_page'])) {
+            return response()->json([
+                'success' => true,
+                'data' => $query->latest()->get(),
+            ]);
+        }
+
+        // Page par page : les commandes à traiter passent devant les commandes closes.
+        $page = $query
+            ->orderByRaw("CASE WHEN status IN ('delivered', 'cancelled') THEN 1 ELSE 0 END")
             ->latest()
-            ->get();
+            ->paginate((int) $filters['per_page']);
 
         return response()->json([
             'success' => true,
-            'data' => $orders,
+            'data' => $page->items(),
+            'meta' => ['total' => $page->total(), 'current_page' => $page->currentPage(), 'last_page' => $page->lastPage()],
         ]);
     }
 

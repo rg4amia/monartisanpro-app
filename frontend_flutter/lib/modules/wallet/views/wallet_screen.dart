@@ -108,6 +108,32 @@ class WalletScreen extends StatelessWidget {
                             ),
                         ],
                       ),
+                      if (controller.availableTypes.length > 1) ...[
+                        const SizedBox(height: 8),
+                        DropdownButtonFormField<String?>(
+                          initialValue: controller.typeFilter.value,
+                          isExpanded: true,
+                          decoration: const InputDecoration(
+                            labelText: 'Type d\'opération',
+                            border: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          items: [
+                            const DropdownMenuItem<String?>(
+                              child: Text('Tous les types'),
+                            ),
+                            for (final type in controller.availableTypes)
+                              DropdownMenuItem<String?>(
+                                value: type.$1,
+                                child: Text(
+                                  type.$2,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                              ),
+                          ],
+                          onChanged: controller.setTypeFilter,
+                        ),
+                      ],
                       const SizedBox(height: 16),
                     ],
                   ),

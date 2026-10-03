@@ -331,6 +331,49 @@ void main() {
   });
 
   group('MissionsController', () {
+    testWidgets(
+        '« Voir plus » ajoute la page suivante de la liste des missions',
+        (tester) async {
+      List<Map<String, dynamic>> page(int from, int count) => [
+            for (var id = from; id < from + count; id++)
+              {..._missionJson('in_progress'), 'id': id},
+          ];
+
+      adapter.on(
+        'GET',
+        '/missions',
+        CannedResponse(
+          statusCode: 200,
+          body: {'success': true, 'data': page(100, 20)},
+        ),
+      );
+      final controller = MissionsController();
+
+      await runControllerAction(
+        tester,
+        () => controller.loadMissions(status: 'all', isRefresh: true),
+      );
+      expect(controller.missions, hasLength(20));
+      expect(controller.hasMoreMissions.value, isTrue);
+
+      adapter.on(
+        'GET',
+        '/missions',
+        CannedResponse(
+          statusCode: 200,
+          body: {'success': true, 'data': page(120, 3)},
+        ),
+      );
+      await runControllerAction(tester, controller.loadMoreMissions);
+
+      expect(controller.missions, hasLength(23));
+      // Page incomplète : il n'y a plus rien à charger.
+      expect(controller.hasMoreMissions.value, isFalse);
+      final last =
+          adapter.requests.lastWhere((r) => r.path.endsWith('missions'));
+      expect(last.queryParameters['page'], 2);
+    });
+
     testWidgets('cancelMission envoie le motif et garde la mission annulée',
         (tester) async {
       adapter

@@ -1043,6 +1043,8 @@ class OrderService
                 'dispute_opened_at' => now(),
             ]);
 
+            app(OrderDisputeService::class)->record($order, $client, $reason);
+
             // Notification Fournisseur
             app(NotificationService::class)->notify(
                 $order->supplier,

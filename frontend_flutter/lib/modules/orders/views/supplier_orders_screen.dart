@@ -88,6 +88,16 @@ class _SupplierOrdersScreenState extends State<SupplierOrdersScreen> {
                     ),
                   ),
                 ],
+                if (controller.hasMore.value)
+                  Padding(
+                    padding: const EdgeInsets.only(top: 4),
+                    child: controller.isLoadingMore.value
+                        ? const Center(child: CircularProgressIndicator())
+                        : OutlinedButton(
+                            onPressed: controller.loadMore,
+                            child: const Text('Voir plus'),
+                          ),
+                  ),
               ],
             ],
           ),

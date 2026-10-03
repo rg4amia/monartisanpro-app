@@ -3,6 +3,7 @@ import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/utils/json_readers.dart';
 import '../models/history_models.dart';
+import '../models/payout_model.dart';
 
 /// Historiques consultés depuis « Mon historique » (Chantier 20).
 ///
@@ -80,6 +81,31 @@ class HistoryRepository {
       ApiEndpoints.referentInspections,
       ReferentInspection.fromJson,
       page: page,
+    );
+  }
+
+  /// Litiges des commandes de l'utilisateur (client, fournisseur, livreur),
+  /// avec leur issue. [statut] : `ouvert`, `resolu`, ou `null` pour tous.
+  Future<HistoryPage<OrderDisputeRecord>> orderDisputes({
+    String? statut,
+    int page = 1,
+  }) {
+    return _page(
+      ApiEndpoints.orderDisputes,
+      OrderDisputeRecord.fromJson,
+      page: page,
+      query: {if (statut != null) 'statut': statut},
+    );
+  }
+
+  /// Historique complet des versements Mobile Money de l'utilisateur.
+  /// [statut] : `verse`, `en_cours`, `echoue`, `annule`, ou `null` pour tous.
+  Future<HistoryPage<PayoutModel>> payouts({String? statut, int page = 1}) {
+    return _page(
+      ApiEndpoints.payouts,
+      PayoutModel.fromJson,
+      page: page,
+      query: {if (statut != null) 'statut': statut},
     );
   }
 

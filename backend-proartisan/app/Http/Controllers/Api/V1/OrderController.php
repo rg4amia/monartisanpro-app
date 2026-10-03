@@ -7,9 +7,11 @@ use App\Exceptions\PaymentException;
 use App\Http\Controllers\Controller;
 use App\Models\Address;
 use App\Models\Order;
+use App\Models\OrderDispute;
 use App\Models\SupplierProduct;
 use App\Models\User;
 use App\Services\DeliveryPricingService;
+use App\Services\OrderDisputeService;
 use App\Services\OrderService;
 use App\Services\PaymentService;
 use Illuminate\Http\JsonResponse;
@@ -18,6 +20,7 @@ use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Validator;
+use Illuminate\Validation\Rule;
 
 class OrderController extends Controller
 {
@@ -208,18 +211,45 @@ class OrderController extends Controller
             $query->whereIn('status', $statuses);
         }
 
-        $query->orderBy('created_at', 'desc');
-
         // Sans `per_page`, la liste complète est renvoyée, comme l'attendent
         // les versions déjà installées de l'application.
         if (empty($filters['per_page'])) {
             return response()->json([
                 'success' => true,
-                'data' => $query->get(),
+                'data' => $query->orderBy('created_at', 'desc')->get(),
             ]);
         }
 
-        $page = $query->paginate((int) $filters['per_page']);
+        // Page par page : les commandes à suivre (en cours, course à régler)
+        // passent devant les commandes closes, pour ne jamais être reléguées
+        // derrière « Voir plus ».
+        $page = $query
+            ->orderByRaw("CASE WHEN status IN ('delivered', 'cancelled') AND (delivery_fare_status IS NULL OR delivery_fare_status <> 'a_payer') THEN 1 ELSE 0 END")
+            ->orderBy('created_at', 'desc')
+            ->paginate((int) $filters['per_page']);
+
+        return response()->json([
+            'success' => true,
+            'data' => $page->items(),
+            'meta' => ['total' => $page->total(), 'current_page' => $page->currentPage(), 'last_page' => $page->lastPage()],
+        ]);
+    }
+
+    /**
+     * Litiges des commandes de l'utilisateur (client, fournisseur, livreur), avec leur issue.
+     * GET /api/v1/orders/disputes
+     */
+    public function disputes(Request $request, OrderDisputeService $disputes): JsonResponse
+    {
+        if (! in_array($request->user()->role, ['client', 'fournisseur', 'livreur'], true)) {
+            return response()->json(['success' => false, 'message' => 'Rôle non autorisé pour les litiges de commande.'], 403);
+        }
+
+        $data = $request->validate([
+            'statut' => ['nullable', Rule::in(array_keys(OrderDispute::STATUT_LABELS))],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+        $page = $disputes->paginateFor($request->user(), $data['statut'] ?? null, (int) ($data['per_page'] ?? 20));
 
         return response()->json([
             'success' => true,

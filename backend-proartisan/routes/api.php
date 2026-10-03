@@ -175,6 +175,8 @@ Route::prefix('v1')->group(function () {
         Route::post('/addresses/{address}/default', [AddressController::class, 'setDefault']);
 
         // ── Commandes Catalogue E-Commerce ───────────────────────────────────
+        // Avant `orders/{order}` : historique des litiges de commande (Chantier 21).
+        Route::get('/orders/disputes', [OrderController::class, 'disputes']);
         Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
         Route::post('/orders/estimate-delivery', [OrderController::class, 'estimateDelivery']);
         Route::post('/orders/multi-estimate', [OrderController::class, 'estimateMultiDelivery']);

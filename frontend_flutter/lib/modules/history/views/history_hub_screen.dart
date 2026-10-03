@@ -36,8 +36,8 @@ List<HistoryEntry> historyEntriesFor(String role) {
         ),
         HistoryEntry(
           icon: Icons.payments_outlined,
-          title: 'Versements reçus',
-          subtitle: 'Virements Mobile Money aboutis',
+          title: 'Versements',
+          subtitle: 'Virements Mobile Money aboutis, en cours, échoués',
           open: () => Get.toNamed(Routes.receivedPayouts),
         ),
         HistoryEntry(
@@ -81,8 +81,14 @@ List<HistoryEntry> historyEntriesFor(String role) {
         ),
         HistoryEntry(
           icon: Icons.gavel_outlined,
-          title: 'Litiges',
-          subtitle: 'Commandes et chantiers contestés',
+          title: 'Litiges de commandes',
+          subtitle: 'Commandes contestées et décision rendue',
+          open: () => Get.toNamed(Routes.orderDisputes),
+        ),
+        HistoryEntry(
+          icon: Icons.gpp_maybe_outlined,
+          title: 'Litiges de chantiers',
+          subtitle: 'Chantiers fournis ayant connu un litige',
           open: () => Get.to(() => const SupplierLitigesScreen()),
         ),
       ];
@@ -110,9 +116,8 @@ List<HistoryEntry> historyEntriesFor(String role) {
         HistoryEntry(
           icon: Icons.gavel_outlined,
           title: 'Courses en litige',
-          subtitle: 'Livraisons contestées',
-          open: () =>
-              Get.toNamed(Routes.driverDeliveries, arguments: 'disputed'),
+          subtitle: 'Livraisons contestées et décision rendue',
+          open: () => Get.toNamed(Routes.orderDisputes),
         ),
       ];
     case 'referent':
@@ -155,6 +160,12 @@ List<HistoryEntry> historyEntriesFor(String role) {
           title: 'Commandes de matériaux',
           subtitle: 'En cours et passées',
           open: () => Get.toNamed(Routes.clientOrders),
+        ),
+        HistoryEntry(
+          icon: Icons.report_gmailerrorred_outlined,
+          title: 'Litiges de commandes',
+          subtitle: 'Commandes contestées et décision rendue',
+          open: () => Get.toNamed(Routes.orderDisputes),
         ),
       ];
   }

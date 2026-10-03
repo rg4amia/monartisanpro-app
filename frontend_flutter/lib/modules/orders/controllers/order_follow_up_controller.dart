@@ -38,6 +38,11 @@ class OrderFollowUpController extends GetxController {
   final isLoading = false.obs;
   final errorMsg = RxnString();
 
+  /// Des commandes plus anciennes restent à charger (« Voir plus »).
+  final hasMore = false.obs;
+  final isLoadingMore = false.obs;
+  int _page = 1;
+
   /// Commande dont l'action « préparer » est en cours, pour n'afficher le
   /// chargement que sur la ligne concernée.
   final preparingOrderId = RxnInt();
@@ -56,14 +61,38 @@ class OrderFollowUpController extends GetxController {
     errorMsg.value = null;
 
     try {
-      orders.value = asSupplier
-          ? await _repo.getSupplierOrders()
-          : await _repo.getMyOrders(forceRefresh: true);
+      final page = await _repo.getOrdersPage(asSupplier: asSupplier);
+      _page = 1;
+      orders.assignAll(page.items);
+      hasMore.value = page.hasMore;
     } catch (_) {
       errorMsg.value =
           'Impossible de charger les commandes. Vérifiez votre connexion.';
     } finally {
       isLoading.value = false;
+    }
+  }
+
+  /// Page suivante des commandes, ajoutée à celles déjà affichées.
+  Future<void> loadMore() async {
+    if (!hasMore.value || isLoadingMore.value) return;
+
+    isLoadingMore.value = true;
+    errorMsg.value = null;
+
+    try {
+      final page = await _repo.getOrdersPage(
+        asSupplier: asSupplier,
+        page: _page + 1,
+      );
+      _page += 1;
+      orders.addAll(page.items);
+      hasMore.value = page.hasMore;
+    } catch (_) {
+      errorMsg.value =
+          'Impossible de charger la suite des commandes. Vérifiez votre connexion.';
+    } finally {
+      isLoadingMore.value = false;
     }
   }
 

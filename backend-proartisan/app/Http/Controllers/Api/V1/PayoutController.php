@@ -7,6 +7,7 @@ use App\Models\MobileMoneyPayout;
 use App\Services\MobileMoneyPayoutService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 /**
  * Versements Mobile Money reçus par l'utilisateur connecté (artisan,
@@ -21,9 +22,25 @@ class PayoutController extends Controller
      */
     public function index(Request $request): JsonResponse
     {
+        $filters = $request->validate([
+            'statut' => ['nullable', Rule::in(array_keys(MobileMoneyPayout::STATUT_LABELS))],
+            'per_page' => ['nullable', 'integer', 'min:1', 'max:100'],
+        ]);
+
+        // Sans `per_page`, les 50 derniers versements (versions installées).
+        if (empty($filters['per_page'])) {
+            return response()->json([
+                'success' => true,
+                'data' => $this->payouts->listFor($request->user()),
+            ]);
+        }
+
+        $page = $this->payouts->historyFor($request->user(), $filters['statut'] ?? null, (int) $filters['per_page']);
+
         return response()->json([
             'success' => true,
-            'data' => $this->payouts->listFor($request->user()),
+            'data' => $page->items(),
+            'meta' => ['total' => $page->total(), 'current_page' => $page->currentPage(), 'last_page' => $page->lastPage()],
         ]);
     }
 

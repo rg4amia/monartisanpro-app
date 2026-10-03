@@ -38,6 +38,11 @@ class MissionsController extends GetxController {
   final DevisRepository _devisRepo = DevisRepository();
 
   final missions = <MissionModel>[].obs;
+
+  /// Des missions plus anciennes restent à charger (« Voir plus »).
+  final hasMoreMissions = false.obs;
+  final isLoadingMoreMissions = false.obs;
+  int _missionsPage = 1;
   final currentMission = Rx<MissionModel?>(null);
   final currentMissionDevis = <DevisModel>[].obs;
   final jalons = <JalonModel>[].obs;
@@ -105,6 +110,11 @@ class MissionsController extends GetxController {
         forceRefresh: isRefresh, // Force API call on pull-to-refresh
       );
       missions.value = result;
+      _missionsPage = 1;
+      // Une première page pleine laisse supposer une suite ; « Voir plus »
+      // disparaît dès qu'une page revient incomplète.
+      hasMoreMissions.value =
+          result.length >= MissionRepository.missionsPageSize;
 
       // Clear error on success
       errorMsg.value = null;
@@ -124,6 +134,32 @@ class MissionsController extends GetxController {
     } finally {
       isLoading.value = false;
       isRefreshing.value = false;
+    }
+  }
+
+  /// Page suivante de la liste, ajoutée aux missions déjà affichées.
+  Future<void> loadMoreMissions() async {
+    if (!hasMoreMissions.value || isLoadingMoreMissions.value) return;
+
+    isLoadingMoreMissions.value = true;
+    final filter = selectedFilter.value;
+
+    try {
+      final next = await _repo.getMissionsPage(
+        status: filter == 'all' ? null : filter,
+        page: _missionsPage + 1,
+      );
+      // L'onglet a changé pendant le chargement : la page n'est plus attendue.
+      if (filter != selectedFilter.value) return;
+
+      _missionsPage += 1;
+      final known = missions.map((m) => m.id).toSet();
+      missions.addAll(next.where((m) => !known.contains(m.id)));
+      hasMoreMissions.value = next.length >= MissionRepository.missionsPageSize;
+    } catch (_) {
+      _showErrorSnackbar('Impossible de charger la suite des missions');
+    } finally {
+      isLoadingMoreMissions.value = false;
     }
   }
 

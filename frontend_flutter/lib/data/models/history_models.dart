@@ -275,3 +275,50 @@ class DeliveryRecord {
     );
   }
 }
+
+/// Un litige de commande et son issue. Aucun nom ni téléphone n'y figure.
+class OrderDisputeRecord {
+  const OrderDisputeRecord({
+    required this.id,
+    required this.orderId,
+    required this.statut,
+    required this.statutLabel,
+    required this.orderTotal,
+    this.reason,
+    this.outcomeLabel,
+    this.resolutionNote,
+    this.openedAt,
+    this.resolvedAt,
+  });
+
+  final int id;
+  final int orderId;
+  final String statut;
+  final String statutLabel;
+  final int orderTotal;
+  final String? reason;
+  final String? outcomeLabel;
+  final String? resolutionNote;
+  final DateTime? openedAt;
+  final DateTime? resolvedAt;
+
+  bool get isResolved => statut == 'resolu';
+
+  factory OrderDisputeRecord.fromJson(Map<String, dynamic> json) {
+    final statut = readString(json['statut']) ?? 'ouvert';
+
+    return OrderDisputeRecord(
+      id: readInt(json['id']) ?? 0,
+      orderId: readInt(json['order_id']) ?? 0,
+      statut: statut,
+      statutLabel: readString(json['statut_label']) ??
+          (statut == 'resolu' ? 'Résolu' : 'En cours'),
+      orderTotal: readInt(json['order_total']) ?? 0,
+      reason: readString(json['reason']),
+      outcomeLabel: readString(json['outcome_label']),
+      resolutionNote: readString(json['resolution_note']),
+      openedAt: _date(json['opened_at']),
+      resolvedAt: _date(json['resolved_at']),
+    );
+  }
+}

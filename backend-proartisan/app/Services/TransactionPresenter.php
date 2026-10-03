@@ -33,6 +33,17 @@ class TransactionPresenter
      */
     private const PERSONAL_ACCOUNT_PATTERN = '/^(?:client_mobile_money|client_bank|artisan_mobile_money|driver_wallet|supplier_wallet|supplier_(?:wave|orange_money|virement_bancaire|especes_guichet)|driver_(?:wave|orange_money|virement_bancaire))_(\d+)$/';
 
+    private const TYPE_LABELS = [
+        'acompte' => 'Paiements au coffre et commandes',
+        'paiement_livraison' => 'Courses de livraison',
+        'liberation_jalon' => 'Étapes de chantier et gains de course',
+        'paiement_fournisseur' => 'Ventes de matériaux et virements',
+        'paiement_livreur' => 'Retraits de gains',
+        'remboursement' => 'Remboursements',
+        'credit' => 'Crédits reçus',
+        'commission' => 'Commissions',
+    ];
+
     private const STATUT_LABELS = [
         'en_attente' => 'En attente',
         'confirme' => 'Confirmé',
@@ -96,6 +107,12 @@ class TransactionPresenter
             'remboursement' => str_starts_with((string) $transaction->wallet_source, 'escrow') ? self::ENTRANT : self::SORTANT,
             default => self::ENTRANT,
         };
+    }
+
+    /** Libellé d'un type d'opération, pour le filtre de l'historique. */
+    public static function typeLabel(string $type): string
+    {
+        return self::TYPE_LABELS[$type] ?? ucfirst(str_replace('_', ' ', $type));
     }
 
     private function isWithdrawal(Transaction $transaction): bool

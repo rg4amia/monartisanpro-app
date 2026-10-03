@@ -81,6 +81,11 @@ export function useServerTable<T extends Record<string, string>>({ path, only, i
         if (restoredRef.current || !lsKey || typeof window === 'undefined') return;
         restoredRef.current = true;
 
+        // La console monte les tables de tous les onglets : seule celle de la
+        // page affichée restaure ses filtres. Sans cette garde, un filtre
+        // mémorisé sur une liste renvoyait vers elle depuis n'importe quel onglet.
+        if (window.location.pathname.replace(/\/+$/, '') !== path) return;
+
         const params = new URLSearchParams(window.location.search);
         if (keys.some((key) => params.has(key as string))) return;
 

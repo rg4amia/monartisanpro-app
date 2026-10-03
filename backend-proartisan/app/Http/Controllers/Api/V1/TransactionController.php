@@ -7,6 +7,7 @@ use App\Http\Controllers\Controller;
 use App\Http\Resources\TransactionResource;
 use App\Models\Transaction;
 use App\Services\OrderService;
+use App\Services\TransactionPresenter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\URL;
@@ -36,6 +37,13 @@ class TransactionController extends Controller
                     });
             });
 
+        // Types présents dans l'historique de l'utilisateur, avant tout filtre :
+        // l'écran ne propose que des filtres qui renvoient quelque chose.
+        $types = (clone $query)->reorder()->distinct()->pluck('type')
+            ->map(fn ($value) => ['value' => $value, 'label' => TransactionPresenter::typeLabel((string) $value)])
+            ->sortBy('label')
+            ->values();
+
         if ($status) {
             $query->where('statut', $status);
         }
@@ -53,6 +61,7 @@ class TransactionController extends Controller
                 'total' => $transactions->total(),
                 'current_page' => $transactions->currentPage(),
                 'last_page' => $transactions->lastPage(),
+                'types' => $types,
             ],
         ]);
     }

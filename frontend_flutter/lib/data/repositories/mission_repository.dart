@@ -29,6 +29,25 @@ class MissionRepository {
     }
   }
 
+  /// Nombre de missions par page renvoyé par le serveur.
+  static const int missionsPageSize = 20;
+
+  /// Une page de la liste des missions au-delà de la première, sans cache :
+  /// un échec remonte, les missions déjà affichées restent en place.
+  Future<List<MissionModel>> getMissionsPage({
+    String? status,
+    required int page,
+  }) async {
+    final res = await NetworkExecutor.run(
+      () => _client.get(
+        ApiEndpoints.missions,
+        params: {'page': page, if (status != null) 'status': status},
+      ),
+    );
+
+    return readDataList(res.data).map(MissionModel.fromJson).toList();
+  }
+
   /// Récupère la liste des missions avec filtre optionnel par statut
   ///
   /// Stratégie cache-first :

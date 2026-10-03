@@ -485,8 +485,12 @@ class MissionController extends Controller
     {
         $user = $request->user();
 
-        // Seuls le client, l'artisan assigné ou un administrateur peuvent consulter l'historique
-        if ($user->role !== 'admin' && (int) $mission->client_id !== (int) $user->id && (int) $mission->artisan_id !== (int) $user->id) {
+        // Le client, l'artisan assigné, un administrateur, ou le Référent pour un
+        // chantier qui relève de son contrôle (à visiter, visité, au-delà du seuil).
+        $isParty = (int) $mission->client_id === (int) $user->id || (int) $mission->artisan_id === (int) $user->id;
+        $isReferent = $user->role === 'referent' && $history->concernsReferent($mission, $user);
+
+        if ($user->role !== 'admin' && ! $isParty && ! $isReferent) {
             return response()->json([
                 'success' => false,
                 'message' => 'Accès non autorisé à l\'historique de cette mission.',
@@ -495,7 +499,7 @@ class MissionController extends Controller
 
         return response()->json([
             'success' => true,
-            'data' => $history->timeline($mission, maskStaff: $user->role !== 'admin'),
+            'data' => $history->timeline($mission, maskStaff: $user->role !== 'admin', maskParties: $isReferent),
         ]);
     }
 }
