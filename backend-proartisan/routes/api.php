@@ -397,7 +397,7 @@ Route::prefix('v1')->group(function () {
             Route::get('/{order}/tracking', [DeliveryTrackingController::class, 'getTracking']);
             Route::post('/{order}/pickup', [DeliveryTrackingController::class, 'verifyPickup']);
             Route::post('/{order}/deliver', [DeliveryTrackingController::class, 'verifyDelivery']);
-            Route::post('/{order}/reassign', [DeliveryTrackingController::class, 'reassign']);
+            Route::post('/{order}/reassign', [DeliveryTrackingController::class, 'reassign'])->middleware('can:admin.missions.manage');
         });
 
         Route::get('/deliveries/fleet-map', [DeliveryTrackingController::class, 'getFleetOverview']);

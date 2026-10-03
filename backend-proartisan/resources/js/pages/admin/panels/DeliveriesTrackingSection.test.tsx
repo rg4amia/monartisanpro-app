@@ -92,7 +92,7 @@ describe('DeliveriesTrackingSection', () => {
 
         await waitFor(() =>
             expect(routerPost).toHaveBeenCalledWith(
-                '/api/v1/orders/5/reassign',
+                '/admin/orders/5/reassign',
                 expect.objectContaining({ reason: expect.any(String) }),
                 expect.objectContaining({ preserveScroll: true }),
             ),
@@ -228,6 +228,23 @@ describe('DeliveriesTrackingSection', () => {
         expect(screen.getByText(/28 km\/h/i)).toBeInTheDocument();
         expect(screen.getByText(/60%/i)).toBeInTheDocument();
         expect(screen.getByText('San Pedro Quincaillerie')).toBeInTheDocument();
+    });
+
+    it('charge la carte par la route du backoffice, jamais par la route /api/v1', () => {
+        (global.fetch as ReturnType<typeof vi.fn>).mockResolvedValue({
+            ok: true,
+            status: 200,
+            json: async () => ({ data: { summary: {}, drivers: [] } }),
+        });
+
+        render(<DeliveriesTrackingSection orders={[]} />);
+
+        fireEvent.click(screen.getByRole('button', { name: /Carte Flotte en Direct/i }));
+
+        expect(global.fetch).toHaveBeenCalledWith(
+            '/admin/deliveries/fleet-map',
+            expect.objectContaining({ credentials: 'same-origin' })
+        );
     });
 });
 

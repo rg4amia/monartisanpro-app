@@ -4,9 +4,11 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Order;
+use App\Services\Admin\AdminActivityLogger;
 use App\Services\DeliveryTrackingService;
 use App\Services\OrderService;
 use Illuminate\Http\JsonResponse;
+use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 
@@ -211,7 +213,7 @@ class DeliveryTrackingController extends Controller
     /**
      * Réassignation manuelle ou d'urgence d'une commande logistique.
      */
-    public function reassign(Request $request, Order $order): JsonResponse
+    public function reassign(Request $request, Order $order, AdminActivityLogger $audit): JsonResponse|RedirectResponse
     {
         $user = $request->user();
         if ($user->role !== 'admin') {
@@ -219,9 +221,20 @@ class DeliveryTrackingController extends Controller
         }
 
         $reason = $request->input('reason', 'Réassignation administrative');
+        // Le backoffice appelle cette action par Inertia, qui attend une redirection.
+        $fromBackoffice = (bool) $request->header('X-Inertia');
 
         try {
+            $previousDriverId = $order->driver_id;
             $updatedOrder = $this->orderService->reassignDriver($order, $reason);
+            $audit->log('delivery.reassigned', $order, [
+                'previous_driver_id' => $previousDriverId,
+                'reason' => $reason,
+            ], "Commande #{$order->id}", $user);
+
+            if ($fromBackoffice) {
+                return back()->with('success', "Course de la commande #{$order->id} retirée au livreur : la recherche est relancée.");
+            }
 
             return response()->json([
                 'success' => true,
@@ -230,6 +243,10 @@ class DeliveryTrackingController extends Controller
                 'order' => $updatedOrder,
             ]);
         } catch (\Throwable $e) {
+            if ($fromBackoffice) {
+                return back()->with('error', "La course de la commande #{$order->id} n'a pas pu être réaffectée.");
+            }
+
             return response()->json([
                 'success' => false,
                 'error' => $e->getMessage(),
@@ -256,4 +273,3 @@ class DeliveryTrackingController extends Controller
         ]);
     }
 }
-

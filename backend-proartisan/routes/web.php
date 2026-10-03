@@ -20,6 +20,7 @@ use App\Http\Controllers\Admin\NotificationCampaignAdminController;
 use App\Http\Controllers\Admin\NotificationTemplateAdminController;
 use App\Http\Controllers\Admin\RecruitmentAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
+use App\Http\Controllers\Api\V1\AdminRolePermissionController;
 use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\KycDocumentController;
@@ -140,6 +141,10 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/cartographie/stats', [AdminTerritoryController::class, 'stats'])->middleware('can:admin.territory.view')->name('cartography.stats');
         Route::get('/cartographie/export', [AdminTerritoryController::class, 'export'])->middleware(['can:admin.territory.view', 'can:admin.exports'])->name('cartography.export');
         Route::get('/deliveries/fleet-map', [DeliveryTrackingController::class, 'getFleetOverview'])->middleware('can:admin.missions.view')->name('deliveries.fleet-map');
+        // Le backoffice passe par sa session web : les routes `/api/v1` équivalentes
+        // exigent un jeton et répondaient 401 en production.
+        Route::get('/orders/{order}/tracking', [DeliveryTrackingController::class, 'getTracking'])->middleware('can:admin.missions.view')->name('orders.tracking');
+        Route::post('/orders/{order}/reassign', [DeliveryTrackingController::class, 'reassign'])->middleware('can:admin.missions.manage')->name('orders.reassign');
 
         // Litiges
         Route::post('/dispute-debts/{debt}/cancel', [AdminOrderDisputeController::class, 'cancelDebt'])->middleware('can:admin.transactions.manage')->name('dispute-debts.cancel');
@@ -213,6 +218,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/trades', [BackofficeController::class, 'storeTrade'])->middleware('can:admin.taxonomy.manage')->name('trades.store');
         Route::put('/trades/{trade}', [BackofficeController::class, 'updateTrade'])->middleware('can:admin.taxonomy.manage')->name('trades.update');
         Route::get('/roles-permissions', [BackofficeController::class, 'rolesPermissions'])->middleware('can:admin.roles.manage')->name('roles-permissions');
+        Route::post('/roles-permissions/assign', [AdminRolePermissionController::class, 'assign'])->middleware('can:admin.roles.manage')->name('roles-permissions.assign');
+        Route::post('/roles-permissions/revoke', [AdminRolePermissionController::class, 'revoke'])->middleware('can:admin.roles.manage')->name('roles-permissions.revoke');
         Route::post('/admins/{user}/permissions', [BackofficeController::class, 'syncAdminPermissions'])->middleware('can:admin.roles.manage')->name('admins.permissions');
         Route::get('/audit-logs', [BackofficeController::class, 'auditLogs'])->middleware('can:admin.audit.view')->name('audit-logs');
         Route::get('/observability', [BackofficeController::class, 'observability'])->middleware('can:admin.observability.view')->name('observability');

@@ -118,11 +118,11 @@ export function DeliveriesTrackingSection({
         setSelectedOrder(order);
         setIsLoadingTracking(true);
         try {
-            const res = await fetch(`/api/v1/orders/${order.id}/tracking`, {
-                headers: {
-                    Accept: 'application/json',
-                },
+            const res = await fetch(`/admin/orders/${order.id}/tracking`, {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
             });
+            if (redirectIfSessionExpired(res)) return;
             if (res.ok) {
                 const data = await res.json();
                 setTrackingData(data.tracking);
@@ -145,7 +145,7 @@ export function DeliveriesTrackingSection({
 
         setReassigningId(orderId);
         router.post(
-            `/api/v1/orders/${orderId}/reassign`,
+            `/admin/orders/${orderId}/reassign`,
             {
                 reason: 'Inactivité détectée par la supervision admin',
             },
@@ -167,8 +167,11 @@ export function DeliveriesTrackingSection({
         setIsLoadingFleet(true);
         try {
             const query = commune !== 'all' ? `?commune=${encodeURIComponent(commune)}` : '';
-            const res = await fetch(`/api/v1/deliveries/fleet-map${query}`, {
-                headers: { Accept: 'application/json' },
+            // Route du backoffice (session web) : la route `/api/v1` exige un jeton
+            // ou un domaine déclaré à Sanctum, et répondait 401 en production.
+            const res = await fetch(`/admin/deliveries/fleet-map${query}`, {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
             });
             if (redirectIfSessionExpired(res)) return;
             if (res.ok) {

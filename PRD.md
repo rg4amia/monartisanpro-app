@@ -658,6 +658,11 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Course** annulée ou remboursée quand la faute est au livreur.
     * **Dette** : ce que le responsable ne peut plus couvrir devient une dette, prélevée sur ses gains suivants ou réglée par Wave / Orange Money ; son profil est bloqué jusqu'au solde.
     * **Tests automatisés** : `Chantier22OrderDisputeRefundTest.php` (14 tests), `OrderDisputeBlock.test.tsx` (11 tests), `dispute_debt_test.dart` (9 tests) ; suite Pest rejouée sur MariaDB 11.8.
+49. **Correctif — Le backoffice passe par ses propres routes (`/admin/*`) :** [COMPLÉTÉ — contrôle dans le navigateur à faire]
+    * **Défaut** : le clic sur « Carte Flotte en Direct » ramenait au tableau de bord. L'écran interrogeait une route de l'application mobile (`/api/v1`), qui répondait « non authentifié » en production ; cette réponse était prise pour une session expirée.
+    * **Correctif** : la carte de la flotte, le suivi en direct d'une course, la réaffectation d'une course et la modification des droits d'un rôle passent par des routes du backoffice, portées par la session de l'administrateur et gardées par leur capacité fine.
+    * **Réaffectation d'une course** : réservée à la capacité `admin.missions.manage` et inscrite au journal d'audit.
+    * **Tests automatisés** : `BackofficeSessionRoutesTest.php` (5 tests), `DeliveriesTrackingSection.test.tsx` (10 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

@@ -8,6 +8,7 @@ use App\Models\User;
 use App\Services\GoogleMapsService;
 use App\Services\OrderService;
 use Illuminate\Support\Carbon;
+use Illuminate\Support\Facades\DB;
 use Tests\Support\Geo;
 
 beforeEach(function () {

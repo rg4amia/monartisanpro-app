@@ -100,7 +100,7 @@ export default function RolesPermissionsPanel({
         }
 
         const action = hasPermission ? 'revoke' : 'assign';
-        const url = `/api/v1/admin/roles-permissions/${action}`;
+        const url = `/admin/roles-permissions/${action}`;
 
         setErrorMessage(null);
         setToggling(permissionName);

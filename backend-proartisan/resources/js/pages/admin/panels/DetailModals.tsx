@@ -375,8 +375,9 @@ export function OrderDetailModal({
     const loadTelemetryManually = async () => {
         setLoadingTelemetry(true);
         try {
-            const res = await fetch(`/api/v1/orders/${order.id}/tracking`, {
-                headers: { Accept: 'application/json' },
+            const res = await fetch(`/admin/orders/${order.id}/tracking`, {
+                headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+                credentials: 'same-origin',
             });
             if (res.ok) {
                 const data = await res.json();
@@ -395,8 +396,9 @@ export function OrderDetailModal({
         }
 
         let isMounted = true;
-        fetch(`/api/v1/orders/${order.id}/tracking`, {
-            headers: { Accept: 'application/json' },
+        fetch(`/admin/orders/${order.id}/tracking`, {
+            headers: { Accept: 'application/json', 'X-Requested-With': 'XMLHttpRequest' },
+            credentials: 'same-origin',
         })
             .then((res) => (res.ok ? res.json() : null))
             .then((data) => {

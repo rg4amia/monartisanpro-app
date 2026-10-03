@@ -1,8 +1,8 @@
 // Onglet « Litiges » du backoffice.
 // Chantier C2 : découpe de console.tsx. Chantier C4 (P1-6) : liste paginée + filtres serveur.
 
-import type { FormEvent, ReactNode } from 'react';
 import { router } from '@inertiajs/react';
+import type { FormEvent, ReactNode } from 'react';
 
 import {
     actionButtonClass,

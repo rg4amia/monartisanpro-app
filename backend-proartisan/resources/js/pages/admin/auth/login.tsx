@@ -42,6 +42,8 @@ export default function AdminLoginPage({ errors, flash, challenge }: LoginPagePr
         if (challenge?.token) {
             form.setData('bot_token', challenge.token);
         }
+        // `form` change d'identité à chaque rendu : l'ajouter relancerait l'effet en boucle.
+        // eslint-disable-next-line react-hooks/exhaustive-deps
     }, [challenge?.token]);
 
     useEffect(() => {
