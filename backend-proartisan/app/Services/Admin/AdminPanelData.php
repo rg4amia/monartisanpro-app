@@ -33,6 +33,7 @@ use App\Services\DriverCashoutService;
 use App\Services\GeneratedDocumentService;
 use App\Services\KycService;
 use App\Services\MobileMoneyPayoutService;
+use App\Services\OrderDisputeDebtService;
 use App\Services\OrderService;
 use App\Services\UploadLimitService;
 use Illuminate\Http\Request;
@@ -330,6 +331,11 @@ class AdminPanelData
                 fn () => Schema::hasTable('mobile_money_payouts') ? $this->payouts->adminOverview() : null,
                 null,
                 false
+            ),
+            'disputeDebtsOverview' => rescue(
+                fn () => Schema::hasTable('order_dispute_debts') ? app(OrderDisputeDebtService::class)->adminOverview() : null,
+                null,
+                false,
             ),
             'driverCashoutsOverview' => rescue(
                 fn () => Schema::hasTable('driver_cashouts') ? $this->driverCashouts->adminOverview() : null,

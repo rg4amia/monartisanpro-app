@@ -4,6 +4,7 @@ use App\Exceptions\MissionTransitionException;
 use App\Http\Middleware\AccountActive;
 use App\Http\Middleware\AdminOnly;
 use App\Http\Middleware\EnforceAdminIdleTimeout;
+use App\Http\Middleware\EnsureNoDisputeDebt;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\KycVerified;
 use App\Http\Middleware\PaymentUnrestricted;
@@ -72,6 +73,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'admin.only' => AdminOnly::class,
             'account.active' => AccountActive::class,
             'payment.unrestricted' => PaymentUnrestricted::class,
+            'dispute.debt_free' => EnsureNoDisputeDebt::class,
             'supplier.only' => SupplierOnly::class,
             'gateway.verified' => VerifyGatewayRequest::class,
             'smspro.signed' => VerifySmsproWebhook::class,

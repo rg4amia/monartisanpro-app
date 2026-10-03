@@ -8,6 +8,7 @@ import '../../../data/models/mission_model.dart';
 import '../../../shared/widgets/broadcast_media_section.dart';
 import '../../../shared/widgets/communication_banner.dart';
 import '../../../shared/widgets/loading_shimmer.dart';
+import '../../history/views/dispute_debt_screen.dart';
 import '../../notifications/controllers/notifications_controller.dart';
 import '../../orders/views/supplier_dashboard_screen.dart';
 import '../../orders/views/supplier_litiges_screen.dart';
@@ -57,6 +58,7 @@ class SupplierHomeScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.stretch,
                       children: [
+                        const DisputeDebtBannerForRole(),
                         CommunicationBanner(
                           announcements: controller.announcements,
                         ),

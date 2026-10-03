@@ -142,6 +142,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/deliveries/fleet-map', [DeliveryTrackingController::class, 'getFleetOverview'])->middleware('can:admin.missions.view')->name('deliveries.fleet-map');
 
         // Litiges
+        Route::post('/dispute-debts/{debt}/cancel', [AdminOrderDisputeController::class, 'cancelDebt'])->middleware('can:admin.transactions.manage')->name('dispute-debts.cancel');
         Route::post('/orders/{order}/dispute/resolve', [AdminOrderDisputeController::class, 'resolve'])->middleware('can:admin.litiges.arbitrate')->name('orders.dispute.resolve');
         Route::get('/litiges', [BackofficeController::class, 'litiges'])->middleware('can:admin.litiges.view')->name('litiges');
         Route::get('/litiges/{litige}/invoice', [BackofficeController::class, 'downloadInvoice'])->middleware('can:admin.litiges.view')->name('litiges.invoice');

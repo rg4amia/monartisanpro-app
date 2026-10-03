@@ -8,6 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-10-03 | Plan | [Chantier 22 — Gel, remboursement et recouvrement d'un litige de commande](plans/2026-10-03-chantier-22-remboursement-litige-commande.md) | livré (contrôle manuel à faire) | — |
 | 2026-10-03 | Plan | [Chantier 21 — Litiges de commande avec issue, et compléments des historiques](plans/2026-10-03-chantier-21-complements-historiques.md) | livré (contrôle manuel à faire) | — |
 | 2026-10-03 | Plan | [Chantier 20 — Historiques dans chaque espace de l'application mobile](plans/2026-10-03-chantier-20-historiques-mobile.md) | livré (contrôle manuel à faire) | — |
 | 2026-10-03 | Plan | [Chantier 19 — Cycle de vie des missions : machine à états fiable, validation finale, annulation, délai de réponse](plans/2026-10-03-chantier-19-cycle-de-vie-mission.md) | livré (contrôle manuel à faire) | — |

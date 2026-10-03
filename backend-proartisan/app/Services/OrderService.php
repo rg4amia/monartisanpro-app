@@ -43,10 +43,23 @@ class OrderService
     }
 
     /**
+     * Un fournisseur qui doit un remboursement à la suite d'un litige ne
+     * reçoit plus de commande tant que la somme n'est pas réglée.
+     */
+    private function assertSupplierAvailable(User $supplier): void
+    {
+        if (app(OrderDisputeDebtService::class)->hasOpenDebt($supplier)) {
+            throw new \Exception('Ce fournisseur est momentanément indisponible. Choisissez un autre fournisseur.');
+        }
+    }
+
+    /**
      * Crée une commande et calcule les coûts associés.
      */
     public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0, ?string $promoCode = null, ?Address $address = null, ?int $missionId = null): Order
     {
+        $this->assertSupplierAvailable($supplier);
+
         return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode, $vehicleClass, $surgeMultiplier, $promoCode, $address, $missionId) {
             $subtotal = 0;
             $itemsData = [];
@@ -188,6 +201,7 @@ class OrderService
 
             foreach ($packages as $pkg) {
                 $supplier = User::where('role', 'fournisseur')->findOrFail($pkg['supplier_id']);
+                $this->assertSupplierAvailable($supplier);
                 $deliveryMode = $pkg['delivery_mode'] ?? 'delivery';
                 $vehicleClass = $pkg['vehicle_class'] ?? 'moto';
                 $surgeMultiplier = (float) ($pkg['surge_multiplier'] ?? 1.0);
@@ -1155,6 +1169,9 @@ class OrderService
                 'type' => 'ecom_supplier_commission',
             ]
         );
+
+        // Une dette de litige en cours se rembourse en priorité sur ce gain.
+        app(OrderDisputeDebtService::class)->recover($supplier);
     }
 
     /**
@@ -1163,7 +1180,7 @@ class OrderService
      *
      * @return array{commission: int, net: int}
      */
-    private function driverShare(int $deliveryCost): array
+    public function driverShare(int $deliveryCost): array
     {
         $ratio = (float) Setting::getValueByKey('commission_livreur', 0.10);
         $commission = (int) round($deliveryCost * $ratio);
@@ -1497,6 +1514,9 @@ class OrderService
                 'type' => 'ecom_driver_commission',
             ]
         );
+
+        // Une dette de litige en cours se rembourse en priorité sur ce gain.
+        app(OrderDisputeDebtService::class)->recover($driver);
     }
 
     /**

@@ -496,6 +496,46 @@ class NotificationCatalog
             'body' => 'Le litige de la commande #{commande} est clos : {issue}.',
             'sms' => false,
         ],
+        'commande.litige_rembourse.client' => [
+            'label' => 'Litige de commande : client remboursé',
+            'domain' => 'litiges', 'audience' => 'client', 'type' => 'payment',
+            'variables' => ['commande' => 'Numéro de la commande', 'montant' => 'Montant remboursé'],
+            'title' => 'Votre réclamation est acceptée',
+            'body' => 'Le litige de la commande #{commande} est clos en votre faveur : {montant} vous sont remboursés sur votre Mobile Money.',
+            'sms' => false,
+        ],
+        'litige_commande.dette_creee.responsable' => [
+            'label' => 'Remboursement dû après un litige de commande',
+            'domain' => 'litiges', 'audience' => 'utilisateur', 'type' => 'payment',
+            'variables' => ['commande' => 'Numéro de la commande', 'montant' => 'Montant dû'],
+            'title' => 'Remboursement dû',
+            'body' => 'Litige de la commande #{commande} : vous devez {montant} à ProsArtisan. Votre compte est bloqué jusqu\'au règlement ; la somme sera aussi prélevée sur vos prochains gains.',
+            'sms' => false,
+        ],
+        'litige_commande.dette_prelevee.responsable' => [
+            'label' => 'Prélèvement sur une dette de litige',
+            'domain' => 'litiges', 'audience' => 'utilisateur', 'type' => 'payment',
+            'variables' => ['commande' => 'Numéro de la commande', 'montant' => 'Montant prélevé', 'restant' => 'Restant dû'],
+            'title' => 'Remboursement partiel enregistré',
+            'body' => 'Litige de la commande #{commande} : {montant} ont été remboursés. Reste dû : {restant}.',
+            'sms' => false,
+        ],
+        'litige_commande.dette_soldee.responsable' => [
+            'label' => 'Dette de litige soldée',
+            'domain' => 'litiges', 'audience' => 'utilisateur', 'type' => 'payment',
+            'variables' => ['commande' => 'Numéro de la commande'],
+            'title' => 'Remboursement soldé',
+            'body' => 'La somme due pour le litige de la commande #{commande} est entièrement remboursée. Votre compte est débloqué.',
+            'sms' => false,
+        ],
+        'litige_commande.dette_annulee.responsable' => [
+            'label' => 'Dette de litige annulée',
+            'domain' => 'litiges', 'audience' => 'utilisateur', 'type' => 'payment',
+            'variables' => ['commande' => 'Numéro de la commande'],
+            'title' => 'Remboursement annulé',
+            'body' => 'ProsArtisan a annulé la somme due pour le litige de la commande #{commande}. Votre compte est débloqué.',
+            'sms' => false,
+        ],
 
         // ─── Livraisons et courses ──────────────────────────────────────────
         'course.disponible.livreur' => [

@@ -2,9 +2,9 @@
 // Chantier C2 : découpe de console.tsx. Chantier C4 (P1-6) : journal financier paginé + filtres serveur.
 // Extension : Trésorerie Entrées/Sorties, Cash-Out Quincailleries & Séquestre Bloqué sur Litiges.
 
-import { useState   } from 'react';
-import type {FormEvent, ReactNode} from 'react';
 import { router } from '@inertiajs/react';
+import type {FormEvent, ReactNode} from 'react';
+import { useState   } from 'react';
 
 import { cn } from '@/lib/utils';
 import {
@@ -24,9 +24,11 @@ import {
 } from '../shared';
 import type { AdminTransaction, DocumentStats, GeneratedDocumentItem, Paginated, TransactionStats } from '../shared';
 import { CashoutQuincaillerieSection } from './CashoutQuincaillerieSection';
-import { DocumentsReportsSection } from './DocumentsReportsSection';
 import { CollectionsSection } from './CollectionsSection';
 import type { CollectionsOverview } from './CollectionsSection';
+import { DisputeDebtsSection } from './DisputeDebtsSection';
+import type { DisputeDebtsOverview } from './DisputeDebtsSection';
+import { DocumentsReportsSection } from './DocumentsReportsSection';
 import { PayoutsSection } from './PayoutsSection';
 import type { DriverCashoutsOverview, PayoutsOverview } from './PayoutsSection';
 
@@ -55,6 +57,7 @@ interface TransactionsPanelProps {
     payoutsOverview?: PayoutsOverview | null;
     driverCashoutsOverview?: DriverCashoutsOverview | null;
     collectionsOverview?: CollectionsOverview | null;
+    disputeDebtsOverview?: DisputeDebtsOverview | null;
 }
 
 export function TransactionsPanel({
@@ -80,11 +83,15 @@ export function TransactionsPanel({
     payoutsOverview,
     driverCashoutsOverview,
     collectionsOverview,
+    disputeDebtsOverview,
 }: TransactionsPanelProps) {
     const rows = transactionsPage?.data ?? [];
     const [subTab, setSubTab] = useState<'treasury' | 'payouts' | 'collections' | 'commissions' | 'journal' | 'documents' | 'ledger'>('treasury');
     const payoutsToHandle = (payoutsOverview?.stats?.failed_count ?? 0) + (driverCashoutsOverview?.pending?.length ?? 0);
-    const collectionsToHandle = (collectionsOverview?.stats?.unpaid_count ?? 0) + (collectionsOverview?.pending_bank_transfers?.length ?? 0);
+    const collectionsToHandle =
+        (collectionsOverview?.stats?.unpaid_count ?? 0) +
+        (collectionsOverview?.pending_bank_transfers?.length ?? 0) +
+        (disputeDebtsOverview?.stats?.en_cours ?? 0);
 
     return (
         <section className="mt-5 space-y-6">
@@ -217,7 +224,12 @@ export function TransactionsPanel({
             )}
 
             {/* VUE 1 ter : ENCAISSEMENTS — COURSES IMPAYÉES, RESTRICTIONS, VIREMENTS (Chantier 11) */}
-            {subTab === 'collections' && <CollectionsSection collectionsOverview={collectionsOverview} />}
+            {subTab === 'collections' && (
+                <>
+                    <CollectionsSection collectionsOverview={collectionsOverview} />
+                    <DisputeDebtsSection overview={disputeDebtsOverview} />
+                </>
+            )}
 
             {/* VUE 2 : COMMISSIONS & PERFORMANCE MÉTIERS */}
             {subTab === 'commissions' && (

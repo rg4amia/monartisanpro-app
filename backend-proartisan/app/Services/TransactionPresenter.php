@@ -42,6 +42,7 @@ class TransactionPresenter
         'remboursement' => 'Remboursements',
         'credit' => 'Crédits reçus',
         'commission' => 'Commissions',
+        'reglement_dette_litige' => 'Règlements de dette de litige',
     ];
 
     private const STATUT_LABELS = [
@@ -145,6 +146,7 @@ class TransactionPresenter
             'liberation_jalon' => str_starts_with($dest, 'driver_wallet') ? 'Gain de course livrée' : 'Paiement d\'étape de chantier',
             'paiement_fournisseur' => $source === 'platform_treasury' ? 'Retrait de gains vers Mobile Money' : 'Vente de matériaux',
             'paiement_livreur' => 'Retrait de gains vers Mobile Money',
+            'reglement_dette_litige' => 'Règlement de dette de litige',
             'remboursement' => $direction === self::SORTANT ? 'Remboursement du micro-crédit' : 'Remboursement reçu',
             'credit' => str_starts_with($source, 'microfinance') || $source === 'wave_ci' ? 'Micro-crédit versé' : 'Crédit reçu',
             default => 'Opération',

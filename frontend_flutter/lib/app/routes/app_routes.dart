@@ -84,6 +84,7 @@ abstract class Routes {
   static const referentInspections = '/referent-inspections';
   static const referentLitiges = '/referent-litiges';
   static const orderDisputes = '/order-disputes';
+  static const disputeDebts = '/dispute-debts';
   static const missionHistory = '/mission-history';
 
   // Legal

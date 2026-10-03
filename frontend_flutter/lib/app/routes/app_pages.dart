@@ -16,6 +16,7 @@ import '../../modules/clients/parrainage/views/parrainage_client_screen.dart';
 import '../../modules/devis/bindings/devis_binding.dart';
 import '../../modules/devis/views/quote_builder_screen.dart';
 import '../../modules/devis/views/quote_screen.dart';
+import '../../modules/history/views/dispute_debt_screen.dart';
 import '../../modules/history/views/history_hub_screen.dart';
 import '../../modules/history/views/history_screens.dart';
 import '../../modules/home/bindings/home_binding.dart';
@@ -407,6 +408,10 @@ class AppPages {
     GetPage(
       name: Routes.orderDisputes,
       page: () => const OrderDisputesScreen(),
+    ),
+    GetPage(
+      name: Routes.disputeDebts,
+      page: () => const DisputeDebtScreen(),
     ),
     GetPage(
       name: Routes.missionHistory,

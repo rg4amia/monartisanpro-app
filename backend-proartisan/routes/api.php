@@ -14,6 +14,7 @@ use App\Http\Controllers\Api\V1\DeliveryBatchController;
 use App\Http\Controllers\Api\V1\DeliveryController;
 use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\DevisController;
+use App\Http\Controllers\Api\V1\DisputeDebtController;
 use App\Http\Controllers\Api\V1\Driver\DriverCashoutController;
 use App\Http\Controllers\Api\V1\EvaluationController;
 use App\Http\Controllers\Api\V1\EvidenceVaultController;
@@ -193,9 +194,9 @@ Route::prefix('v1')->group(function () {
         Route::post('/deliveries/estimate', [OrderController::class, 'estimateDelivery']);
         Route::get('/deliveries/available', [DeliveryController::class, 'available'])->middleware('kyc.verified');
         Route::get('/deliveries/batches', [DeliveryBatchController::class, 'index'])->middleware('kyc.verified');
-        Route::post('/deliveries/batch-accept', [DeliveryBatchController::class, 'accept'])->middleware('kyc.verified');
+        Route::post('/deliveries/batch-accept', [DeliveryBatchController::class, 'accept'])->middleware(['kyc.verified', 'dispute.debt_free']);
         Route::get('/deliveries/active-tour', [DeliveryBatchController::class, 'activeTour'])->middleware('kyc.verified');
-        Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept'])->middleware('kyc.verified');
+        Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept'])->middleware(['kyc.verified', 'dispute.debt_free']);
 
         // ── Utilisateurs ─────────────────────────────────────────────────────
         Route::put('/users/{user}', [UserController::class, 'update']);
@@ -227,12 +228,16 @@ Route::prefix('v1')->group(function () {
         Route::get('/supplier/orders', [SupplierDashboardController::class, 'orders'])->middleware('supplier.only');
         Route::get('/supplier/litiges', [SupplierDashboardController::class, 'litiges'])->middleware('supplier.only');
         Route::get('/supplier/cashouts', [SupplierCashoutController::class, 'index'])->middleware('supplier.only');
-        Route::post('/supplier/cashouts', [SupplierCashoutController::class, 'store'])->middleware(['supplier.only', 'kyc.verified']);
+        Route::post('/supplier/cashouts', [SupplierCashoutController::class, 'store'])->middleware(['supplier.only', 'kyc.verified', 'dispute.debt_free']);
         Route::get('/supplier/cashouts/{cashout}/receipt', [SupplierCashoutController::class, 'receipt'])->middleware('supplier.only');
 
         // ── Retrait des gains livreur & versements Mobile Money (Chantier 10) ──
         Route::get('/driver/cashouts', [DriverCashoutController::class, 'index']);
-        Route::post('/driver/cashouts', [DriverCashoutController::class, 'store'])->middleware(['kyc.verified', 'throttle:10,1']);
+        Route::post('/driver/cashouts', [DriverCashoutController::class, 'store'])->middleware(['kyc.verified', 'throttle:10,1', 'dispute.debt_free']);
+
+        // Dettes de litige de commande : consultation et règlement direct (Chantier 22).
+        Route::get('/dispute-debts', [DisputeDebtController::class, 'index']);
+        Route::post('/dispute-debts/{debt}/pay', [DisputeDebtController::class, 'pay'])->middleware('throttle:10,1');
         Route::get('/payouts', [PayoutController::class, 'index']);
         Route::post('/payouts/{payout}/retry', [PayoutController::class, 'retry'])->middleware('throttle:10,1');
         Route::put('/payouts/{payout}/destination', [PayoutController::class, 'updateDestination'])->middleware('throttle:10,1');
@@ -316,7 +321,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/jcodes', [JCodeController::class, 'store'])->middleware(['can:jcode.create', 'kyc.verified']);
         Route::get('/jcodes/active', [JCodeController::class, 'active']);
         Route::get('/jcodes/{jcode}', [JCodeController::class, 'show']);
-        Route::post('/jcodes/{jcode}/scan', [JCodeController::class, 'scan'])->middleware(['can:jcode.scan', 'kyc.verified']);
+        Route::post('/jcodes/{jcode}/scan', [JCodeController::class, 'scan'])->middleware(['can:jcode.scan', 'kyc.verified', 'dispute.debt_free']);
         Route::post('/jcodes/{jcode}/photo-materiaux', [JCodeController::class, 'uploadPhotoMateriaux'])->middleware(['can:jcode.upload-photo-materials', 'kyc.verified']);
         Route::get('/jcodes/{jcode}/redemptions', [JCodeController::class, 'redemptions']);
 
@@ -401,9 +406,9 @@ Route::prefix('v1')->group(function () {
         Route::prefix('deliveries')->middleware('kyc.verified')->group(function () {
             Route::get('/available', [DeliveryController::class, 'available']);
             Route::get('/batches', [DeliveryBatchController::class, 'index']);
-            Route::post('/batch-accept', [DeliveryBatchController::class, 'accept']);
+            Route::post('/batch-accept', [DeliveryBatchController::class, 'accept'])->middleware('dispute.debt_free');
             Route::get('/active-tour', [DeliveryBatchController::class, 'activeTour']);
-            Route::post('/{order}/accept', [DeliveryController::class, 'accept']);
+            Route::post('/{order}/accept', [DeliveryController::class, 'accept'])->middleware('dispute.debt_free');
         });
 
         // ── Parrainages ────────────────────────────────────────────────────────

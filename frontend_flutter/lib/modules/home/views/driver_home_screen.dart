@@ -9,6 +9,7 @@ import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../shared/widgets/broadcast_media_section.dart';
 import '../../../shared/widgets/communication_banner.dart';
+import '../../history/views/dispute_debt_screen.dart';
 import '../controllers/home_controller.dart';
 import '../widgets/driver_home/driver_delivery_cards.dart';
 import '../widgets/driver_home/driver_header.dart';
@@ -145,6 +146,7 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 20),
                     child: Column(
                       children: [
+                        const DisputeDebtBannerForRole(),
                         CommunicationBanner(
                           announcements: controller.announcements,
                         ),

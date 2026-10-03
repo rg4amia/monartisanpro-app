@@ -652,6 +652,12 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Application** : écran « Litiges de commandes » (client, fournisseur, livreur) ; « Voir plus » dans les missions et les commandes ; « Historique des versements » filtrable ; filtre des paiements par type d'opération ; historique d'un chantier lisible par le Référent, sans le nom des parties.
     * **Défaut corrigé (backoffice)** : un filtre mémorisé sur une liste renvoyait vers cette liste depuis n'importe quel module ; les filtres ne sont plus restaurés que sur la page de leur liste.
     * **Tests automatisés** : `Chantier21HistoryComplementsTest.php` (8 tests), `OrderDisputeBlock.test.tsx` (5 tests), tests Flutter des écrans et contrôleurs concernés ; suite Pest rejouée sur MariaDB 11.8.
+48. **Chantier 22 — Gel, remboursement et recouvrement d'un litige de commande :** [COMPLÉTÉ — contrôle manuel à faire]
+    * **Gel** du montant de la commande contestée chez le fournisseur dès l'ouverture du litige.
+    * **Remboursement** : à la clôture, l'administrateur fixe le montant (plafonné au prix des articles, hors frais de service) et désigne le responsable, fournisseur ou livreur. ProsArtisan avance le remboursement au client.
+    * **Course** annulée ou remboursée quand la faute est au livreur.
+    * **Dette** : ce que le responsable ne peut plus couvrir devient une dette, prélevée sur ses gains suivants ou réglée par Wave / Orange Money ; son profil est bloqué jusqu'au solde.
+    * **Tests automatisés** : `Chantier22OrderDisputeRefundTest.php` (14 tests), `OrderDisputeBlock.test.tsx` (11 tests), `dispute_debt_test.dart` (9 tests) ; suite Pest rejouée sur MariaDB 11.8.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

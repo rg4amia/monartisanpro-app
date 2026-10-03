@@ -77,15 +77,15 @@ class Chantier21HistoryComplementsTest extends TestCase
 
         $this->actingAs($this->admin)
             ->post("/admin/orders/{$order->id}/dispute/resolve", [
-                'outcome' => 'reclamation_acceptee',
-                'note' => 'Sacs manquants confirmés par la photo de livraison.',
+                'outcome' => 'reclamation_rejetee',
+                'note' => 'Livraison conforme à la photo de remise.',
             ])
             ->assertRedirect()
             ->assertSessionHas('success');
 
         $dispute = OrderDispute::where('order_id', $order->id)->sole();
         $this->assertSame('resolu', $dispute->statut);
-        $this->assertSame('reclamation_acceptee', $dispute->outcome);
+        $this->assertSame('reclamation_rejetee', $dispute->outcome);
         $this->assertSame($this->admin->id, $dispute->resolved_by);
         $this->assertNotNull($dispute->resolved_at);
         $this->assertSame('delivered', $order->fresh()->status);
@@ -102,7 +102,7 @@ class Chantier21HistoryComplementsTest extends TestCase
         $this->actingAs($this->admin)
             ->post("/admin/orders/{$order->id}/dispute/resolve", ['outcome' => 'reclamation_rejetee', 'note' => 'Second avis.'])
             ->assertSessionHasErrors('order');
-        $this->assertSame('reclamation_acceptee', $dispute->fresh()->outcome);
+        $this->assertSame('reclamation_rejetee', $dispute->fresh()->outcome);
     }
 
     public function test_la_cloture_exige_une_issue_connue_un_motif_et_le_droit_d_arbitrer(): void

@@ -31,6 +31,8 @@ class OrderDispute extends Model
     protected $fillable = [
         'order_id', 'opened_by', 'reason', 'statut', 'outcome',
         'resolution_note', 'resolved_by', 'opened_at', 'resolved_at',
+        'frozen_amount', 'frozen_user_id', 'refund_amount', 'fare_refund',
+        'responsible_role', 'responsible_user_id', 'refund_payout_id',
     ];
 
     protected function casts(): array
@@ -38,6 +40,9 @@ class OrderDispute extends Model
         return [
             'opened_at' => 'datetime',
             'resolved_at' => 'datetime',
+            'frozen_amount' => 'integer',
+            'refund_amount' => 'integer',
+            'fare_refund' => 'integer',
         ];
     }
 
@@ -54,6 +59,15 @@ class OrderDispute extends Model
     public function statutLabel(): string
     {
         return self::STATUT_LABELS[$this->statut] ?? $this->statut;
+    }
+
+    public function responsibleLabel(): ?string
+    {
+        return match ($this->responsible_role) {
+            'fournisseur' => 'Fournisseur',
+            'livreur' => 'Livreur',
+            default => null,
+        };
     }
 
     public function outcomeLabel(): ?string

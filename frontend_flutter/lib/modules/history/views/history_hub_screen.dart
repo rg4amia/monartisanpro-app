@@ -91,6 +91,12 @@ List<HistoryEntry> historyEntriesFor(String role) {
           subtitle: 'Chantiers fournis ayant connu un litige',
           open: () => Get.to(() => const SupplierLitigesScreen()),
         ),
+        HistoryEntry(
+          icon: Icons.account_balance_wallet_outlined,
+          title: 'Remboursements dus',
+          subtitle: 'Sommes dues après un litige de commande',
+          open: () => Get.toNamed(Routes.disputeDebts),
+        ),
       ];
     case 'livreur':
     case 'driver':
@@ -118,6 +124,12 @@ List<HistoryEntry> historyEntriesFor(String role) {
           title: 'Courses en litige',
           subtitle: 'Livraisons contestées et décision rendue',
           open: () => Get.toNamed(Routes.orderDisputes),
+        ),
+        HistoryEntry(
+          icon: Icons.account_balance_wallet_outlined,
+          title: 'Remboursements dus',
+          subtitle: 'Sommes dues après un litige de commande',
+          open: () => Get.toNamed(Routes.disputeDebts),
         ),
       ];
     case 'referent':

@@ -15,6 +15,8 @@ class SupplierCatalogService
         return User::query()
             ->where('role', 'fournisseur')
             ->whereHas('fournisseurAgree', fn ($q) => $q->where('statut', 'agree'))
+            // Un fournisseur bloqué par une dette de litige ne reçoit plus de commande.
+            ->whereNotIn('id', app(OrderDisputeDebtService::class)->debtorIds())
             ->with(['fournisseurAgree.sector', 'fournisseurAgree.trade'])
             ->withCount(['supplierProducts' => fn ($q) => $q->where('is_active', true)])
             ->when($search, function ($query) use ($search) {

@@ -2,16 +2,12 @@
 
 namespace App\Services;
 
-use App\Enums\PaymentProvider;
-use App\Enums\PaymentStatus;
 use App\Enums\WalletType;
-use App\Models\GeneratedDocument;
 use App\Models\Setting;
 use App\Models\SupplierCashout;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\Admin\AdminActivityLogger;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
@@ -38,7 +34,10 @@ class SupplierCashoutService
             ->whereIn('statut', [SupplierCashout::STATUT_EN_ATTENTE, SupplierCashout::STATUT_APPROUVE])
             ->sum('montant_brut');
 
-        return max(0, $walletMateriaux - $pendingCashouts);
+        // 3. Sommes gelées par un litige de commande ouvert (Chantier 22)
+        $frozen = app(OrderDisputeDebtService::class)->frozenFor($supplier);
+
+        return max(0, $walletMateriaux - $pendingCashouts - $frozen);
     }
 
     /**

@@ -525,11 +525,15 @@ void main() {
         'Virements',
         'Litiges de commandes',
         'Litiges de chantiers',
+        'Remboursements dus',
       ]);
-      expect(
-        titles('livreur'),
-        ['Gains', 'Courses', 'Retraits', 'Courses en litige'],
-      );
+      expect(titles('livreur'), [
+        'Gains',
+        'Courses',
+        'Retraits',
+        'Courses en litige',
+        'Remboursements dus',
+      ]);
       expect(titles('driver'), titles('livreur'));
       expect(titles('referent'), ['Inspections réalisées', 'Litiges']);
     });

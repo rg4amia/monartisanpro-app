@@ -287,6 +287,8 @@ class OrderDisputeRecord {
     this.reason,
     this.outcomeLabel,
     this.resolutionNote,
+    this.responsibleLabel,
+    this.refundAmount = 0,
     this.openedAt,
     this.resolvedAt,
   });
@@ -299,6 +301,12 @@ class OrderDisputeRecord {
   final String? reason;
   final String? outcomeLabel;
   final String? resolutionNote;
+
+  /// Responsable désigné quand la réclamation est acceptée.
+  final String? responsibleLabel;
+
+  /// Montant rendu au client (articles et, le cas échéant, course).
+  final int refundAmount;
   final DateTime? openedAt;
   final DateTime? resolvedAt;
 
@@ -317,6 +325,8 @@ class OrderDisputeRecord {
       reason: readString(json['reason']),
       outcomeLabel: readString(json['outcome_label']),
       resolutionNote: readString(json['resolution_note']),
+      responsibleLabel: readString(json['responsible_label']),
+      refundAmount: readInt(json['refund_amount']) ?? 0,
       openedAt: _date(json['opened_at']),
       resolvedAt: _date(json['resolved_at']),
     );

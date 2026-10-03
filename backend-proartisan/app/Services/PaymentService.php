@@ -9,6 +9,7 @@ use App\Models\Devis;
 use App\Models\Jalon;
 use App\Models\Mission;
 use App\Models\Order;
+use App\Models\OrderDisputeDebt;
 use App\Models\PromoCode;
 use App\Models\RecruitmentEngagement;
 use App\Models\RecruitmentOffer;
@@ -231,6 +232,75 @@ class PaymentService
             'Instructions de virement bancaire pour la course de livraison',
             'Paiement de la course',
             ['order_id' => $order->id],
+        );
+    }
+
+    /**
+     * Initie le règlement d'une dette de litige de commande par son débiteur.
+     * Le montant est le restant dû établi par le serveur (Règle d'or 36).
+     */
+    public function initiateDisputeDebtPayment(User $debtor, OrderDisputeDebt $debt, PaymentProvider $provider, ?string $phone): array
+    {
+        if ((int) $debt->user_id !== (int) $debtor->id) {
+            throw new PaymentException("Cette dette n'est pas la vôtre.", 403);
+        }
+
+        if (! $debt->isOpen() || $debt->remaining() <= 0) {
+            throw new PaymentException("Cette dette n'est plus à régler.", 422);
+        }
+
+        if (! in_array($provider, [PaymentProvider::WAVE, PaymentProvider::ORANGE_MONEY], true)) {
+            throw new PaymentException('Le règlement se fait par Wave ou Orange Money.', 422);
+        }
+
+        $montant = $debt->remaining();
+        $this->assertPaymentAllowed($montant, $provider);
+
+        $phone = (string) ($phone ?? $debtor->payment_phone ?? $debtor->phone ?? '');
+        $subject = ['debt_id' => $debt->id];
+
+        $existing = Transaction::where('user_id', $debtor->id)
+            ->where('type', 'reglement_dette_litige')
+            ->where('montant', $montant)
+            ->where('provider', $provider)
+            ->where('statut', PaymentStatus::EN_ATTENTE)
+            ->whereJsonContains('metadata->debt_id', $debt->id)
+            ->orderByDesc('id')
+            ->first();
+
+        if ($existing && ($reused = $this->reusePendingTransaction($existing, $provider, 'Règlement de la dette', $subject))) {
+            return $reused;
+        }
+
+        $label = "Remboursement du litige de la commande #{$debt->dispute->order_id}";
+
+        $transaction = Transaction::create([
+            'user_id' => $debtor->id,
+            'type' => 'reglement_dette_litige',
+            'montant' => $montant,
+            'wallet_source' => 'client_mobile_money_'.$debtor->id,
+            'wallet_dest' => 'platform_treasury',
+            'provider' => $provider,
+            'statut' => PaymentStatus::EN_ATTENTE,
+            'client_phone' => $phone,
+            'metadata' => [
+                'payment_type' => 'dispute_debt',
+                'debt_id' => $debt->id,
+                'order_id' => $debt->dispute->order_id,
+                'description' => $label,
+            ],
+        ]);
+
+        return $this->startCheckout(
+            $transaction,
+            $provider,
+            $phone,
+            $label,
+            ['debt_id' => $debt->id, 'payment_type' => 'dispute_debt'],
+            'REF-DET-'.$debt->id,
+            'Instructions de virement bancaire',
+            'Règlement de la dette',
+            $subject,
         );
     }
 
@@ -539,6 +609,13 @@ class PaymentService
         // Commande de matériaux (ou panier) : encaissement réel (Chantier 11).
         if (($transaction->metadata['payment_type'] ?? '') === 'order') {
             app(OrderService::class)->confirmOrderPayment($transaction);
+
+            return;
+        }
+
+        // Dette de litige de commande réglée par son débiteur.
+        if (($transaction->metadata['payment_type'] ?? '') === 'dispute_debt') {
+            app(OrderDisputeDebtService::class)->applyPayment($transaction);
 
             return;
         }

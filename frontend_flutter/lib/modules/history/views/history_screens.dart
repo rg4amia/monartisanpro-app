@@ -282,6 +282,9 @@ class OrderDisputesScreen extends StatelessWidget {
           'Ouvert le ${_on(dispute.openedAt)}',
           if (dispute.outcomeLabel != null)
             'Décision : ${dispute.outcomeLabel}',
+          if (dispute.refundAmount > 0)
+            'Remboursé au client : ${Formatters.fcfa(dispute.refundAmount)}'
+                '${dispute.responsibleLabel != null ? ' · responsable : ${dispute.responsibleLabel}' : ''}',
           if (dispute.resolutionNote != null) dispute.resolutionNote!,
           if (dispute.resolvedAt != null) 'Clos le ${_on(dispute.resolvedAt)}',
         ],
