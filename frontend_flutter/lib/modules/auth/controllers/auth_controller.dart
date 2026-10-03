@@ -3,13 +3,22 @@ import 'package:dio/dio.dart';
 import 'package:get/get.dart';
 
 import '../../../core/network/sync_service.dart';
+import '../../../core/services/otp_sms_listener.dart';
 import '../../../core/services/push_identity.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../data/models/user_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 
 class AuthController extends GetxController {
+  AuthController({OtpSmsListener? smsListener})
+      : _smsListener = smsListener ?? SmartAuthOtpSmsListener();
+
   final AuthRepository _repo = AuthRepository();
+  final OtpSmsListener _smsListener;
+
+  /// Rang de l'écoute en cours : un SMS attendu par une écoute remplacée ou
+  /// arrêtée ne doit plus rien remplir.
+  int _smsListenRun = 0;
 
   final phone = ''.obs;
   final otp = ''.obs;
@@ -20,6 +29,11 @@ class AuthController extends GetxController {
   final errorMsg = Rx<String?>(null);
   final cguAccepted = false.obs;
   final currentUser = Rx<UserModel?>(null);
+
+  /// Code lu dans le SMS reçu, à reporter dans les cases de l'écran OTP.
+  /// Il ne déclenche jamais la vérification : l'utilisateur appuie lui-même
+  /// sur « Vérifier le code ».
+  final receivedSmsCode = Rx<String?>(null);
 
   // Reset Account / Lost phone
   final resetOldPhone = ''.obs;
@@ -67,10 +81,35 @@ class AuthController extends GetxController {
     return null;
   }
 
+  /// Attend le SMS du code. À lancer avant l'envoi : un SMS arrivé avant le
+  /// début de l'écoute n'est pas remis à l'application.
+  void listenForOtpSms() {
+    final run = ++_smsListenRun;
+    receivedSmsCode.value = null;
+    unawaited(
+      _smsListener.waitForCode().then((code) {
+        if (run == _smsListenRun && code != null) receivedSmsCode.value = code;
+      }),
+    );
+  }
+
+  void stopListeningForOtpSms() {
+    _smsListenRun++;
+    receivedSmsCode.value = null;
+    unawaited(_smsListener.cancel());
+  }
+
+  @override
+  void onClose() {
+    stopListeningForOtpSms();
+    super.onClose();
+  }
+
   Future<void> sendOtp({String? answer}) async {
     if (!canSendOtp) return;
     isLoading.value = true;
     errorMsg.value = null;
+    listenForOtpSms();
     try {
       final effectiveAnswer =
           answer ?? (botAnswer.value.isNotEmpty ? botAnswer.value : null);
@@ -84,6 +123,7 @@ class AuthController extends GetxController {
       otpSent.value = true;
     } catch (e) {
       errorMsg.value = _parseError(e);
+      stopListeningForOtpSms();
       // Renouveler le défi si échec
       unawaited(fetchSecurityChallenge());
     } finally {

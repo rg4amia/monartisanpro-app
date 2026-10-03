@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'dart:io';
 
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:frontend_flutter/core/network/api_client.dart';
+import 'package:frontend_flutter/core/services/otp_sms_listener.dart';
 import 'package:frontend_flutter/core/storage/storage_service.dart';
 import 'package:frontend_flutter/modules/auth/controllers/auth_controller.dart';
 
@@ -25,6 +27,24 @@ Map<String, dynamic> _userJson({
       'wallet_mo': 0,
       'name': 'Jean Kouassi',
     };
+
+/// Note combien de requêtes étaient déjà parties au début de chaque écoute.
+class _RecordingSmsListener implements OtpSmsListener {
+  _RecordingSmsListener(this._adapter);
+
+  final FakeHttpClientAdapter _adapter;
+  final List<int> requestsSeenAtStart = [];
+  int cancelCount = 0;
+
+  @override
+  Future<String?> waitForCode() {
+    requestsSeenAtStart.add(_adapter.requests.length);
+    return Completer<String?>().future;
+  }
+
+  @override
+  Future<void> cancel() async => cancelCount++;
+}
 
 void main() {
   TestWidgetsFlutterBinding.ensureInitialized();
@@ -142,6 +162,44 @@ void main() {
       expect(body['bot_token'], 'tok_security_xyz');
       expect(body['bot_answer'], '7');
       expect(body['bot_trap'], '');
+    });
+  });
+
+  group('AuthController — écoute du SMS du code', () {
+    test('l\'écoute démarre avant l\'envoi du code', () async {
+      final sms = _RecordingSmsListener(adapter);
+      adapter.on(
+          'POST', '/auth/send-otp', const CannedResponse(statusCode: 200),);
+      final controller = AuthController(smsListener: sms)
+        ..phone.value = '+2250700000001';
+
+      await controller.sendOtp();
+
+      // Un SMS arrivé avant le début de l'écoute ne serait pas remis.
+      expect(sms.requestsSeenAtStart, [0]);
+      expect(adapter.requests, hasLength(1));
+      expect(sms.cancelCount, 0);
+    });
+
+    test('un envoi en échec arrête l\'écoute', () async {
+      final sms = _RecordingSmsListener(adapter);
+      final controller = AuthController(smsListener: sms)
+        ..phone.value = '+2250700000001';
+
+      await controller.sendOtp();
+
+      expect(controller.errorMsg.value, isNotNull);
+      expect(sms.cancelCount, 1);
+    });
+
+    test('aucune écoute pour un numéro invalide', () async {
+      final sms = _RecordingSmsListener(adapter);
+      final controller = AuthController(smsListener: sms)
+        ..phone.value = '0700000001';
+
+      await controller.sendOtp();
+
+      expect(sms.requestsSeenAtStart, isEmpty);
     });
   });
 

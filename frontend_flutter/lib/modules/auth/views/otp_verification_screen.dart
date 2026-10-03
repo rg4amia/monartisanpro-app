@@ -39,11 +39,23 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   String? _phone;
 
+  /// Vrai quand les cases viennent d'être remplies depuis le SMS reçu.
+  bool _autoFilled = false;
+  Worker? _smsCodeWorker;
+
   @override
   void initState() {
     super.initState();
     final args = Get.arguments as Map<String, dynamic>?;
     _phone = args?['phone'] as String?;
+
+    // L'écoute du SMS démarre avec l'envoi du code (AuthController.sendOtp) :
+    // le code a pu arriver avant l'ouverture de l'écran.
+    _smsCodeWorker = ever<String?>(_c.receivedSmsCode, _onSmsCode);
+    final pending = _c.receivedSmsCode.value;
+    if (pending != null) {
+      WidgetsBinding.instance.addPostFrameCallback((_) => _onSmsCode(pending));
+    }
 
     // Auto-focus first field
     Future.delayed(const Duration(milliseconds: 300), () {
@@ -53,6 +65,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
 
   @override
   void dispose() {
+    _smsCodeWorker?.dispose();
     for (final c in _otpCtrl) {
       c.dispose();
     }
@@ -62,7 +75,43 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     super.dispose();
   }
 
+  /// Reporte dans les cases le code lu dans le SMS. La vérification reste à
+  /// la main de l'utilisateur : rien n'est envoyé au serveur ici.
+  void _onSmsCode(String? code) {
+    if (code == null || !mounted) return;
+    _fillCode(code);
+    setState(() => _autoFilled = true);
+    _c.receivedSmsCode.value = null;
+  }
+
+  void _fillCode(String code) {
+    for (var i = 0; i < 4; i++) {
+      _otpCtrl[i].text = code[i];
+    }
+    _c.otp.value = code;
+    _c.errorMsg.value = null;
+    FocusManager.instance.primaryFocus?.unfocus();
+    HapticFeedback.mediumImpact();
+  }
+
   void _onOtpKey(String v, int i) {
+    if (_autoFilled) setState(() => _autoFilled = false);
+
+    // Code collé ou proposé par le clavier : la case reçoit plusieurs chiffres.
+    if (v.length > 1) {
+      if (v.length >= 4) {
+        // Les 4 derniers : la case pouvait déjà contenir un chiffre.
+        _fillCode(v.substring(v.length - 4));
+        return;
+      }
+      // Saisie dans une case déjà remplie : le dernier chiffre tapé l'emporte.
+      v = v.substring(v.length - 1);
+      _otpCtrl[i].value = TextEditingValue(
+        text: v,
+        selection: const TextSelection.collapsed(offset: 1),
+      );
+    }
+
     if (v.length == 1 && i < 3) {
       _otpFocus[i + 1].requestFocus();
     }
@@ -208,6 +257,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     }
     _c.otp.value = '';
     _c.errorMsg.value = null;
+    if (_autoFilled) setState(() => _autoFilled = false);
 
     // Resend OTP
     await _c.sendOtp();
@@ -240,6 +290,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
           leading: IconButton(
             icon: const Icon(Icons.arrow_back, color: _Dt.ink),
             onPressed: () {
+              _c.stopListeningForOtpSms();
               _c.otpSent.value = false;
               _c.otp.value = '';
               _c.errorMsg.value = null;
@@ -266,6 +317,7 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
                 _buildHeader(),
                 const SizedBox(height: 40),
                 _buildOtpFields(),
+                if (_autoFilled) _buildAutoFilledNote(),
                 const SizedBox(height: 32),
 
                 // Error message
@@ -331,9 +383,26 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
   }
 
   Widget _buildOtpFields() {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-      children: List.generate(4, (i) => _buildOtpBox(i)),
+    return AutofillGroup(
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+        children: List.generate(4, (i) => _buildOtpBox(i)),
+      ),
+    );
+  }
+
+  Widget _buildAutoFilledNote() {
+    return const Padding(
+      padding: EdgeInsets.only(top: 16),
+      child: Text(
+        'Code rempli automatiquement. Appuyez sur « Vérifier le code ».',
+        style: TextStyle(
+          fontSize: 13,
+          color: AppColors.success,
+          fontWeight: FontWeight.w700,
+        ),
+        textAlign: TextAlign.center,
+      ),
     );
   }
 
@@ -346,9 +415,12 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
         focusNode: _otpFocus[i],
         onChanged: (v) => _onOtpKey(v, i),
         keyboardType: TextInputType.number,
+        autofillHints: const [AutofillHints.oneTimeCode],
+        // Pas de limite à un caractère : un code collé ou proposé par le
+        // clavier arrive entier dans une case, puis _onOtpKey le répartit.
         inputFormatters: [
           FilteringTextInputFormatter.digitsOnly,
-          LengthLimitingTextInputFormatter(1),
+          LengthLimitingTextInputFormatter(5),
         ],
         textAlign: TextAlign.center,
         style: const TextStyle(
