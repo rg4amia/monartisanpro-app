@@ -687,6 +687,13 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Backoffice** : le classement des artisans affiche le nombre de clients distincts sous le nombre d'évaluations.
     * **Dégradation d'inactivité** : l'administrateur l'active et la désactive depuis l'onglet « Évaluations & Scores », après confirmation ; l'écran donne le nombre d'artisans visés et les points retirés sur 30 jours. Chaque changement est audité.
     * **Tests automatisés** : `Chantier26AntiCollusionAndDecayToggleTest.php` (15 tests), `InactivityDecayCard.test.tsx` (6 tests).
+54. **Chantier 27 — Sécurisation des comptes utilisateurs, lot A (application) :** [COMPLÉTÉ — contrôle manuel à faire ; lots B à E à venir]
+    * **Inscription** : un compte ne s'ouvre qu'après validation du code reçu par SMS sur ce numéro. Il n'est plus possible d'ouvrir un compte au numéro d'un tiers.
+    * **Compte supprimé** : son titulaire reçoit un message l'invitant à contacter le support, au lieu d'une erreur technique.
+    * **Récupération d'un compte** : ouverte aux livreurs, qui ne pouvaient pas l'utiliser.
+    * **Profil d'un tiers** : seul un administrateur ayant la gestion des utilisateurs le modifie, avec trace au journal d'audit ; jamais le moyen de paiement.
+    * **Carte CNMCI** : stockée en privé et consultée par un lien temporaire ; les cartes existantes sont déplacées au déploiement.
+    * **Tests automatisés** : `Chantier27LotAAccountSecurityTest.php` (17 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

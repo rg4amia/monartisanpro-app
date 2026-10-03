@@ -13,10 +13,45 @@ class AuthService
      */
     public function findOrCreateByPhone(string $phone): User
     {
+        // Le numéro d'un compte supprimé reste réservé par sa ligne : sans ce
+        // contrôle, la création échouait en erreur interne.
+        if (User::onlyTrashed()->where('phone', $phone)->exists()) {
+            throw ValidationException::withMessages([
+                'phone' => ['Ce numéro est associé à un compte supprimé. Contactez le support ProsArtisan pour le rétablir.'],
+            ]);
+        }
+
         return User::firstOrCreate(
             ['phone' => $phone],
             ['kyc_status' => 'en_attente']
         );
+    }
+
+    /**
+     * L'inscription n'est ouverte qu'au détenteur du numéro : un code doit
+     * avoir été validé pour lui, récemment. Sans cela, n'importe qui ouvrait
+     * un compte au numéro d'un tiers.
+     */
+    public function assertPhoneVerified(string $phone): void
+    {
+        if (! app(OtpService::class)->hasRecentVerification($phone)) {
+            throw ValidationException::withMessages([
+                'phone' => ['Validez d\'abord le code reçu par SMS avant de terminer votre inscription.'],
+            ]);
+        }
+    }
+
+    public function consumePhoneVerification(string $phone): void
+    {
+        app(OtpService::class)->consumeVerification($phone);
+    }
+
+    /** Rôle tel que la base le stocke : « driver » désigne le livreur. */
+    public static function canonicalRole(string $role): string
+    {
+        $role = strtolower($role);
+
+        return $role === 'driver' ? 'livreur' : $role;
     }
 
     /**

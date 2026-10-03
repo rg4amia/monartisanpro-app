@@ -27,4 +27,19 @@ class UserPhotoController extends Controller
             'Cache-Control' => 'private, max-age=900, no-store',
         ]);
     }
+
+    /** Carte CNMCI d'un artisan : même principe (User::cnmciCardUrl). */
+    public function cnmciCard(User $user): Response
+    {
+        $path = $user->cnmciCardPath();
+
+        if ($path === null || User::isLegacyPublicPath($path) || ! Storage::disk('local')->exists($path)) {
+            abort(404);
+        }
+
+        return response()->file(Storage::disk('local')->path($path), [
+            'X-Content-Type-Options' => 'nosniff',
+            'Cache-Control' => 'private, max-age=900, no-store',
+        ]);
+    }
 }

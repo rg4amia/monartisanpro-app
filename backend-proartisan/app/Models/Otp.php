@@ -18,6 +18,7 @@ class Otp extends Model
         'attempts',
         'expires_at',
         'used_at',
+        'verified_at',
     ];
 
     protected function casts(): array
@@ -25,6 +26,7 @@ class Otp extends Model
         return [
             'expires_at' => 'datetime',
             'used_at' => 'datetime',
+            'verified_at' => 'datetime',
             'attempts' => 'integer',
         ];
     }

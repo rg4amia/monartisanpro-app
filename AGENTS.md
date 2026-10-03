@@ -673,6 +673,13 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 - **Pilotage** (`Admin\InactivityDecayAdminService`) : carte « Dégradation d'inactivité » de l'onglet « Évaluations & Scores » (artisans visés, pénalités et points retirés sur 30 jours), `PUT /admin/evaluations/inactivity-decay`, capacité `admin.settings.manage`, confirmation `useConfirm`, audit `score.inactivity_decay.enabled` / `.disabled` avec le nombre d'artisans visés. Ce réglage (groupe `score_rules`) est absent de l'éditeur générique des réglages, qui le refuse.
 - **Artisans visés** (`ScoreService::countInactiveArtisans`) : compte actif, score positif et non gelé, sans activité depuis 60 jours. Les points retirés ne sont pas rendus à la désactivation.
 - **Tests** : `Chantier26AntiCollusionAndDecayToggleTest.php`, `InactivityDecayCard.test.tsx`.
+134. **Comptes de l'application : inscription prouvée, profil d'un tiers réservé, carte CNMCI privée (Chantier 27, lot A)** :
+- **Inscription après un code validé** : `POST /auth/register` exige qu'un code de connexion ait été validé pour ce numéro dans les 30 dernières minutes (`OtpService::hasRecentVerification`, colonne `otps.verified_at`, délai `prosartisan.otp.registration_window_minutes`), sinon 422. La preuve est consommée à la réussite. Elle vit côté serveur : l'application n'envoie rien de plus. `used_at` n'est pas une preuve, il est aussi posé quand un code est brûlé. Toute route publique qui crée ou termine un compte vérifie cette preuve.
+- **Compte supprimé** : `AuthService::findOrCreateByPhone` répond 422 avec un message en français quand le numéro appartient à un compte supprimé — jamais l'erreur de la base.
+- **Rôle canonique** : `AuthService::canonicalRole` ramène `driver` à `livreur` avant toute recherche en base (Règle d'or 63).
+- **Profil d'un tiers** (`PUT /api/v1/users/{user}`, `/location`, `POST /cnmci`) : le titulaire, ou un administrateur porteur de `admin.users.manage` — jamais le seul rôle `admin` (Règle d'or 36). L'action d'un administrateur est auditée (`user.profile.updated_by_admin`, `user.location.updated_by_admin`, `user.cnmci.updated_by_admin`). Le moyen de paiement d'un tiers ne se modifie pas par cette route.
+- **Carte CNMCI** : disque privé `local` (`cnmci/`), lien signé de 15 minutes (`User::cnmciCardUrl`, route `users.cnmci-card.file`), formats JPEG, PNG, WEBP ; chemin brut par `User::cnmciCardPath()`. L'ancienne carte est supprimée au remplacement et à l'anonymisation. Existant : `php artisan cnmci:migrate-to-private [--dry-run]`, lancée par une migration au déploiement.
+- **Tests** : `Chantier27LotAAccountSecurityTest.php`.
 
 ## 📎 Fichier de référence du flux
 

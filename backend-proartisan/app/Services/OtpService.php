@@ -150,9 +150,32 @@ class OtpService
             return false;
         }
 
-        $otpRecord->update(['used_at' => now()]);
+        // `verified_at` distingue un code validé d'un code brûlé : c'est la
+        // preuve exigée pour terminer une inscription.
+        $otpRecord->update(['used_at' => now(), 'verified_at' => now()]);
 
         return true;
+    }
+
+    /**
+     * Un code de connexion a-t-il été validé pour ce numéro dans la fenêtre
+     * d'inscription ? Les codes d'une autre action (étape de chantier…) ne
+     * comptent pas.
+     */
+    public function hasRecentVerification(string $phone): bool
+    {
+        $minutes = (int) config('prosartisan.otp.registration_window_minutes', 30);
+
+        return Otp::where('phone', $phone)
+            ->whereNull('action')
+            ->where('verified_at', '>=', now()->subMinutes($minutes))
+            ->exists();
+    }
+
+    /** La preuve ne sert qu'une fois. */
+    public function consumeVerification(string $phone): void
+    {
+        Otp::where('phone', $phone)->whereNotNull('verified_at')->update(['verified_at' => null]);
     }
 
     /**

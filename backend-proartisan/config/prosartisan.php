@@ -53,6 +53,9 @@ return [
         // Porter 'length' à 6 renforce encore la marge, au prix d'un
         // changement d'UX côté mobile (champ de saisie).
         'max_attempts' => 5,
+        // Délai, après la validation du code, pendant lequel l'inscription peut
+        // être terminée. Passé ce délai, il faut valider un nouveau code.
+        'registration_window_minutes' => 30,
     ],
 
     'score_prosartisan' => [

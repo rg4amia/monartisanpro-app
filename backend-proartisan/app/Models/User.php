@@ -237,6 +237,47 @@ class User extends Authenticatable
     }
 
     /**
+     * Carte CNMCI : stockée sur le disque privé et servie par un lien signé de
+     * 15 minutes. Les cartes d'avant le Chantier 27, encore sur le disque
+     * public, gardent leur adresse jusqu'à `cnmci:migrate-to-private`.
+     */
+    protected function cnmciCardUrl(): Attribute
+    {
+        return Attribute::make(
+            get: function (?string $value): ?string {
+                if ($value === null || $value === '') {
+                    return null;
+                }
+
+                if (self::isLegacyPublicPath($value)) {
+                    return $value;
+                }
+
+                return URL::temporarySignedRoute(
+                    'users.cnmci-card.file',
+                    now()->addMinutes(15),
+                    ['user' => $this->getKey()],
+                );
+            },
+        );
+    }
+
+    /** Chemin de la carte CNMCI tel qu'il est stocké en base. */
+    public function cnmciCardPath(): ?string
+    {
+        $raw = $this->getRawOriginal('cnmci_card_url');
+
+        return $raw === null || $raw === '' ? null : $raw;
+    }
+
+    public static function isLegacyPublicPath(string $value): bool
+    {
+        return str_starts_with($value, 'http://')
+            || str_starts_with($value, 'https://')
+            || str_starts_with($value, '/storage/');
+    }
+
+    /**
      * Normalisation du rôle : 'driver' (anglais) est automatiquement converti
      * en 'livreur' (valeur ENUM en base MariaDB/MySQL).
      */

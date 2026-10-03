@@ -115,6 +115,11 @@ class AdminGdprService
                 Storage::disk('local')->delete($user->photo_path);
             }
 
+            $cnmciCard = $user->cnmciCardPath();
+            if ($cnmciCard !== null && ! User::isLegacyPublicPath($cnmciCard)) {
+                Storage::disk('local')->delete($cnmciCard);
+            }
+
             // Purge des notifications personnelles et de leur journal d'envoi.
             NotificationDelivery::where('user_id', $user->id)->delete();
             NotificationPreference::where('user_id', $user->id)->delete();

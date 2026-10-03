@@ -79,6 +79,11 @@ Route::get('/users/{user}/photo', [UserPhotoController::class, 'show'])
     ->middleware('signed')
     ->name('users.photo.file');
 
+// Carte CNMCI d'un artisan : même principe (User::cnmciCardUrl).
+Route::get('/users/{user}/cnmci-card', [UserPhotoController::class, 'cnmciCard'])
+    ->middleware('signed')
+    ->name('users.cnmci-card.file');
+
 Route::inertia('/cgu', 'cgu', ['defaultTab' => 'cgu'])->name('cgu');
 Route::inertia('/politique-confidentialite', 'cgu', ['defaultTab' => 'privacy'])->name('privacy');
 Route::inertia('/privacy', 'cgu', ['defaultTab' => 'privacy']);

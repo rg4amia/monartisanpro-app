@@ -1,7 +1,8 @@
 <?php
 
+use App\Models\Otp;
 use App\Models\User;
-use App\Services\AuthService;
+use App\Services\OtpService;
 use Illuminate\Database\QueryException;
 
 // ── Unicité du numéro de téléphone à l'inscription ───────────────────────────
@@ -39,7 +40,12 @@ test('il autorise la complétion d’un compte stub créé par verify-otp sur le
     // Stub créé par le vrai chemin de verify-otp : seul le téléphone est renseigné,
     // name reste null ; role vaut null sous SQLite mais 'client' sous MariaDB
     // (ENUM NOT NULL sans défaut → premier élément), comme en production.
-    $stub = app(AuthService::class)->findOrCreateByPhone($phone);
+    // L'inscription exige un code validé pour ce numéro (Chantier 27).
+    app(OtpService::class)->sendOtp($phone);
+    $this->postJson('/api/v1/auth/verify-otp', ['phone' => $phone, 'otp' => Otp::where('phone', $phone)->latest('id')->value('code')])
+        ->assertOk()
+        ->assertJsonPath('has_completed_profile', false);
+    $stub = User::where('phone', $phone)->firstOrFail();
 
     $response = $this->postJson('/api/v1/auth/register', registerPayload($phone));
 

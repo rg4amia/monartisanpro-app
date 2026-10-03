@@ -210,6 +210,9 @@ class AuthController extends Controller
             ], 403);
         }
 
+        // Preuve de détention du numéro : un code validé récemment.
+        $this->authService->assertPhoneVerified($request->phone);
+
         $user = $this->authService->findOrCreateByPhone($request->phone);
 
         // Met à jour le profil utilisateur
@@ -217,6 +220,8 @@ class AuthController extends Controller
 
         // Génère un token d'authentification
         $token = $this->authService->createToken($user, $request->input('device_fingerprint'));
+
+        $this->authService->consumePhoneVerification($request->phone);
 
         return response()->json([
             'success' => true,
@@ -261,7 +266,7 @@ class AuthController extends Controller
             'old_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
             'new_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
             'name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'string', 'in:client,artisan,fournisseur,driver'],
+            'role' => ['required', 'string', 'in:client,artisan,fournisseur,driver,livreur'],
         ]);
 
         // Vérifie si un autre utilisateur utilise déjà le nouveau numéro
@@ -275,7 +280,7 @@ class AuthController extends Controller
 
         // Trouve l'utilisateur par l'ancien numéro, le rôle et le nom complet exact
         $user = User::where('phone', $request->old_phone)
-            ->where('role', $request->role)
+            ->where('role', AuthService::canonicalRole($request->role))
             ->where('name', trim($request->name))
             ->first();
 
@@ -305,7 +310,7 @@ class AuthController extends Controller
             'old_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
             'new_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
             'name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'string', 'in:client,artisan,fournisseur,driver'],
+            'role' => ['required', 'string', 'in:client,artisan,fournisseur,driver,livreur'],
             'otp' => ['required', 'string', 'size:4'],
         ]);
 
@@ -319,7 +324,7 @@ class AuthController extends Controller
 
         // Trouve à nouveau l'utilisateur pour modification
         $user = User::where('phone', $request->old_phone)
-            ->where('role', $request->role)
+            ->where('role', AuthService::canonicalRole($request->role))
             ->where('name', trim($request->name))
             ->first();
 
