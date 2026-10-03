@@ -45,6 +45,7 @@ use App\Services\Admin\AdminTaxonomyService;
 use App\Services\Admin\AdminUserService;
 use App\Services\Admin\AppStoreLinkAdminService;
 use App\Services\Admin\ArtisanDirectoryAdminService;
+use App\Services\Admin\InactivityDecayAdminService;
 use App\Services\Admin\NotificationCampaignAdminService;
 use App\Services\Admin\NotificationTemplateAdminService;
 use App\Services\Admin\UserManualService;
@@ -243,6 +244,34 @@ class BackofficeController extends Controller
         $status = $frozen ? 'gelé' : 'dégelé';
 
         return back()->with('success', "Le score ProsArtisan de l'artisan {$user->name} a été {$status} avec succès.");
+    }
+
+    /** Historique complet du score d'un compte, pour la fiche du backoffice. */
+    public function scoreLedger(User $user): JsonResponse
+    {
+        return response()->json($this->adminService->scoreLedgerOf($user));
+    }
+
+    /** Active ou désactive la dégradation d'inactivité du score. */
+    public function updateInactivityDecay(Request $request, InactivityDecayAdminService $decay): RedirectResponse
+    {
+        $data = $request->validate(
+            ['enabled' => ['required', 'boolean']],
+            ['enabled.required' => 'Précisez si la dégradation doit être activée ou désactivée.', 'enabled.boolean' => 'Valeur invalide.'],
+        );
+
+        $enabled = (bool) $data['enabled'];
+        $changed = $decay->setEnabled($enabled);
+
+        if (! $changed) {
+            return back()->with('success', $enabled
+                ? "La dégradation d'inactivité était déjà activée."
+                : "La dégradation d'inactivité était déjà désactivée.");
+        }
+
+        return back()->with('success', $enabled
+            ? "Dégradation d'inactivité activée : elle s'appliquera au prochain passage quotidien."
+            : "Dégradation d'inactivité désactivée : plus aucun point ne sera retiré pour inactivité.");
     }
 
     public function llmAdmin(): Response

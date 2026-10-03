@@ -164,7 +164,7 @@ Note : Pour les prestations chantiers de l'Artisan.
 * **Seuils (configurables dans `config/prosartisan.php` → `score_prosartisan`) :**
   * `credit_threshold = 700` — score $\ge 700$ requis pour l'éligibilité au micro-crédit d'urgence ; plafond de crédit = $50\,000 + (\text{score} - 700) \times 1\,500$ FCFA (soit 500 000 FCFA à 1000). Éligibilité et plafond sont calculés sur **le même score, recalculé depuis le ledger au moment de la demande** — jamais sur la colonne stockée, qui peut être obsolète.
   * `golden_marker_threshold = 700` — badge « marqueur doré » (artisan prioritaire dans le matching et la vitrine).
-  * `excellence_threshold = 800` — palier d'excellence, conditionné à la maturité (10 missions) et à ≥ 3 critères $\ge 4{,}8/5$.
+  * `excellence_threshold = 800` — palier d'excellence, conditionné à la maturité (10 clients distincts) et à ≥ 3 critères $\ge 4{,}8/5$.
 * L'ancienne échelle 0–100 et l'ancien seuil `70` (période « Score N'Zassa ») sont **obsolètes** et ne doivent plus apparaître ni en code ni en documentation.
 
 ---
@@ -669,6 +669,24 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Aucune réponse inventée** : recherche sans fiche, photo non analysée, IA indisponible et médiation de litige l'annoncent au lieu de renvoyer un contenu par défaut.
     * **Sécurité** : documents sur disque privé avec formats et taille contrôlés ; plus de téléchargement d'une adresse fournie par l'utilisateur ; médiation IA réservée aux parties au litige ; toutes les actions auditées.
     * **Tests automatisés** : `Chantier23LlmKnowledgeTest.php` (35 tests), `LlmAdminPanel.test.tsx` (13 tests).
+51. **Chantier 24 — Formule du Score ProsArtisan :** [COMPLÉTÉ — contrôle manuel à faire]
+    * **Plancher des notes** : une étoile vaut 0 point (auparavant, la pire note rapportait 200 points sur 1000). Dix évaluations à 3/5 donnent 500, à 4/5 donnent 750, à 5/5 donnent 1000.
+    * **Plafond d'excellence** : sans trois critères à 4,8/5 au moins, le score total est plafonné à 800, bonus compris.
+    * **Scores existants** recalculés au déploiement ; les scores gelés ne bougent pas.
+    * **Tests automatisés** : `Chantier24ScoreFormulaTest.php` (12 tests), `score_conversion_test.dart` (3 tests).
+52. **Chantier 25 — Corrections du module « Évaluations & Scores » :** [COMPLÉTÉ — contrôle manuel à faire]
+    * **Données personnelles** : la liste « Mes évaluations » ne transmet plus le compte entier de l'autre partie (téléphone, soldes, position exacte), seulement son nom et son rôle.
+    * **Lien vérifié** : un livreur ne s'évalue plus depuis une mission, seulement depuis la commande qu'il a livrée.
+    * **Doublons** : la base refuse deux évaluations de la même personne pour la même mission ou commande.
+    * **Crédibilité de l'évaluateur** : un client aux missions terminées pèse désormais pleinement (l'indice restait à 0,1 pour tous).
+    * **Dégradation d'inactivité** : la commande ne plante plus et retire 5 points par semaine au plus ; elle reste éteinte tant qu'elle n'est pas activée.
+    * **Backoffice** : historique complet du score par artisan, recherche du classement limitée aux artisans, libellés corrigés.
+    * **Tests automatisés** : `Chantier25EvaluationFixesTest.php` (17 tests), `DetailModals.test.tsx`.
+53. **Chantier 26 — Maturité par clients distincts et pilotage de la dégradation d'inactivité :** [COMPLÉTÉ — contrôle manuel à faire]
+    * **Anti-collusion** : le score entier demande dix clients distincts. Dix évaluations à 5/5 d'un seul client ne donnent plus que 100 points au lieu de 1000.
+    * **Backoffice** : le classement des artisans affiche le nombre de clients distincts sous le nombre d'évaluations.
+    * **Dégradation d'inactivité** : l'administrateur l'active et la désactive depuis l'onglet « Évaluations & Scores », après confirmation ; l'écran donne le nombre d'artisans visés et les points retirés sur 30 jours. Chaque changement est audité.
+    * **Tests automatisés** : `Chantier26AntiCollusionAndDecayToggleTest.php` (15 tests), `InactivityDecayCard.test.tsx` (6 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

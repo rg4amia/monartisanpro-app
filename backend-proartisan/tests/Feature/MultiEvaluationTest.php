@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\JCode;
 use App\Models\Mission;
+use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -70,10 +71,29 @@ class MultiEvaluationTest extends TestCase
             ])
             ->assertStatus(201);
 
-        // 2. Évaluation du livreur
+        // 2. Évaluation du livreur : depuis la commande qu'il a livrée. Rien ne
+        // relie un livreur à une mission ; la tentative par la mission est refusée.
+        $this->actingAs($client)
+            ->postJson('/api/v1/evaluations', ['mission_id' => $mission->id, 'evalue_id' => $driver->id, 'note' => 4])
+            ->assertStatus(422);
+
+        $order = Order::create([
+            'client_id' => $client->id,
+            'supplier_id' => $supplier->id,
+            'driver_id' => $driver->id,
+            'status' => 'delivered',
+            'subtotal' => 25000,
+            'delivery_cost' => 2000,
+            'platform_fee' => 0,
+            'total_amount' => 27000,
+            'pickup_code' => '4821',
+            'reception_code' => '7734',
+            'delivery_mode' => 'delivery',
+        ]);
+
         $this->actingAs($client)
             ->postJson('/api/v1/evaluations', [
-                'mission_id' => $mission->id,
+                'order_id' => $order->id,
                 'evalue_id' => $driver->id,
                 'note' => 4,
                 'commentaire' => 'Livraison rapide.',

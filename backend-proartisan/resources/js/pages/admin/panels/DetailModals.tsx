@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { cn } from '@/lib/utils';
 
+import { redirectIfSessionExpired } from '../hooks/useIdleLogout';
 import {
     DeliveryModeBadge,
     DeliveryStatusBadge,
@@ -34,16 +35,36 @@ function CloseButton({ onClose }: { onClose: () => void }) {
     );
 }
 
-export function ArtisanLedgerModal({
-    artisan,
-    scoreLedger,
-    onClose,
-}: {
-    artisan: ArtisanScoreItem;
-    scoreLedger: ScoreLedgerEntryItem[];
-    onClose: () => void;
-}) {
-    const entries = scoreLedger.filter((entry) => entry.user_id === artisan.id);
+export function ArtisanLedgerModal({ artisan, onClose }: { artisan: ArtisanScoreItem; onClose: () => void }) {
+    // Historique chargé pour ce seul artisan : la liste générale des 100
+    // dernières lignes laissait croire à un historique vide.
+    const [entries, setEntries] = useState<ScoreLedgerEntryItem[] | null>(null);
+    const [total, setTotal] = useState(0);
+    const [error, setError] = useState(false);
+
+    useEffect(() => {
+        let active = true;
+
+        fetch(`/admin/users/${artisan.id}/score-ledger`, { headers: { Accept: 'application/json' }, credentials: 'same-origin' })
+            .then((response) => {
+                if (redirectIfSessionExpired(response)) return null;
+                if (!response.ok) throw new Error(String(response.status));
+
+                return response.json();
+            })
+            .then((data: { entries?: ScoreLedgerEntryItem[]; total?: number } | null) => {
+                if (!active || !data) return;
+                setEntries(data.entries ?? []);
+                setTotal(data.total ?? 0);
+            })
+            .catch(() => {
+                if (active) setError(true);
+            });
+
+        return () => {
+            active = false;
+        };
+    }, [artisan.id]);
 
     return (
         <div role="dialog" aria-modal="true" aria-label="Fenêtre de détail" className="fixed inset-0 z-50 flex items-center justify-center bg-black/60 backdrop-blur-sm p-4">
@@ -61,8 +82,14 @@ export function ArtisanLedgerModal({
                 </div>
 
                 <div className="mt-6 max-h-[400px] overflow-y-auto space-y-3 pr-1">
-                    {entries.length === 0 ? (
-                        <EmptyState description="Aucun événement enregistré dans le Ledger pour cet artisan." title="Historique vide" />
+                    {error ? (
+                        <p role="alert" className="text-xs text-rose-700">
+                            L'historique du score n'a pas pu être chargé. Fermez la fiche puis rouvrez-la.
+                        </p>
+                    ) : entries === null ? (
+                        <p className="text-xs italic text-[var(--admin-muted)]">Chargement de l'historique…</p>
+                    ) : entries.length === 0 ? (
+                        <EmptyState description="Aucun bonus ni pénalité enregistré pour cet artisan. Son score vient de ses seules évaluations." title="Aucun événement" />
                     ) : (
                         entries.map((entry) => (
                             <div key={entry.id} className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] p-4 flex items-start justify-between gap-4">
@@ -79,7 +106,7 @@ export function ArtisanLedgerModal({
                                         </span>
                                     </div>
                                     <p className="mt-2 text-sm font-semibold text-[var(--admin-text)]">{entry.description}</p>
-                                    <span className="mt-1 block text-xs text-[var(--admin-muted)]">Type: {entry.event_type}</span>
+                                    <span className="mt-1 block text-xs text-[var(--admin-muted)]">{entry.event_label ?? entry.event_type}</span>
                                 </div>
                                 <span className="text-xs text-[var(--admin-muted)] shrink-0">
                                     {shortDate(entry.created_at)}
@@ -88,6 +115,12 @@ export function ArtisanLedgerModal({
                         ))
                     )}
                 </div>
+
+                {entries !== null && total > entries.length ? (
+                    <p className="mt-3 text-xs text-[var(--admin-muted)]">
+                        {entries.length} événements les plus récents sur {total}.
+                    </p>
+                ) : null}
 
                 <div className="mt-6 flex justify-end">
                     <button type="button" onClick={onClose} className="admin-button admin-button--ghost">

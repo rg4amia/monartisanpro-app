@@ -21,6 +21,7 @@ import type {
     DistrictListItem,
     DocumentStats,
     EvaluationStats,
+    InactivityDecayOverview,
     FaqItem,
     FaqStats,
     FlashMessages,
@@ -48,7 +49,6 @@ import type {
     RecruitmentOfferItem,
     RecruitmentSettings,
     RecruitmentStats,
-    ScoreLedgerEntryItem,
     SectorItem,
     SettingItem,
     TerritoryBreakdowns,
@@ -101,7 +101,6 @@ export interface AdminPageProps {
     users: AdminUser[];
     evaluationsList: AdminEvaluation[];
     artisansScores: ArtisanScoreItem[];
-    scoreLedger: ScoreLedgerEntryItem[];
     navBadges?: {
         transactions_en_attente?: number;
         communications_publiees?: number;
@@ -142,6 +141,7 @@ export interface AdminPageProps {
     evaluationsPage?: Paginated<AdminEvaluation>;
     artisansScoresPage?: Paginated<ArtisanScoreItem>;
     evaluationStats?: EvaluationStats;
+    inactivityDecay?: InactivityDecayOverview | null;
     missionsPage?: Paginated<AdminMission>;
     ordersPage?: Paginated<AdminOrder>;
     missionStats?: MissionStats;

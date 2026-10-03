@@ -8,6 +8,10 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-10-03 | Plan | [Chantier 26 — Maturité par clients distincts et pilotage de la dégradation d'inactivité](plans/2026-10-03-chantier-26-anti-collusion-et-degradation.md) | livré (contrôle manuel à faire) | — |
+| 2026-10-03 | Plan | [Chantier 25 — Corrections du module « Évaluations & Scores »](plans/2026-10-03-chantier-25-corrections-evaluations-scores.md) | livré (contrôle manuel à faire) | — |
+| 2026-10-03 | Plan | [Chantier 24 — Formule du Score ProsArtisan : plancher des notes, plafond d'excellence](plans/2026-10-03-chantier-24-formule-score.md) | livré (contrôle manuel à faire) | — |
+| 2026-10-03 | Analyse | [Module « Évaluations & Scores » : calcul du score, fiabilité des évaluations, dégradation](analyses/2026-10-03-analyse-module-evaluations-scores.md) | — | — |
 | 2026-10-03 | Plan | [Chantier 23 — Base de connaissances de l'Assistant IA, ingestion réelle](plans/2026-10-03-chantier-23-base-connaissances-assistant-ia.md) | livré (contrôle manuel à faire) | — |
 | 2026-10-03 | Analyse | [Module « Administration LLM ProsArtisan » : ingestion, Assistant IA, sécurité](analyses/2026-10-03-analyse-module-administration-llm.md) | — | — |
 | 2026-10-03 | Plan | [Chantier 22 — Gel, remboursement et recouvrement d'un litige de commande](plans/2026-10-03-chantier-22-remboursement-litige-commande.md) | livré (contrôle manuel à faire) | — |

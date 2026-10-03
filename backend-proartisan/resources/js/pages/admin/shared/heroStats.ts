@@ -195,7 +195,7 @@ export function buildHeroStats(activeTab: AdminTab, ctx: HeroStatsContext): Hero
         case 'evaluations':
             return [
                 { label: 'Évaluations', tone: 'amber' as const, value: numberFormat.format(evaluationStats.evaluations_total) },
-                { label: 'Note moyenne', tone: 'green' as const, value: evaluationStats.evaluations_total > 0 ? `${evaluationStats.note_moyenne} / 5` : 'N/A' },
+                { label: 'Note moyenne', tone: 'green' as const, value: evaluationStats.note_moyenne !== null && evaluationStats.evaluations_total > 0 ? `${evaluationStats.note_moyenne} / 5` : 'Non évalué' },
                 { label: 'Artisans suivis', tone: 'blue' as const, value: numberFormat.format(evaluationStats.artisans_suivis) },
                 { label: 'Scores gelés', tone: 'rose' as const, value: numberFormat.format(evaluationStats.scores_geles) },
             ];

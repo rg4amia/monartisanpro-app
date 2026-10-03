@@ -1,4 +1,5 @@
 import 'dart:async';
+
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
@@ -8,6 +9,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
+import '../../../core/utils/score_conversion.dart';
 import '../../../data/models/artisan_model.dart';
 import '../../../shared/widgets/score_prosartisan.dart';
 import '../../missions/controllers/artisan_selection_controller.dart';
@@ -384,15 +386,7 @@ class ArtisanProfileScreen extends StatelessWidget {
   }
 
   int _weightedBreakdownValue(dynamic value, int maxPoints) {
-    double parsed;
-
-    if (value is num) {
-      parsed = value.toDouble();
-    } else {
-      parsed = double.tryParse(value?.toString() ?? '') ?? 0;
-    }
-
-    return (parsed / 5 * maxPoints).round().clamp(0, maxPoints);
+    return pillarPointsFromRating(value, maxPoints).round();
   }
 }
 

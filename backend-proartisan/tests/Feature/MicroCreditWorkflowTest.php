@@ -13,7 +13,6 @@ use App\Models\User;
 use App\Services\ScoreService;
 use App\Services\WalletService;
 use App\States\Mission\CompletedState;
-use App\States\Mission\FundedLockedState;
 use App\States\Mission\InProgressState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
@@ -110,7 +109,7 @@ class MicroCreditWorkflowTest extends TestCase
 
             Evaluation::create([
                 'mission_id' => $mission->id,
-                'evaluateur_id' => $client->id,
+                'evaluateur_id' => User::factory()->create(['role' => 'client', 'kyc_status' => 'actif'])->id,
                 'evalue_id' => $artisan->id,
                 'note' => 5,
                 'fiabilite' => 5.0,
@@ -490,7 +489,7 @@ class MicroCreditWorkflowTest extends TestCase
 
             Evaluation::create([
                 'mission_id' => $mission->id,
-                'evaluateur_id' => $client->id,
+                'evaluateur_id' => User::factory()->create(['role' => 'client', 'kyc_status' => 'actif'])->id,
                 'evalue_id' => $artisan->id,
                 'note' => 5,
                 'fiabilite' => 5.0,

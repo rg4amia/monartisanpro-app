@@ -85,31 +85,51 @@ function makeTransaction(overrides: Partial<AdminTransaction> = {}): AdminTransa
 }
 
 describe('ArtisanLedgerModal', () => {
-    it('affiche uniquement les entrées du ledger de l\'artisan ciblé', () => {
-        render(
-            <ArtisanLedgerModal
-                artisan={makeArtisan()}
-                scoreLedger={[
-                    makeLedgerEntry({ id: 1, user_id: 3 }),
-                    makeLedgerEntry({ id: 2, user_id: 99, description: 'Entrée dun autre artisan' }),
-                ]}
-                onClose={vi.fn()}
-            />,
-        );
+    function serveLedger(body: unknown, ok = true) {
+        vi.stubGlobal('fetch', vi.fn().mockResolvedValue({ ok, status: ok ? 200 : 500, json: async () => body }));
+    }
 
-        expect(screen.getByText('Mission #12 terminée avec succès.')).toBeInTheDocument();
-        expect(screen.queryByText('Entrée dun autre artisan')).not.toBeInTheDocument();
+    it("charge l'historique complet de l'artisan ciblé", async () => {
+        serveLedger({ entries: [makeLedgerEntry({ id: 1, user_id: 3, event_label: 'Évaluation favorable' })], total: 1 });
+
+        render(<ArtisanLedgerModal artisan={makeArtisan()} onClose={vi.fn()} />);
+
+        expect(await screen.findByText('Mission #12 terminée avec succès.')).toBeInTheDocument();
         expect(screen.getByText('+25 points')).toBeInTheDocument();
+        expect(screen.getByText('Évaluation favorable')).toBeInTheDocument();
+        expect(global.fetch).toHaveBeenCalledWith('/admin/users/3/score-ledger', expect.objectContaining({ credentials: 'same-origin' }));
     });
 
-    it('affiche un état vide sans événement pour cet artisan', () => {
-        render(<ArtisanLedgerModal artisan={makeArtisan()} scoreLedger={[]} onClose={vi.fn()} />);
-        expect(screen.getByText('Historique vide')).toBeInTheDocument();
+    it("dit quand seule une partie de l'historique est affichée", async () => {
+        serveLedger({ entries: [makeLedgerEntry({ id: 1, user_id: 3 })], total: 420 });
+
+        render(<ArtisanLedgerModal artisan={makeArtisan()} onClose={vi.fn()} />);
+
+        expect(await screen.findByText('1 événements les plus récents sur 420.')).toBeInTheDocument();
     });
 
-    it('déclenche onClose', () => {
+    it('affiche un état vide sans événement pour cet artisan', async () => {
+        serveLedger({ entries: [], total: 0 });
+
+        render(<ArtisanLedgerModal artisan={makeArtisan()} onClose={vi.fn()} />);
+
+        expect(await screen.findByText('Aucun événement')).toBeInTheDocument();
+    });
+
+    it("annonce une panne au lieu d'un historique vide", async () => {
+        serveLedger({}, false);
+
+        render(<ArtisanLedgerModal artisan={makeArtisan()} onClose={vi.fn()} />);
+
+        expect(await screen.findByRole('alert')).toHaveTextContent("n'a pas pu être chargé");
+        expect(screen.queryByText('Aucun événement')).not.toBeInTheDocument();
+    });
+
+    it('déclenche onClose', async () => {
+        serveLedger({ entries: [], total: 0 });
         const onClose = vi.fn();
-        render(<ArtisanLedgerModal artisan={makeArtisan()} scoreLedger={[]} onClose={onClose} />);
+        render(<ArtisanLedgerModal artisan={makeArtisan()} onClose={onClose} />);
+        await screen.findByText('Aucun événement');
 
         // Deux boutons portent le nom accessible "Fermer" : la croix d'en-tête
         // (aria-label) et le bouton texte du pied de modale.

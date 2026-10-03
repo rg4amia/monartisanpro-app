@@ -58,7 +58,6 @@ import type {
     KycUser,
     LitigeItem,
     PromoCodeItem,
-    ScoreLedgerEntryItem,
 } from './shared';
 import {
     AdminShell,
@@ -105,7 +104,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         bankTransferSettings,
         evaluationsList = [] as AdminEvaluation[],
         artisansScores = [] as ArtisanScoreItem[],
-        scoreLedger = [] as ScoreLedgerEntryItem[],
         navBadges = {} as NonNullable<AdminPageProps['navBadges']>,
         financialKpis = {} as any,
         promoCodes = [] as PromoCodeItem[],
@@ -137,6 +135,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         evaluationsPage = undefined,
         artisansScoresPage = undefined,
         evaluationStats = { evaluations_total: 0, note_moyenne: 0, artisans_suivis: 0, scores_geles: 0 },
+        inactivityDecay = undefined,
         missionsPage = undefined,
         ordersPage = undefined,
         missionStats = { en_cours: 0, en_litige: 0, referent_required: 0, enrichies: 0 },
@@ -1009,6 +1008,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     evaluationsPage={evaluationsPage}
                                     artisansScoresPage={artisansScoresPage}
                                     evaluationStats={evaluationStats}
+                                    inactivityDecay={inactivityDecay}
+                                    canManageScoreRules={can(permissions, 'admin.settings.manage')}
                                     evalSearch={evalTable.filters.search_eval}
                                     onEvalSearchChange={(v) => evalTable.set('search_eval', v)}
                                     onEvalSubmit={evalTable.apply}
@@ -1195,7 +1196,6 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 {selectedArtisanForLedger && (
                     <ArtisanLedgerModal
                         artisan={selectedArtisanForLedger}
-                        scoreLedger={scoreLedger}
                         onClose={() => setSelectedArtisanForLedger(null)}
                     />
                 )}

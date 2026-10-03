@@ -37,6 +37,12 @@ class DecayScoreCommand extends Command
 
         if ($isDryRun) {
             $this->warn('[DRY-RUN] Aucune modification ne sera effectuée.');
+        } elseif (! ScoreService::inactivityDecayEnabled()) {
+            // Éteinte par défaut : son activation retire des points à des
+            // artisans réels et relève d'une décision (SCORE_INACTIVITY_DECAY_ENABLED).
+            $this->info("Dégradation d'inactivité désactivée : aucun score modifié. Utilisez --dry-run pour voir les artisans concernés.");
+
+            return self::SUCCESS;
         }
 
         $artisans = User::query()
@@ -49,9 +55,18 @@ class DecayScoreCommand extends Command
         $skipped = 0;
 
         foreach ($artisans as $artisan) {
-            $inactivityDays = $this->scoreService->getInactivityDays($artisan);
+            try {
+                $inactivityDays = $this->scoreService->getInactivityDays($artisan);
+            } catch (\Throwable $e) {
+                // Un artisan en erreur n'interrompt pas le traitement des suivants.
+                $this->error("  ❌ Artisan #{$artisan->id} : {$e->getMessage()}");
+                Log::error('[DecayScore] Erreur', ['user_id' => $artisan->id, 'error' => $e->getMessage()]);
+                $skipped++;
 
-            if ($inactivityDays < 60) {
+                continue;
+            }
+
+            if ($inactivityDays < ScoreService::INACTIVITY_THRESHOLD_DAYS) {
                 continue;
             }
 

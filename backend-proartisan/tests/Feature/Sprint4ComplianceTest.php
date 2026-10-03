@@ -2,10 +2,10 @@
 
 namespace Tests\Feature;
 
+use App\Models\Evaluation;
 use App\Models\Jalon;
 use App\Models\Litige;
 use App\Models\Mission;
-use App\Models\ScoreLedgerEntry;
 use App\Models\User;
 use App\Services\ScoreService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -90,13 +90,20 @@ class Sprint4ComplianceTest extends TestCase
             'score_prosartisan' => 300,
         ]);
 
-        ScoreLedgerEntry::create([
-            'user_id' => $parrain->id,
-            'event_type' => 'success_mission',
-            'points' => 890,
-            'credibility_factor' => 1.00,
-            'description' => 'Initial high score',
-        ]);
+        // Au-delà de 800, le score exige des évaluations d'excellence : un
+        // bonus du ledger seul ne franchit plus le seuil.
+        $evaluateur = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
+        for ($i = 0; $i < 10; $i++) {
+            Evaluation::create([
+                'evaluateur_id' => User::factory()->create(['role' => 'client', 'kyc_status' => 'actif'])->id,
+                'evalue_id' => $parrain->id,
+                'note' => 5,
+                'fiabilite' => 5,
+                'integrite' => 5,
+                'qualite' => 5,
+                'reactivite' => 5,
+            ]);
+        }
         app(ScoreService::class)->recalculateFromLedger($parrain);
 
         $filleul = User::factory()->create([
@@ -161,8 +168,8 @@ class Sprint4ComplianceTest extends TestCase
             ])
             ->assertOk();
 
-        // Parrain score must have dropped from 890 by 50 points -> 840
-        $this->assertSame(840, $parrain->fresh()->score_prosartisan);
+        // Le parrain passe de 1000 à 950 : pénalité de caution de 50 points.
+        $this->assertSame(950, $parrain->fresh()->score_prosartisan);
     }
 
     public function test_jalon_multiple_proofs_and_direct_acceptance(): void

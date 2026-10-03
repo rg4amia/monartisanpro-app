@@ -501,9 +501,13 @@ class AdminService
     {
         return $this->artisanScoresQuery()
             ->when($search, function ($q) use ($search): void {
-                $q->where('name', 'like', "%{$search}%")
-                    ->orWhere('phone', 'like', "%{$search}%")
-                    ->orWhere('id', $search);
+                // Conditions groupées : sans parenthèses, les « OU » échappaient
+                // au filtre sur le rôle et ramenaient des comptes non artisans.
+                $q->where(function ($sub) use ($search): void {
+                    $sub->where('name', 'like', "%{$search}%")
+                        ->orWhere('phone', 'like', "%{$search}%")
+                        ->orWhere('id', $search);
+                });
             })
             ->paginate($perPage, ['*'], $pageName);
     }
@@ -518,6 +522,12 @@ class AdminService
         return User::query()
             ->where('role', 'artisan')
             ->withCount('evaluationsRecues')
+            // Clients distincts : c'est ce nombre, et non celui des évaluations,
+            // qui débloque le score potentiel (anti-collusion).
+            ->selectSub(
+                DB::table('evaluations')->selectRaw('COUNT(DISTINCT evaluateur_id)')->whereColumn('evalue_id', 'users.id'),
+                'clients_distincts'
+            )
             ->withAvg('evaluationsRecues', 'fiabilite')
             ->withAvg('evaluationsRecues', 'integrite')
             ->withAvg('evaluationsRecues', 'qualite')
@@ -534,9 +544,38 @@ class AdminService
     {
         return [
             'evaluations_total' => (int) Evaluation::count(),
-            'note_moyenne' => round((float) (Evaluation::avg('note') ?? 0), 1),
+            // Sans aucune évaluation, la moyenne vaut null (« Non évalué »), jamais 0.
+            'note_moyenne' => ($average = Evaluation::avg('note')) !== null ? round((float) $average, 1) : null,
             'artisans_suivis' => (int) User::where('role', 'artisan')->count(),
             'scores_geles' => (int) User::where('role', 'artisan')->where('score_frozen', true)->count(),
+        ];
+    }
+
+    /**
+     * Historique complet du score d'un compte, du plus récent au plus ancien.
+     * La fiche d'un artisan ne se contente plus des 100 dernières lignes tous
+     * comptes confondus, qui laissaient croire à un historique vide.
+     *
+     * @return array{entries: list<array<string, mixed>>, total: int, limit: int}
+     */
+    public function scoreLedgerOf(User $user, int $limit = 300): array
+    {
+        $query = ScoreLedgerEntry::where('user_id', $user->id);
+
+        return [
+            'total' => (clone $query)->count(),
+            'limit' => $limit,
+            'entries' => $query->orderByDesc('created_at')->orderByDesc('id')->limit($limit)->get()
+                ->map(fn (ScoreLedgerEntry $entry) => [
+                    'id' => $entry->id,
+                    'user_id' => $entry->user_id,
+                    'event_type' => $entry->event_type,
+                    'event_label' => ScoreService::eventLabel($entry->event_type),
+                    'points' => (int) $entry->points,
+                    'credibility_factor' => (float) $entry->credibility_factor,
+                    'description' => $entry->description,
+                    'created_at' => $entry->created_at?->toIso8601String(),
+                ])->all(),
         ];
     }
 

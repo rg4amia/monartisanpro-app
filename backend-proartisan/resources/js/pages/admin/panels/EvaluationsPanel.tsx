@@ -6,7 +6,8 @@ import type { FormEvent, ReactNode } from 'react';
 import { cn } from '@/lib/utils';
 
 import { actionButtonClass, DataTable, EmptyState, ExportButton, numberFormat, SectionTitle, shortDate, Surface } from '../shared';
-import type { AdminEvaluation, ArtisanScoreItem, EvaluationStats, Paginated } from '../shared';
+import type { AdminEvaluation, ArtisanScoreItem, EvaluationStats, InactivityDecayOverview, Paginated } from '../shared';
+import { InactivityDecayCard } from './InactivityDecayCard';
 
 interface EvaluationsPanelProps {
     evalSubTab: 'list' | 'artisans';
@@ -14,6 +15,8 @@ interface EvaluationsPanelProps {
     evaluationsPage: Paginated<AdminEvaluation> | undefined;
     artisansScoresPage: Paginated<ArtisanScoreItem> | undefined;
     evaluationStats: EvaluationStats;
+    inactivityDecay?: InactivityDecayOverview | null;
+    canManageScoreRules?: boolean;
     evalSearch: string;
     onEvalSearchChange: (value: string) => void;
     onEvalSubmit: (event: FormEvent) => void;
@@ -37,6 +40,8 @@ export function EvaluationsPanel({
     evaluationsPage,
     artisansScoresPage,
     evaluationStats,
+    inactivityDecay,
+    canManageScoreRules = false,
     evalSearch,
     onEvalSearchChange,
     onEvalSubmit,
@@ -62,7 +67,9 @@ export function EvaluationsPanel({
                 </div>
                 <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-3 text-xs">
                     <p className="text-[var(--admin-muted)]">Note moyenne</p>
-                    <p className="text-lg font-bold text-[var(--admin-text)]">{evaluationStats.note_moyenne} / 5</p>
+                    <p className="text-lg font-bold text-[var(--admin-text)]">
+                        {evaluationStats.note_moyenne !== null ? `${evaluationStats.note_moyenne} / 5` : 'Non évalué'}
+                    </p>
                 </div>
                 <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-3 text-xs">
                     <p className="text-[var(--admin-muted)]">Artisans suivis</p>
@@ -122,9 +129,9 @@ export function EvaluationsPanel({
                     <DataTable className="mt-5">
                         <thead>
                             <tr>
-                                <th>Mission</th>
+                                <th>Mission ou commande</th>
                                 <th>Évaluateur (Client)</th>
-                                <th>Évalué (Artisan)</th>
+                                <th>Évalué</th>
                                 <th>Note Générale</th>
                                 <th>Critères ProsArtisan (F / I / Q / R)</th>
                                 <th>Commentaire</th>
@@ -142,7 +149,7 @@ export function EvaluationsPanel({
                                 evaluations.map((evaluation) => (
                                     <tr key={evaluation.id}>
                                         <td className="font-medium text-[var(--admin-text)]">
-                                            Mission #{evaluation.mission_id}
+                                            {evaluation.mission_id ? `Mission #${evaluation.mission_id}` : `Commande #${evaluation.order_id ?? '—'}`}
                                             {evaluation.mission && (
                                                 <span className="block text-xs text-[var(--admin-muted)] truncate max-w-[150px]">
                                                     {evaluation.mission.description}
@@ -204,9 +211,11 @@ export function EvaluationsPanel({
                     {renderEvalPagination(evaluationsPage?.links)}
                 </Surface>
             ) : (
+                <>
+                <InactivityDecayCard overview={inactivityDecay} canManage={canManageScoreRules} />
                 <Surface className="rounded-[32px] p-5 lg:p-6">
                     <SectionTitle
-                        description="Administration des réputations d'artisans. Gelez les scores pour geler les droits au micro-crédit en cas de litige."
+                        description="Administration des réputations d'artisans. Le score entier demande dix clients distincts : les évaluations répétées d'un même client n'ajoutent pas de maturité. Gelez les scores pour geler les droits au micro-crédit en cas de litige."
                         title="Scores ProsArtisan des Artisans"
                     />
                     <form onSubmit={onScoreSubmit} className="mt-4 flex flex-wrap gap-2">
@@ -264,6 +273,11 @@ export function EvaluationsPanel({
                                         </td>
                                         <td>
                                             <span className="text-sm font-semibold">{artisan.evaluations_recues_count}</span>
+                                            {artisan.clients_distincts !== undefined && artisan.clients_distincts !== null ? (
+                                                <span className="block text-xs text-[var(--admin-muted)]">
+                                                    {Number(artisan.clients_distincts)} client{Number(artisan.clients_distincts) > 1 ? 's' : ''} distinct{Number(artisan.clients_distincts) > 1 ? 's' : ''}
+                                                </span>
+                                            ) : null}
                                         </td>
                                         <td>
                                             <div className="grid grid-cols-2 gap-x-2 text-xs text-[var(--admin-text-soft)]">
@@ -309,6 +323,7 @@ export function EvaluationsPanel({
                     </DataTable>
                     {renderScorePagination(artisansScoresPage?.links)}
                 </Surface>
+                </>
             )}
         </section>
     );

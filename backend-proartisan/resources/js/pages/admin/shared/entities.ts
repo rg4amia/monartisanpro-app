@@ -381,7 +381,9 @@ export interface AdminTransaction {
 
 export interface AdminEvaluation {
     id: number;
-    mission_id: number;
+    /** Nul pour l'évaluation d'une commande. */
+    mission_id: number | null;
+    order_id?: number | null;
     evaluateur_id: number;
     evalue_id: number;
     note: number;
@@ -416,6 +418,8 @@ export interface ArtisanScoreItem {
     score_prosartisan: number;
     score_frozen: boolean;
     evaluations_recues_count: number;
+    /** Clients distincts ayant noté l'artisan : c'est ce nombre qui débloque le score. */
+    clients_distincts?: number | string | null;
     evaluations_recues_avg_fiabilite?: number | string | null;
     evaluations_recues_avg_integrite?: number | string | null;
     evaluations_recues_avg_qualite?: number | string | null;
@@ -426,6 +430,7 @@ export interface ScoreLedgerEntryItem {
     id: number;
     user_id: number;
     event_type: string;
+    event_label?: string;
     points: number;
     credibility_factor: number;
     description: string;
@@ -625,9 +630,23 @@ export interface RecruitmentSettings {
 
 export interface EvaluationStats {
     evaluations_total: number;
-    note_moyenne: number;
+    /** `null` tant qu'aucune évaluation n'existe : « Non évalué », jamais 0. */
+    note_moyenne: number | null;
     artisans_suivis: number;
     scores_geles: number;
+}
+
+/** État de la dégradation d'inactivité du score (Chantier 26). */
+export interface InactivityDecayOverview {
+    enabled: boolean;
+    /** `reglage` : posé depuis le backoffice ; `configuration` : valeur du serveur. */
+    source: 'reglage' | 'configuration';
+    threshold_days: number;
+    points: number;
+    concerned: number;
+    penalties_30d: number;
+    points_removed_30d: number;
+    updated_at: string | null;
 }
 
 export interface MissionStats {

@@ -303,9 +303,7 @@ class AdminPanelData
                 'score_page',
             )->withQueryString(),
             'evaluationStats' => $this->adminService->evaluationStats(),
-            'scoreLedger' => Schema::hasTable('score_ledger_entries')
-                ? $this->adminService->listScoreLedger()
-                : [],
+            'inactivityDecay' => app(InactivityDecayAdminService::class)->overview(),
         ];
     }
 
@@ -359,7 +357,7 @@ class AdminPanelData
             // Les coordonnées bancaires ont leur propre formulaire validé : elles
             // ne doivent pas être modifiables par l'édition générique des réglages.
             'settingsList' => Schema::hasTable('settings')
-                ? Setting::where('group', '!=', BankTransferSettingsService::GROUP)->get()
+                ? Setting::whereNotIn('group', [BankTransferSettingsService::GROUP, InactivityDecayAdminService::GROUP])->get()
                 : [],
             'bankTransferSettings' => Schema::hasTable('settings')
                 ? app(BankTransferSettingsService::class)->values()

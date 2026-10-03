@@ -5,8 +5,8 @@ namespace App\Services;
 use App\Models\Evaluation;
 use App\Models\Mission;
 use App\Models\ScoreLedgerEntry;
+use App\Models\Setting;
 use App\Models\User;
-use App\States\Mission\CompletedState;
 use Carbon\Carbon;
 use Illuminate\Support\Facades\DB;
 
@@ -33,6 +33,29 @@ class ScoreService
         'casse_materiel' => -100,
     ];
 
+    /** Libellés français des événements du score (Règle d'or 27). */
+    private const EVENT_LABELS = [
+        'success_mission' => 'Évaluation favorable',
+        'evaluation_negative' => 'Évaluation défavorable',
+        'evaluation' => 'Évaluation',
+        'jalon_on_time' => 'Étape livrée à temps',
+        'jalon_delay' => "Retard d'étape",
+        'dispute_fraud' => 'Litige perdu ou fraude confirmée',
+        'dispute_abandon' => 'Litiges perdus à répétition',
+        'inactivity_decay' => 'Inactivité',
+        'jcode_scan_success' => 'Bon matériel validé',
+        'rupture_stock_non_signalee' => 'Rupture de stock non signalée',
+        'fraude_gps_tentative' => 'Validation hors zone GPS',
+        'livraison_on_time' => 'Livraison ponctuelle',
+        'livraison_retard' => 'Course retirée pour retard',
+        'casse_materiel' => 'Matériel endommagé',
+    ];
+
+    public static function eventLabel(string $eventType): string
+    {
+        return self::EVENT_LABELS[$eventType] ?? 'Autre événement';
+    }
+
     private const BASE_SCORE = 0;
 
     private const MIN_SCORE = 0;
@@ -47,13 +70,14 @@ class ScoreService
      * Recalcule le Score ProsArtisan d'un artisan à partir de la dernière évaluation
      * reçue et de l'ensemble du Ledger.
      */
-    public function recalculate(User $artisan): int
+    public function recalculate(User $artisan, ?Evaluation $evaluation = null): int
     {
         if ($artisan->score_frozen) {
             return $artisan->score_prosartisan;
         }
 
-        $lastEvaluation = Evaluation::where('evalue_id', $artisan->id)->latest('id')->first();
+        // L'évaluation qui vient d'être enregistrée ; à défaut, la dernière reçue.
+        $lastEvaluation = $evaluation ?? Evaluation::where('evalue_id', $artisan->id)->latest('id')->first();
         if (! $lastEvaluation) {
             return $artisan->score_prosartisan;
         }
@@ -80,7 +104,7 @@ class ScoreService
             $eventType = 'evaluation_negative';
         }
 
-        if ($points !== 0) {
+        if ($points !== 0 && ! $this->alreadyRewarded($lastEvaluation)) {
             ScoreLedgerEntry::create([
                 'user_id' => $artisan->id,
                 'event_type' => $eventType,
@@ -101,13 +125,13 @@ class ScoreService
      * Pour la logistique, la fiabilité (ponctualité/stock) et la qualité (état matériel)
      * sont prédominantes.
      */
-    public function recalculateLogistic(User $logisticWorker): int
+    public function recalculateLogistic(User $logisticWorker, ?Evaluation $evaluation = null): int
     {
         if ($logisticWorker->score_frozen) {
             return $logisticWorker->score_prosartisan;
         }
 
-        $lastEvaluation = Evaluation::where('evalue_id', $logisticWorker->id)->latest('id')->first();
+        $lastEvaluation = $evaluation ?? Evaluation::where('evalue_id', $logisticWorker->id)->latest('id')->first();
         if (! $lastEvaluation) {
             return $logisticWorker->score_prosartisan;
         }
@@ -136,7 +160,7 @@ class ScoreService
             $eventType = 'evaluation_negative';
         }
 
-        if ($points !== 0) {
+        if ($points !== 0 && ! $this->alreadyRewarded($lastEvaluation)) {
             ScoreLedgerEntry::create([
                 'user_id' => $logisticWorker->id,
                 'event_type' => $eventType,
@@ -150,6 +174,12 @@ class ScoreService
         }
 
         return $this->recalculateFromLedger($logisticWorker);
+    }
+
+    /** Le bonus ou le malus d'une évaluation n'est inscrit qu'une fois. */
+    private function alreadyRewarded(Evaluation $evaluation): bool
+    {
+        return ScoreLedgerEntry::where('evaluation_id', $evaluation->id)->exists();
     }
 
     // ──────────────────────────────────────────────
@@ -249,70 +279,144 @@ class ScoreService
     //  Dégradation temporelle (« La Rouille »)
     // ──────────────────────────────────────────────
 
+    public const INACTIVITY_THRESHOLD_DAYS = 60;
+
+    /** Réglage du backoffice ; tant qu'il n'existe pas, la configuration fait foi. */
+    public const INACTIVITY_DECAY_SETTING = 'score_inactivity_decay_enabled';
+
     /**
-     * Applique la pénalité d'inactivité pour un artisan inactif ≥ 60 jours.
-     * Retourne le nombre de points retirés (positif) ou 0 si non-éligible.
+     * La dégradation d'inactivité n'agit que si elle est activée : par le
+     * réglage du backoffice s'il a été posé, sinon par la configuration.
+     */
+    public static function inactivityDecayEnabled(): bool
+    {
+        $setting = Setting::getValueByKey(self::INACTIVITY_DECAY_SETTING);
+
+        return $setting !== null
+            ? (bool) $setting
+            : (bool) config('prosartisan.score_prosartisan.inactivity_decay_enabled', false);
+    }
+
+    /** Points retirés à chaque pénalité d'inactivité. */
+    public static function inactivityDecayPoints(): int
+    {
+        return abs(self::EVENT_POINTS['inactivity_decay']);
+    }
+
+    /**
+     * Nombre d'artisans que la dégradation viserait aujourd'hui : compte actif,
+     * score positif et non gelé, inactif depuis le seuil. Calculé en trois
+     * requêtes, quel que soit le nombre d'artisans.
+     */
+    public function countInactiveArtisans(): int
+    {
+        $lastJalons = DB::table('jalons')
+            ->join('missions', 'jalons.mission_id', '=', 'missions.id')
+            ->whereNotNull('missions.artisan_id')
+            ->whereIn('jalons.statut', ['valide', 'paye'])
+            ->groupBy('missions.artisan_id')
+            ->selectRaw('missions.artisan_id as artisan_id, MAX(jalons.updated_at) as derniere')
+            ->pluck('derniere', 'artisan_id');
+
+        $lastMissions = DB::table('missions')
+            ->whereNotNull('artisan_id')
+            ->groupBy('artisan_id')
+            ->selectRaw('artisan_id, MAX(updated_at) as derniere')
+            ->pluck('derniere', 'artisan_id');
+
+        $limit = now()->subDays(self::INACTIVITY_THRESHOLD_DAYS);
+        $count = 0;
+
+        $artisans = DB::table('users')
+            ->where('role', 'artisan')
+            ->where('account_status', 'actif')
+            ->where('score_prosartisan', '>', 0)
+            ->where('score_frozen', false)
+            ->whereNull('deleted_at')
+            ->select(['id', 'created_at'])
+            ->orderBy('id');
+
+        foreach ($artisans->lazy() as $artisan) {
+            $last = collect([$lastJalons[$artisan->id] ?? null, $lastMissions[$artisan->id] ?? null])
+                ->filter()
+                ->map(fn ($date) => Carbon::parse($date))
+                ->max() ?? Carbon::parse($artisan->created_at);
+
+            if ($last->lte($limit)) {
+                $count++;
+            }
+        }
+
+        return $count;
+    }
+
+    /**
+     * Retire 5 points à un artisan inactif depuis 60 jours au moins, une fois
+     * par semaine au plus, quel que soit le rythme d'appel. Un score déjà nul
+     * n'est pas pénalisé : aucune dette ne s'accumule dans le ledger.
+     * Retourne le nombre de points retirés, ou 0.
      */
     public function applyInactivityDecay(User $artisan): int
     {
-        $inactivityDays = $this->getInactivityDays($artisan);
-
-        if ($inactivityDays < 60) {
+        if ($artisan->score_frozen || (int) $artisan->score_prosartisan <= 0) {
             return 0;
         }
 
-        // -5 pts par semaine d'inactivité au-delà de 60 jours
-        $weeksOver = (int) floor(($inactivityDays - 60) / 7);
-        if ($weeksOver < 1) {
-            $weeksOver = 1; // au moins 1 semaine de pénalité à ≥ 60 jours
+        $inactivityDays = $this->getInactivityDays($artisan);
+
+        if ($inactivityDays < self::INACTIVITY_THRESHOLD_DAYS) {
+            return 0;
         }
 
-        $totalPenalty = self::EVENT_POINTS['inactivity_decay'] * $weeksOver;
+        $penalizedThisWeek = ScoreLedgerEntry::where('user_id', $artisan->id)
+            ->where('event_type', 'inactivity_decay')
+            ->where('created_at', '>', now()->subDays(7))
+            ->exists();
+
+        if ($penalizedThisWeek) {
+            return 0;
+        }
 
         ScoreLedgerEntry::create([
             'user_id' => $artisan->id,
             'event_type' => 'inactivity_decay',
-            'points' => $totalPenalty,
+            'points' => self::EVENT_POINTS['inactivity_decay'],
             'credibility_factor' => 1.00,
-            'description' => "Dégradation inactivité: {$inactivityDays}j ({$weeksOver} sem. au-delà de 60j)",
+            'description' => "Inactivité depuis {$inactivityDays} jours",
         ]);
 
         $this->recalculateFromLedger($artisan);
 
-        return abs($totalPenalty);
+        return abs(self::EVENT_POINTS['inactivity_decay']);
     }
 
     /**
-     * Nombre de jours depuis la dernière activité significative.
+     * Nombre de jours depuis la dernière activité de l'artisan : dernière
+     * étape validée ou payée, ou dernier mouvement d'une de ses missions.
+     * À défaut, depuis son inscription.
      */
     public function getInactivityDays(User $artisan): int
     {
-        $lastJalonValidated = DB::table('jalons')
+        $lastJalon = DB::table('jalons')
             ->join('missions', 'jalons.mission_id', '=', 'missions.id')
             ->where('missions.artisan_id', $artisan->id)
-            ->where('jalons.statut', 'valide')
+            ->whereIn('jalons.statut', ['valide', 'paye'])
             ->max('jalons.updated_at');
 
-        $lastMissionAccepted = Mission::where('artisan_id', $artisan->id)
-            ->whereNotNull('accepted_at')
-            ->max('accepted_at');
+        $lastMission = DB::table('missions')->where('artisan_id', $artisan->id)->max('updated_at');
 
-        $lastActivity = collect([$lastJalonValidated, $lastMissionAccepted])
+        $lastActivity = collect([$lastJalon, $lastMission])
             ->filter()
-            ->map(fn ($d) => Carbon::parse($d))
+            ->map(fn ($date) => Carbon::parse($date))
             ->max();
 
-        if (! $lastActivity) {
-            return (int) now()->diffInDays($artisan->created_at);
-        }
-
-        return (int) now()->diffInDays($lastActivity);
+        return (int) ($lastActivity ?? $artisan->created_at)->diffInDays(now());
     }
 
     // ──────────────────────────────────────────────
     //  Recalcul pur à partir du Ledger
     /**
-     * Somme les piliers d'évaluation pondérés par la maturité (10 missions) et le Ledger pour score_prosartisan (0 à 1000).
+     * Somme les piliers d'évaluation pondérés par la maturité (10 clients distincts) et le Ledger pour score_prosartisan (0 à 1000).
      */
     public function recalculateFromLedger(User $artisan): int
     {
@@ -326,12 +430,14 @@ class ScoreService
                 AVG(integrite)  AS avg_integrite,
                 AVG(qualite)    AS avg_qualite,
                 AVG(reactivite) AS avg_reactivite,
-                COUNT(*)        AS total_evaluations
+                COUNT(*)        AS total_evaluations,
+                COUNT(DISTINCT evaluateur_id) AS clients_distincts
             FROM evaluations
             WHERE evalue_id = ?
         ', [$artisan->id]);
 
         $evalScoreBase = 0;
+        $excellent = false;
         $totalEvals = (int) ($row?->total_evaluations ?? 0);
 
         if ($row && $totalEvals > 0) {
@@ -340,10 +446,12 @@ class ScoreService
             $q = (float) ($row->avg_qualite ?? 0);
             $r = (float) ($row->avg_reactivite ?? 0);
 
-            // Somme brute des 4 piliers : Fiabilité (400) + Intégrité (300) + Qualité (200) + Réactivité (100)
-            $rawCriteriaScore = ($f / 5.0 * 400) + ($i / 5.0 * 300) + ($q / 5.0 * 200) + ($r / 5.0 * 100);
+            // Somme brute des 4 piliers : Fiabilité (400) + Intégrité (300) + Qualité (200) + Réactivité (100).
+            // Une étoile vaut 0 point, cinq étoiles le maximum du pilier.
+            $rawCriteriaScore = self::pillarPoints($f, 'fiabilite') + self::pillarPoints($i, 'integrite')
+                + self::pillarPoints($q, 'qualite') + self::pillarPoints($r, 'reactivite');
 
-            // Condition d'excellence : Au moins 3 critères avec moyenne >= 4.8 / 5 pour dépasser 800
+            // Condition d'excellence : au moins 3 critères avec moyenne >= 4.8 / 5 pour dépasser le seuil
             $countExcellence = 0;
             if ($f >= 4.8) {
                 $countExcellence++;
@@ -358,12 +466,12 @@ class ScoreService
                 $countExcellence++;
             }
 
-            if ($countExcellence < 3) {
-                $rawCriteriaScore = min(800, $rawCriteriaScore);
-            }
+            $excellent = $countExcellence >= 3;
 
-            // Facteur de maturité : 10 missions nécessaires pour débloquer 100% du score potentiel
-            $volumeFactor = min(1.0, $totalEvals / 10.0);
+            // Facteur de maturité : il compte les clients distincts, pas les
+            // évaluations. Dix notes d'un même client ne valent qu'un dixième
+            // du score potentiel (anti-collusion).
+            $volumeFactor = self::maturityFactor((int) ($row->clients_distincts ?? 0));
             $evalScoreBase = (int) round($rawCriteriaScore * $volumeFactor);
         }
 
@@ -382,9 +490,82 @@ class ScoreService
         });
 
         $newScore = min(self::MAX_SCORE, max(self::MIN_SCORE, $evalScoreBase + $ledgerSum));
+
+        // Le plafond d'excellence porte sur le score total, bonus du ledger
+        // compris : sans trois critères à 4,8 au moins, aucun bonus ne fait
+        // franchir le seuil (Règle d'or 14).
+        if (! $excellent) {
+            $newScore = min(self::excellenceThreshold(), $newScore);
+        }
+
         $artisan->update(['score_prosartisan' => $newScore]);
 
         return $newScore;
+    }
+
+    // ──────────────────────────────────────────────
+    //  Conversion des notes en points
+    // ──────────────────────────────────────────────
+
+    /**
+     * Points d'un pilier pour une moyenne de 1 à 5 étoiles : une étoile vaut
+     * 0 point, cinq étoiles le maximum du pilier. Une moyenne nulle signifie
+     * « aucune note » et vaut 0.
+     */
+    public static function pillarPoints(float $average, string $pillar): float
+    {
+        if ($average <= 1.0) {
+            return 0.0;
+        }
+
+        return min(1.0, ($average - 1.0) / 4.0) * self::pillarWeight($pillar);
+    }
+
+    public static function pillarWeight(string $pillar): int
+    {
+        return (int) config("prosartisan.score_prosartisan.weights.{$pillar}", 0);
+    }
+
+    /** Nombre de clients distincts à partir duquel le score potentiel est entier. */
+    public static function maturityTarget(): int
+    {
+        return max(1, (int) config('prosartisan.score_prosartisan.maturity_clients_target', 10));
+    }
+
+    /** Part du score potentiel débloquée par le nombre de clients distincts ayant noté. */
+    public static function maturityFactor(int $distinctClients): float
+    {
+        return min(1.0, max(0, $distinctClients) / self::maturityTarget());
+    }
+
+    /** Score au-delà duquel trois critères à 4,8 au moins sont exigés. */
+    public static function excellenceThreshold(): int
+    {
+        return (int) config('prosartisan.score_prosartisan.excellence_threshold', 800);
+    }
+
+    /**
+     * Recalcule le score de tous les comptes notés ou porteurs d'événements,
+     * après un changement de formule. Les scores gelés ne bougent pas.
+     *
+     * @return array{comptes: int, modifies: int}
+     */
+    public function recalculateAll(): array
+    {
+        $ids = DB::table('evaluations')->distinct()->pluck('evalue_id')
+            ->merge(DB::table('score_ledger_entries')->distinct()->pluck('user_id'))
+            ->unique();
+
+        $changed = 0;
+
+        foreach (User::withTrashed()->whereIn('id', $ids)->lazyById() as $user) {
+            $before = (int) $user->score_prosartisan;
+            if ($this->recalculateFromLedger($user) !== $before) {
+                $changed++;
+            }
+        }
+
+        return ['comptes' => $ids->count(), 'modifies' => $changed];
     }
 
     // ──────────────────────────────────────────────
@@ -393,9 +574,9 @@ class ScoreService
 
     /**
      * Résout l'indice de crédibilité d'un évaluateur.
-     *   - Nouveau client (0 chantier) : 0.1
-     *   - Client KYC actif + > 3 chantiers : 1.0
-     *   - Client B2B (institutionnel) : 1.5
+     *   - Client au KYC actif ayant plus de 3 missions terminées : 1.0
+     *   - Client institutionnel (rôle non encore créé en production) : 1.5
+     *   - Tout autre évaluateur : 0.1
      */
     public function resolveCredibility(?User $evaluateur): float
     {
@@ -403,13 +584,16 @@ class ScoreService
             return 0.1;
         }
 
+        // Rôle absent de l'ENUM `users.role` en production : branche inactive tant
+        // que la décision produit sur les clients institutionnels n'est pas prise.
         if ($evaluateur->role === 'client_b2b') {
             return 1.5;
         }
 
         if ($evaluateur->isKycActif()) {
+            // La base stocke la clé d'état (« completed »), pas le nom de la classe.
             $completedMissionsCount = Mission::where('client_id', $evaluateur->id)
-                ->where('status', CompletedState::class)
+                ->where('status', 'completed')
                 ->count();
             if ($completedMissionsCount > 3) {
                 return 1.0;
@@ -470,7 +654,8 @@ class ScoreService
                 AVG(qualite)    AS avg_qualite,
                 AVG(reactivite) AS avg_reactivite,
                 AVG(note)       AS avg_note,
-                COUNT(*)        AS total_evaluations
+                COUNT(*)        AS total_evaluations,
+                COUNT(DISTINCT evaluateur_id) AS clients_distincts
             FROM evaluations
             WHERE evalue_id = ?
         ', [$artisan->id]);
@@ -478,6 +663,8 @@ class ScoreService
         $threshold = config('prosartisan.score_prosartisan.credit_threshold', 700);
         $goldenThreshold = (int) config('prosartisan.score_prosartisan.golden_marker_threshold', 700);
         $totalEvals = (int) ($row?->total_evaluations ?? 0);
+        $distinctClients = (int) ($row?->clients_distincts ?? 0);
+        $maturityTarget = self::maturityTarget();
 
         return [
             'score_prosartisan' => $calculatedScore,
@@ -485,9 +672,11 @@ class ScoreService
             'is_golden_marker' => $calculatedScore >= $goldenThreshold,
             'golden_marker_threshold' => $goldenThreshold,
             'total_evaluations' => $totalEvals,
-            'maturity_missions_target' => 10,
-            'maturity_missions_count' => min(10, $totalEvals),
-            'maturity_percentage' => round(min(1.0, $totalEvals / 10.0) * 100, 1),
+            // La maturité compte les clients distincts ayant noté le compte.
+            'distinct_clients' => $distinctClients,
+            'maturity_missions_target' => $maturityTarget,
+            'maturity_missions_count' => min($maturityTarget, $distinctClients),
+            'maturity_percentage' => round(self::maturityFactor($distinctClients) * 100, 1),
             'breakdown' => [
                 'fiabilite' => round((float) ($row?->avg_fiabilite ?? 0), 1),
                 'integrite' => round((float) ($row?->avg_integrite ?? 0), 1),
@@ -495,17 +684,18 @@ class ScoreService
                 'reactivite' => round((float) ($row?->avg_reactivite ?? 0), 1),
             ],
             'breakdown_points' => [
-                'fiabilite' => round(((float) ($row?->avg_fiabilite ?? 0) / 5.0) * 400),
-                'integrite' => round(((float) ($row?->avg_integrite ?? 0) / 5.0) * 300),
-                'qualite' => round(((float) ($row?->avg_qualite ?? 0) / 5.0) * 200),
-                'reactivite' => round(((float) ($row?->avg_reactivite ?? 0) / 5.0) * 100),
+                'fiabilite' => (int) round(self::pillarPoints((float) ($row?->avg_fiabilite ?? 0), 'fiabilite')),
+                'integrite' => (int) round(self::pillarPoints((float) ($row?->avg_integrite ?? 0), 'integrite')),
+                'qualite' => (int) round(self::pillarPoints((float) ($row?->avg_qualite ?? 0), 'qualite')),
+                'reactivite' => (int) round(self::pillarPoints((float) ($row?->avg_reactivite ?? 0), 'reactivite')),
             ],
             'max_points' => [
-                'fiabilite' => 400,
-                'integrite' => 300,
-                'qualite' => 200,
-                'reactivite' => 100,
+                'fiabilite' => self::pillarWeight('fiabilite'),
+                'integrite' => self::pillarWeight('integrite'),
+                'qualite' => self::pillarWeight('qualite'),
+                'reactivite' => self::pillarWeight('reactivite'),
             ],
+            'excellence_threshold' => self::excellenceThreshold(),
             'average_rating' => round((float) ($row?->avg_note ?? 0), 1),
         ];
     }

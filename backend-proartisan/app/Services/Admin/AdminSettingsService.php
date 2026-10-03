@@ -27,6 +27,14 @@ class AdminSettingsService
             ]);
         }
 
+        // La dégradation d'inactivité retire des points à des artisans réels :
+        // elle se pilote depuis son écran, avec confirmation.
+        if ($setting->group === InactivityDecayAdminService::GROUP) {
+            throw ValidationException::withMessages([
+                'value' => ['Ce réglage se modifie depuis l\'onglet « Évaluations & Scores ».'],
+            ]);
+        }
+
         $before = $setting->value;
 
         $setting->update(['value' => $value]);

@@ -354,7 +354,7 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
         </div>
 
         <h3>Évaluer</h3>
-        <p>À la fin d'une mission ou d'une livraison, notez séparément l'artisan (fiabilité, intégrité, qualité, réactivité), le livreur et la quincaillerie. Le bouton de notation se trouve directement sur la carte de la mission terminée. Vos notes construisent leur Score ProsArtisan.</p>
+        <p>À la fin d'une mission ou d'une livraison, notez séparément l'artisan (fiabilité, intégrité, qualité, réactivité), le livreur et la quincaillerie. Le bouton de notation se trouve directement sur la carte de la mission terminée ; le livreur se note depuis la commande qu'il a livrée. Chaque personne n'est notée qu'une fois par mission ou par commande. Vos notes construisent leur Score ProsArtisan.</p>
 
         <h3 id="client-litige">Litiges et remboursements</h3>
         <ol class="steps">
@@ -447,10 +447,11 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
           </table>
         </div>
         <ul>
-          <li>Il faut <b>10 missions</b> évaluées pour débloquer tout le potentiel du score.</li>
+          <li>Il faut être noté par <b>10 clients différents</b> pour débloquer tout le potentiel du score. Plusieurs notes d'un même client ne comptent que pour un client.</li>
           <li>À partir de <b>700</b> : marqueur doré (vous passez en tête des recherches) et accès au micro-crédit.</li>
-          <li>Au-delà de <b>800</b> : il faut au moins trois critères notés 4,8/5 ou plus.</li>
-          <li>Une longue inactivité (60 jours et plus) fait baisser le score petit à petit.</li>
+          <li>Une note d'<b>une étoile ne rapporte aucun point</b> ; cinq étoiles donnent le maximum du critère. Trois étoiles partout donnent 500 points, quatre étoiles 750.</li>
+          <li>Au-delà de <b>800</b> : il faut au moins trois critères notés 4,8/5 ou plus. Sans cela, le score reste plafonné à 800, quels que soient les bonus obtenus.</li>
+          <li>Quand ProsArtisan active la dégradation d'inactivité, 60 jours sans activité font perdre 5 points par semaine.</li>
         </ul>
 
         <h3>Micro-crédit d'urgence</h3>
@@ -605,7 +606,7 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
               <tr><td>Litiges</td><td>Arbitrer, demander une télé-expertise IA, convoquer le <b>Jury ProsArtisan</b>. Un <b>litige de commande</b> se clôt depuis la fiche de la commande (onglet Missions › Livraisons › <span class="ui">Suivi 360°</span>) : <span class="ui">Rejeter la réclamation</span> clôt le litige sans remboursement. <span class="ui">Accepter la réclamation</span> demande le <b>montant à rembourser</b> (plafonné au prix des articles, les frais de service ne sont pas rendus), le <b>responsable</b> (fournisseur ou livreur) et le motif. Le client est remboursé sur son Mobile Money, ProsArtisan avançant la somme ; elle est prélevée sur le portefeuille du responsable, et ce qui manque devient une <b>dette</b> qui bloque son compte. Si le livreur est responsable, la course est annulée ou remboursée. Dans les deux cas la commande revient à « Livrée » et les trois parties sont prévenues. Les dettes se suivent dans <span class="ui">Transactions › Encaissements › Dettes de litige de commande</span> (annulation possible avec un motif). Pour une mission de plus de 2 000 000 FCFA, la décision en faveur de l'artisan et la responsabilité partagée sont refusées tant que le Référent n'a pas visité le chantier : les Référents sont prévenus au premier refus, et vous êtes notifié dès la visite enregistrée.</td></tr>
               <tr><td>Transactions</td><td>Paiements, virements sortants (relancer, marquer versé sur référence), retraits livreurs et quincailleries, sous-onglet <b>Encaissements</b>.</td></tr>
               <tr><td>Paramètres</td><td>Commissions, délais, coordonnées de virement bancaire, seuils (dont le score minimal d'un juré). Pour les missions : pénalité d'annulation d'une mission financée (7 % par défaut), délai de réponse de l'artisan (24 heures), délai de validation finale du chantier (72 heures).</td></tr>
-              <tr><td>Évaluations &amp; Scores</td><td>Consulter les notes, geler un score en cas d'abus.</td></tr>
+              <tr><td>Évaluations &amp; Scores</td><td>Consulter les notes, ouvrir l'historique complet du score d'un artisan (bonus et pénalités), geler un score en cas d'abus. Le classement indique, sous le nombre d'évaluations, le nombre de clients distincts : c'est lui qui débloque le score. La carte « Dégradation d'inactivité » indique si elle est activée, combien d'artisans inactifs sont visés et combien de points ont été retirés sur 30 jours ; le bouton « Activer la dégradation » ou « Désactiver la dégradation » demande une confirmation et exige la capacité « Paramètres ».</td></tr>
               <tr><td>Communications, Notifications &amp; Alertes</td><td>Messages aux utilisateurs, alertes internes.</td></tr>
               <tr><td>Messages push &amp; SMS</td><td>Texte et canaux (application, push, SMS) de chaque notification envoyée par la plateforme, envoi de test, journal des envois. Droit <b>Modifier les messages push et SMS</b>.</td></tr>
               <tr><td>Campagnes push &amp; SMS</td><td>Envois ponctuels vers un public ciblé (information de service ou message promotionnel) : rédaction, test, programmation, annulation, suivi. Droit <b>Créer, programmer et annuler des campagnes push et SMS</b>, distinct du précédent.</td></tr>

@@ -2,6 +2,7 @@ import 'package:get/get.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/score_conversion.dart';
 import '../../../data/repositories/artisan_repository.dart';
 
 /// Seuil du Score ProsArtisan (échelle 0–1000) ouvrant l'accès au micro-crédit
@@ -96,8 +97,9 @@ class ScoreController extends GetxController {
       parsed = double.tryParse(value?.toString() ?? '') ?? 0;
     }
 
+    // Note de 1 à 5 étoiles : une étoile vaut 0 %, cinq étoiles 100 %.
     if (parsed <= 5) {
-      return (parsed / 5 * 100).clamp(0, 100);
+      return pillarPointsFromRating(parsed, 100);
     }
 
     return parsed.clamp(0, 100);

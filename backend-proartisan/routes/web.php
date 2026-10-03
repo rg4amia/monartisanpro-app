@@ -208,6 +208,8 @@ Route::prefix('admin')->name('admin.')->group(function () {
 
         // Qualité
         Route::get('/evaluations', [BackofficeController::class, 'evaluations'])->middleware('can:admin.evaluations.view')->name('evaluations');
+        Route::get('/users/{user}/score-ledger', [BackofficeController::class, 'scoreLedger'])->middleware('can:admin.evaluations.view')->name('users.score-ledger');
+        Route::put('/evaluations/inactivity-decay', [BackofficeController::class, 'updateInactivityDecay'])->middleware('can:admin.settings.manage')->name('evaluations.inactivity-decay');
 
         // Plateforme
         Route::get('/settings', [BackofficeController::class, 'settings'])->middleware('can:admin.settings.manage')->name('settings');

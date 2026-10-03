@@ -64,6 +64,9 @@ return [
             'qualite' => 200,
             'reactivite' => 100,
         ],
+        // Clients distincts ayant noté le compte pour débloquer 100 % du score
+        // potentiel : dix évaluations d'un même client ne comptent que pour un.
+        'maturity_clients_target' => 10,
         // Score minimum requis pour l'accès au micro-crédit d'urgence (échelle 0–1000).
         'credit_threshold' => env('SCORE_CREDIT_THRESHOLD', 700),
         // Seuil des scores d'excellence (> 800) exigeant maturité + 5 étoiles sur ≥ 3 critères.
@@ -72,6 +75,10 @@ return [
         'golden_marker_threshold' => env('SCORE_GOLDEN_MARKER_THRESHOLD', 700),
         // Taux de prélèvement automatique d'amortissement du micro-crédit sur les jalons libérés (20% par défaut).
         'credit_repayment_rate' => env('SCORE_CREDIT_REPAYMENT_RATE', 0.20),
+        // Dégradation d'inactivité (« La Rouille ») : −5 points par semaine au-delà de
+        // 60 jours sans activité. Éteinte par défaut : l'activer retire des points à
+        // des artisans réels.
+        'inactivity_decay_enabled' => (bool) env('SCORE_INACTIVITY_DECAY_ENABLED', false),
     ],
 
     'jcode' => [

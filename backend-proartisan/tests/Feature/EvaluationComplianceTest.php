@@ -58,7 +58,8 @@ class EvaluationComplianceTest extends TestCase
                 'reactivite' => 2,
             ])
             ->assertCreated()
-            ->assertJsonPath('data.scoreProsArtisan', 87);
+            // Piliers : 400 + 225 + 100 + 25 = 750, × 1/10 de maturité = 75, plus les bonus du ledger.
+            ->assertJsonPath('data.scoreProsArtisan', 82);
 
         $this->assertDatabaseHas('evaluations', [
             'mission_id' => $mission->id,
@@ -71,7 +72,7 @@ class EvaluationComplianceTest extends TestCase
             'reactivite' => 2,
         ]);
 
-        $this->assertSame(87, $artisan->fresh()->score_prosartisan);
+        $this->assertSame(82, $artisan->fresh()->score_prosartisan);
     }
 
     public function test_artisan_reaches_maximum_score_after_ten_missions_with_three_excellence_criteria(): void
