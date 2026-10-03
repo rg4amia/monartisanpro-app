@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Http\Controllers\Admin\ImpersonationController;
+use App\Services\Admin\AdminIdleSessionService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -47,6 +48,12 @@ class HandleInertiaRequests extends Middleware
                 'permissions' => fn () => $user && $user->role === 'admin' ? $user->adminCapabilities() : [],
                 // Usurpation de session en cours (Chantier C7).
                 'impersonating' => fn () => $request->session()->has(ImpersonationController::SESSION_KEY),
+                // Délai d'inactivité avant fermeture de la session (Chantier 18) ; null hors backoffice.
+                'idleTimeoutSeconds' => function () use ($request) {
+                    $idle = app(AdminIdleSessionService::class);
+
+                    return $idle->concerns($request) ? $idle->timeoutSeconds() : null;
+                },
             ],
             'flash' => [
                 'error' => fn () => $request->session()->get('error'),

@@ -9,12 +9,15 @@ import { useAuditLogFilters } from './hooks/useAuditLogFilters';
 import { useCampagneParrainageForm } from './hooks/useCampagneParrainageForm';
 import { useCommunicationForm } from './hooks/useCommunicationForm';
 import { useExchangeRates, useOnlineStatus, useThemeMode } from './hooks/useConsoleEnvironment';
+import { useIdleLogout } from './hooks/useIdleLogout';
 import { usePromoCodeForm } from './hooks/usePromoCodeForm';
 import { useRowSelection } from './hooks/useRowSelection';
 import { useServerTable } from './hooks/useServerTable';
 import { useUserManagement } from './hooks/useUserManagement';
 import LlmAdminPanel from './llm-admin-panel';
 import { AiQuotasPanel } from './panels/AiQuotasPanel';
+import { AppStoreLinksPanel } from './panels/AppStoreLinksPanel';
+import { ArtisanDirectoryPanel } from './panels/ArtisanDirectoryPanel';
 import { AuditLogsPanel } from './panels/AuditLogsPanel';
 import { CampagnesParrainagePanel } from './panels/CampagnesParrainagePanel';
 import { CartographyPanel } from './panels/CartographyPanel';
@@ -23,13 +26,11 @@ import { DashboardPanel } from './panels/DashboardPanel';
 import { ArtisanLedgerModal, MissionDetailModal, OrderDetailModal, TransactionDetailModal } from './panels/DetailModals';
 import { EvaluationsPanel } from './panels/EvaluationsPanel';
 import { FaqPanel } from './panels/FaqPanel';
-import { ManualPanel } from './panels/ManualPanel';
 import { AiQuotaFormModal, CampagneParrainageFormModal, CommunicationFormModal, PromoCodeFormModal, StatusFormModal, UserFormModal } from './panels/FormModals';
 import { KycPanel } from './panels/KycPanel';
 import { LitigesPanel } from './panels/LitigesPanel';
+import { ManualPanel } from './panels/ManualPanel';
 import { MissionsPanel } from './panels/MissionsPanel';
-import { AppStoreLinksPanel } from './panels/AppStoreLinksPanel';
-import { ArtisanDirectoryPanel } from './panels/ArtisanDirectoryPanel';
 import { NotificationCampaignsPanel } from './panels/NotificationCampaignsPanel';
 import { NotificationMessagesPanel } from './panels/NotificationMessagesPanel';
 import { NotificationsPanel } from './panels/NotificationsPanel';
@@ -176,12 +177,12 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         recruitmentSettings = { client_posting_enabled: '1', fournisseur_posting_enabled: '1' },
         observability = undefined,
         territorySummary = undefined,
-        districtsHeatmap = {},
-        communesHeatmap = {},
+        territoryBreakdowns = undefined,
+        territoryMatrix = undefined,
         districtsList = [],
         communesList = [],
         entities = { data: [], current_page: 1, last_page: 1, total: 0, per_page: 15 },
-        filters = { district: null, commune: null, entity_type: 'all', search: '' },
+        filters = {},
     } = (pageProps || {}) as Partial<AdminPageProps>;
 
     // Capacités fines du backoffice (Chantier C6 / P2-10). `['*']` = accès total.
@@ -314,6 +315,9 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
 
     // Confirmations destructives normalisées + accessibles (Chantier C7 / P2-13).
     const { confirm: askConfirm, dialog: confirmDialog } = useConfirm();
+
+    // Fermeture de la session après inactivité, avec avertissement (Chantier 18).
+    const { dialog: idleDialog } = useIdleLogout(auth?.idleTimeoutSeconds);
 
     // Actions groupées (Chantier C5 / P1-9).
     const kycSelection = useRowSelection();
@@ -735,8 +739,9 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                             {activeTab === 'cartography' ? (
                                 <CartographyPanel
                                     territorySummary={territorySummary}
-                                    districtsHeatmap={districtsHeatmap ?? {}}
-                                    communesHeatmap={communesHeatmap ?? {}}
+                                    territoryBreakdowns={territoryBreakdowns}
+                                    territoryMatrix={territoryMatrix}
+                                    canExport={can(permissions, 'admin.exports')}
                                     districtsList={districtsList ?? []}
                                     communesList={communesList ?? []}
                                     entities={entities ?? { data: [], current_page: 1, last_page: 1, total: 0, per_page: 15 }}
@@ -1226,6 +1231,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 )}
 
                 {confirmDialog}
+                {idleDialog}
 
         </AdminShell>
     );

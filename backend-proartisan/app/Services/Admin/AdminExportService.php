@@ -72,6 +72,39 @@ class AdminExportService
     }
 
     /**
+     * Export d'un tableau déjà calculé (synthèse territoriale…) ou chargé à la
+     * demande, sans passer par une requête Eloquent paginable. Même format et
+     * même ligne d'audit que les autres exports.
+     *
+     * @param  list<string>  $headers
+     * @param  iterable<int, list<mixed>>  $rows
+     * @param  array<string, mixed>  $filters
+     */
+    public function streamTable(string $resource, array $headers, iterable $rows, array $filters, int $count): StreamedResponse
+    {
+        $filename = sprintf('prosartisan_%s_%s.csv', $resource, now()->format('Y-m-d_His'));
+
+        $this->audit->log('export.generated', null, [
+            'resource' => $resource,
+            'filters' => array_filter($filters),
+            'count' => $count,
+        ]);
+
+        return response()->streamDownload(function () use ($headers, $rows): void {
+            $out = fopen('php://output', 'w');
+            fwrite($out, "\xEF\xBB\xBF"); // BOM UTF-8
+            fwrite($out, "sep=;\n");
+            fputcsv($out, $headers, ';');
+
+            foreach ($rows as $row) {
+                fputcsv($out, $row, ';');
+            }
+
+            fclose($out);
+        }, $filename, ['Content-Type' => 'text/csv; charset=UTF-8']);
+    }
+
+    /**
      * @return array{0: list<string>, 1: Builder, 2: callable}
      */
     private function users(Request $request): array

@@ -1,6 +1,7 @@
 import { router } from '@inertiajs/react';
 import { useState, useMemo } from 'react';
 import { cn } from '@/lib/utils';
+import { redirectIfSessionExpired } from '../hooks/useIdleLogout';
 import {
     DeliveryStatusBadge,
     money,
@@ -169,6 +170,7 @@ export function DeliveriesTrackingSection({
             const res = await fetch(`/api/v1/deliveries/fleet-map${query}`, {
                 headers: { Accept: 'application/json' },
             });
+            if (redirectIfSessionExpired(res)) return;
             if (res.ok) {
                 const json = await res.json();
                 if (json.data) {

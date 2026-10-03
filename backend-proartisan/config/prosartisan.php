@@ -86,6 +86,11 @@ return [
         explode(',', (string) env('SUPER_ADMIN_EMAILS', 'admin@prosartisan.ci')),
     ))),
 
+    // Session du backoffice : fermeture après inactivité, reconnexion exigée (Chantier 18).
+    'admin' => [
+        'idle_timeout_minutes' => (int) env('ADMIN_IDLE_TIMEOUT_MINUTES', 15),
+    ],
+
     // Campagnes push et SMS du backoffice (Chantier 14, lot D).
     'notifications' => [
         // Plafond de destinataires d'une campagne : au-delà, la programmation est refusée.

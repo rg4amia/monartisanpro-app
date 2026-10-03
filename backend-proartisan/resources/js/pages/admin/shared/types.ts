@@ -95,7 +95,7 @@ export interface ExchangeRates {
 export type NotifFilter = 'all' | 'unread' | 'alerts';
 
 export interface TerritoryZone {
-    type: 'national' | 'district' | 'commune';
+    type: 'national' | 'district' | 'commune' | 'unlocated';
     slug: string;
     name: string;
     district_slug?: string | null;
@@ -103,11 +103,15 @@ export interface TerritoryZone {
 }
 
 export interface TerritoryActors {
-    clients?: number | { total?: number; with_active_missions?: number };
-    artisans?: number | { total?: number; kyc_actif?: number; kyc_actif_percent?: number };
+    clients?: number;
+    clients_with_active_missions?: number;
+    artisans?: number;
     artisans_kyc_actif?: number;
-    fournisseurs?: number | { total?: number; agreed?: number };
-    livreurs?: number | { total?: number; active_courses?: number };
+    artisans_kyc_percent?: number;
+    fournisseurs?: number;
+    fournisseurs_agrees?: number;
+    livreurs?: number;
+    livreurs_en_course?: number;
     total_actors?: number;
 }
 
@@ -125,8 +129,8 @@ export interface TerritoryMissions {
 }
 
 export interface TerritoryReputation {
-    avg_rating?: number;
-    average_artisan_rating?: number;
+    /** `null` tant qu'aucune évaluation n'existe : affiché « Non évalué ». */
+    avg_rating?: number | null;
     avg_score_prosartisan?: number;
     total_reviews?: number;
 }
@@ -166,30 +170,49 @@ export interface TerritoryBreakdowns {
     cnmci: TerritoryCnmciBreakdown;
 }
 
-export interface DistrictHeatmapItem {
+/** Effectifs d'une zone, par type (Chantier 18). */
+export interface TerritoryZoneRow {
+    slug: string;
     name: string;
-    full_name: string;
-    chef_lieu: string;
-    actors_count: number;
-    missions_count: number;
+    type: 'national' | 'district' | 'commune' | 'unlocated';
+    clients: number;
+    clients_mission_active: number;
+    artisans: number;
+    artisans_kyc_actif: number;
+    livreurs: number;
+    livreurs_en_course: number;
+    fournisseurs: number;
+    fournisseurs_agrees: number;
+    missions_total: number;
+    missions_en_cours: number;
+    missions_terminees: number;
+    litiges: number;
     volume_fcfa: number;
+    total_actors: number;
     realization_rate: number;
     dispute_rate: number;
-    disputes_count?: number;
 }
 
-export interface CommuneHeatmapItem {
-    name: string;
-    type: string;
-    actors_count: number;
-    artisans_count: number;
-    fournisseurs_count: number;
-    livreurs_count: number;
-    clients_count: number;
-    missions_count: number;
-    volume_fcfa: number;
-    realization_rate: number;
-    disputes_count?: number;
+/** Une ligne par district, par commune du Grand Abidjan, « non renseignée » et total national. */
+export interface TerritoryMatrix {
+    national: TerritoryZoneRow;
+    unlocated: TerritoryZoneRow;
+    districts: Record<string, TerritoryZoneRow>;
+    communes: Record<string, TerritoryZoneRow>;
+}
+
+export type TerritoryTypeKey = 'client' | 'artisan' | 'livreur' | 'fournisseur' | 'mission';
+
+export interface TerritoryFilters {
+    district?: string | null;
+    commune?: string | null;
+    entity_type?: string;
+    types?: string[];
+    mission_status?: string;
+    kyc?: string;
+    period?: string;
+    search?: string;
+    sort?: string;
 }
 
 export interface DistrictListItem {
@@ -215,24 +238,22 @@ export interface CommuneListItem {
 export interface TerritoryEntityItem {
     id: number;
     type: string;
-    role?: string;
-    name?: string;
-    phone?: string;
-    kyc_status?: string;
-    score_prosartisan?: number;
-    commune?: string;
-    title?: string;
-    subtitle?: string;
-    actor_name?: string;
-    client_name?: string;
-    contact?: string;
-    status?: string;
-    montant?: number;
+    title?: string | null;
+    subtitle?: string | null;
+    /** Précision propre au type : métier, boutique et agrément, course en cours. */
+    detail?: string | null;
+    actor_name?: string | null;
+    client_name?: string | null;
+    contact?: string | null;
+    /** Clé technique ; l'affichage passe par `status_label`. */
+    status?: string | null;
+    status_label?: string | null;
+    score_prosartisan?: number | null;
     amount_fcfa?: number;
-    location?: string;
-    district?: string;
+    location?: string | null;
+    district?: string | null;
     action_url?: string;
-    created_at?: string;
+    created_at?: string | null;
 }
 
 export type HeatmapMetricMode = 'actors' | 'volume' | 'rate';

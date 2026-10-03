@@ -14,11 +14,9 @@ import type {
     ArtisanScoreItem,
     AuditAdminOption,
     CampagneParrainageItem,
-    CommuneHeatmapItem,
     CommuneListItem,
     DashboardData,
     DeliveryStats,
-    DistrictHeatmapItem,
     DistrictListItem,
     DocumentStats,
     EvaluationStats,
@@ -52,7 +50,10 @@ import type {
     ScoreLedgerEntryItem,
     SectorItem,
     SettingItem,
+    TerritoryBreakdowns,
     TerritoryEntityItem,
+    TerritoryFilters,
+    TerritoryMatrix,
     TerritorySummary,
     TransactionStats,
     UserManualSummary,
@@ -75,6 +76,8 @@ export interface AdminPageProps {
         user?: AuthUser | null;
         // Capacités fines du backoffice — `['*']` = accès total (Chantier C6 / P2-10).
         permissions?: string[];
+        // Délai d'inactivité avant fermeture de la session, en secondes (Chantier 18).
+        idleTimeoutSeconds?: number | null;
     };
     dashboard: DashboardData;
     errors: Record<string, string>;
@@ -195,8 +198,8 @@ export interface AdminPageProps {
     recruitmentStats?: RecruitmentStats;
     recruitmentSettings?: RecruitmentSettings;
     territorySummary?: TerritorySummary;
-    districtsHeatmap?: Record<string, DistrictHeatmapItem>;
-    communesHeatmap?: Record<string, CommuneHeatmapItem>;
+    territoryBreakdowns?: TerritoryBreakdowns;
+    territoryMatrix?: TerritoryMatrix;
     districtsList?: DistrictListItem[];
     communesList?: CommuneListItem[];
     entities?: {
@@ -206,12 +209,7 @@ export interface AdminPageProps {
         total: number;
         per_page: number;
     };
-    filters?: {
-        district: string | null;
-        commune: string | null;
-        entity_type: string;
-        search: string;
-    };
+    filters?: TerritoryFilters;
 }
 
 export interface AuditNotificationItem extends AdminNotificationItem {

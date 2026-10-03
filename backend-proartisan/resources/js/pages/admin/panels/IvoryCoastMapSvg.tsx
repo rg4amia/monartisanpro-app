@@ -1,22 +1,25 @@
 import React, { useState, useMemo, useRef } from 'react';
-import type { DistrictHeatmapItem, CommuneHeatmapItem, HeatmapMetricMode } from '../shared/types';
+import type { HeatmapMetricMode, TerritoryMatrix, TerritoryTypeKey, TerritoryZoneRow } from '../shared/types';
 import {
     IVORY_COAST_DISTRICTS,
     IVORY_COAST_CITIES,
     ABIDJAN_COMMUNES_GEODATA,
-    getChoroplethColor
-    
-    
-    
+    getChoroplethColor,
 } from './ivoryCoastGeoData';
-import type {CityGeoData, DistrictGeoData, AbidjanCommuneGeoData} from './ivoryCoastGeoData';
+import type { CityGeoData, DistrictGeoData, AbidjanCommuneGeoData } from './ivoryCoastGeoData';
+import { TERRITORY_TYPES, countForTypes, effectiveTypes } from './territoryTypes';
+
+/** Au-delà, une pastille par type surchargerait les petites zones : seul le total s'affiche. */
+const MAX_TYPE_BADGES = 3;
 
 interface IvoryCoastMapSvgProps {
     viewMode: 'national' | 'abidjan';
     selectedDistrict: string | null;
     selectedCommune: string | null;
-    districtsHeatmap: Record<string, DistrictHeatmapItem>;
-    communesHeatmap: Record<string, CommuneHeatmapItem>;
+    /** Effectifs par type et par zone. */
+    matrix: TerritoryMatrix;
+    /** Types cochés ; vide = tous. */
+    activeTypes?: TerritoryTypeKey[];
     onSelectDistrict: (slug: string) => void;
     onSelectCommune: (slug: string) => void;
     onSwitchViewMode: (mode: 'national' | 'abidjan') => void;
@@ -27,8 +30,8 @@ export function IvoryCoastMapSvg({
     viewMode,
     selectedDistrict,
     selectedCommune,
-    districtsHeatmap,
-    communesHeatmap,
+    matrix,
+    activeTypes = [],
     onSelectDistrict,
     onSelectCommune,
     onSwitchViewMode,
@@ -58,11 +61,7 @@ export function IvoryCoastMapSvg({
         isoCode?: string;
         chefLieu?: string;
         regions?: string[];
-        actors: number;
-        missions: number;
-        volumeFcfa?: number;
-        disputes: number;
-        rate: number;
+        row?: TerritoryZoneRow;
         x: number;
         y: number;
         population?: string;
@@ -72,51 +71,70 @@ export function IvoryCoastMapSvg({
     // Calcul dynamique de la valeur maximale pour la normalisation de la choroplèthe
     const maxMetricValue = useMemo(() => {
         let max = 1;
-        if (viewMode === 'national') {
-            Object.values(districtsHeatmap).forEach((d) => {
-                if (metricMode === 'actors') max = Math.max(max, d.actors_count || 0);
-                else if (metricMode === 'volume') max = Math.max(max, d.volume_fcfa || 0);
-                else if (metricMode === 'rate') max = 100;
-            });
-        } else {
-            Object.values(communesHeatmap).forEach((c) => {
-                if (metricMode === 'actors') max = Math.max(max, c.actors_count || 0);
-                else if (metricMode === 'volume') max = Math.max(max, c.volume_fcfa || 0);
-                else if (metricMode === 'rate') max = 100;
-            });
-        }
+        const rows = Object.values(viewMode === 'national' ? matrix.districts : matrix.communes);
+        rows.forEach((row) => {
+            if (metricMode === 'actors') max = Math.max(max, countForTypes(row, activeTypes));
+            else if (metricMode === 'volume') max = Math.max(max, row.volume_fcfa || 0);
+            else if (metricMode === 'rate') max = 100;
+        });
         return Math.max(max, 1);
-    }, [districtsHeatmap, communesHeatmap, viewMode, metricMode]);
+    }, [matrix, activeTypes, viewMode, metricMode]);
 
-    // Calcul de la couleur d'un district
-    const getDistrictFill = (district: DistrictGeoData, isSelected: boolean) => {
-        if (isSelected) return '#f59e0b'; // Amber sélectionné
-        const stats = districtsHeatmap[district.slug];
-        if (!stats) return '#f8fafc'; // Neutre clair
-
-        let val = 0;
-        if (metricMode === 'actors') val = stats.actors_count;
-        else if (metricMode === 'volume') val = stats.volume_fcfa;
-        else if (metricMode === 'rate') return getChoroplethColor(stats.realization_rate, 'rate');
-
-        const normalized = Math.min(100, (val / maxMetricValue) * 100);
-        return getChoroplethColor(normalized, metricMode);
-    };
-
-    // Calcul de la couleur d'une commune (Abidjan)
-    const getCommuneFill = (commune: AbidjanCommuneGeoData, isSelected: boolean) => {
+    // Couleur d'une zone selon la métrique ; une zone sans donnée reste neutre.
+    const zoneFill = (stats: TerritoryZoneRow | undefined, isSelected: boolean, empty: string) => {
         if (isSelected) return '#f59e0b';
-        const stats = communesHeatmap[commune.id];
-        if (!stats) return '#f1f5f9';
+        if (!stats) return empty;
+        if (metricMode === 'rate') {
+            return stats.missions_total > 0 ? getChoroplethColor(stats.realization_rate, 'rate') : empty;
+        }
 
-        let val = 0;
-        if (metricMode === 'actors') val = stats.actors_count;
-        else if (metricMode === 'volume') val = stats.volume_fcfa;
-        else if (metricMode === 'rate') return getChoroplethColor(stats.realization_rate, 'rate');
+        const val = metricMode === 'actors' ? countForTypes(stats, activeTypes) : stats.volume_fcfa;
+        if (val <= 0) return empty;
 
-        const normalized = Math.min(100, (val / maxMetricValue) * 100);
-        return getChoroplethColor(normalized, metricMode);
+        return getChoroplethColor(Math.min(100, (val / maxMetricValue) * 100), metricMode);
     };
+
+    // Valeur affichée dans la pastille centrale d'une zone.
+    const zoneValue = (stats: TerritoryZoneRow | undefined): string | number => {
+        if (metricMode === 'volume') {
+            const volume = stats?.volume_fcfa ?? 0;
+            return volume > 0 ? `${Math.round(volume / 1000)}k` : '0';
+        }
+        if (metricMode === 'rate') return `${stats?.realization_rate ?? 0}%`;
+        return countForTypes(stats, activeTypes);
+    };
+
+    // Une pastille par type coché, tant que la sélection reste lisible.
+    const badgeTypes = activeTypes.length >= 1 && activeTypes.length <= MAX_TYPE_BADGES && metricMode === 'actors'
+        ? effectiveTypes(activeTypes)
+        : [];
+
+    const renderTypeBadges = (stats: TerritoryZoneRow | undefined, cx: number, cy: number, radius: number, gap: number) => {
+        if (!stats || badgeTypes.length < 2) return null;
+        const start = cx - ((badgeTypes.length - 1) * gap) / 2;
+
+        return badgeTypes.map((type, index) => (
+            <g key={type.key} data-testid={`badge-${stats.slug}-${type.key}`}>
+                <circle cx={start + index * gap} cy={cy} r={radius} fill={type.color} stroke="#ffffff" strokeWidth="1" />
+                <text
+                    x={start + index * gap}
+                    y={cy + radius * 0.38}
+                    textAnchor="middle"
+                    fill="#ffffff"
+                    fontSize={radius * 1.05}
+                    fontWeight="bold"
+                >
+                    {stats[type.field]}
+                </text>
+            </g>
+        ));
+    };
+
+    const getDistrictFill = (district: DistrictGeoData, isSelected: boolean) =>
+        zoneFill(matrix.districts[district.slug], isSelected, '#f8fafc');
+
+    const getCommuneFill = (commune: AbidjanCommuneGeoData, isSelected: boolean) =>
+        zoneFill(matrix.communes[commune.id], isSelected, '#f1f5f9');
 
     // Gestion du Zoom
     const handleZoomIn = () => setZoomLevel((prev) => Math.min(prev + 0.35, 3.5));
@@ -283,9 +301,9 @@ export function IvoryCoastMapSvg({
                                     ? 'bg-blue-600 text-white shadow'
                                     : 'text-[#6b533f] hover:text-blue-700'
                             }`}
-                            title="Densité des 4 catégories d'acteurs"
+                            title="Effectif des types cochés dans chaque zone"
                         >
-                            👥 Acteurs
+                            👥 Effectif
                         </button>
                         <button
                             type="button"
@@ -505,13 +523,8 @@ export function IvoryCoastMapSvg({
                         <g filter="url(#mapShadow)">
                             {IVORY_COAST_DISTRICTS.map((district) => {
                                 const isSelected = selectedDistrict === district.slug;
-                                const stats = districtsHeatmap[district.slug];
+                                const stats = matrix.districts[district.slug];
                                 const fillColor = getDistrictFill(district, isSelected);
-                                const actorsCount = stats?.actors_count ?? 0;
-                                const missionsCount = stats?.missions_count ?? 0;
-                                const realizationRate = stats?.realization_rate ?? 0;
-                                const disputeCount = stats?.disputes_count ?? 0;
-                                const volumeFcfa = stats?.volume_fcfa ?? 0;
 
                                 return (
                                     <g
@@ -525,11 +538,7 @@ export function IvoryCoastMapSvg({
                                                 isoCode: district.isoCode,
                                                 chefLieu: district.chefLieu,
                                                 regions: district.regions,
-                                                actors: actorsCount,
-                                                missions: missionsCount,
-                                                volumeFcfa: volumeFcfa,
-                                                disputes: disputeCount,
-                                                rate: realizationRate,
+                                                row: stats,
                                                 x: district.center[0],
                                                 y: district.center[1],
                                             });
@@ -565,14 +574,9 @@ export function IvoryCoastMapSvg({
                                                     fontSize={isSelected ? 11 : 9.5}
                                                     fontWeight="bold"
                                                 >
-                                                    {metricMode === 'volume'
-                                                        ? volumeFcfa > 0
-                                                            ? `${Math.round(volumeFcfa / 1000)}k`
-                                                            : '0'
-                                                        : metricMode === 'rate'
-                                                        ? `${realizationRate}%`
-                                                        : actorsCount}
+                                                    {zoneValue(stats)}
                                                 </text>
+                                                {renderTypeBadges(stats, district.center[0], district.center[1] + (district.slug === 'abidjan' ? 40 : 34), 8, 18)}
 
                                                 <text
                                                     x={district.center[0]}
@@ -610,16 +614,11 @@ export function IvoryCoastMapSvg({
                                                 if (onSelectCity) onSelectCity(city);
                                             }}
                                             onMouseEnter={() => {
-                                                const stats = districtsHeatmap[city.districtSlug];
                                                 setHoveredEntity({
                                                     title: city.name,
-                                                    subtitle: `${city.type.toUpperCase()} • ${city.description}`,
+                                                    subtitle: `${city.type.toUpperCase()} • ${city.description} • chiffres du district`,
                                                     chefLieu: city.name,
-                                                    actors: stats?.actors_count ?? 0,
-                                                    missions: stats?.missions_count ?? 0,
-                                                    volumeFcfa: stats?.volume_fcfa ?? 0,
-                                                    disputes: stats?.disputes_count ?? 0,
-                                                    rate: stats?.realization_rate ?? 0,
+                                                    row: matrix.districts[city.districtSlug],
                                                     population: city.population,
                                                     x: city.x,
                                                     y: city.y,
@@ -711,12 +710,9 @@ export function IvoryCoastMapSvg({
 
                         {/* 13 Communes d'Abidjan */}
                         {ABIDJAN_COMMUNES_GEODATA.map((commune) => {
-                            const stats = communesHeatmap[commune.id];
+                            const stats = matrix.communes[commune.id];
                             const isSelected = selectedCommune === commune.id;
                             const fillColor = getCommuneFill(commune, isSelected);
-                            const actorsCount = stats?.actors_count ?? 0;
-                            const missionsCount = stats?.missions_count ?? 0;
-                            const volumeFcfa = stats?.volume_fcfa ?? 0;
 
                             return (
                                 <g
@@ -728,11 +724,7 @@ export function IvoryCoastMapSvg({
                                             title: `Commune de ${commune.name}`,
                                             subtitle: `Zone : ${commune.zone} • Densité : ${commune.density}`,
                                             chefLieu: commune.name,
-                                            actors: actorsCount,
-                                            missions: missionsCount,
-                                            volumeFcfa: volumeFcfa,
-                                            disputes: stats?.disputes_count ?? 0,
-                                            rate: stats?.realization_rate ?? 0,
+                                            row: stats,
                                             x: commune.center[0],
                                             y: commune.center[1],
                                         });
@@ -764,14 +756,9 @@ export function IvoryCoastMapSvg({
                                         fontWeight="bold"
                                         className="pointer-events-none"
                                     >
-                                        {metricMode === 'volume'
-                                            ? volumeFcfa > 0
-                                                ? `${Math.round(volumeFcfa / 1000)}k`
-                                                : '0'
-                                            : metricMode === 'rate'
-                                            ? `${stats?.realization_rate ?? 0}%`
-                                            : actorsCount}
+                                        {zoneValue(stats)}
                                     </text>
+                                    {renderTypeBadges(stats, commune.center[0], commune.center[1] + 23, 5.5, 12.5)}
                                     <text
                                         x={commune.center[0]}
                                         y={commune.center[1] + 14}
@@ -808,9 +795,6 @@ export function IvoryCoastMapSvg({
                                     </p>
                                 )}
                             </div>
-                            <span className="rounded-full bg-[#fbf5ec] px-2 py-0.5 text-[10px] font-bold text-[#b77918] border border-[#e8d5bc]">
-                                Actif
-                            </span>
                         </div>
 
                         {hoveredEntity.population && (
@@ -820,38 +804,56 @@ export function IvoryCoastMapSvg({
                             </div>
                         )}
 
-                        <div className="grid grid-cols-2 gap-2 text-xs">
-                            <div className="rounded-xl bg-[#fbf8f4] p-1.5 border border-[#f0e4d2]">
-                                <p className="text-[10px] text-[#785f47]">Acteurs recensés</p>
-                                <p className="text-sm font-bold text-blue-700">{hoveredEntity.actors}</p>
-                            </div>
-                            <div className="rounded-xl bg-[#fbf8f4] p-1.5 border border-[#f0e4d2]">
-                                <p className="text-[10px] text-[#785f47]">Missions traitées</p>
-                                <p className="text-sm font-bold text-[#241b16]">{hoveredEntity.missions}</p>
-                            </div>
-                            <div className="rounded-xl bg-[#fbf8f4] p-1.5 border border-[#f0e4d2]">
-                                <p className="text-[10px] text-[#785f47]">Taux de succès</p>
-                                <p className="text-sm font-bold text-emerald-700">{hoveredEntity.rate}%</p>
-                            </div>
-                            <div className="rounded-xl bg-[#fbf8f4] p-1.5 border border-[#f0e4d2]">
-                                <p className="text-[10px] text-[#785f47]">Litiges signalés</p>
-                                <p
-                                    className={`text-sm font-bold ${
-                                        hoveredEntity.disputes > 0 ? 'text-rose-600' : 'text-slate-700'
-                                    }`}
-                                >
-                                    {hoveredEntity.disputes}
-                                </p>
-                            </div>
-                        </div>
+                        {hoveredEntity.row ? (
+                            <>
+                                <ul className="space-y-1 text-xs" data-testid="zone-breakdown">
+                                    {TERRITORY_TYPES.map((type) => {
+                                        const row = hoveredEntity.row!;
+                                        const detail = {
+                                            client: `${row.clients_mission_active} avec mission en cours`,
+                                            artisan: `${row.artisans_kyc_actif} KYC actif`,
+                                            livreur: `${row.livreurs_en_course} en course`,
+                                            fournisseur: `${row.fournisseurs_agrees} agréée${row.fournisseurs_agrees > 1 ? 's' : ''}`,
+                                            mission: `${row.missions_en_cours} en cours • ${row.missions_terminees} terminée${row.missions_terminees > 1 ? 's' : ''}`,
+                                        }[type.key];
 
-                        {hoveredEntity.volumeFcfa !== undefined && (
-                            <div className="mt-2 text-[11px] text-[#6b533f] flex items-center justify-between bg-[#fbf7f2] p-1.5 rounded-lg border border-[#f0e4d2]">
-                                <span>Volume d'affaires :</span>
-                                <span className="font-bold text-[#b77918]">
-                                    {Math.round(hoveredEntity.volumeFcfa).toLocaleString('fr-FR')} FCFA
-                                </span>
-                            </div>
+                                        return (
+                                            <li key={type.key} className="flex items-center justify-between gap-2 rounded-lg bg-[#fbf8f4] px-2 py-1 border border-[#f0e4d2]">
+                                                <span className="flex items-center gap-1.5 text-[#241b16]">
+                                                    <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: type.color }} />
+                                                    <span className="font-semibold">{type.label}</span>
+                                                </span>
+                                                <span className="text-right">
+                                                    <span className="font-bold text-[#241b16]">{row[type.field]}</span>
+                                                    <span className="block text-[10px] text-[#785f47]">{detail}</span>
+                                                </span>
+                                            </li>
+                                        );
+                                    })}
+                                </ul>
+                                <div className="mt-2 grid grid-cols-2 gap-2 text-[11px]">
+                                    <div className="rounded-lg bg-[#fbf7f2] p-1.5 border border-[#f0e4d2]">
+                                        <p className="text-[10px] text-[#785f47]">Litiges</p>
+                                        <p className={`font-bold ${hoveredEntity.row.litiges > 0 ? 'text-rose-600' : 'text-slate-700'}`}>
+                                            {hoveredEntity.row.litiges}
+                                        </p>
+                                    </div>
+                                    <div className="rounded-lg bg-[#fbf7f2] p-1.5 border border-[#f0e4d2]">
+                                        <p className="text-[10px] text-[#785f47]">Taux de réalisation</p>
+                                        <p className="font-bold text-emerald-700">
+                                            {hoveredEntity.row.missions_total > 0 ? `${hoveredEntity.row.realization_rate}%` : 'Aucune mission'}
+                                        </p>
+                                    </div>
+                                </div>
+                                <div className="mt-2 text-[11px] text-[#6b533f] flex items-center justify-between bg-[#fbf7f2] p-1.5 rounded-lg border border-[#f0e4d2]">
+                                    <span>Volume des missions :</span>
+                                    <span className="font-bold text-[#b77918]">
+                                        {Math.round(hoveredEntity.row.volume_fcfa).toLocaleString('fr-FR')} FCFA
+                                    </span>
+                                </div>
+                            </>
+                        ) : (
+                            <p className="text-xs text-[#785f47]">Aucune donnée pour cette zone.</p>
                         )}
                     </div>
                 )}
@@ -861,10 +863,13 @@ export function IvoryCoastMapSvg({
             <div className="mt-3 flex flex-wrap items-center justify-between gap-3 border-t border-[#e2d4c0] pt-3 text-[11px] text-[#785f47]">
                 <div className="flex items-center gap-2">
                     <span className="font-semibold text-[#241b16]">
-                        Échelle {metricMode === 'actors' ? 'Acteurs' : metricMode === 'volume' ? 'Volume FCFA' : 'Réalisation'} :
+                        Échelle {metricMode === 'actors' ? 'Effectif' : metricMode === 'volume' ? 'Volume FCFA' : 'Réalisation'} :
                     </span>
                     <div className="flex items-center gap-1.5">
-                        <span className="h-3 w-4 rounded-sm border border-[#c4b5a2] bg-[#f8fafc]" title="Faible / Nul" />
+                        <span
+                            className="h-3 w-4 rounded-sm border border-[#c4b5a2]"
+                            style={{ backgroundColor: getChoroplethColor(5, metricMode) }}
+                        />
                         <span>Faible</span>
                         <span
                             className="h-3 w-4 rounded-sm border border-[#c4b5a2]"
@@ -884,7 +889,18 @@ export function IvoryCoastMapSvg({
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex flex-wrap items-center gap-3">
+                    {badgeTypes.length >= 2 &&
+                        badgeTypes.map((type) => (
+                            <div key={type.key} className="flex items-center gap-1.5">
+                                <span className="h-2.5 w-2.5 rounded-full" style={{ backgroundColor: type.color }} />
+                                <span>{type.label}</span>
+                            </div>
+                        ))}
+                    <div className="flex items-center gap-1.5">
+                        <span className="h-3 w-4 rounded-sm border border-[#c4b5a2] bg-[#f8fafc]" />
+                        <span>Zone sans donnée</span>
+                    </div>
                     <div className="flex items-center gap-1.5">
                         <span className="h-3 w-3 rounded-full border border-[#18181b] bg-[#f59e0b]" />
                         <span className="font-medium text-[#241b16]">Zone sélectionnée</span>

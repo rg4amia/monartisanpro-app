@@ -8,6 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-10-03 | Plan | [Chantier 18 — Fermeture de session du backoffice après inactivité, et Cartographie & Territoires](plans/2026-10-03-chantier-18-session-inactivite-cartographie.md) | livré (contrôle dans le navigateur à faire) | — |
 | 2026-10-03 | Plan | [Chantier 17 — Saisie automatique du code OTP reçu par SMS](plans/2026-10-03-chantier-17-saisie-automatique-otp.md) | livré (contrôle sur appareil réel à faire) | — |
 | 2026-09-29 | Plan | [Chantier 16 — Liens Google Play et App Store pilotés depuis le backoffice](plans/2026-09-29-chantier-16-liens-applications-mobiles.md) | livré | — |
 | 2026-09-29 | Plan | [Chantier 15 — Annuaire artisans : disponibilité validée et présence pilotée](plans/2026-09-29-chantier-15-annuaire-artisans.md) | livré | — |

@@ -102,6 +102,8 @@ routes/api.php
 - `AdminExportService` — exports CSV en streaming (BOM UTF-8, `sep=;`, `->lazy()`)
 - `AdminGdprService` — vue des données personnelles + anonymisation tracée (RGPD)
 - `FraudAlertAdminService` — arbitrage des alertes de fraude (gel, levée avec respect du seuil Référent, confirmation avec sanction de score, classement), audité
+- `AdminIdleSessionService` — fermeture de la session du backoffice après inactivité (15 min), auditée (Règle d'or 87)
+- `AdminTerritoryService` — Cartographie & Territoires : matrice par zone et par type, synthèse, liste détaillée, exports (Règle d'or 88)
 - `AdminObservabilityService` — instantané de santé (jobs KO, webhooks paiement, fraude GPS, seuil Référent)
 - `AdminDashboardCache` / `TelegramAlertService` — cache des KPI + alertes d'observabilité
 
@@ -367,3 +369,33 @@ App Router (`src/app/`), composants partagés dans `src/components/`, accès API
 - **Collage et suggestion du clavier** : un code complet collé ou proposé par le clavier (`AutofillHints.oneTimeCode`) se répartit dans les 4 cases.
 - **Périmètre** : connexion et inscription. Les autres saisies de code (étape de chantier, changement de numéro, espace fournisseur du site) ne sont pas raccordées.
 - **Tests** : `otp_code_extractor_test.dart`, `otp_verification_screen_test.dart`, `auth_controller_test.dart`. Le remplissage réel ne se vérifie que sur un appareil Android avec un SMS réel.
+87. **Fermeture de la session du backoffice après inactivité (Chantier 18, lot A)** :
+- **Principe** : une session d'administrateur restée 15 minutes sans activité est fermée ; l'administrateur se reconnecte (mot de passe et 2FA). Délai réglable par `config('prosartisan.admin.idle_timeout_minutes')` (`ADMIN_IDLE_TIMEOUT_MINUTES`).
+- **Le serveur est seul juge** : le middleware `EnforceAdminIdleTimeout` (groupes `web` et `api`) lit `session('admin_last_activity_at')` par `AdminIdleSessionService`.
+  - Délai dépassé : déconnexion, session invalidée, jeton CSRF régénéré, cookie « Se souvenir de moi » révoqué, ligne d'audit `admin.session.expired_idle` (origine `serveur` ou `ecran`).
+  - Réponse selon l'appelant : redirection vers `/admin/login` avec le motif ; `Inertia::location` pour une navigation Inertia ; 401 JSON pour un appel `fetch`.
+  - Une session recréée par le cookie « Se souvenir de moi » sans horodatage d'activité est traitée comme expirée.
+- **Périmètre** : toute session d'un compte `admin`, et toute session usurpée (Règle d'or 24), qui expire sans retour au compte de l'administrateur. Les jetons Bearer de l'application mobile, sans session, ne sont pas concernés.
+- **Requêtes d'arrière-plan** : une requête portant l'en-tête `X-Admin-Passive` ne prolonge pas la session. Tout rafraîchissement automatique ajouté au backoffice doit le porter.
+- **Écran** : hook `useIdleLogout`, monté dans `console.tsx` avec le délai partagé `auth.idleTimeoutSeconds`.
+  - Activité suivie (souris, clavier, toucher, défilement) et partagée entre onglets du navigateur (`localStorage`).
+  - Activité sans requête signalée au serveur au plus toutes les 5 minutes (`POST /admin/session/keep-alive`).
+  - Avertissement accessible à 14 minutes (« Votre session va se fermer », compte à rebours, « Rester connecté ») ; une fois affiché, seul ce bouton prolonge la session.
+  - À 15 minutes : `POST /admin/session/expire`, puis retour à la page de connexion.
+  - Un appel `fetch` recevant 401 renvoie à la connexion (`redirectIfSessionExpired`).
+- **Tests** : `AdminIdleTimeoutTest.php`, `useIdleLogout.test.tsx`.
+88. **Cartographie & Territoires : matrice par zone, filtres par type, tableau à deux vues (Chantier 18, lots B)** :
+- **Une zone par acteur et par mission** : `AdminTerritoryService::getZoneMatrix` donne, pour chaque district, chaque commune du Grand Abidjan, la ligne « Commune non renseignée » et le total national, le nombre de clients, d'artisans (dont KYC actif), de livreurs (dont en course), de quincailleries (dont agréées) et de missions (en cours, terminées, en litige, volume).
+  - Un acteur est situé par sa commune. Sans commune, ou avec une commune hors référentiel, il est compté « non renseigné », jamais rangé sous Abidjan (Règle d'or 29).
+  - Une mission est située par l'adresse du chantier, à défaut par la commune du client, puis par celle de l'artisan.
+  - La somme des districts et des non renseignés retrouve le total national.
+  - Le rattachement se calcule en PHP (ville reconnue seulement entre deux séparateurs de mot) ; les listes filtrent ensuite par identifiants. L'instantané sans filtre est mis en cache (`AdminDashboardCache::territorySnapshot`).
+- **Filtres, un seul état pour la carte et le tableau** : types cochés (clients, artisans, livreurs, quincailleries, missions), statut des missions, période des missions (30 ou 90 jours), statut KYC des acteurs, zone.
+  - L'API `GET /admin/cartographie/stats` refuse une valeur inconnue (422). Les identifiants de type sont au singulier (`artisan`, `mission`…) ; les anciens pluriels restent acceptés.
+- **Carte** : coloration et pastille sur l'effectif des types cochés ; une pastille par type quand un à trois types sont cochés ; décompte complet par type au survol ; zone sans donnée signalée. Clients et artisans ne sont jamais affichés en points individuels (Règle d'or 22).
+- **Tableau Récapitulatif Territorial** :
+  - « Synthèse par zone » : une ligne par district (ou par commune dans la vue Grand Abidjan), colonnes des types cochés, total, tri par colonne, clic qui sélectionne la zone ;
+  - « Détail » : acteurs ou missions de la zone, statuts libellés en français (`status_label`, Règle d'or 27), précision par type (métier, boutique et agrément, course en cours), tri, pagination côté serveur.
+- **Export CSV** des deux vues : `GET /admin/cartographie/export` (`vue=synthese|detail`), capacités `admin.territory.view` **et** `admin.exports`, audité (`export.generated`, Règle d'or 20).
+- **Colonnes de `missions`** : l'adresse du chantier est `client_address`, la catégorie `gemini_category`. `location_address` et `category` n'existent pas : une requête qui les vise passe sur SQLite et échoue sur MariaDB.
+- **Tests** : `AdminTerritoryControllerTest.php`, `CartographyPanel.test.tsx`, `IvoryCoastMapSvg.test.tsx`.

@@ -2,6 +2,7 @@
 
 use App\Http\Middleware\AccountActive;
 use App\Http\Middleware\AdminOnly;
+use App\Http\Middleware\EnforceAdminIdleTimeout;
 use App\Http\Middleware\HandleInertiaRequests;
 use App\Http\Middleware\KycVerified;
 use App\Http\Middleware\PaymentUnrestricted;
@@ -35,6 +36,8 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
 
         $middleware->web(append: [
+            // Avant Inertia : une session expirée ne partage plus aucune donnée.
+            EnforceAdminIdleTimeout::class,
             HandleInertiaRequests::class,
             AddLinkHeadersForPreloadedAssets::class,
         ]);
@@ -58,6 +61,9 @@ return Application::configure(basePath: dirname(__DIR__))
 
         $middleware->api(prepend: [
             EnsureFrontendRequestsAreStateful::class,
+            // Appels du backoffice authentifiés par la session (carte de la flotte…) :
+            // sans effet sur les jetons Bearer de l'application mobile, qui n'ont pas de session.
+            EnforceAdminIdleTimeout::class,
         ]);
 
         $middleware->alias([

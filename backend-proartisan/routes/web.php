@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminCollectionController;
 use App\Http\Controllers\Admin\AdminDocumentController;
 use App\Http\Controllers\Admin\AdminFraudController;
 use App\Http\Controllers\Admin\AdminPayoutController;
+use App\Http\Controllers\Admin\AdminSessionController;
 use App\Http\Controllers\Admin\AdminTerritoryController;
 use App\Http\Controllers\Admin\AppStoreLinkAdminController;
 use App\Http\Controllers\Admin\ArtisanDirectoryAdminController;
@@ -102,6 +103,11 @@ Route::prefix('admin')->name('admin.')->group(function () {
     });
     // Fin d'usurpation : accessible au compte usurpé (non-admin), donc hors « admin.only ».
     Route::middleware('auth')->post('/stop-impersonating', [ImpersonationController::class, 'stop'])->name('stop-impersonating');
+    // Session : maintien et fermeture pour inactivité. Hors « admin.only », une session usurpée y étant soumise aussi.
+    Route::middleware('auth')->group(function () {
+        Route::post('/session/keep-alive', [AdminSessionController::class, 'keepAlive'])->name('session.keep-alive');
+        Route::post('/session/expire', [AdminSessionController::class, 'expire'])->name('session.expire');
+    });
 
     Route::middleware(['auth', 'admin.only'])->group(function () {
         Route::get('/', fn () => redirect()->route('admin.dashboard'))->name('index');
@@ -127,6 +133,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/missions', [BackofficeController::class, 'missions'])->middleware('can:admin.missions.view')->name('missions');
         Route::get('/cartographie', [BackofficeController::class, 'cartography'])->middleware('can:admin.territory.view')->name('cartography');
         Route::get('/cartographie/stats', [AdminTerritoryController::class, 'stats'])->middleware('can:admin.territory.view')->name('cartography.stats');
+        Route::get('/cartographie/export', [AdminTerritoryController::class, 'export'])->middleware(['can:admin.territory.view', 'can:admin.exports'])->name('cartography.export');
         Route::get('/deliveries/fleet-map', [DeliveryTrackingController::class, 'getFleetOverview'])->middleware('can:admin.missions.view')->name('deliveries.fleet-map');
 
         // Litiges

@@ -174,14 +174,11 @@ class AdminPanelData
      */
     public function cartography(Request $request): array
     {
-        $district = $request->query('district');
-        $commune = $request->query('commune');
-        $filters = [
-            'entity_type' => $request->query('entity_type', 'all'),
-            'district' => $district,
-            'commune' => $commune,
-            'search' => $request->query('search', ''),
-        ];
+        // Une valeur inconnue dans l'adresse retombe sur « tout » : la page
+        // s'ouvre toujours ; l'API JSON, elle, refuse les valeurs inconnues.
+        $filters = $this->territoryService->normalizeFilters($request->query());
+        $district = $filters['district'];
+        $commune = $filters['commune'];
         $entitiesPage = $this->territoryService->getTerritoryEntities($filters, (int) $request->query('per_page', 15))->withQueryString();
 
         $districtsList = [];
@@ -202,10 +199,9 @@ class AdminPanelData
         }
 
         return [
-            'territorySummary' => $this->territoryService->getTerritorySummary($district, $commune),
+            'territorySummary' => $this->territoryService->getTerritorySummary($district, $commune, $filters),
             'territoryBreakdowns' => $this->territoryService->getTerritoryBreakdowns($district, $commune),
-            'districtsHeatmap' => $this->territoryService->getDistrictsHeatmap(),
-            'communesHeatmap' => $this->territoryService->getCommunesHeatmap(),
+            'territoryMatrix' => $this->territoryService->getZoneMatrix($filters),
             'districtsList' => $districtsList,
             'communesList' => $communesList,
             'entities' => $entitiesPage,
