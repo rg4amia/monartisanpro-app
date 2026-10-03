@@ -1,12 +1,12 @@
 <?php
 
-use App\Http\Controllers\Admin\LlmAdminController;
 use App\Http\Controllers\Api\V1\AddressController;
 use App\Http\Controllers\Api\V1\AdminController;
 use App\Http\Controllers\Api\V1\AdminRolePermissionController;
 use App\Http\Controllers\Api\V1\ArtisanAvailabilityController;
 use App\Http\Controllers\Api\V1\ArtisanController;
 use App\Http\Controllers\Api\V1\ArtisanStockController;
+use App\Http\Controllers\Api\V1\AssistantController;
 use App\Http\Controllers\Api\V1\AuthController;
 use App\Http\Controllers\Api\V1\CommunicationController;
 use App\Http\Controllers\Api\V1\DashboardController;
@@ -64,8 +64,8 @@ Route::prefix('v1')->group(function () {
     // connaître l'utilisateur, donc d'appliquer un quota par utilisateur.
     // `throttle:ai` reste un garde-fou anti-rafale (par utilisateur).
     Route::middleware(['auth:sanctum', 'throttle:ai'])->group(function () {
-        Route::post('/chat', [LlmAdminController::class, 'chat']);
-        Route::post('/search', [LlmAdminController::class, 'search']);
+        Route::post('/chat', [AssistantController::class, 'chat']);
+        Route::post('/search', [AssistantController::class, 'search']);
     });
 
     // ─────────────────────────────────────────────────────────────────────────
@@ -360,7 +360,7 @@ Route::prefix('v1')->group(function () {
         Route::put('/litiges/{litige}/refund-destination', [LitigeController::class, 'refundDestination'])->middleware('throttle:10,1');
         Route::post('/litiges/{litige}/jury/assign', [LitigeJuryController::class, 'assign']);
         Route::post('/litiges/{litige}/jury/vote', [LitigeJuryController::class, 'vote']);
-        Route::post('/litiges/{litige}/llm-mediation', [LlmAdminController::class, 'llmMediation']);
+        Route::post('/litiges/{litige}/llm-mediation', [AssistantController::class, 'mediation'])->middleware('throttle:ai');
 
         // ── Jury ProsArtisan (Arbitrage par les Pairs - Chantier 12) ───────────
         Route::get('/jury/dossiers', [JuryController::class, 'index']);

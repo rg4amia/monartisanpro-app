@@ -128,4 +128,11 @@ return [
         // Score de qualité OCR minimum requis pour la pièce d'identité (0 à 100).
         'ocr_min_quality' => (int) env('KYC_OCR_MIN_QUALITY', 70),
     ],
+
+    // Base de connaissances de l'Assistant IA (Chantier 23).
+    'llm' => [
+        // Taille maximale d'un document de référence importé, en kilo-octets.
+        // Gemini reçoit le fichier dans la requête : rester sous 20 Mo.
+        'max_document_kb' => (int) env('LLM_MAX_DOCUMENT_KB', 15360),
+    ],
 ];

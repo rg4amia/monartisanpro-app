@@ -639,6 +639,17 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 - **Appel `fetch`** : `credentials: 'same-origin'`, en-tête `Accept: application/json`, puis `redirectIfSessionExpired`. **Action Inertia** (`router.post`) : le contrôleur répond par une redirection (`back()->with('success' | 'error')`) quand la requête porte `X-Inertia`, jamais par du JSON.
 - **Réaffectation d'une course** par un administrateur : auditée (`delivery.reassigned`, livreur précédent et motif — Règle d'or 17).
 - **Tests** : `BackofficeSessionRoutesTest.php`, `DeliveriesTrackingSection.test.tsx`.
+130. **Base de connaissances de l'Assistant IA : ingestion réelle, relecture obligatoire, aucune réponse inventée (Chantier 23)** :
+- **Circuit** (`Llm\KnowledgeBaseService`, onglet « Administration LLM », capacité `admin.llm.manage`) : document importé → fiches rédigées par Gemini (`GeminiService::extractKnowledgeSheets`, 5 au plus, origine `ia`) ou fiche saisie à la main → relecture → approbation → publication (`production_items`). **Seule une fiche approuvée par un administrateur atteint l'Assistant.** Une fiche publiée ne se modifie pas : elle se retire (motif obligatoire), se corrige, puis se réapprouve.
+- **Échec fermé** : sans clé Gemini, sur erreur, réponse illisible ou document sans règle exploitable, l'import passe en `echec` avec son motif et **aucune fiche n'est créée**. La consigne interdit à l'IA d'ajouter un dosage, un prix ou un matériau absent du document ; une valeur absente reste vide (`KnowledgeSheetSchema::normalize`).
+- **Génération différée** : `GenerateKnowledgeSheetsJob::dispatchAfterResponse` ; l'écran suit l'état de l'import par un rafraîchissement portant `X-Admin-Passive`. Une génération restée « en cours » plus de 10 minutes est tenue pour interrompue et se relance.
+- **Documents** : extensions `pdf, txt, md, png, jpg, jpeg, webp`, contenu vérifié, taille bornée par `prosartisan.llm.max_document_kb` ; disque privé `local` (`llm-documents/`), jamais le disque public ; téléchargement par `GET /admin/api/llm/imports/{id}/document`.
+- **Assistant** (`Llm\AssistantService`, `Api\V1\AssistantController`) : recherche sans fiche → liste vide ; photo non analysée → 503 ; IA indisponible → annonce, avec la fiche validée correspondante s'il y en a une. Jamais de dosage, de diagnostic ni de médiation par défaut. Le serveur ne télécharge aucune adresse fournie par l'utilisateur (`image_url` ignorée).
+- **Médiation IA d'un litige** (`Llm\DisputeMediationService`) : parties au litige ou administrateur uniquement (403 sinon), soumise au quota IA (action `mediation`), sans nom ni téléphone transmis à l'IA, 503 si l'IA ne répond pas.
+- **Identifiant et contenu d'une fiche** : identifiant créé par le serveur (`fiche-<ulid>`), contenu validé par `KnowledgeSheetRequest` ; mots-clés normalisés (minuscules, sans accent, `_`).
+- **Index vectoriel facultatif** (`Llm\KnowledgeVectorIndex`, Qdrant) : fiche indexée à la publication, retirée au retrait, best-effort ; sans Qdrant, recherche par mots-clés.
+- **Audit** : `llm.document.imported` / `.generated` / `.deleted`, `llm.documents.cleared`, `llm.sheet.created` / `.updated` / `.approved` / `.rejected` / `.deleted` / `.withdrawn`.
+- **Tests** : `Chantier23LlmKnowledgeTest.php`, `LlmAdminPanel.test.tsx`.
 
 ## 📎 Fichier de référence du flux
 

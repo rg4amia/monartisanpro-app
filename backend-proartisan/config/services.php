@@ -106,6 +106,7 @@ return [
     'gemini' => [
         'api_key' => env('GEMINI_API_KEY'),
         'model' => env('GEMINI_MODEL', 'gemini-3.6-flash'),
+        'embedding_model' => env('GEMINI_EMBEDDING_MODEL', 'text-embedding-004'),
         'base_url' => env('GEMINI_BASE_URL', 'https://generativelanguage.googleapis.com'),
     ],
 

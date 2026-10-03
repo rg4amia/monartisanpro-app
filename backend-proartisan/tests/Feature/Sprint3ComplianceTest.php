@@ -17,6 +17,7 @@ use Illuminate\Contracts\Auth\Authenticatable;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Http;
 use Tests\Support\Geo;
 use Tests\Support\Scores;
 use Tests\TestCase;
@@ -220,6 +221,13 @@ class Sprint3ComplianceTest extends TestCase
             'description' => 'Fuite persistante',
             'statut' => 'ouvert',
             'workflow_step' => 'preuves',
+        ]);
+
+        config(['services.gemini.api_key' => 'test-key']);
+        Http::fake([
+            '*' => Http::response([
+                'candidates' => [['content' => ['parts' => [['text' => 'Faits extraits : fuite après intervention.']]]]],
+            ]),
         ]);
 
         $response = $this->actingAs($client)

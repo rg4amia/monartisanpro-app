@@ -21,6 +21,7 @@ use App\Http\Controllers\Admin\NotificationTemplateAdminController;
 use App\Http\Controllers\Admin\RecruitmentAdminController;
 use App\Http\Controllers\Admin\VitrineAdminController;
 use App\Http\Controllers\Api\V1\AdminRolePermissionController;
+use App\Http\Controllers\Api\V1\AssistantController;
 use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\KycDocumentController;
@@ -356,6 +357,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('/contacts/{contact}', [VitrineAdminController::class, 'destroyContact'])->name('contacts.destroy');
         });
 
+        // Base de connaissances de l'Assistant IA (Chantier 23).
         Route::prefix('api/llm')->name('api.llm.')->middleware('can:admin.llm.manage')->group(function () {
             Route::get('/staging', [LlmAdminController::class, 'getStaging'])->name('staging.index');
             Route::post('/staging', [LlmAdminController::class, 'storeStaging'])->name('staging.store');
@@ -365,19 +367,18 @@ Route::prefix('admin')->name('admin.')->group(function () {
             Route::delete('/staging/{id}', [LlmAdminController::class, 'destroyStaging'])->name('staging.destroy');
 
             Route::get('/production', [LlmAdminController::class, 'getProduction'])->name('production.index');
+            Route::post('/production/{id}/withdraw', [LlmAdminController::class, 'withdrawProduction'])->name('production.withdraw');
 
             Route::get('/imports', [LlmAdminController::class, 'getImports'])->name('imports.index');
             Route::post('/imports', [LlmAdminController::class, 'storeImport'])->name('imports.store');
-            Route::put('/imports/{id}', [LlmAdminController::class, 'updateImport'])->name('imports.update');
             Route::delete('/imports', [LlmAdminController::class, 'clearImports'])->name('imports.clear');
-            Route::post('/upload', [LlmAdminController::class, 'upload'])->name('upload');
+            Route::post('/imports/{id}/generate', [LlmAdminController::class, 'generate'])->name('imports.generate');
+            Route::get('/imports/{id}/document', [LlmAdminController::class, 'document'])->name('imports.document');
+            Route::delete('/imports/{id}', [LlmAdminController::class, 'destroyImport'])->name('imports.destroy');
 
-            Route::get('/config/professions', [LlmAdminController::class, 'getProfessions'])->name('config.professions');
-            Route::get('/config/categories', [LlmAdminController::class, 'getCategories'])->name('config.categories');
-            Route::get('/config/contexts', [LlmAdminController::class, 'getContexts'])->name('config.contexts');
-
-            Route::post('/search', [LlmAdminController::class, 'search'])->name('search');
-            Route::post('/chat', [LlmAdminController::class, 'chat'])->name('chat');
+            // Essai de l'Assistant depuis le backoffice : mêmes réponses que l'application.
+            Route::post('/search', [AssistantController::class, 'search'])->name('search');
+            Route::post('/chat', [AssistantController::class, 'chat'])->name('chat');
         });
     });
 });

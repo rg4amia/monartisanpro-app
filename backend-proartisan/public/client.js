@@ -4,7 +4,7 @@
  * Gère la communication API, la synthèse/reconnaissance vocale et les simulations offline/3G.
  */
 
-import { dbInstance } from "./db.js?v=6";
+import { dbInstance } from "./db.js?v=7";
 
 function determineTagsFromFilename(filename) {
   const name = (filename || "").toLowerCase();
@@ -41,6 +41,8 @@ const PATHOLOGY_PRESETS = [
     description: "L'eau traverse la dalle du salon lors des pluies d'Abidjan."
   }
 ];
+
+const FICHES_CACHE_KEY = "prosartisan_fiches_v2";
 
 class ClientAppManager {
   constructor() {
@@ -89,35 +91,29 @@ class ClientAppManager {
     } catch (e) { /* noop */ }
   }
 
-  // Initialisation du cache hors-ligne avec des données de démo par défaut
+  // Cache hors-ligne : uniquement des fiches validées déjà reçues du serveur.
+  // L'ancien cache contenait des fiches de démonstration : il est supprimé.
   setupCache() {
-    if (localStorage.getItem("prosartisan_cache") !== null) {
-      return; // Déjà initialisé (éventuellement vide après nettoyage)
+    localStorage.removeItem("prosartisan_cache");
+    if (localStorage.getItem(FICHES_CACHE_KEY) === null) {
+      localStorage.setItem(FICHES_CACHE_KEY, "[]");
     }
-    const demoItems = [
-      {
-        id: "prod-201",
-        metadata: { type_ouvrage: "Etancheite", tags_pathologies: ["infiltration_dalle", "toit_terrasse", "etancheite_defaillante"] },
-        cout_estime_local: { gamme_prix: "Eleve", estimation_m2_fcfa: "8 000 - 12 000 FCFA par m²", justification_economique: "Évite l'oxydation des fers." },
-        alternative_prosartisan: {
-          titre_vulgarise: "Étanchéité liquide de toit-terrasse (SEL)",
-          methode_execution: "Nettoyer la dalle, appliquer résine d'étanchéité, poser la toile en fibre de verre, puis deuxième couche de résine.",
-          dosages_recommandes: [
-            { element: "Résine d'étanchéité liquide", ratio: "1.5 kg par m²", unite_mesure_locale: "Seau de maçon (10L)" },
-            { element: "Toile fibre de verre", ratio: "1.1 m² par m²", unite_mesure_locale: "Sac" }
-          ],
-          materiaux_recommandes: [
-            { nom: "Résine SEL", substitut_acceptable: "Peinture routière", disponibilite: "Zone Industrielle" }
-          ]
-        }
-      }
-    ];
-    localStorage.setItem("prosartisan_cache", JSON.stringify(demoItems));
+  }
+
+  // Conserve une fiche validée pour la consultation hors-ligne (30 au plus).
+  rememberFiche(doc) {
+    if (!doc || !doc.id || (doc.metadata && doc.metadata.is_llm_fallback)) return;
+    try {
+      const cache = JSON.parse(localStorage.getItem(FICHES_CACHE_KEY) || "[]").filter(item => item.id !== doc.id);
+      cache.unshift(doc);
+      localStorage.setItem(FICHES_CACHE_KEY, JSON.stringify(cache.slice(0, 30)));
+    } catch (e) {
+      // Stockage plein ou indisponible : la consultation en ligne n'est pas affectée.
+    }
   }
 
   clearCache() {
-    localStorage.removeItem("prosartisan_cache");
-    localStorage.setItem("prosartisan_cache", "[]");
+    localStorage.setItem(FICHES_CACHE_KEY, "[]");
     this.log("system", "Le cache local de l'analyse diagnostic RAG a été vidé avec succès.");
     alert("Le cache local RAG a été vidé. L'image uploadée ou la saisie va être traitée directement par le serveur.");
   }
@@ -522,16 +518,11 @@ class ClientAppManager {
 
       if (this.networkState === "offline") {
         // Mode offline : Charger du cache local (LocalStorage)
-        const localCacheData = JSON.parse(localStorage.getItem("prosartisan_cache") || "[]");
+        const localCacheData = JSON.parse(localStorage.getItem(FICHES_CACHE_KEY) || "[]");
         // Filtrer par tags
         resultDoc = localCacheData.find(item =>
           item.metadata.tags_pathologies.some(t => tags.includes(t))
         );
-
-        // Si aucun match local, prendre la première fiche du cache
-        if (!resultDoc && localCacheData.length > 0) {
-          resultDoc = localCacheData[0];
-        }
 
         // Enregistrer la requête dans la queue de synchro locale
         this.offlineQueue.push({
@@ -556,6 +547,7 @@ class ClientAppManager {
         }, imageB64, imageUrl, this.selectedPreset ? this.selectedPreset.title : null);
         if (list && list.length > 0) {
           resultDoc = list[0];
+          this.rememberFiche(resultDoc);
         }
       }
 
@@ -567,11 +559,17 @@ class ClientAppManager {
         this.renderResult(resultDoc);
         this.log("rag", `Résultat du RAG récupéré pour la fiche : "${resultDoc.alternative_prosartisan.titre_vulgarise}"`);
       } else {
-        this.log("llm", "Aucun résultat dans la base RAG. Interrogation du LLM (Contexte socio-anthropologique ivoirien)...");
-        resultDoc = await this.fallbackToLLM(tags, textContext);
-        this.currentDoc = resultDoc;
-        this.renderResult(resultDoc);
-        this.log("llm", "Diagnostic LLM de secours généré avec succès.");
+        this.currentDoc = null;
+        this.dom.resultArea.innerHTML = `
+          <div class="glass-card text-center py-6">
+            <span class="text-2xl block mb-2">📭</span>
+            <p class="text-sm font-semibold text-slate-200">Aucune fiche validée ne correspond</p>
+            <p class="text-xs text-slate-400 mt-2">${this.networkState === "offline"
+              ? "Hors-ligne, seules les fiches déjà consultées sont disponibles. Réessayez une fois connecté."
+              : "Notre base technique ne traite pas encore ce problème. Posez votre question à l'assistant dans l'onglet Chat, ou ajoutez une photo."}</p>
+          </div>
+        `;
+        this.log("rag", "Aucune fiche validée pour cette recherche.");
       }
 
     } catch (err) {
@@ -581,49 +579,12 @@ class ClientAppManager {
       this.dom.resultArea.innerHTML = `
         <div class="glass-card text-center py-6 border-red-500/30">
           <span class="text-2xl block mb-2">⚠️</span>
-          <p class="text-sm font-semibold text-red-400">Erreur de connexion</p>
-          <p class="text-xs text-slate-400 mt-2">Impossible de joindre le serveur API. Veuillez vérifier votre connexion Internet ou réessayer plus tard.</p>
+          <p class="text-sm font-semibold text-red-400">Diagnostic indisponible</p>
+          <p class="text-xs text-slate-400 mt-2">${err.userMessage || "Impossible de joindre le serveur. Vérifiez votre connexion Internet ou réessayez plus tard."}</p>
         </div>
       `;
       this.log("system", `Erreur de communication : ${err.message}`);
     }
-  }
-
-  async fallbackToLLM(tags, textContext) {
-    this.log("llm", "Génération de l'analyse avec contexte culturel (Solidarité, Respect des aînés)...");
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    const detectedIssue = tags.length > 0 ? tags.join(", ").replace(/_/g, " ") : "Problème non spécifié";
-
-    return {
-      id: "llm-fallback-" + Date.now(),
-      norme_origine: {
-        source: "LLM Génératif ProsArtisan",
-        titre_original: "Analyse experte générée par IA",
-        reference_article: "N/A"
-      },
-      metadata: {
-        type_ouvrage: "Général",
-        tags_pathologies: tags
-      },
-      cout_estime_local: {
-        gamme_prix: "Moyen",
-        estimation_m2_fcfa: "Sur devis spécifique",
-        justification_economique: "Le LLM recommande d'ajuster selon les prix de la quincaillerie locale. Rappelez au client que chercher trop de réduction entraîne un travail bâclé ('Mougou-mougou coûte cher')."
-      },
-      alternative_prosartisan: {
-        titre_vulgarise: `Diagnostic IA : ${detectedIssue}`,
-        methode_execution: `🌟 Approche Socio-Anthropologique (Côte d'Ivoire) :\n- Posture du Boss : En Afrique, le chef de chantier est garant de la sécurité familiale. Parlez au client avec respect ("Grand-frère", "Tonton") tout en assumant votre expertise technique.\n- Gestion du conflit : Ne critiquez jamais l'artisan précédent devant le client (préservez l'harmonie sociale), expliquez simplement que "les éléments ont travaillé".\n\n🛠️ Recommandation Technique :\n1. Traitez la zone touchée avec des dosages certifiés.\n2. Utilisez le sable de carrière bien lavé.\n3. Prenez le temps de faire le travail sans précipitation.`,
-        bouclier_autorite: `« Grand-frère (ou Patron), la maison c'est le refuge de la famille. Aujourd'hui, on remarque un petit souci d'humidité ou de fissure. On ne va pas jeter la pierre à celui qui a fait avant, le bâtiment travaille. Mon devoir de Boss de chantier, c'est de vous conseiller la meilleure solution technique pour que vous ayez la paix de l'esprit. Un bon traitement aujourd'hui avec les bons matériaux, ça vous évite de jeter l'argent par la fenêtre demain. On va gérer ça proprement. »`,
-        dosages_recommandes: [
-          { element: "Ciment local adapté", ratio: "Selon norme", unite_mesure_locale: "Sac" },
-          { element: "Sable propre", ratio: "Proportion standard", unite_mesure_locale: "Brouette (60L)" }
-        ],
-        materiaux_recommandes: [
-          { nom: "Matériaux certifiés", substitut_acceptable: "Adaptation selon stock", disponibilite: "Quincaillerie" }
-        ]
-      }
-    };
   }
 
   // --- RENDU DU RÉSULTAT RAG MOBILE ---

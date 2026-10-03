@@ -667,6 +667,16 @@ footer.colophon { max-width: 1180px; margin: 0 auto; padding-top: 24px; border-t
         </ol>
         <p>Une campagne se modifie ou se supprime tant qu'elle n'est pas partie. <span class="ui">Annuler</span> arrête une campagne programmée ou en cours : les personnes déjà servies le restent, et personne ne reçoit jamais deux fois la même campagne. Une campagne envoyée reste dans l'historique ; <span class="ui">Dupliquer</span> en fait un nouveau brouillon. Chaque envoi figure dans le <span class="ui">Journal des envois</span> sous « Campagne : nom », et chaque action est inscrite au journal d'audit.</p>
 
+        <h3>Alimenter l'Assistant IA en fiches techniques <span class="tag">Nouveau</span></h3>
+        <p>L'onglet <span class="ui">Administration LLM</span> gère les fiches techniques sur lesquelles l'Assistant IA des artisans s'appuie. <b>Seule une fiche que vous avez approuvée est transmise aux artisans.</b></p>
+        <ol class="steps">
+          <li><div><span class="ui">Importer un document</span> : une norme ou un guide technique, en PDF, texte ou image, de 15 Mo au plus. Le fichier n'est accessible qu'aux administrateurs.</div></li>
+          <li><div><span class="ui">Générer les fiches</span> : l'IA lit le document et rédige jusqu'à cinq fiches pratiques. L'opération dure une à deux minutes ; l'état passe à « Génération en cours », puis « Fiches générées ». En cas d'« Échec », le motif s'affiche et vous pouvez relancer. L'IA a pour consigne de ne rien ajouter qui ne figure pas dans le document : un prix ou un dosage absent reste vide.</div></li>
+          <li><div>Dans <span class="ui">Fiches à relire</span>, ouvrez chaque fiche par <span class="ui">Relire</span>. Une fiche « Générée par IA » peut contenir une erreur : comparez chaque valeur au <b>passage du document</b> affiché en bas de la fiche, corrigez, puis <span class="ui">Enregistrer</span>.</div></li>
+          <li><div><span class="ui">Approuver et publier</span> rend la fiche disponible pour l'Assistant. <span class="ui">Rejeter</span> demande un motif ; une fiche rejetée n'est jamais publiée.</div></li>
+        </ol>
+        <p><span class="ui">Nouvelle fiche manuelle</span> permet de rédiger une fiche sans document. Une fiche publiée ne se modifie pas : <span class="ui">Retirer</span> (motif obligatoire) la renvoie dans les fiches à relire, où vous la corrigez avant de l'approuver de nouveau. <span class="ui">Essayer l'Assistant IA</span> pose une question comme un artisan et indique les fiches citées ; chaque essai compte dans votre quota IA. Quand aucune fiche ne correspond, l'Assistant le dit à l'artisan : il ne propose plus de dosage par défaut.</p>
+
         <h3>Convoquer un jury <span class="tag">Nouveau</span></h3>
         <ol class="steps">
           <li><div>Sur la fiche du litige, cliquez sur <span class="ui">Convoquer Jury ProsArtisan (3 pairs)</span>. Trois artisans sont tirés au sort parmi ceux du même métier, au KYC actif, étrangers aux parties, dont le score recalculé atteint le seuil.</div></li>

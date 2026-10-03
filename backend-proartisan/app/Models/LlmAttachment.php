@@ -20,6 +20,10 @@ class LlmAttachment extends Model
         'extension',
         'file_link',
         'uploaded_by',
+        'disk',
+        'path',
+        'mime_type',
+        'size',
         'created_at',
     ];
 }

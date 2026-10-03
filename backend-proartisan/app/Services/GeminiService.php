@@ -1065,7 +1065,7 @@ Retourne obligatoirement ce format JSON uniquement:
             $prompt .= "  \"recommended_client_percentage\": 50,\n";
             $prompt .= "  \"rationale_fr\": \"Explication détaillée\",\n";
             $prompt .= "  \"confidence_score\": 85\n";
-            $prompt .= "}";
+            $prompt .= '}';
 
             $response = Http::timeout(15)
                 ->connectTimeout(5)
@@ -1084,6 +1084,7 @@ Retourne obligatoirement ce format JSON uniquement:
 
                 if (is_array($result) && isset($result['estimated_completion_rate'])) {
                     $result['analyzed_at'] = now()->toIso8601String();
+
                     return $result;
                 }
             }
@@ -1098,7 +1099,7 @@ Retourne obligatoirement ce format JSON uniquement:
             'recommended_action' => 'split_escrow',
             'recommended_artisan_percentage' => 50,
             'recommended_client_percentage' => 50,
-            'rationale_fr' => "Télé-expertise de repli : partage équitable 50/50 recommandé en attendant instruction physique.",
+            'rationale_fr' => 'Télé-expertise de repli : partage équitable 50/50 recommandé en attendant instruction physique.',
             'confidence_score' => 60,
             'analyzed_at' => now()->toIso8601String(),
         ];
@@ -1591,6 +1592,115 @@ Retourne obligatoirement ce format JSON uniquement:
     }
 
     /**
+     * Rédige, à partir d'un document de référence (norme, guide technique),
+     * les fiches techniques de la base de connaissances de l'Assistant IA.
+     *
+     * Échec fermé : sans clé, sur erreur ou réponse illisible, renvoie `null` —
+     * jamais une fiche de substitution (Règle d'or 29). Une liste vide signifie
+     * que le document ne contient aucune règle technique exploitable.
+     *
+     * @return list<array<string, mixed>>|null
+     */
+    public function extractKnowledgeSheets(string $bytes, string $mimeType, string $filename, ?int $userId = null): ?array
+    {
+        $prompt = <<<'PROMPT'
+Tu es ingénieur BTP en Côte d'Ivoire. Le document joint est un texte de référence (norme, guide technique, fiche fabricant).
+Rédige, UNIQUEMENT à partir de ce document, des fiches pratiques destinées à des artisans de chantier.
+
+Règles impératives :
+- N'invente rien. Toute information absente du document reste vide : chaîne vide "" ou liste vide []. N'ajoute ni dosage, ni prix, ni matériau que le document ne donne pas.
+- Une fiche par règle technique distincte du document, 5 fiches au plus. Si le document ne contient aucune règle technique exploitable, renvoie {"fiches": []}.
+- "texte_brut" recopie mot pour mot le passage du document qui fonde la fiche (800 caractères au plus).
+- "methode_execution" reformule ce passage en étapes simples, en français courant, sans changer aucune valeur.
+- "dosages_recommandes" reprend les dosages du document. Tu peux ajouter l'équivalent en unité de chantier (sac de 50 kg, brouette de 60 L, seau de 10 L) seulement s'il se calcule exactement à partir des valeurs du document ; garde alors la valeur d'origine dans "ratio".
+- "estimation_m2_fcfa", "gamme_prix" et "justification_economique" restent vides si le document ne donne aucun prix.
+- "tags_pathologies" : 2 à 6 mots-clés en minuscules, sans accent, mots reliés par "_" (exemples : fissure_structure, infiltration_dalle, dosage_beton).
+- "gamme_prix" vaut "Faible", "Moyen", "Eleve" ou "".
+
+Réponds par un objet JSON de cette forme exacte :
+{"fiches": [{
+  "norme_origine": {"source": "", "reference_article": "", "titre_original": "", "texte_brut": ""},
+  "alternative_prosartisan": {
+    "titre_vulgarise": "", "methode_execution": "", "bouclier_autorite": "",
+    "dosages_recommandes": [{"element": "", "ratio": "", "unite_mesure_locale": ""}],
+    "materiaux_recommandes": [{"nom": "", "substitut_acceptable": "", "disponibilite": ""}]
+  },
+  "cout_estime_local": {"gamme_prix": "", "estimation_m2_fcfa": "", "justification_economique": ""},
+  "metadata": {"tags_pathologies": [], "type_ouvrage": ""}
+}]}
+PROMPT;
+
+        $decoded = $this->callKycVision(
+            [[$bytes, $mimeType]],
+            $prompt."\n\nNom du fichier : ".mb_substr($filename, 0, 200),
+            'ingestion',
+            120,
+            $userId
+        );
+
+        if ($decoded === null) {
+            return null;
+        }
+
+        $sheets = $decoded['fiches'] ?? null;
+
+        if (! is_array($sheets)) {
+            return null;
+        }
+
+        return array_values(array_filter($sheets, 'is_array'));
+    }
+
+    /**
+     * Réponse en texte libre à une consigne. Échec fermé : `null` sans clé,
+     * sur erreur ou réponse vide — l'appelant annonce l'indisponibilité.
+     */
+    public function generateText(string $prompt, string $action, int $timeout = 60, ?int $userId = null): ?string
+    {
+        if ($this->apiKey === '' || $this->apiKey === 'PLACEHOLDER_KEY') {
+            return null;
+        }
+
+        $startTime = microtime(true);
+
+        try {
+            $response = Http::timeout($timeout)
+                ->connectTimeout(5)
+                ->post($this->getEndpointUrl(), [
+                    'contents' => [['parts' => [['text' => $prompt]]]],
+                ]);
+
+            $responseTimeMs = (microtime(true) - $startTime) * 1000;
+
+            if (! $response->successful()) {
+                AiMonitoringService::log($this->model, $action, 0, 0, $responseTimeMs, $response->status(), $response->body(), $userId);
+
+                return null;
+            }
+
+            AiMonitoringService::log(
+                $this->model,
+                $action,
+                (int) ($response->json('usageMetadata.promptTokenCount') ?? 0),
+                (int) ($response->json('usageMetadata.candidatesTokenCount') ?? 0),
+                $responseTimeMs,
+                200,
+                null,
+                $userId
+            );
+
+            $text = trim((string) ($response->json('candidates.0.content.parts.0.text') ?? ''));
+
+            return $text !== '' ? $text : null;
+        } catch (\Throwable $e) {
+            AiMonitoringService::log($this->model, $action, 0, 0, (microtime(true) - $startTime) * 1000, 500, $e->getMessage(), $userId);
+            Log::error('Gemini : exception', ['action' => $action, 'message' => $e->getMessage()]);
+
+            return null;
+        }
+    }
+
+    /**
      * Appel Gemini Vision commun aux contrôles KYC. Renvoie le JSON décodé,
      * ou null si l'analyse n'a pas pu être menée (clé absente, erreur, réponse illisible).
      *
@@ -1631,7 +1741,7 @@ Retourne obligatoirement ce format JSON uniquement:
 
             if (! $response->successful()) {
                 AiMonitoringService::log($this->model, $action, 0, 0, $responseTimeMs, $response->status(), $response->body(), $userId);
-                Log::error('Gemini KYC : réponse en erreur', ['action' => $action, 'status' => $response->status()]);
+                Log::error('Gemini : réponse en erreur', ['action' => $action, 'status' => $response->status()]);
 
                 return null;
             }
@@ -1652,7 +1762,7 @@ Retourne obligatoirement ce format JSON uniquement:
             $decoded = json_decode($text, true);
 
             if (! is_array($decoded)) {
-                Log::warning('Gemini KYC : réponse non JSON', ['action' => $action]);
+                Log::warning('Gemini : réponse non JSON', ['action' => $action]);
 
                 return null;
             }
@@ -1661,7 +1771,7 @@ Retourne obligatoirement ce format JSON uniquement:
         } catch (\Throwable $e) {
             $responseTimeMs = (microtime(true) - $startTime) * 1000;
             AiMonitoringService::log($this->model, $action, 0, 0, $responseTimeMs, 500, $e->getMessage(), $userId);
-            Log::error('Gemini KYC : exception', ['action' => $action, 'message' => $e->getMessage()]);
+            Log::error('Gemini : exception', ['action' => $action, 'message' => $e->getMessage()]);
 
             return null;
         }

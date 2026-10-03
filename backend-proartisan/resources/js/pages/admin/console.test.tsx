@@ -43,7 +43,7 @@ vi.mock('@inertiajs/react', () => ({
 
 // Panneaux lourds sans rapport avec le branchement testé.
 vi.mock('./ai-dashboard-panel', () => ({ default: () => <div>panneau-ia</div> }));
-vi.mock('./llm-admin-panel', () => ({ default: () => <div>panneau-llm</div> }));
+vi.mock('./panels/LlmAdminPanel', () => ({ default: () => <div>panneau-llm</div> }));
 vi.mock('./roles-permissions-panel', () => ({ default: () => <div>panneau-roles</div> }));
 vi.mock('./vitrine-panel', () => ({ default: () => <div>panneau-vitrine</div> }));
 vi.mock('./panels/CartographyPanel', () => ({ CartographyPanel: () => <div>panneau-cartographie</div> }));

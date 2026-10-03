@@ -264,12 +264,15 @@ class APIDatabaseClient {
         tags: queryTags,
         filters: metadataFilters,
         image_b64: imageB64,
-        image_url: imageUrl,
         image_name: imageName
       })
     });
     if (!res.ok) {
-      throw new Error(`Erreur serveur (${res.status})`);
+      // Le serveur explique son refus (quota atteint, photo non analysée…).
+      const body = await res.json().catch(() => null);
+      const error = new Error(`Erreur serveur (${res.status})`);
+      error.userMessage = body && typeof body.error === "string" ? body.error : null;
+      throw error;
     }
     return await res.json();
   }

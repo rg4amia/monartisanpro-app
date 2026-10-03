@@ -663,6 +663,12 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Correctif** : la carte de la flotte, le suivi en direct d'une course, la réaffectation d'une course et la modification des droits d'un rôle passent par des routes du backoffice, portées par la session de l'administrateur et gardées par leur capacité fine.
     * **Réaffectation d'une course** : réservée à la capacité `admin.missions.manage` et inscrite au journal d'audit.
     * **Tests automatisés** : `BackofficeSessionRoutesTest.php` (5 tests), `DeliveriesTrackingSection.test.tsx` (10 tests).
+50. **Chantier 23 — Base de connaissances de l'Assistant IA, ingestion réelle :** [COMPLÉTÉ — contrôle manuel à faire]
+    * **Ingestion réelle** : un document de référence importé (PDF, texte, image) est transmis à Gemini, qui en rédige jusqu'à cinq fiches pratiques. L'ancienne ingestion était simulée et produisait des fiches au contenu inventé.
+    * **Relecture obligatoire** : chaque fiche, générée par IA ou saisie à la main, attend l'approbation d'un administrateur avant d'atteindre l'Assistant ; une fiche publiée se retire avec un motif.
+    * **Aucune réponse inventée** : recherche sans fiche, photo non analysée, IA indisponible et médiation de litige l'annoncent au lieu de renvoyer un contenu par défaut.
+    * **Sécurité** : documents sur disque privé avec formats et taille contrôlés ; plus de téléchargement d'une adresse fournie par l'utilisateur ; médiation IA réservée aux parties au litige ; toutes les actions auditées.
+    * **Tests automatisés** : `Chantier23LlmKnowledgeTest.php` (35 tests), `LlmAdminPanel.test.tsx` (13 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.
