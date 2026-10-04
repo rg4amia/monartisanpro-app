@@ -106,7 +106,7 @@ class Chantier27LotBBackofficeAccountsTest extends TestCase
 
     public function test_an_admin_created_by_a_role_manager_gets_an_explicit_capability(): void
     {
-        $this->actingAs($this->adminWith(['admin.users.manage', 'admin.roles.manage']))->post('/admin/users', [
+        $this->actingAs($this->adminWith(['admin.full-access']))->post('/admin/users', [
             'name' => 'Nouvel Admin',
             'phone' => '+2250700000002',
             'role' => 'admin',

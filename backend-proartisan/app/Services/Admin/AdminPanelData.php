@@ -106,15 +106,36 @@ class AdminPanelData
                     ->map(fn (User $user): array => $this->presentKycUser($user))
                     ->all()
                 : [],
-            'litiges' => $can('admin.litiges.view') ? $this->adminService->listLitiges(null, 60)->items() : [],
-            'missions' => $can('admin.missions.view') ? $this->adminService->listMissions(null, null, 100)->items() : [],
-            'orders' => $can('admin.missions.view') ? $this->orders() : [],
-            'transactions' => $can('admin.transactions.view') ? $this->adminService->listTransactions(null, null, 100)->items() : [],
+            // Litiges, missions et transactions : les seuls champs que le
+            // tableau de bord lit (compteurs, courbes, activité récente) —
+            // jamais les modèles entiers, avec les parties et leurs téléphones.
+            'litiges' => $can('admin.litiges.view')
+                ? collect($this->adminService->listLitiges(null, 60)->items())->map(fn ($litige): array => [
+                    'id' => $litige->id,
+                    'mission_id' => $litige->mission_id,
+                    'statut' => $litige->statut,
+                    'created_at' => optional($litige->created_at)->toIso8601String(),
+                    'mission' => ['montant_total' => $litige->mission?->montant_total],
+                ])->all()
+                : [],
+            'missions' => $can('admin.missions.view')
+                ? collect($this->adminService->listMissions(null, null, 100)->items())->map(fn ($mission): array => [
+                    'id' => $mission->id,
+                    'status' => $mission->status,
+                ])->all()
+                : [],
+            'transactions' => $can('admin.transactions.view')
+                ? collect($this->adminService->listTransactions(null, null, 100)->items())->map(fn ($transaction): array => [
+                    'id' => $transaction->id,
+                    'type' => $transaction->type,
+                    'statut' => $transaction->statut,
+                    'montant' => (int) $transaction->montant,
+                    'created_at' => optional($transaction->created_at)->toIso8601String(),
+                ])->all()
+                : [],
             'users' => $can('admin.users.view')
                 ? $this->presentUsers($this->adminService->listUsers(null, null, null, 100)->getCollection())->all()
                 : [],
-            'evaluationsList' => $can('admin.evaluations.view') ? $this->adminService->listEvaluations(100)->items() : [],
-            'artisansScores' => $can('admin.evaluations.view') ? $this->adminService->listArtisansScores() : [],
             'whatsappClickStats' => $can('admin.whatsapp.manage') ? $this->whatsappClickStats() : ['total' => 0, 'today' => 0, 'last_7_days' => 0],
             'faqStats' => $can('admin.faq.manage') ? $this->faqStats() : ['total' => 0, 'actives' => 0, 'roles_covered' => 0],
         ];
@@ -998,19 +1019,6 @@ class AdminPanelData
             ->limit(30)
             ->get()
             ->toArray();
-    }
-
-    private function orders(): array
-    {
-        try {
-            return Schema::hasTable('orders')
-                ? $this->adminService->listOrders(null, null, null, 150)->items()
-                : [];
-        } catch (\Throwable $e) {
-            Log::error('Erreur chargement orders backoffice: '.$e->getMessage());
-
-            return [];
-        }
     }
 
     private function promoCodesList()

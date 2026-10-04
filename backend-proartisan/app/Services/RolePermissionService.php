@@ -30,6 +30,66 @@ class RolePermissionService
     public const ROLES = ['client', 'artisan', 'fournisseur', 'referent', 'livreur'];
 
     /**
+     * Catalogue des actions : rubrique et libellé. Seule source des libellés
+     * affichés — la base n'en garde qu'une copie, écrite par le seeder. Un
+     * libellé se corrige ici, sans migration.
+     */
+    public const CATALOG = [
+        'mission.create' => ['missions', 'Créer une demande de mission'],
+        'mission.view' => ['missions', 'Consulter les missions'],
+        'mission.update-status' => ['missions', "Mettre à jour l'état d'une mission"],
+        'mission.estimate' => ['missions', "Demander une estimation de prix à l'assistant"],
+        'mission.referent-validate' => ['missions', 'Valider un chantier après la visite du Référent'],
+
+        'devis.create' => ['devis', 'Rédiger un devis pour une mission'],
+        'devis.view' => ['devis', 'Consulter les devis'],
+        'devis.update' => ['devis', 'Modifier un devis'],
+        'devis.accept' => ['devis', 'Accepter un devis et payer son acompte'],
+        'devis.refuse' => ['devis', 'Refuser un devis'],
+
+        'jalon.view' => ['jalons', 'Consulter les étapes du chantier'],
+        'jalon.submit' => ['jalons', 'Déclarer une étape terminée'],
+        'jalon.upload-photos' => ['jalons', "Envoyer les photos géolocalisées d'une étape"],
+        'jalon.request-otp' => ['jalons', "Demander le code de validation d'une étape"],
+        'jalon.validate-otp' => ['jalons', 'Valider une étape par son code et payer l\'artisan'],
+
+        'jcode.create' => ['jcodes', 'Créer un bon matériel'],
+        'jcode.view' => ['jcodes', 'Consulter les bons matériels'],
+        'jcode.scan' => ['jcodes', 'Servir un bon matériel au comptoir'],
+        'jcode.upload-photo-materials' => ['jcodes', 'Envoyer la photo géolocalisée des matériaux reçus'],
+
+        'orders.create' => ['orders', 'Commander des matériaux'],
+        'orders.view' => ['orders', 'Consulter les commandes'],
+        'orders.manage' => ['orders', 'Préparer les commandes reçues'],
+        'deliveries.manage' => ['orders', 'Accepter et effectuer des livraisons'],
+
+        'litige.create' => ['litiges', 'Ouvrir un litige'],
+        'litige.view' => ['litiges', "Consulter le dossier d'un litige"],
+        'litige.arbitrate' => ['litiges', 'Arbitrer un litige'],
+        'litige.vote' => ['litiges', "Voter au sein d'un jury de litige"],
+
+        'kyc.upload' => ['kyc', "Envoyer ses pièces d'identité"],
+        'kyc.view' => ['kyc', 'Consulter les dossiers KYC en attente'],
+        'kyc.review' => ['kyc', 'Valider ou rejeter un dossier KYC'],
+
+        'evaluation.create' => ['evaluations', 'Évaluer un artisan, un fournisseur ou un livreur'],
+
+        'parrainage.create' => ['parrainages', 'Parrainer un nouvel utilisateur'],
+        'parrainage.view' => ['parrainages', 'Consulter ses parrainages'],
+
+        'micro-credit.apply' => ['micro-credit', 'Demander un micro-crédit'],
+        'micro-credit.view' => ['micro-credit', 'Consulter ses demandes de micro-crédit'],
+
+        'transactions.view' => ['transactions', "Consulter l'historique de ses paiements"],
+
+        'sms.send' => ['sms', 'Envoyer des SMS administratifs'],
+        'sms.view' => ['sms', 'Consulter le journal des SMS'],
+
+        'supplier.dashboard' => ['supplier', 'Accéder au tableau de bord du fournisseur'],
+        'supplier-products.manage' => ['supplier', 'Gérer les articles de son catalogue'],
+    ];
+
+    /**
      * Droits d'origine de chaque rôle — seule liste de référence : le seeder,
      * le repli de `HasPermissions` et le retour aux droits d'origine la lisent.
      */
@@ -172,9 +232,18 @@ class RolePermissionService
     public function getAllPermissions(): Collection
     {
         return Permission::whereIn('name', self::effectiveActions())
-            ->orderBy('category')
             ->orderBy('name')
-            ->get(['id', 'name', 'description', 'category']);
+            ->get(['id', 'name', 'description', 'category'])
+            // Rubrique et libellé viennent du catalogue du code ; la copie en
+            // base ne sert que si l'action n'y figure pas encore.
+            ->map(fn (Permission $permission): array => [
+                'id' => $permission->id,
+                'name' => $permission->name,
+                'category' => self::CATALOG[$permission->name][0] ?? $permission->category,
+                'description' => self::CATALOG[$permission->name][1] ?? $permission->description,
+            ])
+            ->sortBy(['category', 'name'])
+            ->values();
     }
 
     /**

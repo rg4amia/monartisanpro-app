@@ -20,6 +20,8 @@ interface AdminAccount {
     protected: boolean;
     /** Le compte de l'administrateur connecté : il garde toujours la gestion des rôles. */
     is_self?: boolean;
+    /** Faux : le compte détient des droits que l'administrateur connecté n'a pas. */
+    editable?: boolean;
 }
 
 /** Capacités qu'un administrateur ne se retire jamais à lui-même (anti-verrouillage). */
@@ -47,6 +49,8 @@ interface RolesPermissionsPanelProps {
     customizedRoles?: Record<string, boolean>;
     /** Profils types d'administrateur : un jeu de capacités appliqué d'un geste. */
     adminProfiles?: Record<string, AdminProfile>;
+    /** Capacités que l'administrateur connecté peut accorder ; `*` : toutes. */
+    grantableCapabilities?: string[];
 }
 
 interface AdminProfile {
@@ -101,6 +105,7 @@ export default function RolesPermissionsPanel({
     reservedRolePermissions = {},
     customizedRoles = {},
     adminProfiles = {},
+    grantableCapabilities = ['*'],
 }: RolesPermissionsPanelProps) {
     const { confirm, dialog } = useConfirm();
     const [selectedRole, setSelectedRole] = useState<string>('client');
@@ -116,7 +121,11 @@ export default function RolesPermissionsPanel({
     );
     const adminHasFullAccess = selectedAdmin?.capabilities.includes('*') ?? false;
     const adminIsProtected = selectedAdmin?.protected ?? false;
-    const adminLocked = savingAdmin || adminIsProtected;
+    // Nul n'accorde ce qu'il ne détient pas ; le serveur reste seul juge.
+    const canGrantAll = grantableCapabilities.includes('*');
+    const canGrant = (capability: string) => canGrantAll || grantableCapabilities.includes(capability);
+    const adminOutOfReach = !adminIsProtected && selectedAdmin?.editable === false;
+    const adminLocked = savingAdmin || adminIsProtected || adminOutOfReach;
 
     // Une action réservée à d'autres rôles ne peut pas être attribuée à
     // celui-ci : l'afficher verrouillée ne ferait qu'encombrer l'écran.
@@ -227,7 +236,7 @@ export default function RolesPermissionsPanel({
         }
 
         // Si toutes les capacités sont sélectionnées, réactiver la sentinelle d'accès total
-        if (allCapabilities.length > 0 && next.length >= allCapabilities.length) {
+        if (canGrantAll && allCapabilities.length > 0 && next.length >= allCapabilities.length) {
             submitAdminCapabilities(['admin.full-access']);
             return;
         }
@@ -330,6 +339,20 @@ export default function RolesPermissionsPanel({
                                         </p>
                                     ) : null}
 
+                                    {adminOutOfReach ? (
+                                        <p className="rounded-2xl border border-[#e6d3b2] bg-[#fbf1db] p-4 text-xs text-[#7d571b]">
+                                            Ce compte détient des droits que vous n'avez pas : seul un administrateur qui les
+                                            détient peut modifier ses droits.
+                                        </p>
+                                    ) : null}
+
+                                    {!canGrantAll && !adminLocked ? (
+                                        <p className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 text-xs text-[var(--admin-text-soft)]">
+                                            Vous ne pouvez accorder que les droits que vous détenez vous-même. Les autres sont
+                                            grisés.
+                                        </p>
+                                    ) : null}
+
                                     <label className="flex items-center justify-between gap-4 p-4 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)]">
                                         <div className="min-w-0">
                                             <span className="font-semibold text-sm text-[var(--admin-text)]">Accès total</span>
@@ -342,7 +365,7 @@ export default function RolesPermissionsPanel({
                                             type="checkbox"
                                             className="h-5 w-5 shrink-0"
                                             checked={adminHasFullAccess}
-                                            disabled={adminLocked}
+                                            disabled={adminLocked || !canGrantAll}
                                             onChange={(e) => setFullAccess(e.target.checked)}
                                         />
                                     </label>
@@ -360,7 +383,7 @@ export default function RolesPermissionsPanel({
                                                         key={key}
                                                         type="button"
                                                         title={profile.description}
-                                                        disabled={adminLocked}
+                                                        disabled={adminLocked || !profile.capabilities.every(canGrant)}
                                                         onClick={() => applyProfile(profile)}
                                                         className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text)] transition hover:bg-[#f7efe2] disabled:opacity-50"
                                                     >
@@ -394,7 +417,7 @@ export default function RolesPermissionsPanel({
                                                             type="checkbox"
                                                             className="h-5 w-5 shrink-0 mt-0.5"
                                                             checked={adminHas(name)}
-                                                            disabled={adminLocked}
+                                                            disabled={adminLocked || (!canGrant(name) && !adminHas(name))}
                                                             onChange={() => toggleAdminCapability(name)}
                                                         />
                                                     </label>

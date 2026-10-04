@@ -26,6 +26,8 @@ class AdminPermissionService
 
     public const EMPTY_SELECTION_MESSAGE = 'Cochez au moins une capacité, ou l\'accès total.';
 
+    public const OUTRANKED_MESSAGE = 'Ce compte détient des droits que vous n\'avez pas : seul un administrateur qui les détient peut agir sur lui.';
+
     /**
      * Profils types : un jeu de capacités appliqué d'un geste à un compte,
      * que l'administrateur ajuste ensuite. Un profil n'est pas mémorisé sur
@@ -253,6 +255,42 @@ class AdminPermissionService
     }
 
     /**
+     * L'acteur détient-il tout ce que détient la cible ? Sans cela, le porteur
+     * de « gérer les rôles » prenait la main sur un compte plus étendu que le
+     * sien, et obtenait par lui ce qu'il n'a pas.
+     */
+    public function covers(User $actor, User $target): bool
+    {
+        $held = $this->capabilitiesFor($actor);
+
+        if ($held === ['*']) {
+            return true;
+        }
+
+        $targeted = $this->capabilitiesFor($target);
+
+        return $targeted !== ['*'] && array_diff($targeted, $held) === [];
+    }
+
+    /**
+     * Capacités d'un compte administrateur qui vient d'être créé ou promu :
+     * l'accès total si son auteur l'a, sinon les capacités de son auteur —
+     * jamais davantage.
+     *
+     * @return array<int, string>
+     */
+    public function initialCapabilitiesGrantedBy(?User $actor): array
+    {
+        if ($actor === null) {
+            return [self::FULL_ACCESS];
+        }
+
+        $held = $this->capabilitiesFor($actor);
+
+        return $held === ['*'] || $held === [] ? [self::FULL_ACCESS] : $held;
+    }
+
+    /**
      * Remplace intégralement les capacités d'un administrateur.
      *
      * @param  array<int, string>  $capabilities
@@ -293,6 +331,26 @@ class AdminPermissionService
         }
 
         $before = $this->storedCapabilities($target);
+
+        // Nul n'accorde ce qu'il ne détient pas : sans cette limite, « gérer
+        // les rôles » valait l'accès total, son porteur pouvant tout
+        // s'accorder. Seul un administrateur à accès total accorde tout.
+        $held = $this->capabilitiesFor($actor);
+        if ($held !== ['*']) {
+            if ($target->id !== $actor->id && ! $this->covers($actor, $target)) {
+                throw ValidationException::withMessages(['user' => [self::OUTRANKED_MESSAGE]]);
+            }
+
+            $selfKept = $target->id === $actor->id ? self::SELF_KEPT_CAPABILITIES : [];
+            $beyond = array_values(array_diff($capabilities, $before, $held, $selfKept));
+
+            if ($beyond !== []) {
+                throw ValidationException::withMessages([
+                    'capabilities' => ['Vous ne pouvez accorder que les droits que vous détenez vous-même. Hors de votre portée : '.implode(', ', $beyond).'.'],
+                ]);
+            }
+        }
+
         $installed = Permission::whereIn('name', $capabilities)->pluck('id', 'name');
 
         // Ignorée en silence, une capacité sans ligne en base pouvait laisser
@@ -360,10 +418,13 @@ class AdminPermissionService
      */
     public function panelData(): array
     {
+        $actor = Auth::user();
+        $grantable = $actor instanceof User ? $this->capabilitiesFor($actor) : [];
+
         $admins = User::query()
             ->where('role', 'admin')
             ->orderBy('name')
-            ->get(['id', 'name', 'email', 'phone'])
+            ->get(['id', 'name', 'email', 'phone', 'role', 'account_status', 'anonymized_at'])
             ->map(fn (User $admin) => [
                 'id' => $admin->id,
                 'name' => $admin->name,
@@ -372,6 +433,9 @@ class AdminPermissionService
                 'capabilities' => $this->capabilitiesFor($admin),
                 'protected' => $this->isProtectedSuperAdmin($admin),
                 'is_self' => $admin->id === Auth::id(),
+                // Un compte plus étendu que celui de l'administrateur connecté
+                // ne se modifie pas par lui.
+                'editable' => $actor instanceof User && ($admin->id === $actor->id || $this->covers($actor, $admin)),
             ])
             ->values()
             ->all();
@@ -379,6 +443,8 @@ class AdminPermissionService
         return [
             'adminCapabilityCatalog' => self::catalog(),
             'adminProfiles' => self::PROFILES,
+            // Capacités que l'administrateur connecté peut accorder (`*` : toutes).
+            'grantableCapabilities' => $grantable,
             'admins' => $admins,
         ];
     }

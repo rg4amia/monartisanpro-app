@@ -67,7 +67,7 @@ class AdminUserService
         $user = User::create($data);
 
         if ($user->role === 'admin') {
-            $this->grantExplicitFullAccess($user);
+            $this->grantInitialAccess($user);
         }
 
         $this->audit->log('user.created', $user, [
@@ -469,6 +469,12 @@ class AdminUserService
         if (! $this->canManageAdminAccounts($actor)) {
             throw new \LogicException('Agir sur un compte administrateur exige le droit de gérer les rôles et les droits des administrateurs.');
         }
+
+        // Changer le mot de passe d'un compte plus étendu que le sien
+        // suffirait à s'en emparer.
+        if (! $this->permissions->covers($actor, $target)) {
+            throw new \LogicException(AdminPermissionService::OUTRANKED_MESSAGE);
+        }
     }
 
     /**
@@ -549,7 +555,7 @@ class AdminUserService
     private function syncAdminAccessAfterRoleChange(User $user, string $previousRole): void
     {
         if ($user->role === 'admin') {
-            $this->grantExplicitFullAccess($user);
+            $this->grantInitialAccess($user);
 
             return;
         }
@@ -561,22 +567,25 @@ class AdminUserService
     }
 
     /**
-     * L'accès total d'un nouvel administrateur s'écrit en base : il ne repose
-     * pas sur l'absence de ligne, et se restreint ensuite dans « Rôles & Actions ».
+     * Les droits d'un nouvel administrateur s'écrivent en base : l'accès total
+     * si son auteur l'a, sinon les capacités de son auteur — jamais davantage.
+     * Ils se règlent ensuite dans « Rôles & Actions ».
      */
-    private function grantExplicitFullAccess(User $user): void
+    private function grantInitialAccess(User $user): void
     {
-        $permissionId = DB::table('permissions')->where('name', AdminPermissionService::FULL_ACCESS)->value('id');
-
-        if ($permissionId === null || DB::table('admin_permission_user')->where('user_id', $user->id)->exists()) {
+        if (DB::table('admin_permission_user')->where('user_id', $user->id)->exists()) {
             return;
         }
 
-        DB::table('admin_permission_user')->insert([
-            'user_id' => $user->id,
-            'permission_id' => $permissionId,
-            'created_at' => now(),
-        ]);
+        $capabilities = $this->permissions->initialCapabilitiesGrantedBy($this->actor());
+
+        foreach (DB::table('permissions')->whereIn('name', $capabilities)->pluck('id') as $permissionId) {
+            DB::table('admin_permission_user')->insert([
+                'user_id' => $user->id,
+                'permission_id' => $permissionId,
+                'created_at' => now(),
+            ]);
+        }
 
         $this->permissions->forget($user);
     }

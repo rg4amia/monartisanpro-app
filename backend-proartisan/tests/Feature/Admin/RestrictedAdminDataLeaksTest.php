@@ -75,7 +75,7 @@ class RestrictedAdminDataLeaksTest extends TestCase
 
         $props = $this->props($this->adminWith(['admin.faq.manage']), '/admin/dashboard');
 
-        foreach (['users', 'transactions', 'missions', 'orders', 'litiges', 'kycUsers', 'fournisseurs', 'evaluationsList', 'artisansScores', 'financialKpis'] as $block) {
+        foreach (['users', 'transactions', 'missions', 'litiges', 'kycUsers', 'fournisseurs', 'financialKpis'] as $block) {
             $this->assertSame([], $props[$block], "Le bloc « {$block} » ne doit pas être servi.");
         }
         // Le bloc de sa capacité, lui, est servi.

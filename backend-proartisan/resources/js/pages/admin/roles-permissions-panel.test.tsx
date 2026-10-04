@@ -270,3 +270,36 @@ describe('RolesPermissionsPanel — profils types', () => {
         expect(screen.queryByRole('button', { name: 'Support' })).not.toBeInTheDocument();
     });
 });
+
+describe('RolesPermissionsPanel — droits accordés dans la limite des siens', () => {
+    beforeEach(() => {
+        routerPost.mockReset();
+    });
+
+    it("grise les capacités que l'administrateur connecté ne détient pas, et l'accès total", () => {
+        renderPanel(makeAdmin(), { grantableCapabilities: ['admin.roles.manage', 'admin.users.view', 'admin.faq.manage'] });
+
+        expect(screen.getByText(/Vous ne pouvez accorder que les droits que vous détenez vous-même/)).toBeInTheDocument();
+        expect(capabilityCheckbox('admin.users.manage')).toBeDisabled();
+        expect(capabilityCheckbox('admin.users.view')).toBeEnabled();
+        expect(fullAccessCheckbox()).toBeDisabled();
+    });
+
+    it("verrouille un compte qui détient des droits hors de portée", () => {
+        renderPanel(makeAdmin({ capabilities: ['*'], editable: false }), { grantableCapabilities: ['admin.roles.manage'] });
+
+        expect(screen.getByText(/Ce compte détient des droits que vous n'avez pas/)).toBeInTheDocument();
+        expect(capabilityCheckbox('admin.roles.manage')).toBeDisabled();
+    });
+
+    it("n'applique pas un profil qui contient une capacité hors de portée", () => {
+        renderPanel(makeAdmin(), {
+            grantableCapabilities: ['admin.roles.manage', 'admin.faq.manage'],
+            adminProfiles: {
+                support: { label: 'Support', description: 'Comptes et FAQ', capabilities: ['admin.users.view', 'admin.faq.manage'] },
+            },
+        });
+
+        expect(screen.getByRole('button', { name: 'Support' })).toBeDisabled();
+    });
+});
