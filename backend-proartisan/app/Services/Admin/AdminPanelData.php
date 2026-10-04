@@ -9,7 +9,6 @@ use App\Models\Communication;
 use App\Models\ContactMessage;
 use App\Models\Faq;
 use App\Models\Notification;
-use App\Models\Permission;
 use App\Models\PromoCode;
 use App\Models\RecruitmentOffer;
 use App\Models\Sector;
@@ -651,39 +650,42 @@ class AdminPanelData
 
     public function observability(): array
     {
+        $snapshot = $this->observability->snapshot();
+
+        // Les compteurs restent visibles ; la liste nominative des alertes de
+        // fraude (noms, téléphones) demande la capacité `admin.fraud.view`.
+        if (! $this->capabilityChecker()('admin.fraud.view') && isset($snapshot['fraud']['alerts_list'])) {
+            $snapshot['fraud']['alerts_list'] = [];
+            $snapshot['fraud']['alerts_hidden'] = true;
+        }
+
         return [
-            'observability' => $this->observability->snapshot(),
+            'observability' => $snapshot,
         ];
     }
 
     public function rolesPermissions(): array
     {
-        $allPermissions = [];
-        $rolesPermissions = array_fill_keys(RolePermissionService::ROLES, []);
+        $roles = [
+            'allPermissions' => [],
+            'rolesPermissions' => array_fill_keys(RolePermissionService::ROLES, []),
+            'protectedRolePermissions' => RolePermissionService::PROTECTED,
+            'reservedRolePermissions' => RolePermissionService::RESERVED,
+            'customizedRoles' => array_fill_keys(RolePermissionService::ROLES, false),
+        ];
 
         try {
             if (Schema::hasTable('permissions') && Schema::hasTable('permission_role')) {
-                // Les capacités « admin.* » ne sont pas assignables par rôle :
-                // elles ont leur propre matrice (par compte admin).
-                $allPermissions = Permission::where('name', 'not like', 'admin.%')->get();
-                foreach (array_keys($rolesPermissions) as $role) {
-                    $rolesPermissions[$role] = DB::table('permission_role')
-                        ->join('permissions', 'permission_role.permission_id', '=', 'permissions.id')
-                        ->where('permission_role.role', $role)
-                        ->pluck('permissions.name')
-                        ->toArray();
-                }
+                // Seules les actions exigées par une route sont proposées ;
+                // les capacités « admin.* » ont leur propre matrice, par compte.
+                $roles = app(RolePermissionService::class)->panelData();
             }
         } catch (\Throwable $e) {
-            Log::error('Erreur chargement roles/permissions backoffice: '.$e->getMessage());
+            Log::error('Erreur chargement RolesPermissions: '.$e->getMessage());
         }
 
         return [
-            'allPermissions' => $allPermissions,
-            'rolesPermissions' => $rolesPermissions,
-            // Garde-fous des droits par rôle : actions indispensables et actions réservées.
-            'protectedRolePermissions' => RolePermissionService::PROTECTED,
-            'reservedRolePermissions' => RolePermissionService::RESERVED,
+            ...$roles,
             // Capacités fines du backoffice, affectées compte admin par compte admin
             // (Chantier C6 / P2-10).
             ...$this->adminPermissions->panelData(),

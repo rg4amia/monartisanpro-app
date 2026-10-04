@@ -749,6 +749,13 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Codes secrets** : le texte d'une notification portant un code de retrait, de prise en charge ou de bon matériel n'est plus affiché dans le backoffice.
     * **Analyse** : `docs/chantiers/analyses/2026-10-04-analyse-module-gestion-des-roles.md` (constats B1 et B2 ; les autres attendent une décision).
     * **Tests automatisés** : `RestrictedAdminDataLeaksTest.php` (6 tests), `NotificationsPanel.test.tsx`.
+62. **Chantier 28 — Gestion des rôles : un écran qui dit vrai :** [COMPLÉTÉ — contrôle dans le navigateur à faire]
+    * **Écran « Rôles & Actions »** : il ne propose plus que les actions qui ont un effet. Les 25 interrupteurs sans effet ont disparu ; un rôle sans action réglable est annoncé comme tel.
+    * **Garde-fous** : les actions dont dépend un chantier en cours ne se retirent plus ; « créer une mission » ne s'attribue qu'au client.
+    * **Retour aux droits d'origine** : un bouton rétablit les droits d'un rôle modifié.
+    * **Administrateurs** : un administrateur restreint n'exerce plus les actions de l'application ; des profils types (Support, Finance, Modération, Communication) appliquent un jeu de droits d'un geste ; la liste des alertes de fraude demande son droit.
+    * **Robustesse** : relancer l'initialisation des droits n'efface plus les réglages ; le rôle « driver », sans existence, est supprimé.
+    * **Tests automatisés** : `Chantier28RolesManagementTest.php` (16 tests), `roles-permissions-panel.test.tsx`.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

@@ -42,6 +42,8 @@ interface FraudAlertsSectionProps {
         critical_alerts_count?: number;
         payment_holds_count?: number;
         alerts_list?: FraudAlertItem[];
+        /** Liste nominative retenue par le serveur : capacité `admin.fraud.view` absente. */
+        alerts_hidden?: boolean;
     };
     canManage?: boolean;
 }
@@ -185,10 +187,18 @@ export function FraudAlertsSection({ fraudData, canManage = true }: FraudAlertsS
                         {filteredAlerts.length === 0 ? (
                             <tr>
                                 <td colSpan={7}>
-                                    <EmptyState
-                                        description="Aucun signal suspect ou tentative de fraude n'a été détecté pour le moment."
-                                        title="Réseau sécurisé et conforme"
-                                    />
+                                    {fraudData?.alerts_hidden ? (
+                                        // Liste retenue par le serveur : ne jamais annoncer « aucune alerte ».
+                                        <EmptyState
+                                            description="Le détail des alertes demande le droit « Consulter les alertes anti-fraude et de collusion ». Les compteurs ci-dessus restent exacts."
+                                            title="Liste des alertes non accessible"
+                                        />
+                                    ) : (
+                                        <EmptyState
+                                            description="Aucun signal suspect ou tentative de fraude n'a été détecté pour le moment."
+                                            title="Réseau sécurisé et conforme"
+                                        />
+                                    )}
                                 </td>
                             </tr>
                         ) : (

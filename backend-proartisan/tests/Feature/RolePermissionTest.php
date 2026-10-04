@@ -74,34 +74,23 @@ class RolePermissionTest extends TestCase
             'kyc_status' => 'actif',
         ]);
 
-        // Artisan n'a pas mission.create par défaut
-        $this->assertFalse($artisan->hasPermissionTo('mission.create'));
+        // L'artisan peut modifier un devis par défaut : action réglable,
+        // non indispensable.
+        $this->assertTrue($artisan->hasPermissionTo('devis.update'));
 
-        // Assigner via API
-        $response = $this->actingAs($admin)
-            ->postJson('/api/v1/admin/roles-permissions/assign', [
-                'role' => 'artisan',
-                'permission' => 'mission.create',
-            ]);
-
-        $response->assertOk()
+        $this->actingAs($admin)
+            ->postJson('/api/v1/admin/roles-permissions/revoke', ['role' => 'artisan', 'permission' => 'devis.update'])
+            ->assertOk()
             ->assertJsonPath('success', true);
 
-        // Maintenant l'artisan doit l'avoir
-        $this->assertTrue($artisan->fresh()->hasPermissionTo('mission.create'));
+        $this->assertFalse($artisan->fresh()->hasPermissionTo('devis.update'));
 
-        // Révoquer via API
-        $response = $this->actingAs($admin)
-            ->postJson('/api/v1/admin/roles-permissions/revoke', [
-                'role' => 'artisan',
-                'permission' => 'mission.create',
-            ]);
-
-        $response->assertOk()
+        $this->actingAs($admin)
+            ->postJson('/api/v1/admin/roles-permissions/assign', ['role' => 'artisan', 'permission' => 'devis.update'])
+            ->assertOk()
             ->assertJsonPath('success', true);
 
-        // L'artisan ne doit plus l'avoir
-        $this->assertFalse($artisan->fresh()->hasPermissionTo('mission.create'));
+        $this->assertTrue($artisan->fresh()->hasPermissionTo('devis.update'));
     }
 
     public function test_route_restriction_via_can_middleware(): void

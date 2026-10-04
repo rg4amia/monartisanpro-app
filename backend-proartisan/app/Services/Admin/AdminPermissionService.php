@@ -26,6 +26,49 @@ class AdminPermissionService
 
     public const EMPTY_SELECTION_MESSAGE = 'Cochez au moins une capacité, ou l\'accès total.';
 
+    /**
+     * Profils types : un jeu de capacités appliqué d'un geste à un compte,
+     * que l'administrateur ajuste ensuite. Un profil n'est pas mémorisé sur
+     * le compte : seules ses capacités le sont.
+     */
+    public const PROFILES = [
+        'support' => [
+            'label' => 'Support',
+            'description' => 'Comptes, dossiers KYC, missions et litiges en consultation, historique des notifications, FAQ.',
+            'capabilities' => [
+                'admin.users.view', 'admin.users.manage', 'admin.kyc.view', 'admin.kyc.review',
+                'admin.missions.view', 'admin.litiges.view', 'admin.notifications.view', 'admin.faq.manage',
+            ],
+        ],
+        'finance' => [
+            'label' => 'Finance',
+            'description' => 'Transactions, versements et retraits, exports ; comptes et missions en consultation.',
+            'capabilities' => [
+                'admin.transactions.view', 'admin.transactions.manage', 'admin.exports',
+                'admin.users.view', 'admin.missions.view',
+            ],
+        ],
+        'moderation' => [
+            'label' => 'Modération',
+            'description' => 'Dossiers KYC, fournisseurs, litiges, évaluations, fraude, recrutement et annuaire.',
+            'capabilities' => [
+                'admin.kyc.view', 'admin.kyc.review', 'admin.fournisseurs.review',
+                'admin.litiges.view', 'admin.litiges.arbitrate', 'admin.missions.view',
+                'admin.evaluations.view', 'admin.fraud.view', 'admin.fraud.manage',
+                'admin.recruitment.manage', 'admin.directory.manage',
+            ],
+        ],
+        'communication' => [
+            'label' => 'Communication',
+            'description' => 'Annonces, messages push et SMS, campagnes, site vitrine, FAQ, promotions et parrainage.',
+            'capabilities' => [
+                'admin.communications.manage', 'admin.notifications.manage', 'admin.notifications.broadcast',
+                'admin.vitrine.manage', 'admin.whatsapp.manage', 'admin.faq.manage',
+                'admin.promo.manage', 'admin.parrainage.manage',
+            ],
+        ],
+    ];
+
     /** Préfixe du cache des capacités effectives par utilisateur. */
     private const CACHE_PREFIX = 'admin_caps_user_';
 
@@ -250,7 +293,18 @@ class AdminPermissionService
         }
 
         $before = $this->storedCapabilities($target);
-        $permissionIds = Permission::whereIn('name', $capabilities)->pluck('id')->all();
+        $installed = Permission::whereIn('name', $capabilities)->pluck('id', 'name');
+
+        // Ignorée en silence, une capacité sans ligne en base pouvait laisser
+        // le compte sans aucune ligne — donc avec l'accès total.
+        $missing = array_values(array_diff($capabilities, $installed->keys()->all()));
+        if ($missing !== []) {
+            throw ValidationException::withMessages([
+                'capabilities' => ['Capacité non installée en base : '.implode(', ', $missing).'. Une migration doit l\'inscrire.'],
+            ]);
+        }
+
+        $permissionIds = $installed->values()->all();
 
         DB::transaction(function () use ($target, $permissionIds) {
             DB::table('admin_permission_user')->where('user_id', $target->id)->delete();
@@ -324,6 +378,7 @@ class AdminPermissionService
 
         return [
             'adminCapabilityCatalog' => self::catalog(),
+            'adminProfiles' => self::PROFILES,
             'admins' => $admins,
         ];
     }

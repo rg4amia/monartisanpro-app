@@ -8,6 +8,8 @@ use App\Http\Requests\Admin\RevokePermissionRequest;
 use App\Services\RolePermissionService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
+use Illuminate\Http\Request;
+use Illuminate\Validation\Rule;
 
 class AdminRolePermissionController extends Controller
 {
@@ -60,6 +62,30 @@ class AdminRolePermissionController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'Action attribuée au rôle avec succès.',
+        ]);
+    }
+
+    /**
+     * Rendre à un rôle ses droits d'origine.
+     */
+    public function reset(Request $request): JsonResponse|RedirectResponse
+    {
+        $role = $request->validate([
+            'role' => ['required', 'string', Rule::in(RolePermissionService::ROLES)],
+        ], [
+            'role.required' => 'Le rôle est requis.',
+            'role.in' => 'Le rôle spécifié est invalide.',
+        ])['role'];
+
+        $this->rolePermissionService->resetRole($role);
+
+        if ($request->header('X-Inertia')) {
+            return back()->with('success', 'Droits d\'origine du rôle rétablis.');
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Droits d\'origine du rôle rétablis.',
         ]);
     }
 

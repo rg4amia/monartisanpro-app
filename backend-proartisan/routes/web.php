@@ -229,6 +229,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::get('/roles-permissions', [BackofficeController::class, 'rolesPermissions'])->middleware('can:admin.roles.manage')->name('roles-permissions');
         Route::post('/roles-permissions/assign', [AdminRolePermissionController::class, 'assign'])->middleware('can:admin.roles.manage')->name('roles-permissions.assign');
         Route::post('/roles-permissions/revoke', [AdminRolePermissionController::class, 'revoke'])->middleware('can:admin.roles.manage')->name('roles-permissions.revoke');
+        Route::post('/roles-permissions/reset', [AdminRolePermissionController::class, 'reset'])->middleware('can:admin.roles.manage')->name('roles-permissions.reset');
         Route::post('/admins/{user}/permissions', [BackofficeController::class, 'syncAdminPermissions'])->middleware('can:admin.roles.manage')->name('admins.permissions');
         Route::get('/audit-logs', [BackofficeController::class, 'auditLogs'])->middleware('can:admin.audit.view')->name('audit-logs');
         Route::get('/observability', [BackofficeController::class, 'observability'])->middleware('can:admin.observability.view')->name('observability');

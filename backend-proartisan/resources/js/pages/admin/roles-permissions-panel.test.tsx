@@ -1,4 +1,4 @@
-import { fireEvent, render, screen } from '@testing-library/react';
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
 const routerPost = vi.fn();
@@ -42,7 +42,7 @@ function makeAdmin(overrides: Record<string, unknown> = {}) {
     };
 }
 
-function renderPanel(admin = makeAdmin()) {
+function renderPanel(admin = makeAdmin(), extra: Record<string, unknown> = {}) {
     render(
         <RolesPermissionsPanel
             allPermissions={permissions}
@@ -51,6 +51,7 @@ function renderPanel(admin = makeAdmin()) {
             admins={[admin]}
             protectedRolePermissions={{ client: ['mission.create'] }}
             reservedRolePermissions={{ 'litige.arbitrate': ['referent'] }}
+            {...extra}
         />,
     );
 }
@@ -174,14 +175,22 @@ describe('RolesPermissionsPanel — droits des rôles de l’application', () =>
         expect(screen.getByText('Indispensable à ce rôle : ne se retire pas.')).toBeInTheDocument();
     });
 
-    it("ne laisse pas attribuer une action réservée à un autre rôle", () => {
+    it("ne montre pas à un rôle une action réservée à un autre", () => {
         renderPanel();
 
-        expect(screen.getByRole('checkbox', { name: 'litige.arbitrate' })).toBeDisabled();
-        expect(screen.getByText('Action réservée : ne s’attribue pas à ce rôle.')).toBeInTheDocument();
+        expect(screen.queryByRole('checkbox', { name: 'litige.arbitrate' })).not.toBeInTheDocument();
 
         fireEvent.click(screen.getByRole('button', { name: 'Référent' }));
         expect(screen.getByRole('checkbox', { name: 'litige.arbitrate' })).toBeEnabled();
+    });
+
+    it("annonce un rôle sans action réglable au lieu d'un cadre vide", () => {
+        renderPanel(makeAdmin(), { reservedRolePermissions: { 'mission.create': ['client'], 'litige.arbitrate': ['referent'] } });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Livreur' }));
+
+        expect(screen.getByText("Aucune action réglable pour ce rôle : son accès est fixé par l'application.")).toBeInTheDocument();
+        expect(screen.queryByRole('checkbox', { name: 'mission.create' })).not.toBeInTheDocument();
     });
 
     it('attribue une action au rôle sélectionné', () => {
@@ -195,5 +204,69 @@ describe('RolesPermissionsPanel — droits des rôles de l’application', () =>
             { role: 'artisan', permission: 'mission.create' },
             expect.anything(),
         );
+    });
+
+    it("ne propose le retour aux droits d'origine que pour un rôle modifié", async () => {
+        renderPanel(makeAdmin(), { customizedRoles: { client: true, artisan: false } });
+
+        expect(screen.getByText("Les droits de ce rôle ont été modifiés par rapport à leur réglage d'origine.")).toBeInTheDocument();
+        fireEvent.click(screen.getByRole('button', { name: "Rétablir les droits d'origine" }));
+
+        const dialog = await screen.findByRole('dialog');
+        expect(dialog).toHaveTextContent("Rétablir les droits d'origine du rôle Client ?");
+        expect(routerPost).not.toHaveBeenCalled();
+
+        fireEvent.click(within(dialog).getByRole('button', { name: "Rétablir les droits d'origine" }));
+        await waitFor(() =>
+            expect(routerPost).toHaveBeenCalledWith('/admin/roles-permissions/reset', { role: 'client' }, expect.anything()),
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Artisan' }));
+        expect(screen.queryByRole('button', { name: "Rétablir les droits d'origine" })).not.toBeInTheDocument();
+    });
+});
+
+describe('RolesPermissionsPanel — profils types', () => {
+    const profiles = {
+        support: { label: 'Support', description: 'Comptes et FAQ', capabilities: ['admin.users.view', 'admin.faq.manage'] },
+    };
+
+    beforeEach(() => {
+        routerPost.mockReset();
+    });
+
+    it('applique un profil après confirmation', async () => {
+        renderPanel(makeAdmin(), { adminProfiles: profiles });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Support' }));
+        const dialog = await screen.findByRole('dialog');
+        expect(dialog).toHaveTextContent('Appliquer le profil « Support » à Awa Admin ?');
+        expect(routerPost).not.toHaveBeenCalled();
+
+        fireEvent.click(within(dialog).getByRole('button', { name: 'Appliquer le profil' }));
+        await waitFor(() =>
+            expect(routerPost).toHaveBeenCalledWith(
+                '/admin/admins/7/permissions',
+                { capabilities: ['admin.users.view', 'admin.faq.manage'] },
+                expect.anything(),
+            ),
+        );
+    });
+
+    it('garde la gestion des rôles quand on applique un profil à son propre compte', async () => {
+        renderPanel(makeAdmin({ is_self: true }), { adminProfiles: profiles });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Support' }));
+        fireEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: 'Appliquer le profil' }));
+
+        await waitFor(() => expect(routerPost).toHaveBeenCalled());
+        const sent = (routerPost.mock.calls[0][1] as { capabilities: string[] }).capabilities;
+        expect(sent).toEqual(expect.arrayContaining(['admin.roles.manage', 'admin.users.view', 'admin.faq.manage']));
+    });
+
+    it('ne propose aucun profil pour un super administrateur protégé', () => {
+        renderPanel(makeAdmin({ protected: true, capabilities: ['*'] }), { adminProfiles: profiles });
+
+        expect(screen.queryByRole('button', { name: 'Support' })).not.toBeInTheDocument();
     });
 });

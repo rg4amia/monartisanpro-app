@@ -452,6 +452,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/permissions', [AdminRolePermissionController::class, 'listPermissions']);
                 Route::post('/roles-permissions/assign', [AdminRolePermissionController::class, 'assign']);
                 Route::post('/roles-permissions/revoke', [AdminRolePermissionController::class, 'revoke']);
+                Route::post('/roles-permissions/reset', [AdminRolePermissionController::class, 'reset']);
             });
 
             Route::put('/settings/app-access', [SettingController::class, 'updateAppAccess'])

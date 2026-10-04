@@ -750,6 +750,17 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 - **Codes jamais affichés dans le backoffice** (Règle d'or 38) : une notification dont l'événement porte une variable `code` (`NotificationCatalog::carriesCode`), ou une notification antérieure au catalogue dont le texte contient le mot « code », s'affiche « Texte masqué », sans ses données. La recherche de l'historique ne porte plus sur le texte.
 - **Marquer comme lue** (`POST /admin/notifications/{notification}/read`) : seulement une notification adressée à l'administrateur ou à tous (403 sinon).
 - **Tests** : `RestrictedAdminDataLeaksTest.php`, `NotificationsPanel.test.tsx`. Dans un test, un administrateur restreint se crée avec ses capacités explicites.
+142. **Gestion des rôles : seules les actions exigées par une route se règlent (Chantier 28)** :
+- **Actions réglables** : `RolePermissionService::effectiveActions()` relève dans la table des routes les actions exigées par `can:<action>` (hors `admin.*`). L'écran « Rôles & Actions », l'API et les garde-fous ne connaissent qu'elles ; attribuer ou retirer une autre action est refusé (422). Une action que rien n'exige n'a aucun effet : la proposer ferait croire qu'on coupe une fonction (Règle d'or 29).
+- **Brancher une action** : poser `can:<action>` sur une route la fait apparaître à l'écran. L'ajouter alors à `RESERVED`, et à `PROTECTED` si le rôle ne peut pas s'en passer ; `Chantier28RolesManagementTest` échoue sinon.
+- **Garde-fous** : `PROTECTED` et `RESERVED` ne citent que des actions qui agissent. Toute action qui agit est réservée aux rôles dont son contrôleur suppose l'identité (« créer une mission » au client) ; les actions dont dépend un chantier en cours ne se retirent pas.
+- **Droits d'origine** : `RolePermissionService::DEFAULTS` est la seule liste ; le seeder, le repli de `HasPermissions` et le retour aux droits d'origine (`POST /admin/roles-permissions/reset`, audit `role_permission.reset`) la lisent. `PermissionSeeder` n'écrit que pour un rôle sans aucun droit : relancé, il n'efface jamais un réglage. Accorder une nouvelle action aux rôles existants passe par une migration.
+- **Rôle `driver`** : supprimé du code et de la base (migration `2026_10_04_140000`).
+- **Porte d'autorisation** (`Gate::before`) : une action inconnue n'est accordée d'office à personne ; seul un administrateur à **accès total** exerce les actions de l'application. Un administrateur restreint ne les obtient pas.
+- **Capacités d'administrateur** : `AdminPermissionService::sync` refuse une capacité sans ligne en base au lieu de l'ignorer. Toute capacité du catalogue est installée par une migration et appliquée par une route ou un filtre de données (test de garde).
+- **`admin.fraud.view`** : sans elle, l'écran Santé & Observabilité garde les compteurs et retient la liste nominative des alertes (`alerts_hidden`) ; l'écran l'annonce, jamais « aucune alerte ».
+- **Profils types** (`AdminPermissionService::PROFILES`) : un jeu de capacités appliqué après confirmation, ajustable ensuite, non mémorisé sur le compte. Aucun ne contient `admin.roles.manage`.
+- **Tests** : `Chantier28RolesManagementTest.php`, `RolePermissionTest.php`, `roles-permissions-panel.test.tsx`. Dans un test, une action à retirer puis réattribuer se prend parmi les non indispensables (`devis.update` pour l'artisan, `mission.estimate` pour le client).
 
 ## 📎 Fichier de référence du flux
 

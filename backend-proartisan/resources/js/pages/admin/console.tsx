@@ -943,6 +943,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         rolesPermissions={rolesPermissions ?? {}}
                                         adminCapabilityCatalog={pageProps.adminCapabilityCatalog ?? {}}
                                         protectedRolePermissions={pageProps.protectedRolePermissions ?? {}}
+                                        customizedRoles={pageProps.customizedRoles ?? {}}
+                                        adminProfiles={pageProps.adminProfiles ?? {}}
                                         reservedRolePermissions={pageProps.reservedRolePermissions ?? {}}
                                         admins={pageProps.admins ?? []}
                                     />

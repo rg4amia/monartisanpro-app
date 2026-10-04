@@ -120,6 +120,8 @@ export interface AdminPageProps {
     adminCapabilityCatalog?: Record<string, Record<string, string>>;
     /** Actions qu'aucun retrait ne peut toucher, par rôle. */
     protectedRolePermissions?: Record<string, string[]>;
+    customizedRoles?: Record<string, boolean>;
+    adminProfiles?: Record<string, { label: string; description: string; capabilities: string[] }>;
     /** Actions réservées : nom de l'action => rôles auxquels elle s'attribue. */
     reservedRolePermissions?: Record<string, string[]>;
     admins?: Array<{ id: number; name: string; email: string | null; phone: string | null; capabilities: string[]; protected: boolean }>;

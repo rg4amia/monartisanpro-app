@@ -563,14 +563,14 @@ class Chantier27LotEAccountRulesTest extends TestCase
     {
         $admin = $this->admin();
 
-        foreach ([['client', 'litige.arbitrate'], ['artisan', 'devis.accept'], ['client', 'kyc.review']] as [$role, $permission]) {
+        foreach ([['artisan', 'mission.create'], ['artisan', 'devis.accept'], ['client', 'jcode.scan']] as [$role, $permission]) {
             $this->actingAs($admin)
                 ->postJson('/api/v1/admin/roles-permissions/assign', ['role' => $role, 'permission' => $permission])
                 ->assertStatus(422)
                 ->assertJsonValidationErrors('permission');
         }
 
-        $this->assertFalse($this->account('client')->hasPermissionTo('litige.arbitrate'));
+        $this->assertFalse($this->account('artisan')->hasPermissionTo('mission.create'));
         $this->assertFalse($this->account('artisan')->hasPermissionTo('devis.accept'));
     }
 
@@ -579,12 +579,12 @@ class Chantier27LotEAccountRulesTest extends TestCase
         $admin = $this->admin();
 
         $this->actingAs($admin)
-            ->postJson('/api/v1/admin/roles-permissions/revoke', ['role' => 'client', 'permission' => 'parrainage.create'])
+            ->postJson('/api/v1/admin/roles-permissions/revoke', ['role' => 'client', 'permission' => 'mission.estimate'])
             ->assertOk();
-        $this->assertFalse($this->account('client')->hasPermissionTo('parrainage.create'));
+        $this->assertFalse($this->account('client')->hasPermissionTo('mission.estimate'));
 
         $this->actingAs($admin)
-            ->postJson('/api/v1/admin/roles-permissions/assign', ['role' => 'client', 'permission' => 'parrainage.create'])
+            ->postJson('/api/v1/admin/roles-permissions/assign', ['role' => 'client', 'permission' => 'mission.estimate'])
             ->assertOk();
 
         $this->actingAs($admin)->get('/admin/roles-permissions')->assertInertia(fn (AssertableInertia $page) => $page

@@ -93,15 +93,15 @@ test('les droits d\'un rôle se modifient par la route du backoffice', function 
 
     $this->actingAs($admin)
         ->from('/admin/roles-permissions')
-        ->post('/admin/roles-permissions/assign', ['role' => 'artisan', 'permission' => 'mission.create'], ['X-Inertia' => 'true'])
+        ->post('/admin/roles-permissions/revoke', ['role' => 'artisan', 'permission' => 'devis.update'], ['X-Inertia' => 'true'])
         ->assertRedirect('/admin/roles-permissions');
-    expect($artisan->fresh()->hasPermissionTo('mission.create'))->toBeTrue();
+    expect($artisan->fresh()->hasPermissionTo('devis.update'))->toBeFalse();
 
     $this->actingAs($admin)
         ->from('/admin/roles-permissions')
-        ->post('/admin/roles-permissions/revoke', ['role' => 'artisan', 'permission' => 'mission.create'], ['X-Inertia' => 'true'])
+        ->post('/admin/roles-permissions/assign', ['role' => 'artisan', 'permission' => 'devis.update'], ['X-Inertia' => 'true'])
         ->assertRedirect('/admin/roles-permissions');
-    expect($artisan->fresh()->hasPermissionTo('mission.create'))->toBeFalse();
+    expect($artisan->fresh()->hasPermissionTo('devis.update'))->toBeTrue();
 });
 
 test('un compte qui n\'est pas administrateur n\'atteint aucune de ces routes', function () {

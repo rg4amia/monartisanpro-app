@@ -8,6 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-10-04 | Plan | [Chantier 28 — Gestion des rôles : un écran qui dit vrai, des garde-fous qui portent](plans/2026-10-04-chantier-28-gestion-des-roles.md) | livré (contrôle dans le navigateur à faire) | — |
 | 2026-10-04 | Analyse | [Module « Gestion des rôles » : droits des rôles de l’application et capacités des administrateurs](analyses/2026-10-04-analyse-module-gestion-des-roles.md) | — | — |
 | 2026-10-03 | Plan | [Chantier 27 — Sécurisation des comptes utilisateurs](plans/2026-10-03-chantier-27-securisation-comptes-utilisateurs.md) | livré, lots A à F (contrôle manuel à faire ; nouvelle version de l'application à publier) | — |
 | 2026-10-03 | Analyse | [Module « Utilisateurs » : backoffice, inscription et profil mobile, revue KYC, rôles et actions](analyses/2026-10-03-analyse-module-utilisateurs.md) | — | — |

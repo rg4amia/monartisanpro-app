@@ -12,6 +12,7 @@ use App\Models\WalletTransaction;
 use App\Observers\AdminDashboardCacheObserver;
 use App\Observers\MissionFundedObserver;
 use App\Services\Admin\AdminPermissionService;
+use App\Services\RolePermissionService;
 use Carbon\CarbonImmutable;
 use Illuminate\Cache\RateLimiting\Limit;
 use Illuminate\Http\Request;
@@ -54,9 +55,19 @@ class AppServiceProvider extends ServiceProvider
             if (str_starts_with((string) $ability, 'admin.')) {
                 return null;
             }
-            if ($user->role === 'admin') {
-                return true;
+
+            // Une action que rien n'exige n'est accordée à personne d'office.
+            if (! RolePermissionService::isEffective((string) $ability)) {
+                return null;
             }
+
+            // Seul un administrateur à accès total exerce les actions de
+            // l'application : un administrateur restreint à un périmètre du
+            // backoffice ne les recevait pas moins toutes.
+            if ($user->role === 'admin') {
+                return app(AdminPermissionService::class)->userCan($user, AdminPermissionService::FULL_ACCESS) ?: null;
+            }
+
             if (method_exists($user, 'hasPermissionTo')) {
                 return $user->hasPermissionTo($ability);
             }

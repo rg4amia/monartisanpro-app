@@ -141,8 +141,10 @@ class RestrictedAdminDataLeaksTest extends TestCase
         foreach ($props['allNotifications']['data'] as $row) {
             $this->assertTrue($row['masked']);
             $this->assertNull($row['data_json']);
-            $this->assertStringNotContainsString('4821', json_encode($row));
-            $this->assertStringNotContainsString('9917', json_encode($row));
+            // Le texte seul : un identifiant ou un téléphone tiré au hasard
+            // peut contenir ces chiffres.
+            $this->assertStringNotContainsString('4821', $row['title'].$row['body']);
+            $this->assertStringNotContainsString('9917', $row['title'].$row['body']);
         }
 
         // La recherche ne porte plus sur le texte : elle ne retrouve pas un code.

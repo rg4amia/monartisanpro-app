@@ -1,6 +1,8 @@
 import { router } from '@inertiajs/react';
 import { useMemo, useState } from 'react';
 
+import { useConfirm } from './shared/ConfirmDialog';
+
 interface Permission {
     id: number;
     name: string;
@@ -41,6 +43,16 @@ interface RolesPermissionsPanelProps {
     protectedRolePermissions?: Record<string, string[]>;
     /** Actions réservées : nom de l'action => rôles auxquels elle s'attribue. */
     reservedRolePermissions?: Record<string, string[]>;
+    /** Rôles dont les droits s'écartent des droits d'origine. */
+    customizedRoles?: Record<string, boolean>;
+    /** Profils types d'administrateur : un jeu de capacités appliqué d'un geste. */
+    adminProfiles?: Record<string, AdminProfile>;
+}
+
+interface AdminProfile {
+    label: string;
+    description: string;
+    capabilities: string[];
 }
 
 const roleLabels: Record<string, string> = {
@@ -87,7 +99,10 @@ export default function RolesPermissionsPanel({
     admins = [],
     protectedRolePermissions = {},
     reservedRolePermissions = {},
+    customizedRoles = {},
+    adminProfiles = {},
 }: RolesPermissionsPanelProps) {
+    const { confirm, dialog } = useConfirm();
     const [selectedRole, setSelectedRole] = useState<string>('client');
     const [toggling, setToggling] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -103,8 +118,16 @@ export default function RolesPermissionsPanel({
     const adminIsProtected = selectedAdmin?.protected ?? false;
     const adminLocked = savingAdmin || adminIsProtected;
 
+    // Une action réservée à d'autres rôles ne peut pas être attribuée à
+    // celui-ci : l'afficher verrouillée ne ferait qu'encombrer l'écran.
+    const rolePermissions = allPermissions.filter((perm) => {
+        const held = rolesPermissions[selectedRole]?.includes(perm.name) ?? false;
+        const reservedFor = reservedRolePermissions[perm.name];
+        return held || reservedFor === undefined || reservedFor.includes(selectedRole);
+    });
+
     // Group permissions by category
-    const groupedPermissions = allPermissions.reduce((acc, perm) => {
+    const groupedPermissions = rolePermissions.reduce((acc, perm) => {
         const cat = perm.category || 'other';
         if (!acc[cat]) acc[cat] = [];
         acc[cat].push(perm);
@@ -131,6 +154,44 @@ export default function RolesPermissionsPanel({
                 setErrorMessage(firstError(errors, 'Une erreur est survenue lors de la mise à jour des droits.'));
             },
         });
+    };
+
+    const resetRole = async () => {
+        const ok = await confirm({
+            title: `Rétablir les droits d'origine du rôle ${roleLabels[selectedRole] ?? selectedRole} ?`,
+            message:
+                "Les actions retirées ou ajoutées à ce rôle reviennent à leur réglage d'origine. Le changement s'applique aussitôt à tous les comptes de ce rôle.",
+            confirmLabel: "Rétablir les droits d'origine",
+            tone: 'primary',
+        });
+        if (!ok) return;
+
+        setErrorMessage(null);
+        router.post('/admin/roles-permissions/reset', { role: selectedRole }, {
+            preserveState: true,
+            preserveScroll: true,
+            onError: (errors) => setErrorMessage(firstError(errors, 'Une erreur est survenue lors du retour aux droits d’origine.')),
+        });
+    };
+
+    const applyProfile = async (profile: AdminProfile) => {
+        if (!selectedAdmin || adminIsProtected) return;
+
+        const ok = await confirm({
+            title: `Appliquer le profil « ${profile.label} » à ${selectedAdmin.name} ?`,
+            message: `Ses droits actuels sont remplacés par les ${profile.capabilities.length} capacités de ce profil. Vous pourrez ensuite les ajuster une à une.`,
+            confirmLabel: 'Appliquer le profil',
+            tone: 'primary',
+        });
+        if (!ok) return;
+
+        const next = [...profile.capabilities];
+        if (selectedAdmin.is_self) {
+            for (const kept of SELF_KEPT_CAPABILITIES) {
+                if (!next.includes(kept)) next.push(kept);
+            }
+        }
+        submitAdminCapabilities(next);
     };
 
     const submitAdminCapabilities = (capabilities: string[]) => {
@@ -207,6 +268,7 @@ export default function RolesPermissionsPanel({
 
     return (
         <div className="space-y-8">
+            {dialog}
             {errorMessage ? (
                 <div
                     role="alert"
@@ -285,6 +347,30 @@ export default function RolesPermissionsPanel({
                                         />
                                     </label>
 
+                                    {Object.keys(adminProfiles).length > 0 && !adminIsProtected ? (
+                                        <div className="rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4">
+                                            <span className="font-semibold text-sm text-[var(--admin-text)]">Profils types</span>
+                                            <p className="text-xs text-[var(--admin-text-soft)] mt-1">
+                                                Un profil remplace les droits du compte par un jeu de capacités, à ajuster ensuite.
+                                                Aucun ne donne la gestion des rôles.
+                                            </p>
+                                            <div className="mt-3 flex flex-wrap gap-2">
+                                                {Object.entries(adminProfiles).map(([key, profile]) => (
+                                                    <button
+                                                        key={key}
+                                                        type="button"
+                                                        title={profile.description}
+                                                        disabled={adminLocked}
+                                                        onClick={() => applyProfile(profile)}
+                                                        className="rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-1.5 text-xs font-semibold text-[var(--admin-text)] transition hover:bg-[#f7efe2] disabled:opacity-50"
+                                                    >
+                                                        {profile.label}
+                                                    </button>
+                                                ))}
+                                            </div>
+                                        </div>
+                                    ) : null}
+
                                     {Object.entries(adminCapabilityCatalog).map(([group, capabilities]) => (
                                         <div key={group} className="space-y-3">
                                             <h4 className="text-xs font-bold uppercase tracking-widest text-[#b77918] border-b border-[var(--admin-border)] pb-1.5">
@@ -357,11 +443,33 @@ export default function RolesPermissionsPanel({
                                     Droits & Actions du rôle : <span className="text-[#b77918]">{roleLabels[selectedRole]}</span>
                                 </h3>
                                 <p className="text-xs text-[var(--admin-text-soft)] mt-1">
-                                    Activez ou désactivez les permissions individuelles ci-dessous. Les droits des
-                                    administrateurs se règlent dans « Droits des administrateurs » ci-dessus.
+                                    Seules les actions qu'une fonction de l'application exige figurent ici : les retirer
+                                    ou les attribuer change aussitôt ce que ce rôle peut faire. Le reste de l'accès d'un
+                                    rôle est fixé par l'application.
                                 </p>
                             </div>
+                            {customizedRoles[selectedRole] ? (
+                                <button
+                                    type="button"
+                                    onClick={resetRole}
+                                    className="shrink-0 rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel)] px-3 py-2 text-xs font-semibold text-[var(--admin-text)] transition hover:bg-[#f7efe2]"
+                                >
+                                    Rétablir les droits d'origine
+                                </button>
+                            ) : null}
                         </div>
+
+                        {customizedRoles[selectedRole] ? (
+                            <p className="mb-6 rounded-2xl border border-[#e6d3b2] bg-[#fbf1db] p-3 text-xs text-[#7d571b]">
+                                Les droits de ce rôle ont été modifiés par rapport à leur réglage d'origine.
+                            </p>
+                        ) : null}
+
+                        {rolePermissions.length === 0 ? (
+                            <p className="text-sm text-[var(--admin-text-soft)]">
+                                Aucune action réglable pour ce rôle : son accès est fixé par l'application.
+                            </p>
+                        ) : null}
 
                         <div className="space-y-8">
                             {Object.keys(groupedPermissions).map((category) => (
@@ -374,6 +482,8 @@ export default function RolesPermissionsPanel({
                                             const hasPermission = rolesPermissions[selectedRole]?.includes(perm.name) ?? false;
                                             // Le serveur refuse ces deux cas ; l'écran les annonce avant le clic.
                                             const isProtected = hasPermission && (protectedRolePermissions[selectedRole]?.includes(perm.name) ?? false);
+                                            // Action détenue par un rôle auquel elle est réservée ailleurs : elle
+                                            // se retire, mais ne se réattribue pas.
                                             const reservedFor = reservedRolePermissions[perm.name];
                                             const isReserved = !hasPermission && reservedFor !== undefined && !reservedFor.includes(selectedRole);
 

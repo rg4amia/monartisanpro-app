@@ -4,7 +4,7 @@
 | --- | --- |
 | Créée le | 2026-10-04 |
 | Auteur | Claude Code |
-| Plans issus de cette analyse | — (à ouvrir après décision, voir « Décisions attendues ») |
+| Plans issus de cette analyse | `../plans/2026-10-04-chantier-28-gestion-des-roles.md` |
 
 ## Question posée
 
@@ -130,3 +130,4 @@ Par ordre de priorité.
 
 - **04/10/2026 — B1 et B2 fermés** (décision d'Inza Bamba, sans attendre les décisions ci-dessus) : blocs du tableau de bord servis selon la capacité ; historique du centre de notifications réservé à `admin.notifications.view` ; texte et données des notifications portant un code masqués ; « marquer comme lue » limité à ses propres notifications. Tests : `RestrictedAdminDataLeaksTest.php`.
 - **Restent ouverts** : `admin.fraud.view` toujours appliquée nulle part (B3), et l'ensemble des constats A, B5 à B7 et C, en attente des décisions.
+- **04/10/2026 — Chantier 28** : recommandations 1 à 6 appliquées (constats A1 à A9, B3, B5, B7, C1, C3). Restent en l'état, par décision : B6 (portée de « gérer les rôles ») et C2 (libellés des actions en base).

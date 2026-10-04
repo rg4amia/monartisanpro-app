@@ -167,17 +167,17 @@ class Chantier27LotDRolesAndRightsTest extends TestCase
         $actor = $this->adminWith(['admin.full-access']);
 
         $this->actingAs($actor)
-            ->post('/admin/roles-permissions/assign', ['role' => 'artisan', 'permission' => 'mission.create'], ['X-Inertia' => 'true'])
+            ->post('/admin/roles-permissions/revoke', ['role' => 'artisan', 'permission' => 'devis.update'], ['X-Inertia' => 'true'])
             ->assertSessionHas('success');
         $this->actingAs($actor)
-            ->post('/admin/roles-permissions/revoke', ['role' => 'artisan', 'permission' => 'mission.create'], ['X-Inertia' => 'true'])
+            ->post('/admin/roles-permissions/assign', ['role' => 'artisan', 'permission' => 'devis.update'], ['X-Inertia' => 'true'])
             ->assertSessionHas('success');
 
         foreach (['role_permission.assigned', 'role_permission.revoked'] as $action) {
             $log = AdminActivityLog::where('action', $action)->firstOrFail();
             $this->assertSame($actor->id, $log->admin_id);
             $this->assertSame('artisan', $log->context['role']);
-            $this->assertSame('mission.create', $log->context['permission']);
+            $this->assertSame('devis.update', $log->context['permission']);
         }
     }
 
