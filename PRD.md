@@ -704,12 +704,18 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Formulaire** : téléphone au format `+225` suivi de dix chiffres ; rôle « Livreur » disponible ; l'empreinte de l'appareil ne se saisit plus.
     * **Liste des utilisateurs** : le navigateur ne reçoit que les informations affichées ; le temps de chargement ne dépend plus du nombre de portefeuilles.
     * **Tests automatisés** : `Chantier27LotBBackofficeAccountsTest.php` (22 tests), `FormModals.test.tsx`, `UsersPanel.test.tsx`.
-56. **Chantier 27 — Sécurisation des comptes utilisateurs, lot C (revue KYC) :** [COMPLÉTÉ — contrôle manuel à faire ; lots D et E à venir]
+56. **Chantier 27 — Sécurisation des comptes utilisateurs, lot C (revue KYC) :** [COMPLÉTÉ — contrôle manuel à faire]
     * **Approbation** : un dossier ne s'approuve qu'avec la carte d'identité et le selfie ; un compte anonymisé ou supprimé ne se traite plus. Les deux pièces suivent la décision.
     * **Motif du rejet** : l'utilisateur le reçoit dans la notification et le lit dans l'application, à l'ouverture de la vérification d'identité.
     * **Retour d'un utilisateur rejeté** : dès qu'il renvoie une pièce, son dossier revient dans la liste à traiter. Il n'est jamais validé automatiquement : la décision revient à un administrateur.
     * **Revue par lot** : les dossiers ignorés sont annoncés avec leur motif.
     * **Tests automatisés** : `Chantier27LotCKycReviewTest.php` (10 tests), `KycPanel.test.tsx`, `kyc_rejection_reason_test.dart`.
+57. **Chantier 27 — Sécurisation des comptes utilisateurs, lot D (Rôles & Actions) :** [COMPLÉTÉ — contrôle manuel à faire ; lot E en attente de décisions]
+    * **Accès total explicite** : retirer toutes les capacités d'un administrateur est refusé ; l'accès total s'accorde par sa case. Les administrateurs qui n'avaient aucune capacité reçoivent l'accès total par écrit au déploiement, sans changement de leurs droits.
+    * **Restriction réelle** : un administrateur peut être limité à un périmètre sans conserver d'office la gestion des rôles ; seul l'administrateur connecté la garde sur son propre compte.
+    * **Traçabilité** : chaque changement de droits d'un administrateur est enregistré avec l'état avant et après ; chaque action attribuée ou retirée à un rôle de l'application est enregistrée.
+    * **Rôles** : les rôles sans effet (administrateur, « driver ») ne sont plus proposés.
+    * **Tests automatisés** : `Chantier27LotDRolesAndRightsTest.php` (12 tests), `roles-permissions-panel.test.tsx` (11 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

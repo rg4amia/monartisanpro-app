@@ -1,0 +1,192 @@
+import { fireEvent, render, screen } from '@testing-library/react';
+import { beforeEach, describe, expect, it, vi } from 'vitest';
+
+const routerPost = vi.fn();
+
+vi.mock('@inertiajs/react', () => ({
+    router: {
+        post: (...args: unknown[]) => routerPost(...args),
+    },
+}));
+
+import RolesPermissionsPanel from './roles-permissions-panel';
+
+const catalog = {
+    users: {
+        'admin.users.view': 'Consulter les comptes utilisateurs',
+        'admin.users.manage': 'Créer, modifier, suspendre un compte',
+    },
+    plateforme: {
+        'admin.roles.manage': 'Gérer les rôles et les droits des administrateurs',
+        'admin.faq.manage': "Gérer la FAQ d'aide et support",
+    },
+};
+
+const allCapabilities = ['admin.users.view', 'admin.users.manage', 'admin.roles.manage', 'admin.faq.manage'];
+
+const permissions = [
+    { id: 1, name: 'mission.create', description: 'Créer une mission', category: 'missions' },
+    { id: 2, name: 'litige.arbitrate', description: 'Arbitrer un litige', category: 'litiges' },
+];
+
+function makeAdmin(overrides: Record<string, unknown> = {}) {
+    return {
+        id: 7,
+        name: 'Awa Admin',
+        email: 'awa@example.test',
+        phone: '+2250700000007',
+        capabilities: ['admin.faq.manage'],
+        protected: false,
+        is_self: false,
+        ...overrides,
+    };
+}
+
+function renderPanel(admin = makeAdmin()) {
+    render(
+        <RolesPermissionsPanel
+            allPermissions={permissions}
+            rolesPermissions={{ client: ['mission.create'], artisan: [], fournisseur: [], referent: [], livreur: [] }}
+            adminCapabilityCatalog={catalog}
+            admins={[admin]}
+        />,
+    );
+}
+
+/** Case à cocher d'une capacité du backoffice, retrouvée par son nom technique. */
+function capabilityCheckbox(name: string): HTMLInputElement {
+    return screen.getByText(name).closest('label')!.querySelector('input[type="checkbox"]') as HTMLInputElement;
+}
+
+function fullAccessCheckbox(): HTMLInputElement {
+    return screen.getAllByText('Accès total').map((node) => node.closest('label')).find((label) => label !== null)!.querySelector('input[type="checkbox"]') as HTMLInputElement;
+}
+
+describe('RolesPermissionsPanel — droits des administrateurs', () => {
+    beforeEach(() => {
+        routerPost.mockReset();
+    });
+
+    it("refuse de retirer la dernière capacité d'un administrateur", () => {
+        renderPanel();
+
+        fireEvent.click(capabilityCheckbox('admin.faq.manage'));
+
+        expect(routerPost).not.toHaveBeenCalled();
+        expect(screen.getByRole('alert')).toHaveTextContent("Cochez au moins une capacité, ou l'accès total.");
+    });
+
+    it("n'impose pas la gestion des rôles au compte d'un autre administrateur", () => {
+        renderPanel();
+
+        fireEvent.click(capabilityCheckbox('admin.users.manage'));
+
+        expect(routerPost).toHaveBeenCalledWith(
+            '/admin/admins/7/permissions',
+            { capabilities: ['admin.faq.manage', 'admin.users.manage'] },
+            expect.anything(),
+        );
+    });
+
+    it("garde la gestion des rôles et la consultation des utilisateurs sur son propre compte", () => {
+        renderPanel(makeAdmin({ is_self: true, capabilities: ['admin.roles.manage', 'admin.users.view', 'admin.faq.manage'] }));
+
+        fireEvent.click(capabilityCheckbox('admin.roles.manage'));
+
+        const sent = routerPost.mock.calls[0][1].capabilities as string[];
+        expect(sent).toContain('admin.roles.manage');
+        expect(sent).toContain('admin.users.view');
+    });
+
+    it("retirer l'accès total écrit chaque capacité du catalogue", () => {
+        renderPanel(makeAdmin({ capabilities: ['*'] }));
+
+        fireEvent.click(fullAccessCheckbox());
+
+        expect(routerPost).toHaveBeenCalledWith(
+            '/admin/admins/7/permissions',
+            { capabilities: allCapabilities },
+            expect.anything(),
+        );
+    });
+
+    it("décocher une capacité d'un compte en accès total garde toutes les autres", () => {
+        renderPanel(makeAdmin({ capabilities: ['*'] }));
+
+        fireEvent.click(capabilityCheckbox('admin.faq.manage'));
+
+        expect(routerPost.mock.calls[0][1]).toEqual({
+            capabilities: ['admin.users.view', 'admin.users.manage', 'admin.roles.manage'],
+        });
+    });
+
+    it('rétablit la sentinelle quand toutes les capacités sont cochées', () => {
+        renderPanel(makeAdmin({ capabilities: ['admin.users.view', 'admin.users.manage', 'admin.roles.manage'] }));
+
+        fireEvent.click(capabilityCheckbox('admin.faq.manage'));
+
+        expect(routerPost.mock.calls[0][1]).toEqual({ capabilities: ['admin.full-access'] });
+    });
+
+    it('verrouille les cases du super administrateur protégé', () => {
+        renderPanel(makeAdmin({ protected: true, capabilities: ['*'] }));
+
+        expect(screen.getByText('Super administrateur protégé.')).toBeInTheDocument();
+        expect(fullAccessCheckbox()).toBeDisabled();
+        expect(capabilityCheckbox('admin.faq.manage')).toBeDisabled();
+    });
+
+    it('affiche le message renvoyé par le serveur en cas de refus', () => {
+        routerPost.mockImplementation((...args: unknown[]) => {
+            const options = args[2] as { onError: (errors: Record<string, string>) => void; onFinish: () => void };
+            options.onError({ capabilities: "Cochez au moins une capacité, ou l'accès total." });
+            options.onFinish();
+        });
+        renderPanel();
+
+        fireEvent.click(capabilityCheckbox('admin.users.manage'));
+
+        expect(screen.getByRole('alert')).toHaveTextContent("Cochez au moins une capacité, ou l'accès total.");
+    });
+});
+
+describe('RolesPermissionsPanel — droits des rôles de l’application', () => {
+    beforeEach(() => {
+        routerPost.mockReset();
+    });
+
+    it('ne propose ni le rôle administrateur ni un rôle sans effet', () => {
+        renderPanel();
+
+        for (const role of ['Client', 'Artisan', 'Fournisseur', 'Référent', 'Livreur']) {
+            expect(screen.getByRole('button', { name: role })).toBeInTheDocument();
+        }
+        expect(screen.queryByRole('button', { name: /Administrateur/ })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: /driver/i })).not.toBeInTheDocument();
+    });
+
+    it('retire une action au rôle sélectionné', () => {
+        renderPanel();
+
+        fireEvent.click(screen.getByRole('checkbox', { name: 'mission.create' }));
+
+        expect(routerPost).toHaveBeenCalledWith(
+            '/admin/roles-permissions/revoke',
+            { role: 'client', permission: 'mission.create' },
+            expect.anything(),
+        );
+    });
+
+    it('attribue une action au rôle sélectionné', () => {
+        renderPanel();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Artisan' }));
+        fireEvent.click(screen.getByRole('checkbox', { name: 'mission.create' }));
+
+        expect(routerPost).toHaveBeenCalledWith(
+            '/admin/roles-permissions/assign',
+            { role: 'artisan', permission: 'mission.create' },
+            expect.anything(),
+        );
+    });
+});

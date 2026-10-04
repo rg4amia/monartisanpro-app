@@ -35,6 +35,7 @@ use App\Services\KycService;
 use App\Services\MobileMoneyPayoutService;
 use App\Services\OrderDisputeDebtService;
 use App\Services\OrderService;
+use App\Services\RolePermissionService;
 use App\Services\UploadLimitService;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -562,14 +563,7 @@ class AdminPanelData
     public function rolesPermissions(): array
     {
         $allPermissions = [];
-        $rolesPermissions = [
-            'client' => [],
-            'artisan' => [],
-            'fournisseur' => [],
-            'referent' => [],
-            'livreur' => [],
-            'admin' => [],
-        ];
+        $rolesPermissions = array_fill_keys(RolePermissionService::ROLES, []);
 
         try {
             if (Schema::hasTable('permissions') && Schema::hasTable('permission_role')) {

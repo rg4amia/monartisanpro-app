@@ -24,7 +24,7 @@ class SyncAdminPermissionsRequest extends FormRequest
         );
 
         return [
-            'capabilities' => ['present', 'array'],
+            'capabilities' => ['required', 'array', 'min:1'],
             'capabilities.*' => ['string', Rule::in($allowed)],
         ];
     }
@@ -32,7 +32,8 @@ class SyncAdminPermissionsRequest extends FormRequest
     public function messages(): array
     {
         return [
-            'capabilities.present' => 'La liste des capacités est requise (même vide).',
+            'capabilities.required' => AdminPermissionService::EMPTY_SELECTION_MESSAGE,
+            'capabilities.min' => AdminPermissionService::EMPTY_SELECTION_MESSAGE,
             'capabilities.*.in' => 'Une des capacités transmises est inconnue.',
         ];
     }

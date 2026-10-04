@@ -2,7 +2,9 @@
 
 namespace App\Http\Requests\Admin;
 
+use App\Services\RolePermissionService;
 use Illuminate\Foundation\Http\FormRequest;
+use Illuminate\Validation\Rule;
 
 class RevokePermissionRequest extends FormRequest
 {
@@ -14,7 +16,7 @@ class RevokePermissionRequest extends FormRequest
     public function rules(): array
     {
         return [
-            'role' => ['required', 'string', 'in:client,artisan,fournisseur,referent,livreur,driver,admin'],
+            'role' => ['required', 'string', Rule::in(RolePermissionService::ROLES)],
             'permission' => ['required', 'string', 'exists:permissions,name'],
         ];
     }

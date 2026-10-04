@@ -4,6 +4,7 @@ namespace App\Services\Admin;
 
 use App\Models\Permission;
 use App\Models\User;
+use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -12,13 +13,18 @@ use Illuminate\Validation\ValidationException;
  * Chantier C6 (P2-10) — gestion des capacités fines du backoffice admin.
  *
  * Les capacités sont affectées individuellement, compte admin par compte admin,
- * via la table pivot `admin_permission_user`. Un admin sans aucune capacité —
- * ou porteur de {@see self::FULL_ACCESS} — dispose d'un accès total.
+ * via la table pivot `admin_permission_user`. L'accès total s'accorde par la
+ * capacité {@see self::FULL_ACCESS} ; une liste vide est refusée.
  */
 class AdminPermissionService
 {
     /** Capacité sentinelle : accès total au backoffice. */
     public const FULL_ACCESS = 'admin.full-access';
+
+    /** Capacités qu'un administrateur garde toujours sur son propre compte (anti-verrouillage). */
+    public const SELF_KEPT_CAPABILITIES = ['admin.roles.manage', 'admin.users.view'];
+
+    public const EMPTY_SELECTION_MESSAGE = 'Cochez au moins une capacité, ou l\'accès total.';
 
     /** Préfixe du cache des capacités effectives par utilisateur. */
     private const CACHE_PREFIX = 'admin_caps_user_';
@@ -186,6 +192,8 @@ class AdminPermissionService
                 ->pluck('permissions.name')
                 ->all();
 
+            // Sans aucune ligne, l'accès total reste le filet de secours
+            // (Règle d'or 67) : l'écran ne permet plus d'atteindre cet état.
             if ($names === [] || in_array(self::FULL_ACCESS, $names, true)) {
                 return ['*'];
             }
@@ -220,17 +228,28 @@ class AdminPermissionService
             ]);
         }
 
-        // Garde-fou anti-lockout absolu : un administrateur ne peut jamais se retirer
-        // à lui-même la gestion des rôles (admin.roles.manage) ou son accès total.
-        if ($target->id === $actor->id) {
-            if (! in_array(self::FULL_ACCESS, $capabilities, true) && ! in_array('admin.roles.manage', $capabilities, true)) {
-                $capabilities[] = 'admin.roles.manage';
-            }
-        }
-
         $allowed = array_merge(self::allCapabilityNames(), [self::FULL_ACCESS]);
         $capabilities = array_values(array_unique(array_intersect($capabilities, $allowed)));
 
+        // « Aucune capacité » n'est pas un état : sans ligne, le compte
+        // retrouvait l'accès total, si bien que tout décocher l'accordait.
+        if ($capabilities === []) {
+            throw ValidationException::withMessages([
+                'capabilities' => [self::EMPTY_SELECTION_MESSAGE],
+            ]);
+        }
+
+        // Garde-fou anti-lockout : un administrateur ne se retire jamais à
+        // lui-même la gestion des rôles ni la consultation des utilisateurs.
+        if ($target->id === $actor->id && ! in_array(self::FULL_ACCESS, $capabilities, true)) {
+            foreach (self::SELF_KEPT_CAPABILITIES as $kept) {
+                if (! in_array($kept, $capabilities, true)) {
+                    $capabilities[] = $kept;
+                }
+            }
+        }
+
+        $before = $this->storedCapabilities($target);
         $permissionIds = Permission::whereIn('name', $capabilities)->pluck('id')->all();
 
         DB::transaction(function () use ($target, $permissionIds) {
@@ -251,11 +270,28 @@ class AdminPermissionService
             'admin.permissions_updated',
             $target,
             [
+                'before' => $before,
+                'after' => $capabilities,
                 'capabilities' => $capabilities,
-                'full_access' => in_array(self::FULL_ACCESS, $capabilities, true) || $capabilities === [],
+                'full_access' => in_array(self::FULL_ACCESS, $capabilities, true),
             ],
             actor: $actor,
         );
+    }
+
+    /**
+     * Capacités inscrites en base pour un compte, sans le repli sur l'accès total.
+     *
+     * @return array<int, string>
+     */
+    private function storedCapabilities(User $user): array
+    {
+        return DB::table('admin_permission_user')
+            ->join('permissions', 'admin_permission_user.permission_id', '=', 'permissions.id')
+            ->where('admin_permission_user.user_id', $user->id)
+            ->orderBy('permissions.name')
+            ->pluck('permissions.name')
+            ->all();
     }
 
     public function forget(User $user): void
@@ -281,6 +317,7 @@ class AdminPermissionService
                 'phone' => $admin->phone,
                 'capabilities' => $this->capabilitiesFor($admin),
                 'protected' => $this->isProtectedSuperAdmin($admin),
+                'is_self' => $admin->id === Auth::id(),
             ])
             ->values()
             ->all();

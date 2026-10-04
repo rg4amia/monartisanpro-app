@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\Permission;
+use App\Services\Admin\AdminActivityLogger;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\DB;
@@ -10,6 +11,16 @@ use Illuminate\Validation\ValidationException;
 
 class RolePermissionService
 {
+    /**
+     * Rôles de l'application dont les droits se règlent ici. `admin` n'y
+     * figure pas : il a tous les droits par construction, et ses capacités
+     * fines se règlent compte par compte. `driver` n'existe pas en base, le
+     * rôle des livreurs est `livreur` (Règle d'or 63).
+     */
+    public const ROLES = ['client', 'artisan', 'fournisseur', 'referent', 'livreur'];
+
+    public function __construct(private AdminActivityLogger $audit) {}
+
     /**
      * Liste toutes les permissions disponibles.
      */
@@ -35,30 +46,29 @@ class RolePermissionService
      */
     public function assignPermissionToRole(string $role, string $permissionName): void
     {
-        $this->validateRole($role);
-
-        $permission = Permission::where('name', $permissionName)->first();
-        if (! $permission) {
-            throw ValidationException::withMessages([
-                'permission' => ["La permission '{$permissionName}' n'existe pas."],
-            ]);
-        }
+        $permission = $this->resolve($role, $permissionName);
 
         $exists = DB::table('permission_role')
             ->where('permission_id', $permission->id)
             ->where('role', $role)
             ->exists();
 
-        if (! $exists) {
-            DB::table('permission_role')->insert([
-                'permission_id' => $permission->id,
-                'role' => $role,
-                'created_at' => now(),
-            ]);
+        if ($exists) {
+            return;
         }
 
-        // Effacer le cache
+        DB::table('permission_role')->insert([
+            'permission_id' => $permission->id,
+            'role' => $role,
+            'created_at' => now(),
+        ]);
+
         Cache::forget("role_permissions_{$role}");
+
+        $this->audit->log('role_permission.assigned', null, [
+            'role' => $role,
+            'permission' => $permissionName,
+        ], subjectLabel: "{$role} · {$permissionName}");
     }
 
     /**
@@ -66,35 +76,45 @@ class RolePermissionService
      */
     public function revokePermissionFromRole(string $role, string $permissionName): void
     {
-        $this->validateRole($role);
+        $permission = $this->resolve($role, $permissionName);
+
+        $removed = DB::table('permission_role')
+            ->where('permission_id', $permission->id)
+            ->where('role', $role)
+            ->delete();
+
+        if ($removed === 0) {
+            return;
+        }
+
+        Cache::forget("role_permissions_{$role}");
+
+        $this->audit->log('role_permission.revoked', null, [
+            'role' => $role,
+            'permission' => $permissionName,
+        ], subjectLabel: "{$role} · {$permissionName}");
+    }
+
+    /**
+     * Contrôle le rôle et l'action. Les capacités `admin.*` du backoffice ne
+     * s'attribuent jamais à un rôle de l'application.
+     */
+    private function resolve(string $role, string $permissionName): Permission
+    {
+        if (! in_array($role, self::ROLES, true)) {
+            throw ValidationException::withMessages([
+                'role' => ["Le rôle '{$role}' n'est pas valide."],
+            ]);
+        }
 
         $permission = Permission::where('name', $permissionName)->first();
-        if (! $permission) {
+
+        if (! $permission || str_starts_with($permissionName, 'admin.')) {
             throw ValidationException::withMessages([
                 'permission' => ["La permission '{$permissionName}' n'existe pas."],
             ]);
         }
 
-        DB::table('permission_role')
-            ->where('permission_id', $permission->id)
-            ->where('role', $role)
-            ->delete();
-
-        // Effacer le cache
-        Cache::forget("role_permissions_{$role}");
-    }
-
-    /**
-     * Valide que le rôle fait partie des rôles autorisés.
-     */
-    private function validateRole(string $role): void
-    {
-        $validRoles = ['client', 'artisan', 'fournisseur', 'referent', 'livreur', 'driver', 'admin'];
-
-        if (! in_array($role, $validRoles)) {
-            throw ValidationException::withMessages([
-                'role' => ["Le rôle '{$role}' n'est pas valide."],
-            ]);
-        }
+        return $permission;
     }
 }

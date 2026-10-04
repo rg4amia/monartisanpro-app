@@ -16,6 +16,19 @@ interface AdminAccount {
     capabilities: string[];
     /** Super administrateur protégé : accès total permanent, non modifiable. */
     protected: boolean;
+    /** Le compte de l'administrateur connecté : il garde toujours la gestion des rôles. */
+    is_self?: boolean;
+}
+
+/** Capacités qu'un administrateur ne se retire jamais à lui-même (anti-verrouillage). */
+const SELF_KEPT_CAPABILITIES = ['admin.roles.manage', 'admin.users.view'];
+
+const EMPTY_SELECTION_MESSAGE = "Cochez au moins une capacité, ou l'accès total.";
+
+/** Premier message d'erreur renvoyé par le serveur, sinon le message par défaut. */
+function firstError(errors: Record<string, string> | undefined, fallback: string): string {
+    const first = errors ? Object.values(errors)[0] : undefined;
+    return typeof first === 'string' && first !== '' ? first : fallback;
 }
 
 interface RolesPermissionsPanelProps {
@@ -31,7 +44,6 @@ const roleLabels: Record<string, string> = {
     artisan: 'Artisan',
     fournisseur: 'Fournisseur',
     referent: 'Référent',
-    admin: 'Administrateur (Accès Total)',
     livreur: 'Livreur',
 };
 
@@ -94,11 +106,6 @@ export default function RolesPermissionsPanel({
     }, {} as Record<string, Permission[]>);
 
     const handleTogglePermission = (permissionName: string, hasPermission: boolean) => {
-        if (selectedRole === 'admin') {
-            setErrorMessage("Le rôle Administrateur possède toutes les permissions par défaut et ne peut être modifié.");
-            return;
-        }
-
         const action = hasPermission ? 'revoke' : 'assign';
         const url = `/admin/roles-permissions/${action}`;
 
@@ -114,9 +121,9 @@ export default function RolesPermissionsPanel({
             onFinish: () => {
                 setToggling(null);
             },
-            onError: () => {
-                setErrorMessage("Une erreur est survenue lors de la mise à jour des droits.");
-            }
+            onError: (errors) => {
+                setErrorMessage(firstError(errors, 'Une erreur est survenue lors de la mise à jour des droits.'));
+            },
         });
     };
 
@@ -130,7 +137,7 @@ export default function RolesPermissionsPanel({
             preserveState: true,
             preserveScroll: true,
             onFinish: () => setSavingAdmin(false),
-            onError: () => setErrorMessage('Une erreur est survenue lors de la mise à jour des droits admin.'),
+            onError: (errors) => setErrorMessage(firstError(errors, 'Une erreur est survenue lors de la mise à jour des droits admin.')),
         });
     };
 
@@ -158,12 +165,19 @@ export default function RolesPermissionsPanel({
             return;
         }
 
-        // Garde-fou anti-lockout : préserver au minimum la consultation des utilisateurs et la gestion des rôles
-        if (!next.includes('admin.users.view')) {
-            next.push('admin.users.view');
+        // Garde-fou anti-verrouillage : seul l'administrateur connecté garde d'office
+        // la gestion des rôles sur son propre compte. L'imposer aux autres comptes
+        // revenait à leur donner l'accès total.
+        if (selectedAdmin.is_self) {
+            for (const kept of SELF_KEPT_CAPABILITIES) {
+                if (!next.includes(kept)) next.push(kept);
+            }
         }
-        if (!next.includes('admin.roles.manage')) {
-            next.push('admin.roles.manage');
+
+        // « Aucune capacité » n'est pas un état : le serveur le refuse aussi.
+        if (next.length === 0) {
+            setErrorMessage(EMPTY_SELECTION_MESSAGE);
+            return;
         }
 
         submitAdminCapabilities(next);
@@ -172,13 +186,15 @@ export default function RolesPermissionsPanel({
     const setFullAccess = (full: boolean) => {
         if (full) {
             submitAdminCapabilities(['admin.full-access']);
-        } else {
-            // Retirer l'accès total → périmètre minimal sécurisé (utilisateurs + gestion des rôles pour ne pas s'enfermer).
-            submitAdminCapabilities(['admin.users.view', 'admin.roles.manage']);
+            return;
         }
+
+        // Retirer l'accès total garde chaque capacité actuelle, écrite une à une :
+        // l'administrateur décoche ensuite celles qu'il veut retirer.
+        submitAdminCapabilities(Object.values(adminCapabilityCatalog).flatMap((group) => Object.keys(group)));
     };
 
-    const roles = ['client', 'artisan', 'fournisseur', 'referent', 'livreur', 'admin'];
+    const roles = ['client', 'artisan', 'fournisseur', 'referent', 'livreur'];
 
     const adminHas = (capability: string) =>
         adminHasFullAccess || (selectedAdmin?.capabilities.includes(capability) ?? false);
@@ -206,8 +222,8 @@ export default function RolesPermissionsPanel({
                 <div className="border-b border-[var(--admin-border)] pb-4 mb-6">
                     <h3 className="text-xl font-bold text-[var(--admin-text)]">Droits des administrateurs</h3>
                     <p className="text-xs text-[var(--admin-text-soft)] mt-1">
-                        Chaque compte admin peut être restreint à un périmètre précis. Un admin sans aucune capacité
-                        cochée — ou avec « Accès total » — dispose de l'ensemble des droits du backoffice.
+                        Chaque compte admin peut être restreint à un périmètre précis. L'ensemble des droits du
+                        backoffice s'accorde par la case « Accès total » ; un compte garde toujours au moins une capacité.
                     </p>
                 </div>
 
@@ -250,8 +266,8 @@ export default function RolesPermissionsPanel({
                                         <div className="min-w-0">
                                             <span className="font-semibold text-sm text-[var(--admin-text)]">Accès total</span>
                                             <p className="text-xs text-[var(--admin-text-soft)] mt-1">
-                                                Toutes les capacités, présentes et futures. Décochez — ou cochez directement
-                                                une capacité ci-dessous — pour limiter ce compte à un périmètre précis.
+                                                Toutes les capacités, présentes et futures. Décochez cette case, puis les
+                                                capacités à retirer, pour limiter ce compte à un périmètre précis.
                                             </p>
                                         </div>
                                         <input
@@ -335,10 +351,8 @@ export default function RolesPermissionsPanel({
                                     Droits & Actions du rôle : <span className="text-[#b77918]">{roleLabels[selectedRole]}</span>
                                 </h3>
                                 <p className="text-xs text-[var(--admin-text-soft)] mt-1">
-                                    {selectedRole === 'admin'
-                                        ? "L'administrateur a un accès total ; ses droits fins se règlent dans « Droits des administrateurs » ci-dessus."
-                                        : "Activez ou désactivez les permissions individuelles ci-dessous."
-                                    }
+                                    Activez ou désactivez les permissions individuelles ci-dessous. Les droits des
+                                    administrateurs se règlent dans « Droits des administrateurs » ci-dessus.
                                 </p>
                             </div>
                         </div>
@@ -351,8 +365,7 @@ export default function RolesPermissionsPanel({
                                     </h4>
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         {groupedPermissions[category].map((perm) => {
-                                            const hasPermission = selectedRole === 'admin' ||
-                                                (rolesPermissions[selectedRole] && rolesPermissions[selectedRole].includes(perm.name));
+                                            const hasPermission = rolesPermissions[selectedRole]?.includes(perm.name) ?? false;
 
                                             return (
                                                 <div
@@ -369,7 +382,8 @@ export default function RolesPermissionsPanel({
                                                     <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
                                                         <input
                                                             type="checkbox"
-                                                            disabled={selectedRole === 'admin' || toggling === perm.name}
+                                                            disabled={toggling === perm.name}
+                                                            aria-label={perm.name}
                                                             checked={hasPermission}
                                                             onChange={() => handleTogglePermission(perm.name, hasPermission)}
                                                             className="sr-only peer"

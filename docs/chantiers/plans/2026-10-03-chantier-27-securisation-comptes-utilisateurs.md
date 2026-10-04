@@ -2,7 +2,7 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | en cours (lots A, B et C livrés, contrôle manuel à faire) |
+| Statut | partiel (lots A à D livrés, contrôle manuel à faire ; lot E en attente de décisions) |
 | Créé le | 2026-10-03 |
 | Mis à jour le | 2026-10-04 |
 | Auteur | Claude Code |
@@ -64,7 +64,7 @@ Les lots sont indépendants et se livrent dans cet ordre, chacun avec ses tests.
     - `KycService::uploadDocument` remet un compte « rejeté » en « en attente » dès qu'il renvoie une pièce : le dossier revient dans la liste et l'analyse automatique s'applique.
 15. **Motif du rejet transmis (H5)** — variable `{motif}` ajoutée à l'événement `kyc.rejete.utilisateur` (texte par défaut mis à jour, variable obligatoire) ; `GET /kyc/status` renvoie `rejection_reason`. L'écran KYC de l'application l'affiche s'il est présent.
 
-### Lot D — Rôles & Actions
+### Lot D — Rôles & Actions (livré)
 
 16. **« Aucune capacité » distinct d'« accès total » (I1)** — `AdminPermissionService::sync` refuse une liste vide (422, « Cochez au moins une capacité, ou l'accès total. »). L'accès total s'accorde par sa case explicite. Migration de données : les administrateurs sans ligne reçoivent `admin.full-access`, pour que l'état actuel soit conservé et lisible. Le repli « aucune ligne = accès total » de `capabilitiesFor` est conservé comme filet de secours (Règle d'or 67).
 17. **Audit complet (I3, I5)** — `RolePermissionService` audite `role_permission.assigned` et `.revoked` (rôle, action) ; `admin.permissions_updated` enregistre les capacités avant et après.
@@ -88,7 +88,7 @@ Rien n'est implémenté avant la réponse d'Inza Bamba. Recommandation entre par
 
 ## Règles d'or concernées
 
-1, 6, 16, 17, 21, 22, 24, 29, 35, 36, 39, 40, 49, 55, 67, 68, 74, 80, 81 ; Règle d'or 98 (lot A), Règle d'or 99 (lot B), Règle d'or 100 (lot C).
+1, 6, 16, 17, 21, 22, 24, 29, 35, 36, 39, 40, 49, 55, 67, 68, 74, 80, 81 ; Règle d'or 98 (lot A), Règle d'or 99 (lot B), Règle d'or 100 (lot C), Règle d'or 101 (lot D).
 
 Points d'attention :
 
@@ -149,3 +149,15 @@ Points d'attention :
 - **Hors périmètre, constaté** : la liste des dossiers KYC transmet encore le modèle `User` entier (même défaut que E2) ; H2 (rejet d'un compte déjà actif) et H6 restent ouverts.
 - **Non vérifié** : suite Pest sur MariaDB 11.8 en local (Docker arrêté) ; contrôle manuel dans le navigateur et sur un appareil.
 - **Tests** : `Chantier27LotCKycReviewTest.php` (10 tests, dont 7 échouent sans le correctif) ; `KycAiVerificationTest`, `AdminBulkActionTest`, `AdminPermissionTest`, `AdminAuditLogTest`, `NotificationDeliveryTest` alignés (un dossier approuvé porte ses deux pièces) ; `KycPanel.test.tsx` ; `kyc_rejection_reason_test.dart`.
+
+### Lot D (livré le 2026-10-04)
+
+- **Anti-verrouillage de l'écran limité à son propre compte** (non prévu au plan) : l'écran ajoutait `admin.roles.manage` et `admin.users.view` à **tout** administrateur modifié. Comme `admin.roles.manage` vaut l'accès total (constat I2), aucun administrateur ne pouvait être réellement restreint depuis l'écran. Ces capacités ne sont plus imposées qu'au compte de l'administrateur connecté ; le serveur l'applique aussi, et y ajoute `admin.users.view` comme le demande la Règle d'or 67.
+- **Retrait de l'accès total** : l'écran écrit toutes les capacités du catalogue, au lieu de réduire le compte à deux capacités.
+- **Refus d'une liste vide** : par la validation de la requête (message sous forme d'erreur de formulaire, affiché par l'écran) et par le service.
+- **Audit des rôles** : une ligne seulement quand le droit change réellement ; attribuer une action déjà attribuée n'écrit rien.
+- **Capacités `admin.*`** : refusées pour un rôle de l'application (non prévu au plan).
+- **Administrateurs existants à accès restreint** : ceux qui avaient été restreints depuis l'écran portent `admin.roles.manage`, donc l'accès total de fait. Leurs lignes ne sont pas modifiées : à revoir à la main dans « Rôles & Actions ».
+- **Constat I2** : inchangé, `admin.roles.manage` vaut toujours l'accès total. I4 (garde-fous sur les droits des rôles) reste au lot E.
+- **Non vérifié** : suite Pest sur MariaDB 11.8 en local (Docker arrêté) ; connexion d'un super administrateur après la migration ; contrôle manuel de l'écran.
+- **Tests** : `Chantier27LotDRolesAndRightsTest.php` (12 tests, dont 8 échouent sans le correctif) ; `roles-permissions-panel.test.tsx` (11 tests, premier test de cet écran).
