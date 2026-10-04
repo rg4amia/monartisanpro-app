@@ -24,7 +24,6 @@ class SettingsController extends GetxController {
   final ordersCount = 0.obs;
   final isLoading = false.obs;
 
-  final notificationsEnabled = true.obs;
   final notificationSoundEnabled = true.obs;
   final dataSaverEnabled = true.obs;
 
@@ -43,7 +42,6 @@ class SettingsController extends GetxController {
     userPhone.value = StorageService.getPhone() ?? '';
     userRole.value = StorageService.getRole() ?? '';
     kycStatus.value = StorageService.getKycStatus() ?? 'en_attente';
-    notificationsEnabled.value = StorageService.areNotificationsEnabled();
     notificationSoundEnabled.value =
         StorageService.isNotificationSoundEnabled();
     dataSaverEnabled.value = StorageService.isDataSaverEnabled();
@@ -101,11 +99,6 @@ class SettingsController extends GetxController {
     } finally {
       isSavingPaymentPhone.value = false;
     }
-  }
-
-  void toggleNotifications(bool value) {
-    notificationsEnabled.value = value;
-    StorageService.setNotificationsEnabled(value);
   }
 
   void toggleNotificationSound(bool value) {

@@ -422,6 +422,8 @@ Route::prefix('v1')->group(function () {
 
         // ── Notifications ─────────────────────────────────────────────────────
         Route::get('/notifications', [NotificationController::class, 'index']);
+        Route::get('/notifications/preferences', [NotificationController::class, 'preferences']);
+        Route::put('/notifications/preferences', [NotificationController::class, 'updatePreferences']);
         Route::put('/notifications/{notification}/read', [NotificationController::class, 'markRead']);
         Route::post('/notifications/mark-all-read', [NotificationController::class, 'markAllRead']);
 

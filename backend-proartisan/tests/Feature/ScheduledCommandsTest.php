@@ -23,4 +23,5 @@ it('planifie les commandes de maintenance métier', function (string $signature)
     'prosartisan:driver-watchdog',
     'admin:health-check',
     'notifications:send-campaigns',
+    'notifications:purge-read',
 ]);

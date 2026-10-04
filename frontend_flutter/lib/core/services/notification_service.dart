@@ -3,8 +3,10 @@ import 'package:get/get.dart';
 import 'package:onesignal_flutter/onesignal_flutter.dart';
 
 import '../../app/routes/app_routes.dart';
+import '../../data/repositories/notification_repository.dart';
 import '../../modules/chat/views/chat_screen.dart';
 import '../../modules/main_tab/controllers/main_tab_controller.dart';
+import '../../modules/notifications/controllers/notifications_controller.dart';
 import '../storage/storage_service.dart';
 
 class NotificationService extends GetxService {
@@ -23,23 +25,44 @@ class NotificationService extends GetxService {
   void _registerListeners() {
     try {
       // Gestion des notifications reçues lorsque l'application est au premier plan
+      // Ce que l'utilisateur reçoit se règle sur le serveur (préférences
+      // par rubrique) : tout push arrivé jusqu'ici est affiché.
       OneSignal.Notifications.addForegroundWillDisplayListener((event) {
-        if (StorageService.areNotificationsEnabled()) {
-          event.notification.display();
-        } else {
-          event.preventDefault();
-        }
+        event.notification.display();
       });
 
       // Écouter les clics sur les notifications push reçues
       OneSignal.Notifications.addClickListener((event) {
         final data = event.notification.additionalData;
         if (data != null) {
+          markReadFromPush(data);
           routeToTarget(data);
         }
       });
     } catch (e) {
       debugPrint("Erreur lors de l'enregistrement des écouteurs OneSignal: $e");
+    }
+  }
+
+  /// Identifiant de la notification in-app portée par un push, s'il y en a un
+  /// (un envoi groupé de campagne n'en porte pas).
+  static int? notificationIdOf(Map<String, dynamic> data) =>
+      int.tryParse(data['notification_id']?.toString() ?? '');
+
+  /// Toucher un push marque la notification comme lue, sans bloquer
+  /// l'ouverture de l'écran si le réseau manque.
+  Future<void> markReadFromPush(Map<String, dynamic> data) async {
+    final id = notificationIdOf(data);
+    if (id == null) return;
+
+    try {
+      if (Get.isRegistered<NotificationsController>()) {
+        await Get.find<NotificationsController>().markRead(id);
+      } else {
+        await NotificationRepository().markRead(id);
+      }
+    } catch (e) {
+      debugPrint('Notification non marquée comme lue : $e');
     }
   }
 

@@ -592,7 +592,7 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Manuel d'utilisation** : section « Modifier un message push ou SMS ».
     * **Tests automatisés** : `NotificationMessagesAdminTest.php` (11 tests, SQLite et MariaDB 11.8), `NotificationMessagesPanel.test.tsx` (8 tests), `sms.test.ts` (5 tests).
 
-39. **Chantier 14 — Notifications (lot D : campagnes push & SMS) :** [COMPLÉTÉ — lot E proposé]
+39. **Chantier 14 — Notifications (lot D : campagnes push & SMS) :** [COMPLÉTÉ]
     * **Onglet « Campagnes push & SMS »** (`/admin/campagnes-notifications`, capacité distincte `admin.notifications.broadcast`) : création en brouillon, modification et suppression tant que la campagne n'est pas partie, duplication, envoi de test à soi-même, programmation immédiate ou datée, annulation (y compris en cours d'envoi).
     * **Nature** « Information de service » ou « Promotionnel » : le promotionnel part en push uniquement, et seulement vers les comptes ayant accepté les offres et nouveautés (`notification_preferences`, désactivé par défaut).
     * **Ciblage** cumulatif par rôle, statut KYC, commune et utilisateurs désignés ; administrateurs et comptes suspendus, anonymisés ou supprimés exclus ; plafond de 20 000 destinataires.
@@ -729,6 +729,14 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Boutique du fournisseur** : créée à partir de sa position réelle, plus jamais à des coordonnées par défaut ; son nom se corrige dans le backoffice.
     * **Droits des rôles** : les actions indispensables ne se retirent pas, les actions réservées ne s'attribuent qu'aux rôles prévus.
     * **Tests automatisés** : `Chantier27LotEAccountRulesTest.php` (28 tests), `payment_phone_confirmation_test.dart`, `UsersPanel.test.tsx`, `FormModals.test.tsx`, `roles-permissions-panel.test.tsx`.
+59. **Chantier 14 — Notifications (lot E : préférences de l'utilisateur, liste paginée, purge) :** [COMPLÉTÉ — contrôle sur appareil à faire ; nouvelle version de l'application à publier]
+    * **Préférences** : chaque utilisateur choisit, rubrique par rubrique, de recevoir ou non les notifications push (et les SMS, quand un message courant part par SMS). Le réglage est enregistré sur le serveur et suit l'utilisateur d'un téléphone à l'autre.
+    * **Messages essentiels** : les paiements reçus, les alertes de sécurité, l'ouverture d'un litige et les codes de validation ne se coupent pas.
+    * **Rien ne se perd** : une notification coupée reste dans la liste de l'application.
+    * **Offres et nouveautés** : accord explicite, désactivé par défaut, daté. Les campagnes promotionnelles du backoffice peuvent désormais partir vers les comptes qui l'ont donné.
+    * **Liste** : chargée page par page (« Voir plus »), onglets par rubrique fournis par le serveur, nombre de non lues exact sur l'accueil ; toucher une notification de la barre du téléphone la marque comme lue.
+    * **Conservation** : les notifications lues depuis plus de 12 mois sont supprimées chaque jour ; les non lues ne le sont jamais.
+    * **Tests automatisés** : `Chantier14LotENotificationPreferencesTest.php` (15 tests), `notifications_test.dart` (18 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

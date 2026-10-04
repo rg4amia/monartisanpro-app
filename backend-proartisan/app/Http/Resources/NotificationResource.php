@@ -2,6 +2,7 @@
 
 namespace App\Http\Resources;
 
+use App\Services\Notifications\NotificationCatalog;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
@@ -12,6 +13,8 @@ class NotificationResource extends JsonResource
         return [
             'id' => $this->id,
             'type' => $this->type,
+            'eventKey' => $this->event_key,
+            'domain' => NotificationCatalog::domainOf($this->event_key),
             'title' => $this->title,
             'message' => $this->body,
             'data' => empty($this->data_json) ? new \stdClass : $this->data_json,

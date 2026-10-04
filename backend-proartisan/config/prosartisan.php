@@ -113,6 +113,8 @@ return [
         'campaign_max_recipients' => (int) env('NOTIFICATION_CAMPAIGN_MAX_RECIPIENTS', 20000),
         // Destinataires servis par campagne à chaque passage de la commande (chaque minute).
         'campaign_batch_size' => (int) env('NOTIFICATION_CAMPAIGN_BATCH_SIZE', 1000),
+        // Une notification lue depuis plus longtemps est purgée ; une non lue ne l'est jamais.
+        'read_retention_months' => (int) env('NOTIFICATION_READ_RETENTION_MONTHS', 12),
     ],
 
     'delivery' => [

@@ -2,9 +2,9 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | en cours (lots A, B, C et D livrés le 2026-09-29) |
+| Statut | livré (lots A à D le 2026-09-29, lot E le 2026-10-04 ; contrôle sur appareil à faire) |
 | Créé le | 2026-09-29 |
-| Mis à jour le | 2026-09-29 |
+| Mis à jour le | 2026-10-04 |
 | Auteur | Claude Code |
 | Analyses liées | — (diagnostic reporté ci-dessous, § « Constat ») |
 | Commits | — |
@@ -167,3 +167,18 @@ Sous l'onglet « Notifications & Alertes » existant, nouveaux sous-onglets **Mo
 - **Écran « communication »** : le mobile n'a pas d'écran de détail des communications. Il ouvre l'accueil, où elles sont affichées. `communication_id` est transmis pour un futur écran dédié.
 - **Annulation** : possible aussi pendant l'envoi. Les lots restants ne partent pas et les destinataires déjà servis le restent. Une campagne annulée avant tout envoi peut être supprimée.
 - **Audit** : en plus des actions prévues, `notification_campaign.scheduled`, `.duplicated` et `.test_sent`. L'audit `.sent` est attribué à l'administrateur qui a programmé la campagne.
+
+### Lot E (04/10/2026)
+
+- **Messages essentiels** : le plan citait « OTP, fraude, libération de fonds ». Le critère retenu est celui de la décision n° 1 : est essentiel tout message du domaine sécurité, tout message à canal imposé, et tout message que le catalogue envoie par SMS (paiement reçu, ouverture d'un litige, relance du livreur sans signal). Il porte sur le catalogue, pas sur une surcharge du backoffice.
+- **SMS par rubrique** : par défaut, seuls des messages essentiels partent par SMS. L'interrupteur SMS d'une rubrique n'apparaît donc que si un administrateur a activé le SMS d'un message courant (lot C).
+- **Stockage** : deux listes de rubriques coupées (`muted_push_domains`, `muted_sms_domains`) sur la ligne `notification_preferences` créée au lot D ; l'accord promotionnel reçoit sa date (`promotional_push_at`).
+- **Notification in-app toujours enregistrée** : les préférences ne portent que sur le push et le SMS. Un canal coupé ne produit pas de ligne au journal des envois, comme un canal désactivé par un administrateur (écart du lot B).
+- **Campagnes** : une campagne de service part à tous ses destinataires ; les rubriques ne s'y appliquent pas. Les campagnes promotionnelles deviennent utilisables, l'accord pouvant enfin être donné.
+- **Indicateur local supprimé** : l'interrupteur « Activer/désactiver toutes les notifications », qui ne masquait que l'affichage au premier plan, disparaît. Un utilisateur qui l'avait coupé revoit les notifications au premier plan et règle désormais ses rubriques.
+- **Onglets** : les rubriques présentes dans les notifications de l'utilisateur, fournies par `meta.domains`. Les notifications antérieures au catalogue et les campagnes, sans rubrique, ne figurent que dans « Tout ».
+- **Liste sans cache de repli** : une panne s'annonce avec « Réessayer » et garde les notifications déjà affichées ; l'ancien cache d'une minute pouvait présenter une liste périmée.
+- **Lecture** : toucher un push marque la notification comme lue (`notification_id`, posé au lot A) ; `markRead` conserve la date de première lecture, dont dépend la purge.
+- **Purge** : `notifications:purge-read`, chaque jour à 03 h 40 ; délai réglable (`NOTIFICATION_READ_RETENTION_MONTHS`).
+- `sendPush()` était déjà supprimé depuis le lot A.
+- **Non fait** : aucun écran de backoffice ne montre les préférences d'un utilisateur ni le nombre d'accords promotionnels (l'estimation d'une campagne promotionnelle le donne déjà).

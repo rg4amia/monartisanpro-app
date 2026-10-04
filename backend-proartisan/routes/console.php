@@ -9,6 +9,7 @@ use App\Console\Commands\ExpireArtisanRequestsCommand;
 use App\Console\Commands\ExpireJuryReviewsCommand;
 use App\Console\Commands\ExpireRecruitmentOffersCommand;
 use App\Console\Commands\ExpireUnpaidOrdersCommand;
+use App\Console\Commands\PurgeReadNotificationsCommand;
 use App\Console\Commands\RemindUnpaidDeliveryFaresCommand;
 use App\Console\Commands\RetryFailedPayoutsCommand;
 use App\Console\Commands\SendNotificationCampaignsCommand;
@@ -106,3 +107,9 @@ Schedule::command(SendNotificationCampaignsCommand::class)
     ->withoutOverlapping()
     ->runInBackground()
     ->appendOutputTo(storage_path('logs/notification-campaigns.log'));
+
+// Chantier 14, lot E — purge des notifications lues depuis plus de 12 mois
+Schedule::command(PurgeReadNotificationsCommand::class)
+    ->dailyAt('03:40')
+    ->withoutOverlapping()
+    ->appendOutputTo(storage_path('logs/notifications-purge.log'));

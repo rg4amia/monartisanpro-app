@@ -218,6 +218,7 @@ class ApiEndpoints {
   static const String notifications = '/notifications';
   static String markNotificationRead(int id) => '/notifications/$id/read';
   static const String markAllRead = '/notifications/mark-all-read';
+  static const String notificationPreferences = '/notifications/preferences';
 
   // Communications
   static const String communicationsActive = '/communications/active';

@@ -32,6 +32,7 @@ abstract class Routes {
   // Tabs
   static const missions = '/missions';
   static const notifications = '/notifications';
+  static const notificationPreferences = '/notification-preferences';
   static const settings = '/settings';
   static const updateProfile = '/update-profile';
   static const support = '/support';

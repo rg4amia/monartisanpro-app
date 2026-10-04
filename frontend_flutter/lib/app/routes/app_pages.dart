@@ -48,6 +48,8 @@ import '../../modules/missions/views/mission_tracking_screen.dart';
 import '../../modules/missions/views/missions_screen.dart';
 import '../../modules/missions/views/referent_validation_screen.dart';
 import '../../modules/notifications/bindings/notifications_binding.dart';
+import '../../modules/notifications/controllers/notification_preferences_controller.dart';
+import '../../modules/notifications/views/notification_preferences_screen.dart';
 import '../../modules/notifications/views/notifications_screen.dart';
 import '../../modules/onboarding/bindings/onboarding_binding.dart';
 import '../../modules/onboarding/views/onboarding_screen.dart';
@@ -210,6 +212,13 @@ class AppPages {
       name: Routes.notifications,
       page: () => const NotificationsScreen(),
       binding: NotificationsBinding(),
+    ),
+    GetPage(
+      name: Routes.notificationPreferences,
+      page: () => const NotificationPreferencesScreen(),
+      binding: BindingsBuilder(
+        () => Get.lazyPut(() => NotificationPreferencesController()),
+      ),
     ),
 
     // Aide & support

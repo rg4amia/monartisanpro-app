@@ -25,7 +25,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 | 2026-10-03 | Plan | [Chantier 17 — Saisie automatique du code OTP reçu par SMS](plans/2026-10-03-chantier-17-saisie-automatique-otp.md) | livré (contrôle sur appareil réel à faire) | — |
 | 2026-09-29 | Plan | [Chantier 16 — Liens Google Play et App Store pilotés depuis le backoffice](plans/2026-09-29-chantier-16-liens-applications-mobiles.md) | livré | — |
 | 2026-09-29 | Plan | [Chantier 15 — Annuaire artisans : disponibilité validée et présence pilotée](plans/2026-09-29-chantier-15-annuaire-artisans.md) | livré | — |
-| 2026-09-29 | Plan | [Chantier 14 — Notifications fiables et messages pilotés depuis le backoffice](plans/2026-09-29-chantier-14-notifications.md) | en cours (lots A, B, C et D livrés) | — |
+| 2026-09-29 | Plan | [Chantier 14 — Notifications fiables et messages pilotés depuis le backoffice](plans/2026-09-29-chantier-14-notifications.md) | livré (lot E le 2026-10-04 ; contrôle sur appareil à faire ; nouvelle version de l'application à publier) | — |
 | 2026-09-26 | Audit | [Simulation de bout en bout de l'écosystème ProsArtisan](audits/2026-09-26-audit-simulation-ecosysteme.md) | — | commit « test(ecosysteme) » du 26/09/2026 |
 | 2026-09-26 | Plan | [Chantier 13 — Machine à États Formelle & Guards d'Intégrité des Missions](plans/2026-09-26-chantier-13-machine-etats-guards-missions.md) | livré | `faf6fd8f`, `141b0546` |
 | 2026-09-26 | Plan | [Chantier 12 — Jury ProsArtisan (Arbitrage par les Pairs) & Evidence Vault (Coffre-fort SHA-256)](plans/2026-09-26-chantier-12-jury-prosartisan-evidence-vault.md) | livré | `faf6fd8f`, `141b0546`, `930d2d0c` |

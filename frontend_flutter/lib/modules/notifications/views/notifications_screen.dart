@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
+import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/notification_model.dart';
@@ -57,57 +58,41 @@ class NotificationsScreen extends GetView<NotificationsController> {
             ),
           );
         }),
+        IconButton(
+          tooltip: 'Préférences de notification',
+          icon: const Icon(Icons.tune, color: Colors.black87),
+          onPressed: () => Get.toNamed(Routes.notificationPreferences),
+        ),
         const SizedBox(width: 8),
       ],
     );
   }
 
+  /// « Tout », puis les rubriques présentes dans les notifications de
+  /// l'utilisateur (transmises par le serveur avec leur nombre de non lues).
   Widget _buildTabs() {
     return Container(
       color: Colors.white,
+      height: 50,
       child: Obx(() {
-        final allCount =
-            controller.notifications.where((n) => !n.isRead).length;
-        final missionsCount = controller.notifications
-            .where(
-              (n) =>
-                  !n.isRead &&
-                  (n.type == 'mission' ||
-                      n.type == 'mission_update' ||
-                      n.type == 'jalon' ||
-                      n.type == 'jcode'),
-            )
-            .length;
-        final financesCount = controller.notifications
-            .where(
-              (n) =>
-                  !n.isRead &&
-                  (n.type == 'payment' ||
-                      n.type == 'payment_alert' ||
-                      n.type == 'wallet'),
-            )
-            .length;
+        final selected = controller.selectedTab.value;
 
-        return Row(
+        return ListView(
+          scrollDirection: Axis.horizontal,
           children: [
             _TabItem(
               label: 'Tout',
-              badgeCount: allCount,
-              isSelected: controller.selectedTab.value == 'all',
-              onTap: () => controller.selectTab('all'),
+              badgeCount: controller.unread.value,
+              isSelected: selected == NotificationsController.allTab,
+              onTap: () => controller.selectTab(NotificationsController.allTab),
             ),
-            _TabItem(
-              label: 'Missions',
-              badgeCount: missionsCount,
-              isSelected: controller.selectedTab.value == 'missions',
-              onTap: () => controller.selectTab('missions'),
-            ),
-            _TabItem(
-              label: 'Finances',
-              badgeCount: financesCount,
-              isSelected: controller.selectedTab.value == 'finances',
-              onTap: () => controller.selectTab('finances'),
-            ),
+            for (final domain in controller.domains)
+              _TabItem(
+                label: domain.label,
+                badgeCount: domain.unread,
+                isSelected: selected == domain.key,
+                onTap: () => controller.selectTab(domain.key),
+              ),
           ],
         );
       }),
@@ -116,7 +101,10 @@ class NotificationsScreen extends GetView<NotificationsController> {
 
   Widget _buildContent() {
     return Obx(() {
-      if (controller.isLoading.value) {
+      final items = controller.notifications.toList();
+      final error = controller.errorMsg.value;
+
+      if (controller.isLoading.value && items.isEmpty) {
         return const Center(
           child: CircularProgressIndicator(
             valueColor: AlwaysStoppedAnimation<Color>(AppColors.primary),
@@ -124,28 +112,57 @@ class NotificationsScreen extends GetView<NotificationsController> {
         );
       }
 
-      final filteredNotifications = controller.filteredNotifications;
-
-      if (filteredNotifications.isEmpty) {
-        return _buildEmptyState();
+      // Une panne n'est jamais présentée comme une liste vide.
+      if (items.isEmpty) {
+        return error != null ? _buildErrorState(error) : _buildEmptyState();
       }
 
-      // Grouper les notifications par date
-      final groupedNotifications =
-          _groupNotificationsByDate(filteredNotifications);
+      final groupedNotifications = _groupNotificationsByDate(items);
+      final hasMore = controller.hasMore.value;
+      final footer = (error != null ? 1 : 0) + (hasMore ? 1 : 0);
 
       return RefreshIndicator(
         onRefresh: controller.load,
         color: AppColors.primary,
         child: ListView.builder(
           padding: const EdgeInsets.only(bottom: 16),
-          itemCount: groupedNotifications.length,
+          itemCount: groupedNotifications.length + footer,
           itemBuilder: (context, index) {
-            final group = groupedNotifications[index];
-            return _NotificationGroup(
-              dateLabel: group['label'] as String,
-              notifications: group['notifications'] as List<NotificationModel>,
-              controller: controller,
+            if (index < groupedNotifications.length) {
+              final group = groupedNotifications[index];
+              return _NotificationGroup(
+                dateLabel: group['label'] as String,
+                notifications:
+                    group['notifications'] as List<NotificationModel>,
+                controller: controller,
+              );
+            }
+
+            if (error != null && index == groupedNotifications.length) {
+              return Padding(
+                padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+                child: Text(
+                  error,
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(color: AppColors.danger, fontSize: 13),
+                ),
+              );
+            }
+
+            return Padding(
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 0),
+              child: Obx(
+                () => OutlinedButton(
+                  onPressed: controller.isLoadingMore.value
+                      ? null
+                      : controller.loadMore,
+                  child: Text(
+                    controller.isLoadingMore.value
+                        ? 'Chargement…'
+                        : 'Voir plus',
+                  ),
+                ),
+              ),
             );
           },
         ),
@@ -153,78 +170,80 @@ class NotificationsScreen extends GetView<NotificationsController> {
     });
   }
 
-  Widget _buildEmptyState() {
-    return Obx(() {
-      final tab = controller.selectedTab.value;
-      final (icon, title, subtitle) = _getEmptyStateContent(tab);
-
-      return Center(
-        child: Padding(
-          padding: const EdgeInsets.all(32),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Container(
-                padding: const EdgeInsets.all(24),
-                decoration: BoxDecoration(
-                  color: Colors.grey[100],
-                  shape: BoxShape.circle,
-                ),
-                child: Icon(
-                  icon,
-                  size: 64,
-                  color: Colors.grey[400],
-                ),
-              ),
-              const SizedBox(height: 24),
-              Text(
-                title,
-                style: TextStyle(
-                  color: Colors.grey[800],
-                  fontSize: 18,
-                  fontWeight: FontWeight.w600,
-                ),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: 8),
-              Text(
-                subtitle,
-                style: TextStyle(
-                  color: Colors.grey[600],
-                  fontSize: 14,
-                  fontWeight: FontWeight.w400,
-                  height: 1.5,
-                ),
-                textAlign: TextAlign.center,
-              ),
-            ],
-          ),
+  Widget _buildErrorState(String message) {
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(Icons.cloud_off_outlined, size: 56, color: Colors.grey[400]),
+            const SizedBox(height: 16),
+            Text(
+              message,
+              textAlign: TextAlign.center,
+              style: TextStyle(color: Colors.grey[700], fontSize: 14),
+            ),
+            const SizedBox(height: 16),
+            OutlinedButton(
+              onPressed: controller.load,
+              child: const Text('Réessayer'),
+            ),
+          ],
         ),
-      );
-    });
+      ),
+    );
   }
 
-  (IconData, String, String) _getEmptyStateContent(String tab) {
-    switch (tab) {
-      case 'missions':
-        return (
-          Icons.build_outlined,
-          'Aucune notification mission',
-          'Vous serez notifié ici des mises à jour\nsur vos missions en cours'
-        );
-      case 'finances':
-        return (
-          Icons.account_balance_wallet_outlined,
-          'Aucune notification financière',
-          'Vos transactions et paiements\napparaîtront ici'
-        );
-      default:
-        return (
-          Icons.notifications_none_outlined,
-          'Aucune notification',
-          'Vous n\'avez aucune notification\npour le moment'
-        );
-    }
+  Widget _buildEmptyState() {
+    final inDomain =
+        controller.selectedTab.value != NotificationsController.allTab;
+
+    return Center(
+      child: Padding(
+        padding: const EdgeInsets.all(32),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(24),
+              decoration: BoxDecoration(
+                color: Colors.grey[100],
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                Icons.notifications_none_outlined,
+                size: 64,
+                color: Colors.grey[400],
+              ),
+            ),
+            const SizedBox(height: 24),
+            Text(
+              inDomain
+                  ? 'Aucune notification dans cette rubrique'
+                  : 'Aucune notification',
+              style: TextStyle(
+                color: Colors.grey[800],
+                fontSize: 18,
+                fontWeight: FontWeight.w600,
+              ),
+              textAlign: TextAlign.center,
+            ),
+            const SizedBox(height: 8),
+            Text(
+              "Vous n'avez aucune notification\npour le moment",
+              style: TextStyle(
+                color: Colors.grey[600],
+                fontSize: 14,
+                fontWeight: FontWeight.w400,
+                height: 1.5,
+              ),
+              textAlign: TextAlign.center,
+            ),
+          ],
+        ),
+      ),
+    );
   }
 
   List<Map<String, dynamic>> _groupNotificationsByDate(
@@ -356,54 +375,52 @@ class _TabItem extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return Expanded(
-      child: InkWell(
-        onTap: onTap,
-        child: Container(
-          padding: const EdgeInsets.symmetric(vertical: 14),
-          decoration: BoxDecoration(
-            border: Border(
-              bottom: BorderSide(
-                color: isSelected ? AppColors.primary : Colors.transparent,
-                width: 2.5,
-              ),
+    return InkWell(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 18),
+        decoration: BoxDecoration(
+          border: Border(
+            bottom: BorderSide(
+              color: isSelected ? AppColors.primary : Colors.transparent,
+              width: 2.5,
             ),
           ),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Text(
-                label,
-                textAlign: TextAlign.center,
-                style: TextStyle(
-                  color: isSelected ? AppColors.primary : Colors.grey[600],
-                  fontSize: 15,
-                  fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+        ),
+        child: Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Text(
+              label,
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: isSelected ? AppColors.primary : Colors.grey[600],
+                fontSize: 15,
+                fontWeight: isSelected ? FontWeight.w600 : FontWeight.w500,
+              ),
+            ),
+            if (badgeCount > 0) ...[
+              const SizedBox(width: 6),
+              Container(
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 6,
+                  vertical: 2,
+                ),
+                decoration: BoxDecoration(
+                  color: isSelected ? AppColors.primary : Colors.red,
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Text(
+                  badgeCount > 99 ? '99+' : '$badgeCount',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 11,
+                    fontWeight: FontWeight.w700,
+                  ),
                 ),
               ),
-              if (badgeCount > 0) ...[
-                const SizedBox(width: 6),
-                Container(
-                  padding: const EdgeInsets.symmetric(
-                    horizontal: 6,
-                    vertical: 2,
-                  ),
-                  decoration: BoxDecoration(
-                    color: isSelected ? AppColors.primary : Colors.red,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    badgeCount > 99 ? '99+' : '$badgeCount',
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w700,
-                    ),
-                  ),
-                ),
-              ],
             ],
-          ),
+          ],
         ),
       ),
     );

@@ -102,6 +102,68 @@ class NotificationCatalog
     }
 
     /**
+     * Destinataires du catalogue que chaque rôle peut recevoir.
+     */
+    private const ROLE_AUDIENCES = [
+        'client' => ['client', 'partie', 'recruteur', 'utilisateur', 'beneficiaire'],
+        'artisan' => ['artisan', 'partie', 'utilisateur', 'beneficiaire'],
+        'fournisseur' => ['fournisseur', 'recruteur', 'utilisateur', 'beneficiaire'],
+        'livreur' => ['livreur', 'utilisateur', 'beneficiaire'],
+        'referent' => ['referent', 'utilisateur'],
+        'admin' => ['admin'],
+    ];
+
+    /**
+     * Rubrique d'un événement (null pour une clé inconnue, par exemple une
+     * notification d'un événement retiré du catalogue).
+     */
+    public static function domainOf(?string $event): ?string
+    {
+        return $event !== null && isset(self::EVENTS[$event]) ? self::EVENTS[$event]['domain'] : null;
+    }
+
+    /**
+     * Événements d'une rubrique.
+     *
+     * @return list<string>
+     */
+    public static function eventsOfDomain(string $domain): array
+    {
+        return array_keys(array_filter(self::EVENTS, fn (array $event) => $event['domain'] === $domain));
+    }
+
+    /**
+     * Événements qu'un rôle peut recevoir par `NotificationService::notify()`.
+     *
+     * @return list<string>
+     */
+    public static function eventsForRole(string $role): array
+    {
+        $audiences = self::ROLE_AUDIENCES[$role] ?? ['utilisateur'];
+
+        return array_keys(array_filter(
+            self::EVENTS,
+            fn (array $event) => in_array($event['audience'], $audiences, true) && ! ($event['direct'] ?? false)
+        ));
+    }
+
+    /**
+     * Message essentiel, que l'utilisateur ne peut pas couper dans ses
+     * préférences : sécurité et fraude, canal imposé (code OTP), et tout
+     * message que le catalogue envoie par SMS (paiement reçu, ouverture d'un
+     * litige, relance du livreur sans signal). Le critère porte sur le
+     * catalogue, jamais sur une surcharge du backoffice.
+     */
+    public static function isCritical(string $event): bool
+    {
+        $definition = self::get($event);
+
+        return $definition['domain'] === 'securite'
+            || $definition['locked'] !== []
+            || (bool) ($definition['sms'] ?? false);
+    }
+
+    /**
      * Valeur d'exemple d'une variable, pour l'aperçu et l'envoi de test du
      * backoffice (jamais pour un envoi réel).
      */

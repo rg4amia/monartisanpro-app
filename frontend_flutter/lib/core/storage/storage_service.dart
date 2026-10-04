@@ -86,14 +86,8 @@ class StorageService {
       _box.remove('drv_wallet');
 
   // ── Notifications Preferences ───────────────────────────────────────────────
-  static const String _notificationsEnabledKey = 'notifications_enabled';
   static const String _notificationSoundEnabledKey =
       'notification_sound_enabled';
-
-  static void setNotificationsEnabled(bool value) =>
-      _box.write(_notificationsEnabledKey, value);
-  static bool areNotificationsEnabled() =>
-      _box.read<bool>(_notificationsEnabledKey) ?? true;
 
   static void setNotificationSoundEnabled(bool value) =>
       _box.write(_notificationSoundEnabledKey, value);

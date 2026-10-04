@@ -37,6 +37,50 @@ class NotificationRepository {
     );
   }
 
+  /// Une page de notifications, filtrée par rubrique si [domain] est fourni.
+  /// Sans cache de repli : un échec remonte, il ne passe jamais pour une
+  /// liste vide.
+  Future<NotificationPage> fetchPage({
+    int page = 1,
+    String? domain,
+    int perPage = 30,
+  }) async {
+    final res = await NetworkExecutor.run(
+      () => _client.get(
+        ApiEndpoints.notifications,
+        params: {
+          'page': page,
+          'per_page': perPage,
+          if (domain != null) 'domain': domain,
+        },
+      ),
+    );
+    return NotificationPage.fromResponse(res.data);
+  }
+
+  Future<NotificationPreferences> getPreferences() async {
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.notificationPreferences),
+    );
+    return NotificationPreferences.fromResponse(res.data);
+  }
+
+  /// Enregistre les réglages transmis ; les rubriques absentes ne changent
+  /// pas. Renvoie les préférences telles que le serveur les a retenues.
+  Future<NotificationPreferences> updatePreferences({
+    bool? promotionalPush,
+    Map<String, Map<String, bool>>? domains,
+  }) async {
+    final res = await _client.put(
+      ApiEndpoints.notificationPreferences,
+      data: {
+        if (promotionalPush != null) 'promotional_push': promotionalPush,
+        if (domains != null) 'domains': domains,
+      },
+    );
+    return NotificationPreferences.fromResponse(res.data);
+  }
+
   Future<void> markRead(int id) async {
     await _client.put(ApiEndpoints.markNotificationRead(id));
     await _store.invalidate(_key);

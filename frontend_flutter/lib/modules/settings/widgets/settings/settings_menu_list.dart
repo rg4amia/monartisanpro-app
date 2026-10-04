@@ -62,9 +62,12 @@ class SettingsMenuList extends StatelessWidget {
                 ),
                 const SizedBox(height: 24),
 
-                // Notifications switch Row
-                Obx(
-                  () => Row(
+                // Préférences de notification : réglées sur le serveur,
+                // rubrique par rubrique (Chantier 14, lot E).
+                InkWell(
+                  onTap: () => Get.toNamed(Routes.notificationPreferences),
+                  borderRadius: BorderRadius.circular(12),
+                  child: Row(
                     children: [
                       Container(
                         width: 44,
@@ -94,7 +97,7 @@ class SettingsMenuList extends StatelessWidget {
                             ),
                             SizedBox(height: 2),
                             Text(
-                              'Activer/désactiver toutes les notifications',
+                              'Choisir les notifications et les SMS reçus',
                               style: TextStyle(
                                 fontSize: 12,
                                 color: SettingsColors.muted,
@@ -103,11 +106,9 @@ class SettingsMenuList extends StatelessWidget {
                           ],
                         ),
                       ),
-                      Switch(
-                        value: controller.notificationsEnabled.value,
-                        onChanged: controller.toggleNotifications,
-                        activeThumbColor: orangeAccent,
-                        activeTrackColor: orangeAccent.withValues(alpha: 0.3),
+                      const Icon(
+                        Icons.chevron_right,
+                        color: SettingsColors.muted,
                       ),
                     ],
                   ),
