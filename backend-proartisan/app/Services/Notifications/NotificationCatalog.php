@@ -849,8 +849,10 @@ class NotificationCatalog
         'kyc.rejete.utilisateur' => [
             'label' => 'Dossier KYC rejeté par un administrateur',
             'domain' => 'compte', 'audience' => 'utilisateur', 'type' => 'kyc',
+            'variables' => ['motif' => 'Motif du rejet saisi par l\'administrateur'],
+            'required' => ['motif'],
             'title' => 'Statut KYC mis à jour',
-            'body' => 'Votre dossier KYC a été rejeté. Merci de vérifier vos documents et de recommencer.',
+            'body' => 'Votre dossier KYC a été rejeté. Motif : {motif} Envoyez de nouvelles pièces depuis l\'application.',
             'sms' => false,
         ],
         'kyc.nouveau_profil.admin' => [

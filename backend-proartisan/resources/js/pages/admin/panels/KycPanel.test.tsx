@@ -170,6 +170,28 @@ describe('KycPanel', () => {
         expect(screen.getByText('Rôle soumis à revue humaine')).toBeInTheDocument();
     });
 
+    it("n'autorise pas l'approbation d'un dossier sans ses deux pièces", () => {
+        const { onKycDecision } = renderPanel({
+            kycUsersPage: makePage([
+                makeUser({ kyc_documents: [{ id: 1, type: 'cni', file_url: 'https://example.test/cni.jpg' }] }),
+            ]),
+        });
+
+        expect(screen.getByText('Dossier incomplet : carte d’identité et selfie requis')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Approuver' })).toBeDisabled();
+
+        // Le rejet reste possible : un dossier incomplet peut être refusé avec un motif.
+        fireEvent.click(screen.getByRole('button', { name: 'Rejeter' }));
+        expect(onKycDecision).toHaveBeenCalledWith(expect.objectContaining({ id: 9 }), 'rejete');
+    });
+
+    it("autorise l'approbation d'un dossier complet", () => {
+        renderPanel();
+
+        expect(screen.queryByText('Dossier incomplet : carte d’identité et selfie requis')).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Approuver' })).toBeEnabled();
+    });
+
     it('affiche un état vide sans dossier KYC', () => {
         renderPanel({ kycUsersPage: makePage([]) });
         expect(screen.getByText('Rien à afficher')).toBeInTheDocument();

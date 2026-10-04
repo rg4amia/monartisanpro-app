@@ -132,12 +132,22 @@ class AuthRepository {
 
   Future<String> kycStatus() async {
     final res = await _client.get(ApiEndpoints.kycStatus);
-    final status = readString(readMap(res.data)?['kycStatus']);
+    final status = readString(_kycStatusData(res.data)?['kyc_status']);
     if (status == null) {
       throw const FormatException('Statut KYC absent de la réponse.');
     }
     return status;
   }
+
+  /// Motif saisi par l'administrateur quand le dossier est rejeté, sinon null.
+  Future<String?> kycRejectionReason() async {
+    final res = await _client.get(ApiEndpoints.kycStatus);
+    final reason = readString(_kycStatusData(res.data)?['rejection_reason']);
+    return reason == null || reason.trim().isEmpty ? null : reason.trim();
+  }
+
+  Map<String, dynamic>? _kycStatusData(dynamic body) =>
+      readMap(readMap(body)?['data']);
 
   /// Téléverse la pièce d'identité. Renvoie le statut KYC du compte après
   /// l'analyse IA (`actif` si le dossier a été validé automatiquement), ou

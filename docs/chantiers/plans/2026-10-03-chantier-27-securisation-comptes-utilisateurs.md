@@ -2,7 +2,7 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | en cours (lots A et B livrés, contrôle manuel à faire) |
+| Statut | en cours (lots A, B et C livrés, contrôle manuel à faire) |
 | Créé le | 2026-10-03 |
 | Mis à jour le | 2026-10-04 |
 | Auteur | Claude Code |
@@ -55,7 +55,7 @@ Les lots sont indépendants et se livrent dans cet ordre, chacun avec ses tests.
 12. **Téléphone et rôle livreur (C2, C3)** — téléphone validé par `^\+225[0-9]{10}$` à la création et à la modification (un numéro existant hors format reste accepté tant qu'il n'est pas modifié) ; rôle `livreur` ajouté à la validation et au formulaire.
 13. **Liste allégée (E1, E2)** — `AdminPanelData::users` transmet une forme explicite par compte (champs affichés seulement : ni jeton de notification, ni empreinte, ni position) ; soldes calculés en une requête groupée pour la page. Objectif : nombre de requêtes indépendant du nombre de lignes, vérifié par test.
 
-### Lot C — Revue KYC
+### Lot C — Revue KYC (livré)
 
 14. **Revue cohérente (H1 à H4)** — `AdminService::reviewKyc` passe dans un service dédié `Admin\KycReviewService` :
     - approbation refusée sans carte d'identité **et** selfie (422, « Ce dossier ne contient pas les deux pièces. ») ;
@@ -88,7 +88,7 @@ Rien n'est implémenté avant la réponse d'Inza Bamba. Recommandation entre par
 
 ## Règles d'or concernées
 
-1, 6, 16, 17, 21, 22, 24, 29, 35, 36, 39, 40, 49, 55, 67, 68, 74, 80, 81 ; Règle d'or 98 (lot A), Règle d'or 99 (lot B).
+1, 6, 16, 17, 21, 22, 24, 29, 35, 36, 39, 40, 49, 55, 67, 68, 74, 80, 81 ; Règle d'or 98 (lot A), Règle d'or 99 (lot B), Règle d'or 100 (lot C).
 
 Points d'attention :
 
@@ -137,3 +137,15 @@ Points d'attention :
 - **Référent** : un Référent suspendu ne se connecte plus au backoffice non plus.
 - **Non vérifié** : suite Pest sur MariaDB 11.8 en local (Docker arrêté ; le job CI `tests-mariadb` la rejoue) ; contrôle manuel dans le navigateur.
 - **Tests** : `Chantier27LotBBackofficeAccountsTest.php` (22 tests, dont 21 échouent sans le correctif) ; `AdminUserManagementTest` aligné ; `FormModals.test.tsx`, `UsersPanel.test.tsx`.
+
+### Lot C (livré le 2026-10-04)
+
+- **Retour d'un dossier rejeté sans analyse automatique** : le plan prévoyait que l'analyse automatique s'applique au dossier revenu « en attente ». Elle ne s'applique pas : la Règle d'or 69 interdit à l'IA d'activer un dossier rejeté par un administrateur, et un test existant le garantit. Nouvelle colonne `users.kyc_rejected_at` (migration `2026_10_04_100000`), renseignée au rejet et effacée à l'approbation par un administrateur ; elle bloque l'auto-approbation (`dossier_rejete_par_un_administrateur`). Les dossiers déjà rejetés sont repris avec la date de dernière modification du compte.
+- **Motif sans pièce** : un dossier rejeté sans aucune pièce n'a pas de ligne où enregistrer le motif ; `GET /kyc/status` le relit dans le journal d'audit.
+- **Refus affichés** : message d'erreur dans le backoffice, 422 sur la route d'administration de l'application.
+- **Compte supprimé** : la route répond déjà 404 (compte introuvable) ; le service le refuse aussi s'il est appelé directement.
+- **Écran du backoffice** : le bouton « Approuver » est inactif sur un dossier incomplet (non prévu au plan).
+- **Application mobile** : motif affiché en haut de l'écran de capture de la pièce (`KycRejectionNotice`) ; `AuthRepository.kycStatus` lisait une clé absente de la réponse, corrigé.
+- **Hors périmètre, constaté** : la liste des dossiers KYC transmet encore le modèle `User` entier (même défaut que E2) ; H2 (rejet d'un compte déjà actif) et H6 restent ouverts.
+- **Non vérifié** : suite Pest sur MariaDB 11.8 en local (Docker arrêté) ; contrôle manuel dans le navigateur et sur un appareil.
+- **Tests** : `Chantier27LotCKycReviewTest.php` (10 tests, dont 7 échouent sans le correctif) ; `KycAiVerificationTest`, `AdminBulkActionTest`, `AdminPermissionTest`, `AdminAuditLogTest`, `NotificationDeliveryTest` alignés (un dossier approuvé porte ses deux pièces) ; `KycPanel.test.tsx` ; `kyc_rejection_reason_test.dart`.

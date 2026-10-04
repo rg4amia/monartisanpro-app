@@ -51,6 +51,7 @@ class User extends Authenticatable
         'cgu_accepted_at',
         'anonymized_at',
         'anonymized_by',
+        'kyc_rejected_at',
     ];
 
     protected $attributes = [
@@ -67,6 +68,7 @@ class User extends Authenticatable
             'payment_restricted_at' => 'datetime',
             'cgu_accepted_at' => 'datetime',
             'anonymized_at' => 'datetime',
+            'kyc_rejected_at' => 'datetime',
             'directory_hidden_at' => 'datetime',
             'wallet_materiaux' => 'integer',
             'wallet_mo' => 'integer',

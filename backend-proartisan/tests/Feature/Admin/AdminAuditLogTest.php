@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\AdminActivityLog;
+use App\Models\KycDocument;
 use App\Models\User;
 use App\Services\Admin\AdminUserService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -44,6 +45,9 @@ class AdminAuditLogTest extends TestCase
     {
         $admin = $this->admin();
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'en_attente']);
+        foreach (['cni', 'selfie'] as $type) {
+            KycDocument::create(['user_id' => $artisan->id, 'type' => $type, 'file_url' => "kyc/{$type}.jpg", 'statut' => 'en_attente']);
+        }
 
         $this->actingAs($admin)
             ->post("/admin/kyc/{$artisan->id}/review", ['decision' => 'approuve'])

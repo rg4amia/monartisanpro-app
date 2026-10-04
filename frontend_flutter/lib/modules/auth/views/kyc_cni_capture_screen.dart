@@ -8,6 +8,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
+import 'kyc_rejection_notice.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 
@@ -34,6 +35,12 @@ class KycCniCaptureScreen extends StatefulWidget {
 class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
   final _c = Get.find<AuthController>();
   final _picker = ImagePicker();
+
+  @override
+  void initState() {
+    super.initState();
+    unawaited(_c.loadKycRejectionReason());
+  }
 
   Future<void> _captureImage() async {
     unawaited(HapticFeedback.mediumImpact());
@@ -124,6 +131,14 @@ class _KycCniCaptureScreenState extends State<KycCniCaptureScreen> {
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
                 _buildProgress(),
+                Obx(() {
+                  final reason = _c.kycRejectionReason.value;
+                  if (reason == null) return const SizedBox.shrink();
+                  return Padding(
+                    padding: const EdgeInsets.only(top: 20),
+                    child: KycRejectionNotice(reason: reason),
+                  );
+                }),
                 const SizedBox(height: 32),
                 _buildTitle(),
                 const SizedBox(height: 12),

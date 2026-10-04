@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Models\AdminActivityLog;
 use App\Models\KycDocument;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
@@ -48,6 +49,17 @@ class KycService
             'file_url' => $path,
             'statut' => 'en_attente',
         ]);
+
+        // Un dossier rejeté qui reçoit une nouvelle pièce revient à l'examen :
+        // sans cela il sortait de la liste à traiter et son titulaire restait
+        // sans issue. La date du rejet est conservée : la décision revient à
+        // un administrateur, jamais à l'analyse automatique.
+        if ($user->kyc_status === 'rejete' && $user->anonymized_at === null) {
+            $user->update([
+                'kyc_status' => 'en_attente',
+                'kyc_rejected_at' => $user->kyc_rejected_at ?? now(),
+            ]);
+        }
 
         [$cniDoc, $selfieDoc] = $this->currentDocuments($user);
 
@@ -101,6 +113,9 @@ class KycService
         // un administrateur, suspendu ou anonymisé, ni un rôle soumis à revue humaine.
         if ($user->kyc_status !== 'en_attente') {
             $blockers[] = 'statut_kyc_non_eligible';
+        }
+        if ($user->kyc_rejected_at !== null) {
+            $blockers[] = 'dossier_rejete_par_un_administrateur';
         }
         if (! $user->isAccountActive() || $user->anonymized_at !== null) {
             $blockers[] = 'compte_inactif';
@@ -390,6 +405,10 @@ class KycService
 
         return [
             'kyc_status' => $user->kyc_status,
+            // Motif saisi par l'administrateur, tant que le dossier est rejeté.
+            'rejection_reason' => $user->kyc_status === 'rejete'
+                ? ($cni?->rejection_reason ?? $selfie?->rejection_reason ?? $this->lastRejectionReason($user))
+                : null,
             'is_auto_verified' => (bool) ($cni?->auto_verified && $selfie?->auto_verified),
             'documents' => [
                 'cni' => $cni ? [
@@ -409,6 +428,23 @@ class KycService
             ],
             'can_transact' => $user->kyc_status === 'actif',
         ];
+    }
+
+    /**
+     * Motif du dernier rejet, pour un dossier rejeté sans aucune pièce : il
+     * n'est alors conservé que par le journal d'audit.
+     */
+    private function lastRejectionReason(User $user): ?string
+    {
+        $log = AdminActivityLog::where('action', 'kyc.reviewed')
+            ->where('subject_type', User::class)
+            ->where('subject_id', $user->id)
+            ->latest('created_at')
+            ->first();
+
+        $reason = $log?->context['rejection_reason'] ?? null;
+
+        return is_string($reason) && $reason !== '' ? $reason : null;
     }
 
     /**

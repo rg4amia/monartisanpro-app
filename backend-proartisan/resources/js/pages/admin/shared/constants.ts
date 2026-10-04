@@ -222,6 +222,7 @@ export const kycStatusLabels: Record<string, string> = {
 export const kycAiBlockerLabels: Record<string, string> = {
     auto_approbation_desactivee: 'Auto-approbation désactivée',
     statut_kyc_non_eligible: 'Statut KYC non éligible',
+    dossier_rejete_par_un_administrateur: 'Dossier déjà rejeté par un administrateur',
     compte_inactif: 'Compte suspendu ou anonymisé',
     role_soumis_a_revue_humaine: 'Rôle soumis à revue humaine',
     pieces_incompletes: 'Pièce ou selfie manquant',

@@ -6,7 +6,6 @@ use App\Models\Evaluation;
 use App\Models\FournisseurAgree;
 use App\Models\FraudAlert;
 use App\Models\Jalon;
-use App\Models\KycDocument;
 use App\Models\Litige;
 use App\Models\Mission;
 use App\Models\Order;
@@ -105,82 +104,6 @@ class AdminService
             'rejected' => (int) User::where('kyc_status', 'rejete')->count(),
             'registration_trend' => $trend,
         ];
-    }
-
-    public function reviewKyc(User $admin, User $user, string $decision, ?string $rejectionReason = null): User
-    {
-        // Un compte anonymisé ne se réactive par aucune voie (Règle d'or 22).
-        if ($user->anonymized_at !== null) {
-            throw new \LogicException('Ce compte est anonymisé : son dossier KYC ne se traite plus.');
-        }
-
-        $documents = KycDocument::where('user_id', $user->id)
-            ->whereIn('type', ['cni', 'selfie'])
-            ->whereIn('statut', ['en_attente', 'approuve'])
-            ->get()
-            ->keyBy('type');
-
-        DB::transaction(function () use ($admin, $user, $decision, $rejectionReason, $documents): void {
-            $docStatus = $decision === 'approuve' ? 'approuve' : 'rejete';
-
-            foreach (['cni', 'selfie'] as $type) {
-                if ($documents->has($type)) {
-                    $documents[$type]->update([
-                        'statut' => $docStatus,
-                        'reviewed_by' => $admin->id,
-                        'rejection_reason' => $decision === 'rejete' ? $rejectionReason : null,
-                        'reviewed_at' => now(),
-                    ]);
-                }
-            }
-
-            $user->update([
-                'kyc_status' => $decision === 'approuve' ? 'actif' : 'rejete',
-            ]);
-        });
-
-        $this->notificationService->notify(
-            $user,
-            $decision === 'approuve' ? 'kyc.valide.utilisateur' : 'kyc.rejete.utilisateur',
-            [],
-            ['decision' => $decision]
-        );
-
-        $this->audit->log('kyc.reviewed', $user, [
-            'decision' => $decision,
-            'rejection_reason' => $decision === 'rejete' ? $rejectionReason : null,
-        ], actor: $admin);
-
-        return $user->fresh(['kycDocuments']);
-    }
-
-    /**
-     * Revue KYC groupée (Chantier C5 / P1-9). Chaque dossier passe par `reviewKyc`
-     * (documents, notifications, journal). Un dossier en échec n'interrompt pas le lot.
-     *
-     * @param  array<int>  $ids
-     * @return int Nombre de dossiers traités avec succès.
-     */
-    public function bulkReviewKyc(User $admin, array $ids, string $decision, ?string $rejectionReason = null): int
-    {
-        $done = 0;
-
-        foreach (User::whereIn('id', $ids)->where('kyc_status', 'en_attente')->whereNull('anonymized_at')->get() as $user) {
-            try {
-                $this->reviewKyc($admin, $user, $decision, $rejectionReason);
-                $done++;
-            } catch (\Throwable $e) {
-                Log::error("bulkReviewKyc user {$user->id}: ".$e->getMessage());
-            }
-        }
-
-        $this->audit->log('kyc.bulk_reviewed', null, [
-            'decision' => $decision,
-            'requested' => count($ids),
-            'processed' => $done,
-        ], actor: $admin);
-
-        return $done;
     }
 
     public function listLitiges(?string $statut = null, int $perPage = 20, ?string $search = null): LengthAwarePaginator

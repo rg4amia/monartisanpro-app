@@ -46,6 +46,9 @@ class AuthController extends GetxController {
 
   // KYC
   final cniPath = Rx<String?>(null);
+
+  /// Motif du rejet du dossier par un administrateur, affiché avant un nouvel envoi.
+  final kycRejectionReason = Rx<String?>(null);
   final selfiePath = Rx<String?>(null);
   final kycStep = 0.obs;
 
@@ -246,6 +249,16 @@ class AuthController extends GetxController {
     }
   }
 
+  /// Charge le motif du rejet du dossier, s'il y en a un. Un échec laisse
+  /// l'écran tel quel : le motif complète l'écran, il ne le conditionne pas.
+  Future<void> loadKycRejectionReason() async {
+    try {
+      kycRejectionReason.value = await _repo.kycRejectionReason();
+    } catch (_) {
+      kycRejectionReason.value = null;
+    }
+  }
+
   Future<void> uploadCni() async {
     if (cniPath.value == null) return;
     isLoading.value = true;
@@ -253,6 +266,8 @@ class AuthController extends GetxController {
 
     try {
       _rememberKycStatus(await _repo.uploadCni(cniPath.value!));
+      // Une nouvelle pièce renvoie le dossier à l'examen : le motif ne vaut plus.
+      kycRejectionReason.value = null;
       kycStep.value = kycStep.value < 2 ? kycStep.value + 1 : kycStep.value;
     } catch (e) {
       errorMsg.value = _parseError(e);

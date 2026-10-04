@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\KycDocument;
 use App\Models\Permission;
 use App\Models\User;
 use App\Services\Admin\AdminPermissionService;
@@ -89,6 +90,11 @@ class AdminPermissionTest extends TestCase
     {
         $admin = $this->restrictedAdmin(['admin.kyc.view', 'admin.kyc.review']);
         $pending = User::factory()->count(2)->create(['role' => 'client', 'kyc_status' => 'en_attente']);
+        foreach ($pending as $applicant) {
+            foreach (['cni', 'selfie'] as $type) {
+                KycDocument::create(['user_id' => $applicant->id, 'type' => $type, 'file_url' => "kyc/{$type}-{$applicant->id}.jpg", 'statut' => 'en_attente']);
+            }
+        }
 
         $this->actingAs($admin)->post('/admin/kyc/bulk-review', [
             'user_ids' => $pending->pluck('id')->all(),

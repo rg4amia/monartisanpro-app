@@ -46,6 +46,7 @@ use App\Services\Admin\AdminUserService;
 use App\Services\Admin\AppStoreLinkAdminService;
 use App\Services\Admin\ArtisanDirectoryAdminService;
 use App\Services\Admin\InactivityDecayAdminService;
+use App\Services\Admin\KycReviewService;
 use App\Services\Admin\NotificationCampaignAdminService;
 use App\Services\Admin\NotificationTemplateAdminService;
 use App\Services\Admin\UserManualService;
@@ -280,10 +281,10 @@ class BackofficeController extends Controller
         return $this->page('admin/llm-admin');
     }
 
-    public function reviewKyc(ReviewKycRequest $request, User $user): RedirectResponse
+    public function reviewKyc(ReviewKycRequest $request, User $user, KycReviewService $kycReview): RedirectResponse
     {
         try {
-            $this->adminService->reviewKyc(
+            $kycReview->review(
                 $request->user(),
                 $user,
                 $request->validated('decision'),
@@ -296,16 +297,24 @@ class BackofficeController extends Controller
         return back()->with('success', 'Dossier KYC traité avec succès.');
     }
 
-    public function bulkReviewKyc(BulkReviewKycRequest $request): RedirectResponse
+    public function bulkReviewKyc(BulkReviewKycRequest $request, KycReviewService $kycReview): RedirectResponse
     {
-        $count = $this->adminService->bulkReviewKyc(
+        $result = $kycReview->bulkReview(
             $request->user(),
             $request->validated('user_ids'),
             $request->validated('decision'),
             $request->validated('rejection_reason'),
         );
+        $skipped = count($result['skipped']);
 
-        return back()->with('success', "{$count} dossier(s) KYC traité(s).");
+        if ($skipped === 0) {
+            return back()->with('success', "{$result['processed']} dossier(s) KYC traité(s).");
+        }
+
+        $reasons = implode(' ', array_unique(array_values($result['skipped'])));
+        $message = "{$result['processed']} dossier(s) KYC traité(s), {$skipped} ignoré(s). {$reasons}";
+
+        return back()->with($result['processed'] > 0 ? 'success' : 'error', $message);
     }
 
     public function bulkUserStatus(BulkUserStatusRequest $request, AdminUserService $users): RedirectResponse

@@ -249,7 +249,13 @@ class KycAiVerificationTest extends TestCase
         $this->upload($user, 'cni');
         $this->upload($user, 'selfie');
 
-        $this->assertSame('rejete', $user->fresh()->kyc_status);
+        // Le dossier revient à l'examen d'un administrateur (Chantier 27, lot C),
+        // mais l'analyse automatique ne l'active jamais.
+        $this->assertSame('en_attente', $user->fresh()->kyc_status);
+        $this->assertContains(
+            'dossier_rejete_par_un_administrateur',
+            app(KycService::class)->autoApprovalBlockers($user->fresh()),
+        );
     }
 
     public function test_suppliers_stay_under_human_review(): void

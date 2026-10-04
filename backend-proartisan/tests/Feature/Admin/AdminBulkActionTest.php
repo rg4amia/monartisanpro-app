@@ -3,6 +3,7 @@
 namespace Tests\Feature\Admin;
 
 use App\Models\AdminActivityLog;
+use App\Models\KycDocument;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -23,6 +24,11 @@ class AdminBulkActionTest extends TestCase
     {
         $admin = $this->admin();
         $pending = User::factory()->count(3)->create(['role' => 'client', 'kyc_status' => 'en_attente']);
+        foreach ($pending as $applicant) {
+            foreach (['cni', 'selfie'] as $type) {
+                KycDocument::create(['user_id' => $applicant->id, 'type' => $type, 'file_url' => "kyc/{$type}-{$applicant->id}.jpg", 'statut' => 'en_attente']);
+            }
+        }
         $alreadyActive = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
 
         $this->actingAs($admin)->post('/admin/kyc/bulk-review', [

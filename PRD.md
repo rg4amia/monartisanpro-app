@@ -694,7 +694,7 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Profil d'un tiers** : seul un administrateur ayant la gestion des utilisateurs le modifie, avec trace au journal d'audit ; jamais le moyen de paiement.
     * **Carte CNMCI** : stockée en privé et consultée par un lien temporaire ; les cartes existantes sont déplacées au déploiement.
     * **Tests automatisés** : `Chantier27LotAAccountSecurityTest.php` (17 tests).
-55. **Chantier 27 — Sécurisation des comptes utilisateurs, lot B (backoffice) :** [COMPLÉTÉ — contrôle manuel à faire ; lots C à E à venir]
+55. **Chantier 27 — Sécurisation des comptes utilisateurs, lot B (backoffice) :** [COMPLÉTÉ — contrôle manuel à faire]
     * **Comptes administrateurs** : créer un administrateur, donner ou retirer ce rôle, modifier, suspendre, supprimer ou anonymiser un autre administrateur est réservé à ceux qui gèrent les rôles et les droits. La seule gestion des utilisateurs ne permet plus d'obtenir l'accès total.
     * **Super administrateurs** : seul le super administrateur modifie son propre compte ; son rôle et son adresse e-mail ne changent pas. Personne ne peut le suspendre, le supprimer ni l'anonymiser.
     * **Administrateur suspendu** : il ne peut plus se connecter, et sa session ouverte est fermée à sa requête suivante.
@@ -704,6 +704,12 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Formulaire** : téléphone au format `+225` suivi de dix chiffres ; rôle « Livreur » disponible ; l'empreinte de l'appareil ne se saisit plus.
     * **Liste des utilisateurs** : le navigateur ne reçoit que les informations affichées ; le temps de chargement ne dépend plus du nombre de portefeuilles.
     * **Tests automatisés** : `Chantier27LotBBackofficeAccountsTest.php` (22 tests), `FormModals.test.tsx`, `UsersPanel.test.tsx`.
+56. **Chantier 27 — Sécurisation des comptes utilisateurs, lot C (revue KYC) :** [COMPLÉTÉ — contrôle manuel à faire ; lots D et E à venir]
+    * **Approbation** : un dossier ne s'approuve qu'avec la carte d'identité et le selfie ; un compte anonymisé ou supprimé ne se traite plus. Les deux pièces suivent la décision.
+    * **Motif du rejet** : l'utilisateur le reçoit dans la notification et le lit dans l'application, à l'ouverture de la vérification d'identité.
+    * **Retour d'un utilisateur rejeté** : dès qu'il renvoie une pièce, son dossier revient dans la liste à traiter. Il n'est jamais validé automatiquement : la décision revient à un administrateur.
+    * **Revue par lot** : les dossiers ignorés sont annoncés avec leur motif.
+    * **Tests automatisés** : `Chantier27LotCKycReviewTest.php` (10 tests), `KycPanel.test.tsx`, `kyc_rejection_reason_test.dart`.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

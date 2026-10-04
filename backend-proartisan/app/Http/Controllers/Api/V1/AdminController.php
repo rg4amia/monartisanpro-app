@@ -9,6 +9,7 @@ use App\Http\Requests\Litige\ArbitrateLitigeRequest;
 use App\Models\FournisseurAgree;
 use App\Models\Litige;
 use App\Models\User;
+use App\Services\Admin\KycReviewService;
 use App\Services\AdminService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -43,10 +44,10 @@ class AdminController extends Controller
         ]);
     }
 
-    public function reviewKyc(ReviewKycRequest $request, User $user): JsonResponse
+    public function reviewKyc(ReviewKycRequest $request, User $user, KycReviewService $kycReview): JsonResponse
     {
         try {
-            $updatedUser = $this->adminService->reviewKyc(
+            $updatedUser = $kycReview->review(
                 $request->user(),
                 $user,
                 $request->validated('decision'),

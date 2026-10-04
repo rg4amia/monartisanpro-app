@@ -2,10 +2,11 @@
 
 namespace Tests\Feature;
 
+use App\Models\KycDocument;
 use App\Models\Mission;
 use App\Models\Notification;
 use App\Models\User;
-use App\Services\AdminService;
+use App\Services\Admin\KycReviewService;
 use App\Services\NotificationService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\Client\Request;
@@ -159,7 +160,11 @@ class NotificationDeliveryTest extends TestCase
         $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
         $artisan = User::factory()->create(['role' => 'artisan', 'kyc_status' => 'en_attente']);
 
-        app(AdminService::class)->reviewKyc($admin, $artisan, 'approuve');
+        foreach (['cni', 'selfie'] as $type) {
+            KycDocument::create(['user_id' => $artisan->id, 'type' => $type, 'file_url' => "kyc/{$type}.jpg", 'statut' => 'en_attente']);
+        }
+
+        app(KycReviewService::class)->review($admin, $artisan, 'approuve');
 
         // Le service poussait une seconde notification, au texte différent,
         // en plus de celle de NotificationService.

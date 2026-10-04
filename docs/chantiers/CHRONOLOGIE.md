@@ -8,7 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
-| 2026-10-03 | Plan | [Chantier 27 — Sécurisation des comptes utilisateurs](plans/2026-10-03-chantier-27-securisation-comptes-utilisateurs.md) | en cours (lots A et B livrés) | — |
+| 2026-10-03 | Plan | [Chantier 27 — Sécurisation des comptes utilisateurs](plans/2026-10-03-chantier-27-securisation-comptes-utilisateurs.md) | en cours (lots A, B et C livrés) | — |
 | 2026-10-03 | Analyse | [Module « Utilisateurs » : backoffice, inscription et profil mobile, revue KYC, rôles et actions](analyses/2026-10-03-analyse-module-utilisateurs.md) | — | — |
 | 2026-10-03 | Plan | [Chantier 26 — Maturité par clients distincts et pilotage de la dégradation d'inactivité](plans/2026-10-03-chantier-26-anti-collusion-et-degradation.md) | livré (contrôle manuel à faire) | — |
 | 2026-10-03 | Plan | [Chantier 25 — Corrections du module « Évaluations & Scores »](plans/2026-10-03-chantier-25-corrections-evaluations-scores.md) | livré (contrôle manuel à faire) | — |

@@ -258,7 +258,14 @@ export function KycPanel({
                                     </td>
                                 </tr>
                             ) : (
-                                kycRows.map((user) => (
+                                kycRows.map((user) => {
+                                    // Un dossier ne s'approuve qu'avec ses deux pièces : le serveur
+                                    // le refuse, l'écran l'annonce avant le clic.
+                                    const complete = (['cni', 'selfie'] as const).every((type) =>
+                                        user.kyc_documents.some((document) => document.type === type),
+                                    );
+
+                                    return (
                                     <tr key={user.id} className={isSelected(user.id) ? 'bg-amber-500/10' : undefined}>
                                         <td>
                                             <input
@@ -293,6 +300,11 @@ export function KycPanel({
                                                         Voir {document.type.toUpperCase()}
                                                     </a>
                                                 ))}
+                                                {complete ? null : (
+                                                    <span className="text-xs text-[var(--admin-muted)]">
+                                                        Dossier incomplet : carte d’identité et selfie requis
+                                                    </span>
+                                                )}
                                             </div>
                                         </td>
                                         <td>
@@ -309,7 +321,8 @@ export function KycPanel({
                                                 <div className="flex justify-end gap-2">
                                                     <button
                                                         type="button"
-                                                        disabled={actionLoading}
+                                                        disabled={actionLoading || !complete}
+                                                        title={complete ? undefined : 'Ce dossier ne contient pas les deux pièces.'}
                                                         onClick={() => onKycDecision(user, 'approuve')}
                                                         className={actionButtonClass('success')}
                                                     >
@@ -329,7 +342,8 @@ export function KycPanel({
                                             )}
                                         </td>
                                     </tr>
-                                ))
+                                    );
+                                })
                             )}
                         </tbody>
                     </DataTable>
