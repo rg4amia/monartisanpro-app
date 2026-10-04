@@ -186,52 +186,6 @@ class AuthRepository {
     );
   }
 
-  Future<void> requestResetPhoneLost({
-    required String oldPhone,
-    required String newPhone,
-    required String name,
-    required String role,
-  }) async {
-    await _client.post(
-      '/auth/reset-phone-request',
-      data: {
-        'old_phone': oldPhone,
-        'new_phone': newPhone,
-        'name': name,
-        'role': role,
-      },
-    );
-  }
-
-  Future<Map<String, dynamic>> confirmResetPhoneLost({
-    required String oldPhone,
-    required String newPhone,
-    required String name,
-    required String role,
-    required String otp,
-  }) async {
-    final res = await _client.post(
-      '/auth/reset-phone-confirm',
-      data: {
-        'old_phone': oldPhone,
-        'new_phone': newPhone,
-        'name': name,
-        'role': role,
-        'otp': otp,
-      },
-    );
-
-    final token = (res.data as Map<String, dynamic>)['token'] as String?;
-    if (token != null) {
-      await StorageService.saveToken(token);
-    }
-
-    return {
-      'token': token,
-      'user': (res.data as Map<String, dynamic>)['user'],
-    };
-  }
-
   Future<Map<String, dynamic>> changePhoneConnected({
     required String newPhone,
     String? otp,

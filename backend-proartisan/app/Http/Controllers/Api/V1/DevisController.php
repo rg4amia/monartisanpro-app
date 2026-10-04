@@ -9,8 +9,11 @@ use App\Models\Devis;
 use App\Models\Mission;
 use App\Models\Transaction;
 use App\Services\AiMonitoringService;
+use App\Services\DeviceFingerprintService;
 use App\Services\DevisService;
+use App\Services\FraudDetectionService;
 use App\Services\GeminiService;
+use App\Services\PaymentPhoneService;
 use App\Services\RealtimeEventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -53,10 +56,11 @@ class DevisController extends Controller
             // La synchro du numéro de paiement ne doit jamais faire échouer la
             // soumission du devis elle-même (cf. MissionController::store).
             try {
-                $user->update([
-                    'payment_phone' => $request->input('payment_phone'),
-                    'preferred_payment_provider' => $request->input('preferred_payment_provider'),
-                ]);
+                app(PaymentPhoneService::class)->syncFromFlow(
+                    $user,
+                    $request->input('payment_phone'),
+                    $request->input('preferred_payment_provider'),
+                );
             } catch (\Throwable $e) {
                 Log::warning('Impossible de synchroniser le téléphone de paiement (devis): '.$e->getMessage());
             }
@@ -66,14 +70,14 @@ class DevisController extends Controller
             $devis = $this->devisService->create($mission, $user, $request->validated());
 
             try {
-                $fingerprintService = app(\App\Services\DeviceFingerprintService::class);
+                $fingerprintService = app(DeviceFingerprintService::class);
                 $fingerprintService->recordFromRequest($request, $user);
                 $artisanFp = $fingerprintService->extractFingerprint($request);
                 $mission->update([
                     'artisan_device_fingerprint' => $artisanFp,
                     'artisan_ip' => $request->ip(),
                 ]);
-                app(\App\Services\FraudDetectionService::class)->analyzeDeviceCollusion($mission);
+                app(FraudDetectionService::class)->analyzeDeviceCollusion($mission);
             } catch (\Throwable $e) {
                 Log::warning('Échec audit empreinte artisan devis: '.$e->getMessage());
             }
@@ -210,7 +214,7 @@ class DevisController extends Controller
         $this->devisService->accept($devis, $transaction);
 
         try {
-            $fingerprintService = app(\App\Services\DeviceFingerprintService::class);
+            $fingerprintService = app(DeviceFingerprintService::class);
             $fingerprintService->recordFromRequest($request, $user);
             $clientFp = $fingerprintService->extractFingerprint($request);
             $mission = $devis->mission;
@@ -219,7 +223,7 @@ class DevisController extends Controller
                     'client_device_fingerprint' => $clientFp,
                     'client_ip' => $request->ip(),
                 ]);
-                app(\App\Services\FraudDetectionService::class)->analyzeDeviceCollusion($mission);
+                app(FraudDetectionService::class)->analyzeDeviceCollusion($mission);
             }
         } catch (\Throwable $e) {
             Log::warning('Échec audit empreinte client acceptation devis: '.$e->getMessage());

@@ -38,6 +38,8 @@ class NotificationCatalogTest extends TestCase
         // Fraude et sécurité visant l'utilisateur
         'jalon.controle_securite.artisan',
         'securite.changement_appareil.artisan',
+        'compte.telephone_modifie.utilisateur',
+        'compte.numero_paiement_modifie.utilisateur',
         // Ouverture d'un litige
         'litige.ouvert.partie',
         'commande.litige.fournisseur',

@@ -124,6 +124,40 @@ describe('UsersPanel', () => {
         expect(screen.queryByRole('button', { name: 'Activer' })).not.toBeInTheDocument();
     });
 
+    it('propose seulement la restauration pour un compte supprimé', () => {
+        const onRestoreUser = vi.fn();
+        const deleted = makeUser({ deleted_at: '2026-09-20T10:00:00Z' });
+        renderPanel({ users: makePage([deleted]), stateFilter: 'supprimes', onRestoreUser });
+
+        expect(screen.queryByRole('button', { name: 'Modifier' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Restaurer' }));
+        expect(onRestoreUser).toHaveBeenCalledWith(deleted);
+    });
+
+    it('filtre les comptes supprimés', () => {
+        const onStateFilterChange = vi.fn();
+        renderPanel({ onStateFilterChange });
+
+        fireEvent.change(screen.getByLabelText('État'), { target: { value: 'supprimes' } });
+        expect(onStateFilterChange).toHaveBeenCalledWith('supprimes');
+    });
+
+    it("propose de retirer le KYC d'un compte actif au porteur de la revue KYC", () => {
+        const onRevokeKyc = vi.fn();
+        const user = makeUser({ kyc_status: 'actif' });
+        renderPanel({ users: makePage([user]), canReviewKyc: true, onRevokeKyc });
+
+        fireEvent.click(screen.getByRole('button', { name: 'Retirer le KYC' }));
+        expect(onRevokeKyc).toHaveBeenCalledWith(user);
+    });
+
+    it("ne propose pas de retirer le KYC sans la capacité, ni pour un compte en attente ou un Référent", () => {
+        renderPanel({ users: makePage([makeUser({ kyc_status: 'actif' })]), onRevokeKyc: vi.fn() });
+        expect(screen.queryByRole('button', { name: 'Retirer le KYC' })).not.toBeInTheDocument();
+    });
+
     it("indique si un appareil est lié, sans afficher son empreinte", () => {
         renderPanel({ users: makePage([makeUser({ has_device: true })]) });
 

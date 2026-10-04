@@ -10,6 +10,7 @@ use App\Models\MobileMoneyPayoutEvent;
 use App\Models\Transaction;
 use App\Models\User;
 use App\Services\Admin\AdminActivityLogger;
+use Carbon\CarbonInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -42,6 +43,7 @@ class MobileMoneyPayoutService
         private OrangeMoneyService $orangeMoneyService,
         private NotificationService $notifications,
         private AdminActivityLogger $audit,
+        private PaymentPhoneService $paymentPhones,
     ) {}
 
     /**
@@ -468,6 +470,12 @@ class MobileMoneyPayoutService
         $beneficiary = $payout->user;
         $before = $payout->statut;
 
+        // Numéro de paiement changé depuis peu : le versement attend la fin
+        // du délai de sécurité. Les fonds restent réservés, rien n'est tenté.
+        if (! $payout->phone_locked && $beneficiary && ($lockedUntil = $this->paymentPhones->withdrawalsLockedUntil($beneficiary)) !== null) {
+            return $this->defer($payout, $lockedUntil, $actor);
+        }
+
         // Un bénéficiaire qui corrige son numéro de paiement doit voir la
         // relance partir vers le nouveau numéro, pas vers celui de l'échec.
         $phone = $payout->phone_locked ? $payout->phone : $this->beneficiaryPhone($beneficiary);
@@ -557,6 +565,28 @@ class MobileMoneyPayoutService
         ]);
 
         $this->afterSettlement($payout);
+    }
+
+    /**
+     * Reporte un versement à la fin du délai de sécurité : il sera repris par
+     * la relance automatique, sans compter comme une tentative échouée.
+     */
+    private function defer(MobileMoneyPayout $payout, CarbonInterface $until, ?User $actor): MobileMoneyPayout
+    {
+        $before = $payout->statut;
+        $message = $this->paymentPhones->lockMessage($until);
+
+        $payout->update([
+            'statut' => MobileMoneyPayout::STATUT_ECHOUE,
+            'last_error' => $message,
+            'next_retry_at' => $until,
+        ]);
+
+        $this->recordEvent($payout, MobileMoneyPayoutEvent::ACTION_REPORT_SECURITE, $before, $message, $actor, [
+            'reprise' => $until->toIso8601String(),
+        ]);
+
+        return $payout->fresh();
     }
 
     private function markFailed(MobileMoneyPayout $payout, string $error, ?User $actor): MobileMoneyPayout

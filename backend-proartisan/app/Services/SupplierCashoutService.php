@@ -17,7 +17,8 @@ class SupplierCashoutService
     public function __construct(
         private WalletService $walletService,
         private GeneratedDocumentService $documentService,
-        private AdminActivityLogger $audit
+        private AdminActivityLogger $audit,
+        private PaymentPhoneService $paymentPhones,
     ) {}
 
     /**
@@ -100,6 +101,11 @@ class SupplierCashoutService
 
         if (! in_array($modeRetrait, $allowedModes, true)) {
             throw new \InvalidArgumentException('Mode de retrait non supporté.');
+        }
+
+        $this->paymentPhones->assertWithdrawalsOpen($supplier);
+        if (in_array($modeRetrait, [SupplierCashout::MODE_WAVE, SupplierCashout::MODE_ORANGE_MONEY], true)) {
+            $this->paymentPhones->assertRegisteredDestination($supplier, $data['beneficiary_phone'] ?? null);
         }
 
         $rate = (float) Setting::getValueByKey('commission_cashout_quincaillerie', 0.025);

@@ -195,6 +195,7 @@ function UserHarness({
         documents: { cni: null as File | null, selfie: null as File | null },
         fournisseur_sector_id: '' as number | '',
         fournisseur_trade_id: '' as number | '',
+        fournisseur_shop_name: editing?.fournisseur_shop_name ?? '',
     });
     const formWithErrors = { ...form, errors } as typeof form;
     return (
@@ -288,6 +289,49 @@ describe('UserFormModal', () => {
         expect(screen.queryByText('Statut du compte')).not.toBeInTheDocument();
         expect(screen.queryByPlaceholderText('Empreinte IMEI / Appareil')).not.toBeInTheDocument();
         expect(screen.getByText(/Le statut du compte se change par le bouton/)).toBeInTheDocument();
+    });
+
+    it("ne propose le statut KYC que pour un Référent ou un administrateur", () => {
+        const { unmount } = render(<UserHarness onSubmit={vi.fn((e) => e.preventDefault())} onClose={vi.fn()} />);
+        expect(screen.queryByRole('option', { name: 'Actif (Approuvé)' })).not.toBeInTheDocument();
+        expect(screen.getByText(/Réglé par la revue KYC uniquement/)).toBeInTheDocument();
+        unmount();
+
+        render(
+            <UserHarness
+                editing={{ id: 3, name: 'Référent Nord', role: 'referent' } as AdminUser}
+                onSubmit={vi.fn((e) => e.preventDefault())}
+                onClose={vi.fn()}
+            />,
+        );
+        expect(screen.getByRole('option', { name: 'Actif (Approuvé)' })).toBeInTheDocument();
+    });
+
+    it('annonce la longueur du mot de passe selon le rôle', () => {
+        render(<UserHarness onSubmit={vi.fn((e) => e.preventDefault())} onClose={vi.fn()} />);
+        expect(screen.getByPlaceholderText('Minimum 8 caractères')).toBeInTheDocument();
+    });
+
+    it("permet de corriger le nom de la boutique d'un fournisseur qui en a une", () => {
+        render(
+            <UserHarness
+                editing={{ id: 4, name: 'Koné Ibrahim', role: 'fournisseur', fournisseur_shop_name: 'Quincaillerie du Plateau' } as AdminUser}
+                onSubmit={vi.fn((e) => e.preventDefault())}
+                onClose={vi.fn()}
+            />,
+        );
+        expect(screen.getByDisplayValue('Quincaillerie du Plateau')).toBeEnabled();
+    });
+
+    it("annonce l'absence de boutique plutôt que d'en inventer une", () => {
+        render(
+            <UserHarness
+                editing={{ id: 5, name: 'Sans Boutique', role: 'fournisseur', fournisseur_shop_name: null } as AdminUser}
+                onSubmit={vi.fn((e) => e.preventDefault())}
+                onClose={vi.fn()}
+            />,
+        );
+        expect(screen.getByText(/La boutique est créée quand le fournisseur partage sa position/)).toBeInTheDocument();
     });
 
     it("n'affiche pas la section photo/pièces d'identité en création", () => {

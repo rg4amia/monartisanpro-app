@@ -169,6 +169,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/users/{user}/toggle-status', [BackofficeController::class, 'toggleUserStatus'])->middleware('can:admin.users.manage')->name('users.toggle-status');
         Route::post('/users/bulk-status', [BackofficeController::class, 'bulkUserStatus'])->middleware('can:admin.users.manage')->name('users.bulk-status');
         Route::delete('/users/{user}', [BackofficeController::class, 'destroyUser'])->middleware('can:admin.users.delete')->name('users.destroy');
+        Route::post('/users/{user}/restore', [BackofficeController::class, 'restoreUser'])->whereNumber('user')->middleware('can:admin.users.delete')->name('users.restore');
         Route::post('/users/{user}/impersonate', [ImpersonationController::class, 'start'])->middleware('can:admin.users.impersonate')->name('users.impersonate');
 
         // RGPD (Chantier C6 / P2-11)

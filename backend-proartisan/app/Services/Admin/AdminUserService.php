@@ -2,9 +2,12 @@
 
 namespace App\Services\Admin;
 
+use App\Models\ArtisanProfile;
 use App\Models\Trade;
 use App\Models\User;
+use App\Services\AccountEngagementService;
 use App\Services\KycService;
+use App\Services\NotificationService;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
@@ -24,10 +27,18 @@ class AdminUserService
     /** Capacité requise pour créer, promouvoir ou modifier un compte administrateur. */
     private const ADMIN_ACCOUNTS_CAPABILITY = 'admin.roles.manage';
 
+    /**
+     * Rôles créés ou nommés par un administrateur, sans dossier d'identité à
+     * déposer dans l'application : leur statut KYC se règle à la main.
+     */
+    public const STAFF_ROLES = ['referent', 'admin'];
+
     public function __construct(
         private AdminActivityLogger $audit,
         private KycService $kycDocuments,
         private AdminPermissionService $permissions,
+        private AccountEngagementService $engagement,
+        private NotificationService $notifications,
     ) {}
 
     /**
@@ -47,6 +58,11 @@ class AdminUserService
         $data['password'] = Hash::make($data['password']);
         $data['score_frozen'] = (bool) ($data['score_frozen'] ?? false);
         $data['account_status'] = 'actif';
+        // Seule la revue KYC active un compte de l'application : le
+        // formulaire ne règle le statut que d'un Référent ou d'un administrateur.
+        $data['kyc_status'] = in_array($data['role'], self::STAFF_ROLES, true)
+            ? ($data['kyc_status'] ?? 'actif')
+            : 'en_attente';
 
         $user = User::create($data);
 
@@ -79,7 +95,30 @@ class AdminUserService
         $this->guardRoleChange($user, $data, $actor);
         $this->guardSuperAdminIdentity($user, $data);
 
-        $previousRole = $user->role;
+        $newRole = $data['role'] ?? $user->role;
+        $roleChanged = $newRole !== $user->role;
+        $phoneChanged = array_key_exists('phone', $data) && $data['phone'] !== $user->phone;
+        $previousPhone = $user->phone;
+        $kycStatus = $data['kyc_status'] ?? null;
+        $shopName = array_key_exists('fournisseur_shop_name', $data) ? $data['fournisseur_shop_name'] : false;
+        unset($data['role'], $data['kyc_status'], $data['fournisseur_shop_name']);
+
+        // Statut KYC : réglé à la main pour un Référent ou un administrateur
+        // seulement. Un changement de rôle fixe lui-même le statut.
+        if (! $roleChanged && $kycStatus !== null && in_array($newRole, self::STAFF_ROLES, true)) {
+            $data['kyc_status'] = $kycStatus;
+        }
+
+        $before = $user->only(['name', 'email', 'phone', 'role', 'kyc_status', 'score_frozen']);
+
+        if ($roleChanged) {
+            try {
+                $this->changeRole($user, $newRole, $actor, $kycStatus);
+            } catch (\LogicException $e) {
+                throw ValidationException::withMessages(['role' => [$e->getMessage()]]);
+            }
+        }
+
         $passwordChanged = ! empty($data['password']);
 
         if ($passwordChanged) {
@@ -100,12 +139,10 @@ class AdminUserService
         $fournisseurTradeId = array_key_exists('fournisseur_trade_id', $data) ? $data['fournisseur_trade_id'] : false;
         unset($data['photo'], $data['documents'], $data['fournisseur_sector_id'], $data['fournisseur_trade_id']);
 
-        $before = $user->only(['name', 'email', 'phone', 'role', 'kyc_status', 'score_frozen']);
-
         $user->update($data);
 
-        if ($previousRole !== $user->role) {
-            $this->syncAdminAccessAfterRoleChange($user, $previousRole);
+        if ($phoneChanged) {
+            $this->afterPhoneChangedBySupport($user, $previousPhone);
         }
 
         if ($photo instanceof UploadedFile) {
@@ -124,10 +161,16 @@ class AdminUserService
             $this->updateFournisseurCategory($user, $fournisseurSectorId, $fournisseurTradeId);
         }
 
+        if (is_string($shopName) && trim($shopName) !== '' && $user->role === 'fournisseur') {
+            $user->fournisseurAgree?->update(['nom_boutique' => trim($shopName)]);
+        }
+
         $this->audit->log('user.updated', $user, [
             'before' => $before,
             'after' => $user->only(['name', 'email', 'phone', 'role', 'kyc_status', 'score_frozen']),
             'password_changed' => $passwordChanged,
+            'phone_changed' => $phoneChanged,
+            'sessions_closed' => $phoneChanged || $roleChanged,
             'photo_updated' => $photo instanceof UploadedFile,
             'documents_updated' => $updatedDocuments,
             'fournisseur_sector_id' => $fournisseurSectorId !== false ? $fournisseurSectorId : null,
@@ -135,6 +178,71 @@ class AdminUserService
         ]);
 
         return $user;
+    }
+
+    /**
+     * Seul circuit de changement de rôle, pour le backoffice comme pour la
+     * route d'administration de l'application : compte libre de tout
+     * engagement, KYC remis en attente (un dossier validé pour un rôle ne vaut
+     * pas pour un autre), sessions fermées, ligne d'audit.
+     *
+     * @throws \LogicException Compte engagé : message listant ce qui bloque.
+     */
+    public function changeRole(User $user, string $newRole, ?User $actor, ?string $staffKycStatus = null): User
+    {
+        $previousRole = $user->role;
+
+        if ($previousRole === $newRole) {
+            return $user;
+        }
+
+        $this->engagement->assertFree($user, 'changer de rôle');
+
+        DB::transaction(function () use ($user, $newRole, $staffKycStatus): void {
+            $user->update([
+                'role' => $newRole,
+                'kyc_status' => in_array($newRole, self::STAFF_ROLES, true) ? ($staffKycStatus ?? 'actif') : 'en_attente',
+                'kyc_rejected_at' => null,
+            ]);
+
+            if ($newRole === 'artisan') {
+                ArtisanProfile::query()->firstOrCreate(
+                    ['user_id' => $user->id],
+                    ['intervient_la_nuit' => false],
+                );
+            }
+
+            $user->tokens()->delete();
+        });
+
+        $this->syncAdminAccessAfterRoleChange($user, $previousRole);
+
+        $this->audit->log('user.role.updated', $user, [
+            'before' => $previousRole,
+            'after' => $newRole,
+            'kyc_status' => $user->kyc_status,
+            'tokens_revoked' => true,
+        ], actor: $actor);
+
+        return $user;
+    }
+
+    /**
+     * Le support a changé le numéro d'un compte (carte SIM perdue) : les
+     * sessions ouvertes avec l'ancien numéro sont fermées et le titulaire est
+     * prévenu sur le nouveau.
+     */
+    private function afterPhoneChangedBySupport(User $user, ?string $previousPhone): void
+    {
+        $user->tokens()->delete();
+
+        try {
+            $this->notifications->notify($user, 'compte.telephone_modifie.utilisateur', [
+                'telephone' => (string) $user->phone,
+            ], ['ancien_numero_masque' => $previousPhone !== null ? substr($previousPhone, -2) : null]);
+        } catch (\Throwable $e) {
+            Log::warning('[Comptes] Notification de changement de numéro non envoyée : '.$e->getMessage());
+        }
     }
 
     /**
@@ -194,6 +302,7 @@ class AdminUserService
     {
         $this->guardNotSelf($user, 'Vous ne pouvez pas supprimer votre propre compte administrateur.');
         $this->guardProtected($user, $this->actor());
+        $this->engagement->assertFree($user, 'être supprimé');
 
         $this->audit->log('user.deleted', $user, [
             'role' => $user->role,
@@ -201,6 +310,28 @@ class AdminUserService
         ]);
 
         $user->delete();
+    }
+
+    /**
+     * Restaure un compte supprimé : son numéro restait réservé et son
+     * titulaire ne pouvait plus ni se connecter ni se réinscrire.
+     *
+     * @throws \LogicException
+     */
+    public function restore(User $user): User
+    {
+        if (! $user->trashed()) {
+            throw new \LogicException("Ce compte n'est pas supprimé.");
+        }
+
+        $user->restore();
+
+        $this->audit->log('user.restored', $user, [
+            'role' => $user->role,
+            'phone' => $user->phone,
+        ]);
+
+        return $user;
     }
 
     /**
@@ -225,10 +356,17 @@ class AdminUserService
             'blocked_at' => $suspended ? now() : null,
         ]);
 
+        // Une suspension ferme les sessions de l'application : le compte ne
+        // garde aucun jeton utilisable.
+        if ($suspended) {
+            $user->tokens()->delete();
+        }
+
         $this->audit->log('user.status_changed', $user, [
             'previous_status' => $previous,
             'account_status' => $data['account_status'],
             'reason' => $reason,
+            'sessions_closed' => $suspended,
         ]);
 
         return $user;
@@ -363,6 +501,12 @@ class AdminUserService
         if ($actor !== null && $actor->id === $user->id) {
             throw ValidationException::withMessages([
                 'role' => ['Vous ne pouvez pas changer votre propre rôle.'],
+            ]);
+        }
+
+        if ($this->permissions->isProtectedSuperAdmin($user)) {
+            throw ValidationException::withMessages([
+                'role' => ["Le rôle d'un super administrateur protégé ne se modifie pas."],
             ]);
         }
 

@@ -199,6 +199,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept'])->middleware(['kyc.verified', 'dispute.debt_free']);
 
         // ── Utilisateurs ─────────────────────────────────────────────────────
+        Route::post('/users/payment-phone/code', [UserController::class, 'requestPaymentPhoneCode'])->middleware('throttle:auth');
         Route::put('/users/{user}', [UserController::class, 'update']);
         Route::put('/users/{user}/location', [UserController::class, 'updateLocation']);
         Route::put('/users/{user}/role', [UserController::class, 'setRole']);

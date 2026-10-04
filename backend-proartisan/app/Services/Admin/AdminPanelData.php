@@ -243,6 +243,7 @@ class AdminPanelData
             $request->query('role_users') ?: null,
             $request->query('kyc_users') ?: null,
             25,
+            $request->query('etat_users') ?: null,
         )->withQueryString();
 
         // Photo, pièces KYC et secteur/métier fournisseur : chargés pour la
@@ -271,6 +272,9 @@ class AdminPanelData
             'anonymized_at' => optional($user->anonymized_at)->toIso8601String(),
             'missions_client_count' => (int) $user->missions_client_count,
             'missions_artisan_count' => (int) $user->missions_artisan_count,
+            'missions_ongoing_count' => (int) $user->missions_client_ongoing_count + (int) $user->missions_artisan_ongoing_count,
+            'deleted_at' => optional($user->deleted_at)->toIso8601String(),
+            'fournisseur_shop_name' => $user->fournisseurAgree?->nom_boutique,
             'photo_url' => $user->photo_url,
             'kyc_documents' => $user->kycDocuments->map(fn ($doc) => [
                 'type' => $doc->type,
@@ -585,6 +589,9 @@ class AdminPanelData
         return [
             'allPermissions' => $allPermissions,
             'rolesPermissions' => $rolesPermissions,
+            // Garde-fous des droits par rôle : actions indispensables et actions réservées.
+            'protectedRolePermissions' => RolePermissionService::PROTECTED,
+            'reservedRolePermissions' => RolePermissionService::RESERVED,
             // Capacités fines du backoffice, affectées compte admin par compte admin
             // (Chantier C6 / P2-10).
             ...$this->adminPermissions->panelData(),

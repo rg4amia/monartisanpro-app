@@ -255,6 +255,11 @@ export interface AdminUser {
     has_device?: boolean;
     /** Super administrateur protégé : lui seul modifie son compte. */
     is_protected?: boolean;
+    /** Missions encore à mener à leur terme, comme client ou comme artisan. */
+    missions_ongoing_count?: number;
+    /** Renseigné pour un compte supprimé (filtre « Supprimés »). */
+    deleted_at?: string | null;
+    fournisseur_shop_name?: string | null;
     cgu_accepted_at?: string | null;
     anonymized_at?: string | null;
     photo_url?: string | null;

@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Api\V1;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\OrderService;
+use App\Services\PaymentPhoneService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
@@ -70,10 +71,11 @@ class DeliveryController extends Controller
                 ], 422);
             }
 
-            $user->update([
-                'payment_phone' => $request->input('payment_phone'),
-                'preferred_payment_provider' => $request->input('preferred_payment_provider'),
-            ]);
+            app(PaymentPhoneService::class)->syncFromFlow(
+                $user,
+                $request->input('payment_phone'),
+                $request->input('preferred_payment_provider'),
+            );
         }
 
         try {

@@ -12,6 +12,7 @@ use App\Models\NotificationPreference;
 use App\Models\Parrainage;
 use App\Models\Transaction;
 use App\Models\User;
+use App\Services\AccountEngagementService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
 
@@ -27,7 +28,11 @@ use Illuminate\Support\Facades\Storage;
  */
 class AdminGdprService
 {
-    public function __construct(private AdminActivityLogger $audit, private AdminUserService $accounts) {}
+    public function __construct(
+        private AdminActivityLogger $audit,
+        private AdminUserService $accounts,
+        private AccountEngagementService $engagement,
+    ) {}
 
     /**
      * Instantané structuré de toutes les données personnelles détenues sur un
@@ -108,6 +113,10 @@ class AdminGdprService
 
         // Anonymiser un administrateur revient à le supprimer : mêmes gardes.
         $this->accounts->guardProtected($user, $actor);
+
+        // Un compte qui a encore des fonds, un chantier ou une dette ne se
+        // ferme pas : ils resteraient sans titulaire joignable.
+        $this->engagement->assertFree($user, 'être supprimé');
 
         DB::transaction(function () use ($user, $actor) {
             // Suppression des pièces justificatives KYC (lignes + références fichiers).

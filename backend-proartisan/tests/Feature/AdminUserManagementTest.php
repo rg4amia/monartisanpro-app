@@ -59,14 +59,15 @@ class AdminUserManagementTest extends TestCase
             ]);
 
         $response->assertRedirect();
-        // Le statut du compte ne se change plus par ce formulaire (Chantier 27, lot B).
+        // Le statut du compte ne se change plus par ce formulaire (Chantier 27,
+        // lot B), ni le statut KYC ; un changement de rôle remet le KYC en attente (lot E).
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'name' => 'Nom Modifie',
             'phone' => '+2250111111111',
             'email' => 'modifie@test.com',
             'role' => 'artisan',
-            'kyc_status' => 'actif',
+            'kyc_status' => 'en_attente',
             'account_status' => 'actif',
         ]);
     }

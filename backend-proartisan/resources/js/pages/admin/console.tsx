@@ -245,7 +245,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
     const usersTable = useServerTable({
         path: '/admin/users',
         only: ['usersPage'],
-        initial: { search_users: '', role_users: '', kyc_users: '' },
+        initial: { search_users: '', role_users: '', kyc_users: '', etat_users: '' },
         storageKey: 'users',
     });
 
@@ -359,8 +359,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                 title: `Suspendre ${userSelection.count} compte(s)`,
                 tone: 'danger',
                 confirmLabel: 'Suspendre',
-                promptLabel: 'Motif de suspension (optionnel)',
-                promptOptional: true,
+                promptLabel: 'Motif de suspension (minimum 5 caractères)',
+                promptMinLength: 5,
             });
             if (answer === false) return;
             account_status_reason = String(answer);
@@ -413,9 +413,11 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
         toggleUserStatus: handleToggleUserStatus,
         submitStatusForm: handleStatusSubmit,
         deleteUser: handleDeleteUser,
+        restoreUser: handleRestoreUser,
+        revokeKyc: handleRevokeKyc,
         impersonate: handleImpersonate,
         anonymize: handleAnonymizeUser,
-    } = useUserManagement({ currentAdmin: auth?.user, askConfirm, setActionLoading, canDeleteUsers, canImpersonate, canManageRgpd });
+    } = useUserManagement({ currentAdmin: auth?.user, askConfirm, setActionLoading, canDeleteUsers, canImpersonate, canManageRgpd, canReviewKyc });
 
     const {
         commForm,
@@ -834,6 +836,11 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     onRoleFilterChange={(v) => usersTable.set('role_users', v)}
                                     kycFilter={usersTable.filters.kyc_users}
                                     onKycFilterChange={(v) => usersTable.set('kyc_users', v)}
+                                    stateFilter={usersTable.filters.etat_users}
+                                    onStateFilterChange={(v) => usersTable.set('etat_users', v)}
+                                    onRestoreUser={handleRestoreUser}
+                                    canReviewKyc={canReviewKyc}
+                                    onRevokeKyc={handleRevokeKyc}
                                     onSubmit={usersTable.apply}
                                     onReset={usersTable.reset}
                                     exportParams={usersTable.filters}
@@ -934,6 +941,8 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                         allPermissions={allPermissions ?? []}
                                         rolesPermissions={rolesPermissions ?? {}}
                                         adminCapabilityCatalog={pageProps.adminCapabilityCatalog ?? {}}
+                                        protectedRolePermissions={pageProps.protectedRolePermissions ?? {}}
+                                        reservedRolePermissions={pageProps.reservedRolePermissions ?? {}}
                                         admins={pageProps.admins ?? []}
                                     />
                                 </section>

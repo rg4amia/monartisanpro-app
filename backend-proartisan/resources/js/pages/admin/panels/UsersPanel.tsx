@@ -37,6 +37,13 @@ interface UsersPanelProps {
     onRoleFilterChange: (value: string) => void;
     kycFilter: string;
     onKycFilterChange: (value: string) => void;
+    /** `supprimes` pour les comptes supprimés, vide pour les comptes en place. */
+    stateFilter?: string;
+    onStateFilterChange?: (value: string) => void;
+    onRestoreUser?: (user: AdminUser) => void;
+    /** Retrait de la validation KYC d'un compte actif (capacité `admin.kyc.review`). */
+    canReviewKyc?: boolean;
+    onRevokeKyc?: (user: AdminUser) => void;
     onSubmit: (event: FormEvent) => void;
     onReset: () => void;
     exportParams: Record<string, string>;
@@ -76,6 +83,11 @@ export function UsersPanel({
     onRoleFilterChange,
     kycFilter,
     onKycFilterChange,
+    stateFilter = '',
+    onStateFilterChange,
+    onRestoreUser,
+    canReviewKyc = false,
+    onRevokeKyc,
     onSubmit,
     onReset,
     exportParams,
@@ -149,7 +161,7 @@ export function UsersPanel({
                         ) : null}
                     </div>
 
-                    <form onSubmit={onSubmit} className="mt-5 grid items-end gap-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 md:grid-cols-4">
+                    <form onSubmit={onSubmit} className="mt-5 grid items-end gap-3 rounded-2xl border border-[var(--admin-border)] bg-[var(--admin-panel)] p-4 md:grid-cols-5">
                         <div className="md:col-span-2">
                             <label className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">Rechercher</label>
                             <input
@@ -186,7 +198,19 @@ export function UsersPanel({
                                 <option value="rejete">Rejeté</option>
                             </select>
                         </div>
-                        <div className="flex gap-2 md:col-span-4">
+                        <div>
+                            <label htmlFor="users-state-filter" className="mb-1.5 block text-[10px] font-bold uppercase tracking-wider text-[var(--admin-muted)]">État</label>
+                            <select
+                                id="users-state-filter"
+                                value={stateFilter}
+                                onChange={(e) => onStateFilterChange?.(e.target.value)}
+                                className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
+                            >
+                                <option value="">Comptes en place</option>
+                                <option value="supprimes">Supprimés</option>
+                            </select>
+                        </div>
+                        <div className="flex gap-2 md:col-span-5">
                             <button type="submit" className="rounded-xl bg-[#ebb95e] px-4 py-2 text-xs font-bold text-[#241b16] transition hover:bg-[#dca850]">
                                 Filtrer
                             </button>
@@ -306,7 +330,32 @@ export function UsersPanel({
                                             Client: {user.missions_client_count} • Artisan: {user.missions_artisan_count}
                                         </td>
                                         <td>
+                                            {user.deleted_at ? (
+                                                <div className="flex items-center justify-end gap-2">
+                                                    <span className="text-[10px] text-[var(--admin-muted)]">Supprimé le {shortDate(user.deleted_at)}</span>
+                                                    {canDelete && onRestoreUser ? (
+                                                        <button
+                                                            type="button"
+                                                            onClick={() => onRestoreUser(user)}
+                                                            className={actionButtonClass('success')}
+                                                        >
+                                                            Restaurer
+                                                        </button>
+                                                    ) : null}
+                                                </div>
+                                            ) : (
                                             <div className="flex justify-end gap-2">
+                                                {canReviewKyc && onRevokeKyc && user.kyc_status === 'actif' && !user.anonymized_at
+                                                    && !['admin', 'referent'].includes(user.role) ? (
+                                                    <button
+                                                        type="button"
+                                                        onClick={() => onRevokeKyc(user)}
+                                                        className={actionButtonClass('secondary')}
+                                                        title="Retirer la validation KYC de ce compte"
+                                                    >
+                                                        Retirer le KYC
+                                                    </button>
+                                                ) : null}
                                                 {canManage && !user.anonymized_at ? (
                                                     <>
                                                         <button
@@ -363,6 +412,7 @@ export function UsersPanel({
                                                     <span className="text-xs text-[var(--admin-muted)]">Lecture seule</span>
                                                 ) : null}
                                             </div>
+                                            )}
                                         </td>
                                     </tr>
                                 ))

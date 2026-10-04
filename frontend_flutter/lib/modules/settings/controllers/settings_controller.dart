@@ -4,6 +4,7 @@ import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/services/push_identity.dart';
 import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/phone_format.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
 import '../../../data/repositories/user_repository.dart';
@@ -32,6 +33,9 @@ class SettingsController extends GetxController {
   final isSavingPaymentPhone = false.obs;
   final paymentPhoneError = Rx<String?>(null);
 
+  /// Vrai une fois le code de confirmation envoyé au numéro du compte.
+  final paymentPhoneCodeSent = false.obs;
+
   @override
   void onInit() {
     super.onInit();
@@ -46,9 +50,35 @@ class SettingsController extends GetxController {
     _loadData();
   }
 
+  /// Un compte qui reçoit des gains (artisan, fournisseur, livreur) confirme
+  /// tout changement de numéro de paiement par un code reçu sur le numéro du
+  /// compte. Revenir à ce numéro, ou garder le même, n'en demande pas.
+  bool paymentPhoneNeedsCode(String newPaymentPhone) {
+    if (userRole.value == 'client') return false;
+    final next = normalizeIvorianPhone(newPaymentPhone);
+    return next != normalizeIvorianPhone(paymentPhone.value) &&
+        next != normalizeIvorianPhone(userPhone.value);
+  }
+
+  Future<bool> requestPaymentPhoneCode() async {
+    isSavingPaymentPhone.value = true;
+    paymentPhoneError.value = null;
+    try {
+      await _userRepo.requestPaymentPhoneCode();
+      paymentPhoneCodeSent.value = true;
+      return true;
+    } catch (e) {
+      paymentPhoneError.value = e.toString().replaceAll('Exception: ', '');
+      return false;
+    } finally {
+      isSavingPaymentPhone.value = false;
+    }
+  }
+
   Future<bool> updatePaymentPhone({
     required String newPaymentPhone,
     required String provider,
+    String? code,
   }) async {
     final userId = StorageService.getUserId();
     if (userId == null) return false;
@@ -59,9 +89,11 @@ class SettingsController extends GetxController {
         userId: userId,
         paymentPhone: newPaymentPhone.trim(),
         preferredPaymentProvider: provider,
+        paymentPhoneCode: code,
       );
       paymentPhone.value = newPaymentPhone.trim();
       preferredPaymentProvider.value = provider;
+      paymentPhoneCodeSent.value = false;
       return true;
     } catch (e) {
       paymentPhoneError.value = e.toString().replaceAll('Exception: ', '');

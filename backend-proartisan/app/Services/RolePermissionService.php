@@ -19,7 +19,66 @@ class RolePermissionService
      */
     public const ROLES = ['client', 'artisan', 'fournisseur', 'referent', 'livreur'];
 
+    /**
+     * Actions qu'aucun retrait ne peut toucher : sans elles, l'espace du rôle
+     * cesse de fonctionner pour tous ses utilisateurs, aussitôt.
+     */
+    public const PROTECTED = [
+        'client' => [
+            'mission.create', 'mission.view', 'devis.view', 'devis.accept', 'devis.refuse',
+            'jalon.view', 'jalon.request-otp', 'jalon.validate-otp',
+            'litige.create', 'kyc.upload', 'transactions.view',
+        ],
+        'artisan' => [
+            'mission.view', 'devis.create', 'devis.view', 'jalon.view', 'jalon.submit',
+            'jcode.create', 'litige.create', 'kyc.upload', 'transactions.view',
+        ],
+        'fournisseur' => [
+            'jcode.scan', 'orders.view', 'orders.manage', 'kyc.upload',
+            'supplier.dashboard', 'supplier-products.manage', 'transactions.view',
+        ],
+        'referent' => ['mission.view', 'mission.referent-validate', 'litige.view'],
+        'livreur' => ['orders.view', 'deliveries.manage', 'kyc.upload', 'transactions.view'],
+    ];
+
+    /**
+     * Actions réservées : elles ne s'attribuent qu'aux rôles listés. Une
+     * liste vide réserve l'action aux administrateurs.
+     */
+    public const RESERVED = [
+        'devis.accept' => ['client'],
+        'devis.refuse' => ['client'],
+        'jalon.validate-otp' => ['client'],
+        'devis.create' => ['artisan'],
+        'devis.update' => ['artisan'],
+        'jalon.submit' => ['artisan'],
+        'micro-credit.apply' => ['artisan'],
+        'jcode.scan' => ['fournisseur'],
+        'orders.manage' => ['fournisseur'],
+        'supplier.dashboard' => ['fournisseur'],
+        'supplier-products.manage' => ['fournisseur'],
+        'deliveries.manage' => ['fournisseur', 'livreur'],
+        'mission.referent-validate' => ['referent'],
+        'litige.arbitrate' => ['referent'],
+        'litige.vote' => ['referent', 'artisan'],
+        'kyc.view' => [],
+        'kyc.review' => [],
+        'sms.send' => [],
+        'sms.view' => [],
+    ];
+
     public function __construct(private AdminActivityLogger $audit) {}
+
+    public function isProtected(string $role, string $permission): bool
+    {
+        return in_array($permission, self::PROTECTED[$role] ?? [], true);
+    }
+
+    /** L'action peut-elle être attribuée à ce rôle ? */
+    public function isAssignable(string $role, string $permission): bool
+    {
+        return ! array_key_exists($permission, self::RESERVED) || in_array($role, self::RESERVED[$permission], true);
+    }
 
     /**
      * Liste toutes les permissions disponibles.
@@ -47,6 +106,12 @@ class RolePermissionService
     public function assignPermissionToRole(string $role, string $permissionName): void
     {
         $permission = $this->resolve($role, $permissionName);
+
+        if (! $this->isAssignable($role, $permissionName)) {
+            throw ValidationException::withMessages([
+                'permission' => ["L'action « {$permissionName} » est réservée : elle ne s'attribue pas à ce rôle."],
+            ]);
+        }
 
         $exists = DB::table('permission_role')
             ->where('permission_id', $permission->id)
@@ -77,6 +142,12 @@ class RolePermissionService
     public function revokePermissionFromRole(string $role, string $permissionName): void
     {
         $permission = $this->resolve($role, $permissionName);
+
+        if ($this->isProtected($role, $permissionName)) {
+            throw ValidationException::withMessages([
+                'permission' => ["L'action « {$permissionName} » est indispensable à ce rôle : elle ne se retire pas."],
+            ]);
+        }
 
         $removed = DB::table('permission_role')
             ->where('permission_id', $permission->id)

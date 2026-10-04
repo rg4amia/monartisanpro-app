@@ -15,6 +15,7 @@ interface UserManagementOptions {
     canDeleteUsers: boolean;
     canImpersonate: boolean;
     canManageRgpd: boolean;
+    canReviewKyc?: boolean;
 }
 
 export interface UserFormData {
@@ -29,6 +30,7 @@ export interface UserFormData {
     documents: { cni: File | null; selfie: File | null };
     fournisseur_sector_id: number | '';
     fournisseur_trade_id: number | '';
+    fournisseur_shop_name: string;
 }
 
 const EMPTY_USER: UserFormData = {
@@ -37,12 +39,14 @@ const EMPTY_USER: UserFormData = {
     email: '',
     role: 'client',
     password: '',
-    kyc_status: 'en_attente',
+    // Pris en compte pour un Référent ou un administrateur seulement.
+    kyc_status: 'actif',
     score_frozen: false,
     photo: null,
     documents: { cni: null, selfie: null },
     fournisseur_sector_id: '',
     fournisseur_trade_id: '',
+    fournisseur_shop_name: '',
 };
 
 /**
@@ -51,7 +55,7 @@ const EMPTY_USER: UserFormData = {
  * anonymisation RGPD (Règle d'or 22). Un administrateur ne peut jamais agir
  * sur son propre compte.
  */
-export function useUserManagement({ currentAdmin, askConfirm, setActionLoading, canDeleteUsers, canImpersonate, canManageRgpd }: UserManagementOptions) {
+export function useUserManagement({ currentAdmin, askConfirm, setActionLoading, canDeleteUsers, canImpersonate, canManageRgpd, canReviewKyc = false }: UserManagementOptions) {
     const [userModalOpen, setUserModalOpen] = useState<boolean>(false);
     const [editingUser, setEditingUser] = useState<AdminUser | null>(null);
     const [statusModalOpen, setStatusModalOpen] = useState<boolean>(false);
@@ -93,6 +97,7 @@ export function useUserManagement({ currentAdmin, askConfirm, setActionLoading, 
             documents: { cni: null, selfie: null },
             fournisseur_sector_id: user.fournisseur_sector_id ?? '',
             fournisseur_trade_id: user.fournisseur_trade_id ?? '',
+            fournisseur_shop_name: user.fournisseur_shop_name ?? '',
         });
         setUserModalOpen(true);
     };
@@ -168,6 +173,37 @@ export function useUserManagement({ currentAdmin, askConfirm, setActionLoading, 
         router.delete(`/admin/users/${user.id}`, { preserveScroll: true });
     };
 
+    const restoreUser = async (user: AdminUser): Promise<void> => {
+        if (!canDeleteUsers) return;
+        const ok = await askConfirm({
+            title: `Restaurer le compte de ${user.name} ?`,
+            message: 'Le compte redevient utilisable avec son numéro, ses missions et son historique.',
+            confirmLabel: 'Restaurer',
+        });
+        if (!ok) return;
+        router.post(`/admin/users/${user.id}/restore`, {}, { preserveScroll: true });
+    };
+
+    /** Retire la validation KYC d'un compte déjà actif : motif obligatoire, sessions fermées. */
+    const revokeKyc = async (user: AdminUser): Promise<void> => {
+        if (!canReviewKyc) return;
+        const ongoing = user.missions_ongoing_count ?? 0;
+        const missions =
+            ongoing === 0
+                ? 'Ce compte n’a aucune mission en cours.'
+                : `Attention : ce compte a ${ongoing} mission(s) en cours, qu’il ne pourra plus poursuivre sans KYC validé.`;
+        const reason = await askConfirm({
+            title: `Retirer la validation KYC de ${user.name}`,
+            message: `${missions} Ses sessions seront fermées et il recevra le motif.`,
+            tone: 'danger',
+            confirmLabel: 'Rejeter le KYC',
+            promptLabel: 'Motif du rejet (minimum 10 caractères)',
+            promptMinLength: 10,
+        });
+        if (typeof reason !== 'string') return;
+        router.post(`/admin/kyc/${user.id}/review`, { decision: 'rejete', rejection_reason: reason.trim() }, { preserveScroll: true });
+    };
+
     const impersonate = async (user: AdminUser): Promise<void> => {
         if (!canImpersonate) return;
         const ok = await askConfirm({
@@ -214,6 +250,8 @@ export function useUserManagement({ currentAdmin, askConfirm, setActionLoading, 
         toggleUserStatus,
         submitStatusForm,
         deleteUser,
+        restoreUser,
+        revokeKyc,
         impersonate,
         anonymize,
     };

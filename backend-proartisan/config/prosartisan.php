@@ -58,6 +58,12 @@ return [
         'registration_window_minutes' => 30,
     ],
 
+    'payment_phone' => [
+        // Durée, après un changement du numéro de paiement, pendant laquelle
+        // les retraits et les versements du compte sont suspendus.
+        'withdrawal_lock_hours' => (int) env('PAYMENT_PHONE_LOCK_HOURS', 24),
+    ],
+
     'score_prosartisan' => [
         // Points maximum de chaque pilier sur l'échelle 0–1000 du Score ProsArtisan
         // (cf. ScoreService::recalculateFromLedger).

@@ -13,6 +13,7 @@ use App\Models\Mission;
 use App\Models\User;
 use App\Services\JCodeService;
 use App\Services\NotificationService;
+use App\Services\PaymentPhoneService;
 use App\Services\PhotoService;
 use App\Services\RealtimeEventService;
 use Illuminate\Http\JsonResponse;
@@ -131,10 +132,11 @@ class JCodeController extends Controller
         }
 
         if ($request->has('payment_phone')) {
-            $user->update([
-                'payment_phone' => $request->input('payment_phone'),
-                'preferred_payment_provider' => $request->input('preferred_payment_provider'),
-            ]);
+            app(PaymentPhoneService::class)->syncFromFlow(
+                $user,
+                $request->input('payment_phone'),
+                $request->input('preferred_payment_provider'),
+            );
         }
 
         $recuPhotoUrl = null;

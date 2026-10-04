@@ -44,6 +44,7 @@ class UserRepository {
     bool clearTradeId = false,
     String? paymentPhone,
     String? preferredPaymentProvider,
+    String? paymentPhoneCode,
   }) async {
     // On ne transmet `name` que si l'appelant modifie réellement ce champ :
     // le backend revalide `name` (min:2) à chaque envoi, donc renvoyer un nom
@@ -64,9 +65,17 @@ class UserRepository {
         if (paymentPhone != null) 'payment_phone': paymentPhone,
         if (preferredPaymentProvider != null)
           'preferred_payment_provider': preferredPaymentProvider,
+        if (paymentPhoneCode != null && paymentPhoneCode.isNotEmpty)
+          'payment_phone_code': paymentPhoneCode,
       },
     );
     return response.data as Map<String, dynamic>;
+  }
+
+  /// Demande le code qui confirme un changement de numéro de paiement. Il
+  /// est envoyé par SMS au numéro du compte, jamais au nouveau numéro.
+  Future<void> requestPaymentPhoneCode() async {
+    await _client.post(ApiEndpoints.paymentPhoneCode);
   }
 
   Future<Map<String, dynamic>> updateLocation({

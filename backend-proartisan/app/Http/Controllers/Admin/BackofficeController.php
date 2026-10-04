@@ -461,6 +461,18 @@ class BackofficeController extends Controller
         return back()->with('success', 'Utilisateur supprimé avec succès.');
     }
 
+    /** Restaure un compte supprimé (l'identifiant vise un compte hors de la liste courante). */
+    public function restoreUser(int $user, AdminUserService $users): RedirectResponse
+    {
+        try {
+            $restored = $users->restore(User::withTrashed()->findOrFail($user));
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+
+        return back()->with('success', "Compte de {$restored->name} restauré.");
+    }
+
     public function toggleUserStatus(ToggleUserStatusRequest $request, User $user, AdminUserService $users): RedirectResponse
     {
         try {

@@ -76,234 +76,60 @@ void showLoginResetOptionsDialog(AuthController c) {
   );
 }
 
+/// Récupération d'un compte dont la carte SIM est perdue.
+///
+/// Le changement de numéro ne se fait plus dans l'application : l'ancien
+/// numéro, le nom et le rôle suffisaient à prendre le compte d'un autre. Le
+/// support vérifie désormais l'identité du titulaire avant de changer le numéro.
 void showRecoverAccountDialog(AuthController c) {
-  final oldPhoneCtrl = TextEditingController(text: '+225');
-  final newPhoneCtrl = TextEditingController(text: '+225');
-  final nameCtrl = TextEditingController();
-  final otpCtrl = TextEditingController();
+  Get.dialog(const RecoverAccountDialog());
+}
 
-  // Reset controller states
-  c.resetOldPhone.value = '+225';
-  c.resetNewPhone.value = '+225';
-  c.resetName.value = '';
-  c.resetRole.value = null;
-  c.resetOtp.value = '';
-  c.isResetOtpSent.value = false;
-  c.errorMsg.value = null;
+class RecoverAccountDialog extends StatelessWidget {
+  const RecoverAccountDialog({super.key});
 
-  Get.dialog(
-    Obx(
-      () => AlertDialog(
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-        title: const Text(
-          'Récupération de compte',
-          style: TextStyle(fontWeight: FontWeight.w800),
-        ),
-        content: SingleChildScrollView(
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text(
-                'Rattachez votre ancien compte à votre nouveau numéro de téléphone.',
-                style: TextStyle(color: LoginTokens.muted, fontSize: 13),
-              ),
-              const SizedBox(height: 16),
-
-              // Role Selector
-              DropdownButtonFormField<String>(
-                initialValue: c.resetRole.value,
-                decoration: const InputDecoration(
-                  labelText: 'Votre espace / rôle',
-                  border: OutlineInputBorder(),
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                items: const [
-                  DropdownMenuItem(value: 'client', child: Text('Client')),
-                  DropdownMenuItem(
-                    value: 'artisan',
-                    child: Text('Artisan'),
-                  ),
-                  DropdownMenuItem(
-                    value: 'fournisseur',
-                    child: Text('Fournisseur'),
-                  ),
-                  DropdownMenuItem(value: 'driver', child: Text('Livreur')),
-                ],
-                onChanged: c.isResetOtpSent.value
-                    ? null
-                    : (val) {
-                        c.resetRole.value = val;
-                      },
-              ),
-              const SizedBox(height: 12),
-
-              // Name
-              TextField(
-                controller: nameCtrl,
-                enabled: !c.isResetOtpSent.value,
-                decoration: const InputDecoration(
-                  labelText: 'Nom complet exact',
-                  border: OutlineInputBorder(),
-                  hintText: 'Ex: Jean Dupont',
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                onChanged: (val) => c.resetName.value = val,
-              ),
-              const SizedBox(height: 12),
-
-              // Old Phone
-              TextField(
-                controller: oldPhoneCtrl,
-                enabled: !c.isResetOtpSent.value,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Ancien numéro (+225)',
-                  border: OutlineInputBorder(),
-                  hintText: '+2250707000000',
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                onChanged: (val) => c.resetOldPhone.value = val,
-              ),
-              const SizedBox(height: 12),
-
-              // New Phone
-              TextField(
-                controller: newPhoneCtrl,
-                enabled: !c.isResetOtpSent.value,
-                keyboardType: TextInputType.phone,
-                decoration: const InputDecoration(
-                  labelText: 'Nouveau numéro (+225)',
-                  border: OutlineInputBorder(),
-                  hintText: '+2250707000000',
-                  contentPadding:
-                      EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                ),
-                onChanged: (val) => c.resetNewPhone.value = val,
-              ),
-
-              if (c.isResetOtpSent.value) ...[
-                const SizedBox(height: 16),
-                const Divider(),
-                const SizedBox(height: 8),
-                const Text(
-                  'Entrez le code OTP reçu sur votre nouveau numéro :',
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
-                ),
-                const SizedBox(height: 8),
-                TextField(
-                  controller: otpCtrl,
-                  keyboardType: TextInputType.number,
-                  maxLength: 4,
-                  textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    letterSpacing: 8,
-                  ),
-                  decoration: const InputDecoration(
-                    border: OutlineInputBorder(),
-                    counterText: '',
-                    hintText: '0000',
-                    contentPadding: EdgeInsets.symmetric(vertical: 8),
-                  ),
-                  onChanged: (val) => c.resetOtp.value = val,
-                ),
-              ],
-
-              if (c.errorMsg.value != null) ...[
-                const SizedBox(height: 12),
-                Text(
-                  c.errorMsg.value!,
-                  style: const TextStyle(
-                    color: Colors.red,
-                    fontSize: 12,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ],
-            ],
+  @override
+  Widget build(BuildContext context) {
+    return AlertDialog(
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+      title: const Text(
+        'Récupération de compte',
+        style: TextStyle(fontWeight: FontWeight.w800),
+      ),
+      content: const Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Vous avez perdu votre carte SIM ou changé de numéro ?',
+            style: TextStyle(fontWeight: FontWeight.w700, fontSize: 14),
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Get.back(),
-            child: const Text('Annuler'),
+          SizedBox(height: 10),
+          Text(
+            'Pour protéger votre compte et vos gains, le changement de numéro '
+            'se fait auprès du support ProsArtisan, qui vérifie votre identité.',
+            style: TextStyle(color: LoginTokens.muted, fontSize: 13, height: 1.4),
           ),
-          // À l'étape OTP, les champs d'identité sont désactivés : sans ce
-          // retour, une saisie erronée obligeait à annuler tout le
-          // formulaire et à tout ressaisir.
-          if (c.isResetOtpSent.value)
-            TextButton(
-              onPressed: c.isResetting.value
-                  ? null
-                  : () {
-                      c.isResetOtpSent.value = false;
-                      c.errorMsg.value = null;
-                      c.resetOtp.value = '';
-                      otpCtrl.clear();
-                    },
-              child: const Text('Précédent'),
-            ),
-          ElevatedButton(
-            onPressed: c.isResetting.value
-                ? null
-                : () async {
-                    if (!c.isResetOtpSent.value) {
-                      // Envoyer OTP
-                      await c.requestResetPhone();
-                      if (c.errorMsg.value != null) {
-                        Get.snackbar(
-                          'Erreur',
-                          c.errorMsg.value!,
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                        );
-                      } else {
-                        Get.snackbar(
-                          'OTP envoyé',
-                          'Un code de validation a été envoyé sur votre nouveau numéro.',
-                          backgroundColor: LoginTokens.success,
-                          colorText: Colors.white,
-                        );
-                      }
-                    } else {
-                      // Confirmer la récupération
-                      final success = await c.confirmResetPhone();
-                      if (success) {
-                        Get.back();
-                        Get.snackbar(
-                          'Compte récupéré',
-                          'Votre compte a été associé à votre nouveau numéro avec succès.',
-                          backgroundColor: LoginTokens.success,
-                          colorText: Colors.white,
-                        );
-                        unawaited(Get.offAllNamed(Routes.mainTab));
-                      } else {
-                        Get.snackbar(
-                          'Code OTP erroné',
-                          c.errorMsg.value ?? 'Le code saisi est invalide.',
-                          backgroundColor: Colors.red,
-                          colorText: Colors.white,
-                        );
-                      }
-                    }
-                  },
-            child: c.isResetting.value
-                ? const SizedBox(
-                    width: 18,
-                    height: 18,
-                    child: CircularProgressIndicator(
-                      strokeWidth: 2,
-                      color: Colors.white,
-                    ),
-                  )
-                : Text(c.isResetOtpSent.value ? 'Confirmer' : 'Suivant'),
+          SizedBox(height: 10),
+          Text(
+            'Préparez votre pièce d\'identité et votre ancien numéro.',
+            style: TextStyle(color: LoginTokens.muted, fontSize: 13, height: 1.4),
           ),
         ],
       ),
-    ),
-  );
+      actions: [
+        TextButton(
+          onPressed: () => Get.back(),
+          child: const Text('Fermer'),
+        ),
+        ElevatedButton(
+          onPressed: () {
+            Get.back();
+            unawaited(Get.toNamed(Routes.support));
+          },
+          child: const Text('Contacter le support'),
+        ),
+      ],
+    );
+  }
 }

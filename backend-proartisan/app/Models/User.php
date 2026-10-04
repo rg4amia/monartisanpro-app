@@ -52,6 +52,7 @@ class User extends Authenticatable
         'anonymized_at',
         'anonymized_by',
         'kyc_rejected_at',
+        'payment_phone_changed_at',
     ];
 
     protected $attributes = [
@@ -69,6 +70,7 @@ class User extends Authenticatable
             'cgu_accepted_at' => 'datetime',
             'anonymized_at' => 'datetime',
             'kyc_rejected_at' => 'datetime',
+            'payment_phone_changed_at' => 'datetime',
             'directory_hidden_at' => 'datetime',
             'wallet_materiaux' => 'integer',
             'wallet_mo' => 'integer',
@@ -108,42 +110,6 @@ class User extends Authenticatable
                     'description' => 'Solde initial (main d\'œuvre)',
                     'cle_idempotence' => (string) Str::uuid(),
                 ]);
-            }
-        });
-
-        if (app()->runningUnitTests()) {
-            return;
-        }
-
-        static::saved(function (User $user) {
-            if ($user->role === 'fournisseur' && ! $user->fournisseurAgree()->exists()) {
-                $lat = 5.3300;
-                $lng = -4.0620;
-
-                if (config('database.default') === 'sqlite') {
-                    DB::table('fournisseurs_agrees')->insert([
-                        'user_id' => $user->id,
-                        'nom_boutique' => 'Quincaillerie de '.($user->name ?? $user->phone),
-                        'statut' => 'en_attente',
-                        'position' => "$lat,$lng",
-                        'created_at' => now(),
-                        'updated_at' => now(),
-                    ]);
-                } else {
-                    DB::statement(
-                        'INSERT INTO fournisseurs_agrees (user_id, nom_boutique, statut, position, created_at, updated_at) 
-                         VALUES (?, ?, ?, POINT(?, ?), ?, ?)',
-                        [
-                            $user->id,
-                            'Quincaillerie de '.($user->name ?? $user->phone),
-                            'en_attente',
-                            $lng,
-                            $lat,
-                            now(),
-                            now(),
-                        ]
-                    );
-                }
             }
         });
     }

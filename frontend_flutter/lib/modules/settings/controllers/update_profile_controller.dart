@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../../../app/routes/app_routes.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/utils/error_handler.dart';
+import '../../../core/utils/phone_format.dart';
 import '../../../data/models/sector_model.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/user_repository.dart';
@@ -34,6 +35,9 @@ class UpdateProfileController extends GetxController {
 
   // Mobile Money pour reversement des gains (Artisans, Livreurs, Fournisseurs)
   final paymentPhoneController = TextEditingController();
+
+  /// Numéro de paiement à l'ouverture de l'écran, pour savoir s'il a changé.
+  String _initialPaymentPhone = '';
   final selectedPaymentProvider = 'wave'.obs;
 
   // Localisation
@@ -105,6 +109,7 @@ class UpdateProfileController extends GetxController {
       cnmciCardUrl.value = user.cnmciCardUrl;
 
       paymentPhoneController.text = user.paymentPhone ?? '';
+      _initialPaymentPhone = user.paymentPhone ?? '';
       if (user.preferredPaymentProvider != null &&
           user.preferredPaymentProvider!.isNotEmpty) {
         selectedPaymentProvider.value = user.preferredPaymentProvider!;
@@ -351,11 +356,22 @@ class UpdateProfileController extends GetxController {
         clearTradeId: isArtisan.value &&
             selectedSectorId.value != null &&
             selectedTradeId.value == null,
-        paymentPhone: paymentPhoneController.text.trim().isNotEmpty
+        paymentPhone: paymentPhoneController.text.trim().isNotEmpty &&
+                !paymentPhoneChangeNeedsCode
             ? paymentPhoneController.text.trim()
             : null,
         preferredPaymentProvider: selectedPaymentProvider.value,
       );
+
+      if (paymentPhoneChangeNeedsCode) {
+        Get.snackbar(
+          'Numéro de paiement inchangé',
+          'Pour le modifier, ouvrez Profil › Reversement Mobile Money : '
+              'un code de confirmation vous sera envoyé.',
+          snackPosition: SnackPosition.BOTTOM,
+          duration: const Duration(seconds: 6),
+        );
+      }
 
       if (isArtisan.value &&
           (cnmciNumberController.text.isNotEmpty ||
@@ -413,6 +429,16 @@ class UpdateProfileController extends GetxController {
     } finally {
       isLoading.value = false;
     }
+  }
+
+  /// Un compte qui reçoit des gains confirme le changement de son numéro de
+  /// paiement par un code : cet écran ne l'envoie donc pas.
+  bool get paymentPhoneChangeNeedsCode {
+    if (!isProActor.value) return false;
+    final next = normalizeIvorianPhone(paymentPhoneController.text);
+    return next.isNotEmpty &&
+        next != normalizeIvorianPhone(_initialPaymentPhone) &&
+        next != normalizeIvorianPhone(StorageService.getPhone() ?? '');
   }
 
   @override

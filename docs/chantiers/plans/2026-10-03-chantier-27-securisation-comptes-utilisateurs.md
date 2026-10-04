@@ -2,7 +2,7 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | partiel (lots A à D livrés, contrôle manuel à faire ; lot E en attente de décisions) |
+| Statut | livré (lots A à E ; contrôle manuel à faire, nouvelle version de l'application à publier) |
 | Créé le | 2026-10-03 |
 | Mis à jour le | 2026-10-04 |
 | Auteur | Claude Code |
@@ -70,9 +70,9 @@ Les lots sont indépendants et se livrent dans cet ordre, chacun avec ses tests.
 17. **Audit complet (I3, I5)** — `RolePermissionService` audite `role_permission.assigned` et `.revoked` (rôle, action) ; `admin.permissions_updated` enregistre les capacités avant et après.
 18. **Rôles sans effet retirés (I4, partie sans décision)** — `admin` et `driver` sortent de la validation et de l'écran.
 
-### Lot E — Règles à décider
+### Lot E — Règles à décider (livré)
 
-Rien n'est implémenté avant la réponse d'Inza Bamba. Recommandation entre parenthèses.
+Décisions d'Inza Bamba du 04/10/2026 : la recommandation de chaque point est retenue telle quelle. Recommandation entre parenthèses.
 
 19. **Récupération « SIM perdue » (F2)** — (fermer la route ; le support change le numéro depuis le backoffice, action auditée qui ferme les sessions et prévient l'utilisateur). Variante : la conserver avec une preuve que l'attaquant n'a pas, par exemple le numéro de la pièce d'identité du dossier KYC.
 20. **Numéro de paiement (G1)** — (code de confirmation envoyé au numéro du compte, notification push et SMS au titulaire, blocage des retraits pendant 24 heures après le changement).
@@ -88,7 +88,7 @@ Rien n'est implémenté avant la réponse d'Inza Bamba. Recommandation entre par
 
 ## Règles d'or concernées
 
-1, 6, 16, 17, 21, 22, 24, 29, 35, 36, 39, 40, 49, 55, 67, 68, 74, 80, 81 ; Règle d'or 98 (lot A), Règle d'or 99 (lot B), Règle d'or 100 (lot C), Règle d'or 101 (lot D).
+1, 6, 16, 17, 21, 22, 24, 29, 35, 36, 39, 40, 49, 55, 67, 68, 74, 80, 81 ; Règle d'or 98 (lot A), Règle d'or 99 (lot B), Règle d'or 100 (lot C), Règle d'or 101 (lot D), Règle d'or 102 (lot E).
 
 Points d'attention :
 
@@ -161,3 +161,21 @@ Points d'attention :
 - **Constat I2** : inchangé, `admin.roles.manage` vaut toujours l'accès total. I4 (garde-fous sur les droits des rôles) reste au lot E.
 - **Non vérifié** : suite Pest sur MariaDB 11.8 en local (Docker arrêté) ; connexion d'un super administrateur après la migration ; contrôle manuel de l'écran.
 - **Tests** : `Chantier27LotDRolesAndRightsTest.php` (12 tests, dont 8 échouent sans le correctif) ; `roles-permissions-panel.test.tsx` (11 tests, premier test de cet écran).
+
+### Lot E (livré le 2026-10-04)
+
+Décisions prises par Inza Bamba le 04/10/2026 : les onze recommandations sont retenues. Écarts et précisions de mise en œuvre :
+
+- **Étape 19 (SIM perdue)** : les deux routes restent déclarées et répondent 410 avec un renvoi vers le support, pour que les versions installées affichent un message clair. Le changement par le support passe par le formulaire existant du backoffice. Le titulaire est prévenu sur le **nouveau** numéro ; l'ancien, perdu, ne reçoit rien.
+- **Étape 20 (numéro de paiement)** : la protection couvre les comptes qui reçoivent des gains (artisan, fournisseur, livreur). Le client, sans portefeuille ni retrait, garde le changement sans code. Non prévu au plan mais nécessaire : le numéro s'écrivait aussi au fil du devis, du bon matériel et de l'acceptation d'une course, et un retrait acceptait un numéro saisi à la demande — ces voies ne remplacent plus un numéro enregistré. Le blocage de 24 heures couvre les demandes de retrait et les versements automatiques (reportés, pas échoués). Le support ne peut toujours pas changer le numéro de paiement d'un tiers.
+- **Étape 21 (suppression)** : la règle vaut aussi pour l'anonymisation par un administrateur. Une commande impayée (« en attente de paiement ») ne bloque pas.
+- **Étape 23 (statut KYC)** : l'exception vaut pour le Référent et pour l'administrateur.
+- **Étape 24 (rejet d'un compte actif)** : l'action « Retirer le KYC » est ajoutée à la liste des utilisateurs, la liste KYC ne montrant que les dossiers en attente.
+- **Étape 26 (mot de passe)** : la règle s'applique à la création et au changement. La page de connexion et la commande de secours `admin:reset-password` ne sont pas modifiées.
+- **Étape 27 (rôle)** : le changement vers le rôle Référent ou administrateur laisse le KYC actif.
+- **Étape 28 (boutique)** : aucun écran ne permettait de saisir une boutique. La fiche est donc créée à la première position réelle partagée par le fournisseur, « en attente », avec le nom du compte, que l'administrateur corrige. `OrderService` créait aussi une boutique **agréée** à un point fixe pour toute commande en livraison chez un fournisseur sans fiche : cette commande est maintenant refusée. Les boutiques déjà créées d'office ne sont pas modifiées.
+- **Étape 29 (droits des rôles)** : listes écrites dans `RolePermissionService` (`PROTECTED`, `RESERVED`) ; elles se relisent si de nouvelles actions sont ajoutées au catalogue.
+- **Application mobile** : dialogue de récupération remplacé par un renvoi vers le support ; code de confirmation dans Profil › Reversement Mobile Money ; l'écran « Modifier le profil » n'envoie plus un numéro de paiement changé et renvoie vers ce dialogue. **Tant que la nouvelle version n'est pas installée**, un artisan, un fournisseur ou un livreur ne peut pas changer son numéro de paiement depuis l'application (le serveur demande un code que l'ancienne version ne sait pas envoyer).
+- **Reste ouvert** : F5 (le changement de numéro par l'utilisateur connecté ne ferme pas ses autres sessions), E3 (filtre sur le statut du compte), H6, I2.
+- **Non vérifié** : suite Pest sur MariaDB 11.8 en local (Docker arrêté) ; contrôle manuel du backoffice et de l'application sur un appareil ; réception réelle des SMS.
+- **Tests** : `Chantier27LotEAccountRulesTest.php` (28 tests, dont 26 échouent sans le correctif) ; `PhoneResetComplianceTest`, `Chantier27LotAAccountSecurityTest`, `Chantier27LotBBackofficeAccountsTest`, `AdminUserManagementTest` et `NotificationCatalogTest` alignés ; `payment_phone_confirmation_test.dart` ; tests Vitest des trois écrans.

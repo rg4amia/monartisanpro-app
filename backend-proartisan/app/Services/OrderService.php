@@ -7,7 +7,6 @@ use App\Enums\PaymentStatus;
 use App\Enums\WalletType;
 use App\Models\Address;
 use App\Models\DeliveryTracking;
-use App\Models\FournisseurAgree;
 use App\Models\Order;
 use App\Models\OrderItem;
 use App\Models\PromoCode;
@@ -92,15 +91,9 @@ class OrderService
             if ($deliveryMode === 'delivery') {
                 $supplierProfile = $supplier->fournisseurAgree;
                 if (! $supplierProfile) {
-                    $supplierProfile = FournisseurAgree::firstOrCreate(
-                        ['user_id' => $supplier->id],
-                        [
-                            'nom_boutique' => $supplier->name ?? 'Quincaillerie',
-                            'position' => DB::raw('POINT(-4.0083, 5.3599)'),
-                            'statut' => 'agree',
-                            'approuve_at' => now(),
-                        ]
-                    );
+                    // Sans fiche boutique, le point d'enlèvement n'est pas connu :
+                    // aucune course ne se calcule depuis des coordonnées inventées.
+                    throw new \Exception('Ce fournisseur n\'a pas encore de boutique enregistrée : la livraison n\'est pas proposée. Choisissez le retrait ou un autre fournisseur.');
                 }
             }
 

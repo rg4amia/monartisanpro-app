@@ -3,7 +3,7 @@
 - **Date** : 2026-10-03
 - **Auteur** : Claude (Opus 5.5), à la demande d'Inza Bamba
 - **Statut** : analyse seule, aucun code modifié
-- **Suite** : `plans/2026-10-03-chantier-27-securisation-comptes-utilisateurs.md` — lot A livré (F1, F3, F4, G2, G3) ; lot B livré (A1 à A4, B1 à B5, B7, C2, C3, C7, E1, E2) ; lot C livré (H1, H2 pour les comptes anonymisés et supprimés, H3, H4, H5) ; lot D livré (I1, I3, I4 pour les rôles sans effet, I5)
+- **Suite** : `plans/2026-10-03-chantier-27-securisation-comptes-utilisateurs.md` — lot A livré (F1, F3, F4, G2, G3) ; lot B livré (A1 à A4, B1 à B5, B7, C2, C3, C7, E1, E2) ; lot C livré (H1, H2 pour les comptes anonymisés et supprimés, H3, H4, H5) ; lot D livré (I1, I3, I4 pour les rôles sans effet, I5) ; lot E livré (F2, G1, G4, G5, D1 à D3, C1, C4 à C6, B6, H2, I4)
 
 ## Question posée
 

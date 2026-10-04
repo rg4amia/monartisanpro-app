@@ -78,8 +78,10 @@ void showPaymentPhoneDialog(
           : 'wave')
       .obs;
   final phoneCtrl = TextEditingController(text: controller.paymentPhone.value);
+  final codeCtrl = TextEditingController();
   final isClient = controller.userRole.value == 'client';
   controller.paymentPhoneError.value = null;
+  controller.paymentPhoneCodeSent.value = false;
 
   Get.dialog(
     Obx(
@@ -182,6 +184,31 @@ void showPaymentPhoneDialog(
                   ),
                 ),
               ),
+              if (controller.paymentPhoneCodeSent.value) ...[
+                const SizedBox(height: 14),
+                const Text(
+                  'Un code vous a été envoyé par SMS au numéro de votre compte. '
+                  'Saisissez-le pour confirmer le nouveau numéro. '
+                  'Par sécurité, vos retraits reprendront 24 heures après ce changement.',
+                  style: TextStyle(
+                    color: SettingsColors.muted,
+                    fontSize: 12,
+                    height: 1.4,
+                  ),
+                ),
+                const SizedBox(height: 10),
+                TextField(
+                  controller: codeCtrl,
+                  keyboardType: TextInputType.number,
+                  decoration: InputDecoration(
+                    labelText: 'Code de confirmation',
+                    prefixIcon: const Icon(Icons.lock_outline, size: 20),
+                    border: OutlineInputBorder(
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                  ),
+                ),
+              ],
               if (controller.paymentPhoneError.value != null) ...[
                 const SizedBox(height: 10),
                 Text(
@@ -216,9 +243,27 @@ void showPaymentPhoneDialog(
                       return;
                     }
 
+                    // Changement de numéro d'un compte qui reçoit des gains :
+                    // d'abord le code, envoyé au numéro du compte.
+                    if (controller.paymentPhoneNeedsCode(phone) &&
+                        !controller.paymentPhoneCodeSent.value) {
+                      await controller.requestPaymentPhoneCode();
+                      return;
+                    }
+
+                    if (controller.paymentPhoneCodeSent.value &&
+                        codeCtrl.text.trim().isEmpty) {
+                      controller.paymentPhoneError.value =
+                          'Saisissez le code reçu par SMS.';
+                      return;
+                    }
+
                     final success = await controller.updatePaymentPhone(
                       newPaymentPhone: phone,
                       provider: selectedProvider.value,
+                      code: controller.paymentPhoneCodeSent.value
+                          ? codeCtrl.text.trim()
+                          : null,
                     );
 
                     if (success) {
@@ -255,7 +300,11 @@ void showPaymentPhoneDialog(
                       color: Colors.white,
                     ),
                   )
-                : const Text('Enregistrer'),
+                : Text(
+                    controller.paymentPhoneCodeSent.value
+                        ? 'Confirmer'
+                        : 'Enregistrer',
+                  ),
           ),
         ],
       ),

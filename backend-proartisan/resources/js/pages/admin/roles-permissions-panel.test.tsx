@@ -49,6 +49,8 @@ function renderPanel(admin = makeAdmin()) {
             rolesPermissions={{ client: ['mission.create'], artisan: [], fournisseur: [], referent: [], livreur: [] }}
             adminCapabilityCatalog={catalog}
             admins={[admin]}
+            protectedRolePermissions={{ client: ['mission.create'] }}
+            reservedRolePermissions={{ 'litige.arbitrate': ['referent'] }}
         />,
     );
 }
@@ -165,16 +167,21 @@ describe('RolesPermissionsPanel — droits des rôles de l’application', () =>
         expect(screen.queryByRole('button', { name: /driver/i })).not.toBeInTheDocument();
     });
 
-    it('retire une action au rôle sélectionné', () => {
+    it('ne laisse pas retirer une action indispensable au rôle', () => {
         renderPanel();
 
-        fireEvent.click(screen.getByRole('checkbox', { name: 'mission.create' }));
+        expect(screen.getByRole('checkbox', { name: 'mission.create' })).toBeDisabled();
+        expect(screen.getByText('Indispensable à ce rôle : ne se retire pas.')).toBeInTheDocument();
+    });
 
-        expect(routerPost).toHaveBeenCalledWith(
-            '/admin/roles-permissions/revoke',
-            { role: 'client', permission: 'mission.create' },
-            expect.anything(),
-        );
+    it("ne laisse pas attribuer une action réservée à un autre rôle", () => {
+        renderPanel();
+
+        expect(screen.getByRole('checkbox', { name: 'litige.arbitrate' })).toBeDisabled();
+        expect(screen.getByText('Action réservée : ne s’attribue pas à ce rôle.')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Référent' }));
+        expect(screen.getByRole('checkbox', { name: 'litige.arbitrate' })).toBeEnabled();
     });
 
     it('attribue une action au rôle sélectionné', () => {

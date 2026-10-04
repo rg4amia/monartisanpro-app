@@ -97,7 +97,7 @@ class Chantier27LotBBackofficeAccountsTest extends TestCase
             'name' => 'Nouvel Admin',
             'phone' => '+2250700000001',
             'role' => 'admin',
-            'password' => 'secret123',
+            'password' => 'secret-12-caracteres',
             'kyc_status' => 'actif',
         ])->assertSessionHasErrors('role');
 
@@ -110,7 +110,7 @@ class Chantier27LotBBackofficeAccountsTest extends TestCase
             'name' => 'Nouvel Admin',
             'phone' => '+2250700000002',
             'role' => 'admin',
-            'password' => 'secret123',
+            'password' => 'secret-12-caracteres',
             'kyc_status' => 'actif',
         ])->assertSessionHasNoErrors();
 
@@ -212,10 +212,12 @@ class Chantier27LotBBackofficeAccountsTest extends TestCase
         $this->actingAs($actor)->delete("/admin/users/{$super->id}")->assertSessionHas('error');
         $this->actingAs($actor)->post("/admin/users/{$super->id}/toggle-status", [
             'account_status' => 'suspendu',
+            'account_status_reason' => 'Tentative de suspension',
         ])->assertSessionHas('error');
         $this->actingAs($actor)->post('/admin/users/bulk-status', [
             'user_ids' => [$super->id],
             'account_status' => 'suspendu',
+            'account_status_reason' => 'Tentative de suspension',
         ])->assertSessionHas('error');
         $this->actingAs($actor)->post("/admin/users/{$super->id}/anonymize")->assertSessionHas('error');
 
@@ -233,6 +235,7 @@ class Chantier27LotBBackofficeAccountsTest extends TestCase
         $this->actingAs($actor)->delete("/admin/users/{$other->id}")->assertSessionHas('error');
         $this->actingAs($actor)->post("/admin/users/{$other->id}/toggle-status", [
             'account_status' => 'suspendu',
+            'account_status_reason' => 'Tentative de suspension',
         ])->assertSessionHas('error');
         $this->actingAs($actor)->post("/admin/users/{$other->id}/anonymize")->assertSessionHas('error');
 

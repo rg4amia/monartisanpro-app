@@ -624,7 +624,11 @@ export function UserFormModal({
                                 onChange={(e) => form.setData('password', e.target.value)}
                                 className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
                                 required={!editing}
-                                placeholder={editing ? 'Laisser vide pour ne pas changer' : 'Minimum 6 caractères'}
+                                placeholder={
+                                    editing
+                                        ? 'Laisser vide pour ne pas changer'
+                                        : `Minimum ${form.data.role === 'admin' ? 12 : 8} caractères`
+                                }
                             />
                             {form.errors.password && <p className="text-xs text-[#b24f43]">{form.errors.password}</p>}
                         </label>
@@ -688,20 +692,51 @@ export function UserFormModal({
                         );
                     })()}
 
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    {editing && form.data.role === 'fournisseur' ? (
                         <label className="block space-y-1">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Statut KYC</span>
-                            <select
-                                value={form.data.kyc_status}
-                                onChange={(e) => form.setData('kyc_status', e.target.value)}
-                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
-                            >
-                                <option value="en_attente">En attente</option>
-                                <option value="actif">Actif (Approuvé)</option>
-                                <option value="rejete">Rejeté</option>
-                            </select>
-                            {form.errors.kyc_status && <p className="text-xs text-[#b24f43]">{form.errors.kyc_status}</p>}
+                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Nom de la boutique</span>
+                            <input
+                                type="text"
+                                value={form.data.fournisseur_shop_name ?? ''}
+                                onChange={(e) => form.setData('fournisseur_shop_name', e.target.value)}
+                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
+                                placeholder={editing.fournisseur_shop_name ? undefined : 'Aucune boutique enregistrée'}
+                                disabled={!editing.fournisseur_shop_name}
+                            />
+                            {!editing.fournisseur_shop_name && (
+                                <p className="text-[11px] text-[var(--admin-muted)]">
+                                    La boutique est créée quand le fournisseur partage sa position depuis l’application.
+                                </p>
+                            )}
+                            {form.errors.fournisseur_shop_name && (
+                                <p className="text-xs text-[#b24f43]">{form.errors.fournisseur_shop_name}</p>
+                            )}
                         </label>
+                    ) : null}
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        {form.data.role === 'referent' || form.data.role === 'admin' ? (
+                            <label className="block space-y-1">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Statut KYC</span>
+                                <select
+                                    value={form.data.kyc_status}
+                                    onChange={(e) => form.setData('kyc_status', e.target.value)}
+                                    className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
+                                >
+                                    <option value="actif">Actif (Approuvé)</option>
+                                    <option value="en_attente">En attente</option>
+                                    <option value="rejete">Rejeté</option>
+                                </select>
+                                {form.errors.kyc_status && <p className="text-xs text-[#b24f43]">{form.errors.kyc_status}</p>}
+                            </label>
+                        ) : (
+                            <div className="space-y-1">
+                                <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Statut KYC</span>
+                                <p className="text-[11px] text-[var(--admin-muted)]">
+                                    Réglé par la revue KYC uniquement : un compte s’active dans l’onglet « KYC &amp; Vérifications ».
+                                </p>
+                            </div>
+                        )}
 
                         <label className="block space-y-1">
                             <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Gel de Score ProsArtisan</span>
@@ -719,6 +754,7 @@ export function UserFormModal({
 
                     <p className="text-[11px] text-[var(--admin-muted)]">
                         Le statut du compte se change par le bouton « Suspendre » ou « Activer » de la liste, qui enregistre le motif.
+                        Changer le numéro ou le rôle ferme les sessions du compte ; changer le rôle remet son KYC en attente.
                     </p>
 
                     {editing ? (
@@ -851,6 +887,7 @@ export function StatusFormModal({
                             onChange={(e) => form.setData('account_status_reason', e.target.value)}
                             className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none h-24 resize-none"
                             required
+                            minLength={5}
                             placeholder="Ex: Documents non conformes ou comportement abusif signalé..."
                         />
                         {form.errors.account_status_reason && (

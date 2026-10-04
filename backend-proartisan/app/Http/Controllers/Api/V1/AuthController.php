@@ -258,95 +258,30 @@ class AuthController extends Controller
     }
 
     /**
-     * Initie la réassociation de numéro pour un utilisateur ayant perdu sa carte SIM.
+     * Récupération « carte SIM perdue » : fermée (Chantier 27, lot E).
+     *
+     * L'ancien numéro, le nom et le rôle suffisaient à faire envoyer le code
+     * au numéro de l'appelant, donc à prendre le compte d'autrui. Le
+     * changement de numéro passe désormais par le support, qui vérifie
+     * l'identité du titulaire. Les routes restent déclarées pour répondre aux
+     * versions installées de l'application par un message clair.
      */
-    public function requestResetPhoneLost(Request $request): JsonResponse
+    public function requestResetPhoneLost(): JsonResponse
     {
-        $request->validate([
-            'old_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
-            'new_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
-            'name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'string', 'in:client,artisan,fournisseur,driver,livreur'],
-        ]);
-
-        // Vérifie si un autre utilisateur utilise déjà le nouveau numéro
-        $alreadyUsed = User::where('phone', $request->new_phone)->exists();
-        if ($alreadyUsed) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Le nouveau numéro de téléphone est déjà associé à un compte.',
-            ], 422);
-        }
-
-        // Trouve l'utilisateur par l'ancien numéro, le rôle et le nom complet exact
-        $user = User::where('phone', $request->old_phone)
-            ->where('role', AuthService::canonicalRole($request->role))
-            ->where('name', trim($request->name))
-            ->first();
-
-        if (! $user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Les informations fournies (ancien numéro, nom complet ou rôle) ne correspondent à aucun compte.',
-            ], 404);
-        }
-
-        // Envoie l'OTP au nouveau numéro
-        $this->otpService->sendOtp($request->new_phone);
-
-        return response()->json([
-            'success' => true,
-            'message' => 'Code OTP de validation envoyé sur votre nouveau numéro.',
-            'expires_in' => $this->otpService->ttlSeconds(),
-        ]);
+        return $this->phoneRecoveryClosed();
     }
 
-    /**
-     * Confirme la réassociation de numéro et connecte l'utilisateur.
-     */
-    public function confirmResetPhoneLost(Request $request): JsonResponse
+    public function confirmResetPhoneLost(): JsonResponse
     {
-        $request->validate([
-            'old_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
-            'new_phone' => ['required', 'string', 'regex:/^\+225[0-9]{10}$/'],
-            'name' => ['required', 'string', 'max:255'],
-            'role' => ['required', 'string', 'in:client,artisan,fournisseur,driver,livreur'],
-            'otp' => ['required', 'string', 'size:4'],
-        ]);
+        return $this->phoneRecoveryClosed();
+    }
 
-        // Vérifie l'OTP sur le nouveau numéro
-        if (! $this->otpService->verifyOtp($request->new_phone, $request->otp)) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Code OTP de validation invalide ou expiré.',
-            ], 422);
-        }
-
-        // Trouve à nouveau l'utilisateur pour modification
-        $user = User::where('phone', $request->old_phone)
-            ->where('role', AuthService::canonicalRole($request->role))
-            ->where('name', trim($request->name))
-            ->first();
-
-        if (! $user) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Le compte à réinitialiser est introuvable.',
-            ], 404);
-        }
-
-        // Met à jour le numéro de téléphone
-        $user->update(['phone' => $request->new_phone]);
-
-        // Génère le token Sanctum
-        $token = $this->authService->createToken($user);
-
+    private function phoneRecoveryClosed(): JsonResponse
+    {
         return response()->json([
-            'success' => true,
-            'message' => 'Votre compte a été récupéré avec succès. Votre numéro a été mis à jour.',
-            'token' => $token,
-            'user' => new UserResource($user->load('artisanProfile.sector', 'artisanProfile.trade')),
-        ]);
+            'success' => false,
+            'message' => 'La récupération de compte se fait auprès du support ProsArtisan, qui vérifie votre identité avant de changer votre numéro. Contactez-le depuis « Aide et support ».',
+        ], 410);
     }
 
     /**

@@ -16,11 +16,16 @@ class AccountActive
             return $next($request);
         }
 
+        // Le message reprend le motif enregistré : il annonçait « litiges
+        // abusifs » quel que soit le motif réel de la suspension.
+        $reason = trim((string) $user->account_status_reason);
+        $status = $user->account_status === 'banni' ? 'Votre compte est banni.' : 'Votre compte est suspendu.';
+
         return response()->json([
             'success' => false,
-            'message' => $user->account_status === 'banni'
-                ? 'Votre compte a été banni suite à des litiges répétés.'
-                : 'Votre compte est temporairement bloqué en raison de litiges abusifs.',
+            'message' => $reason !== ''
+                ? "{$status} Motif : {$reason}"
+                : "{$status} Contactez le support ProsArtisan.",
             'account_status' => $user->account_status,
             'reason' => $user->account_status_reason,
         ], 403);

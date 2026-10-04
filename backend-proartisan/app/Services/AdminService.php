@@ -331,12 +331,20 @@ class AdminService
         return $fournisseurAgree->fresh('user');
     }
 
-    public function listUsers(?string $query = null, ?string $role = null, ?string $kycStatus = null, int $perPage = 20): LengthAwarePaginator
+    /**
+     * @param  string|null  $state  `supprimes` pour les comptes supprimés, sinon les comptes en place.
+     */
+    public function listUsers(?string $query = null, ?string $role = null, ?string $kycStatus = null, int $perPage = 20, ?string $state = null): LengthAwarePaginator
     {
+        $ongoing = fn ($q) => $q->whereIn('status', AccountEngagementService::ONGOING_MISSION_STATES);
+
         return User::query()
+            ->when($state === 'supprimes', fn ($q) => $q->onlyTrashed())
             ->withCount([
                 'missionsClient',
                 'missionsArtisan',
+                'missionsClient as missions_client_ongoing_count' => $ongoing,
+                'missionsArtisan as missions_artisan_ongoing_count' => $ongoing,
             ])
             ->when($query, function ($q) use ($query) {
                 $q->where(function ($sub) use ($query): void {

@@ -3,74 +3,29 @@
 use App\Models\Otp;
 use App\Models\User;
 
-test('request reset phone lost fails with invalid credentials', function () {
+test('la récupération « SIM perdue » est fermée, même avec le nom, le rôle et l\'ancien numéro exacts', function () {
     $user = User::factory()->create([
         'phone' => '+2250707262811',
         'name' => 'Jean Dupont',
         'role' => 'artisan',
     ]);
 
-    $response = $this->postJson('/api/v1/auth/reset-phone-request', [
-        'old_phone' => '+2250707262811',
-        'new_phone' => '+2250707262812',
-        'name' => 'Jean Martin', // Nom erroné
-        'role' => 'artisan',
-    ]);
-
-    $response->assertStatus(404);
-});
-
-test('request reset phone lost sends OTP when credentials match', function () {
-    $user = User::factory()->create([
-        'phone' => '+2250707262811',
-        'name' => 'Jean Dupont',
-        'role' => 'artisan',
-    ]);
-
-    $response = $this->postJson('/api/v1/auth/reset-phone-request', [
+    $body = [
         'old_phone' => '+2250707262811',
         'new_phone' => '+2250707262812',
         'name' => 'Jean Dupont',
         'role' => 'artisan',
-    ]);
+    ];
 
-    $response->assertStatus(200);
-    $response->assertJsonPath('success', true);
+    $this->postJson('/api/v1/auth/reset-phone-request', $body)
+        ->assertStatus(410)
+        ->assertJsonPath('success', false);
+    $this->postJson('/api/v1/auth/reset-phone-confirm', $body + ['otp' => '1234'])
+        ->assertStatus(410);
 
-    $this->assertDatabaseHas('otps', [
-        'phone' => '+2250707262812',
-    ]);
-});
-
-test('confirm reset phone lost updates phone number and logs in', function () {
-    $user = User::factory()->create([
-        'phone' => '+2250707262811',
-        'name' => 'Jean Dupont',
-        'role' => 'artisan',
-    ]);
-
-    // Générer OTP pour le nouveau numéro
-    $otpCode = '1234';
-    Otp::create([
-        'phone' => '+2250707262812',
-        'code' => $otpCode,
-        'expires_at' => now()->addMinutes(5),
-    ]);
-
-    $response = $this->postJson('/api/v1/auth/reset-phone-confirm', [
-        'old_phone' => '+2250707262811',
-        'new_phone' => '+2250707262812',
-        'name' => 'Jean Dupont',
-        'role' => 'artisan',
-        'otp' => $otpCode,
-    ]);
-
-    $response->assertStatus(200);
-    $response->assertJsonStructure(['success', 'token', 'user']);
-
-    // Vérifier en base
-    $user->refresh();
-    expect($user->phone)->toBe('+2250707262812');
+    // Aucun code n'est envoyé au numéro de l'appelant, et le compte garde son numéro.
+    expect(Otp::where('phone', '+2250707262812')->count())->toBe(0)
+        ->and($user->fresh()->phone)->toBe('+2250707262811');
 });
 
 test('logged in user can change phone number via OTP confirmation', function () {

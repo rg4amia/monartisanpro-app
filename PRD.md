@@ -690,7 +690,7 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
 54. **Chantier 27 — Sécurisation des comptes utilisateurs, lot A (application) :** [COMPLÉTÉ — contrôle manuel à faire]
     * **Inscription** : un compte ne s'ouvre qu'après validation du code reçu par SMS sur ce numéro. Il n'est plus possible d'ouvrir un compte au numéro d'un tiers.
     * **Compte supprimé** : son titulaire reçoit un message l'invitant à contacter le support, au lieu d'une erreur technique.
-    * **Récupération d'un compte** : ouverte aux livreurs, qui ne pouvaient pas l'utiliser.
+    * **Récupération d'un compte** : ouverte aux livreurs, qui ne pouvaient pas l'utiliser (route fermée depuis par le lot E).
     * **Profil d'un tiers** : seul un administrateur ayant la gestion des utilisateurs le modifie, avec trace au journal d'audit ; jamais le moyen de paiement.
     * **Carte CNMCI** : stockée en privé et consultée par un lien temporaire ; les cartes existantes sont déplacées au déploiement.
     * **Tests automatisés** : `Chantier27LotAAccountSecurityTest.php` (17 tests).
@@ -710,12 +710,25 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Retour d'un utilisateur rejeté** : dès qu'il renvoie une pièce, son dossier revient dans la liste à traiter. Il n'est jamais validé automatiquement : la décision revient à un administrateur.
     * **Revue par lot** : les dossiers ignorés sont annoncés avec leur motif.
     * **Tests automatisés** : `Chantier27LotCKycReviewTest.php` (10 tests), `KycPanel.test.tsx`, `kyc_rejection_reason_test.dart`.
-57. **Chantier 27 — Sécurisation des comptes utilisateurs, lot D (Rôles & Actions) :** [COMPLÉTÉ — contrôle manuel à faire ; lot E en attente de décisions]
+57. **Chantier 27 — Sécurisation des comptes utilisateurs, lot D (Rôles & Actions) :** [COMPLÉTÉ — contrôle manuel à faire]
     * **Accès total explicite** : retirer toutes les capacités d'un administrateur est refusé ; l'accès total s'accorde par sa case. Les administrateurs qui n'avaient aucune capacité reçoivent l'accès total par écrit au déploiement, sans changement de leurs droits.
     * **Restriction réelle** : un administrateur peut être limité à un périmètre sans conserver d'office la gestion des rôles ; seul l'administrateur connecté la garde sur son propre compte.
     * **Traçabilité** : chaque changement de droits d'un administrateur est enregistré avec l'état avant et après ; chaque action attribuée ou retirée à un rôle de l'application est enregistrée.
     * **Rôles** : les rôles sans effet (administrateur, « driver ») ne sont plus proposés.
     * **Tests automatisés** : `Chantier27LotDRolesAndRightsTest.php` (12 tests), `roles-permissions-panel.test.tsx` (11 tests).
+58. **Chantier 27 — Sécurisation des comptes utilisateurs, lot E (règles décidées le 04/10/2026) :** [COMPLÉTÉ — contrôle manuel à faire ; nouvelle version de l'application à publier]
+    * **Récupération d'un compte** : elle ne se fait plus dans l'application. Le support vérifie l'identité du titulaire et change le numéro ; les sessions sont fermées et le titulaire prévenu.
+    * **Numéro de paiement** : un artisan, un fournisseur ou un livreur confirme tout changement par un code reçu sur le numéro de son compte ; il est prévenu par SMS et ses retraits reprennent 24 heures plus tard. Un retrait ne part que vers le numéro enregistré.
+    * **Suppression** : un compte qui a un solde, une mission, une commande, un crédit, une dette ou un versement en attente ne se supprime pas ; le message dit ce qui bloque.
+    * **Compte supprimé** : il se restaure depuis le backoffice, et la liste a un filtre « Supprimés ».
+    * **Statut KYC** : seule la revue KYC active un compte de l'application ; le Référent est créé actif par un administrateur.
+    * **Retrait de la validation KYC** d'un compte actif : avec motif, sessions fermées, missions en cours annoncées avant confirmation.
+    * **Suspension** : motif obligatoire, sessions fermées, et l'application affiche le motif réel.
+    * **Changement de rôle** : un seul circuit ; refusé pour un compte engagé ; KYC remis en attente.
+    * **Mot de passe** : 12 caractères pour un administrateur, 8 pour les autres rôles.
+    * **Boutique du fournisseur** : créée à partir de sa position réelle, plus jamais à des coordonnées par défaut ; son nom se corrige dans le backoffice.
+    * **Droits des rôles** : les actions indispensables ne se retirent pas, les actions réservées ne s'attribuent qu'aux rôles prévus.
+    * **Tests automatisés** : `Chantier27LotEAccountRulesTest.php` (28 tests), `payment_phone_confirmation_test.dart`, `UsersPanel.test.tsx`, `FormModals.test.tsx`, `roles-permissions-panel.test.tsx`.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

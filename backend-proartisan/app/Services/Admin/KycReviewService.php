@@ -4,6 +4,7 @@ namespace App\Services\Admin;
 
 use App\Models\KycDocument;
 use App\Models\User;
+use App\Services\AccountEngagementService;
 use App\Services\NotificationService;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -22,6 +23,7 @@ class KycReviewService
     public function __construct(
         private NotificationService $notificationService,
         private AdminActivityLogger $audit,
+        private AccountEngagementService $engagement,
     ) {}
 
     /**
@@ -45,6 +47,8 @@ class KycReviewService
         }
 
         $reason = $approved ? null : $rejectionReason;
+        $wasActive = $user->kyc_status === 'actif';
+        $ongoingMissions = $wasActive && ! $approved ? $this->engagement->ongoingMissionsCount($user) : 0;
 
         DB::transaction(function () use ($admin, $user, $approved, $reason, $documents): void {
             // Les pièces courantes suivent la décision, quel que soit leur
@@ -77,9 +81,18 @@ class KycReviewService
             );
         }
 
+        // Retirer la validation d'un compte actif ferme ses sessions : il ne
+        // doit plus agir avec un jeton obtenu quand son identité était admise.
+        if ($wasActive && ! $approved) {
+            $user->tokens()->delete();
+        }
+
         $this->audit->log('kyc.reviewed', $user, [
             'decision' => $decision,
             'rejection_reason' => $reason,
+            'compte_actif_avant' => $wasActive,
+            'sessions_fermees' => $wasActive && ! $approved,
+            'missions_en_cours' => $ongoingMissions,
         ], actor: $admin);
 
         return $user->fresh(['kycDocuments']);

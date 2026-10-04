@@ -28,6 +28,7 @@ class DriverCashoutService
         private MobileMoneyPayoutService $payouts,
         private NotificationService $notifications,
         private AdminActivityLogger $audit,
+        private PaymentPhoneService $paymentPhones,
     ) {}
 
     /**
@@ -78,6 +79,11 @@ class DriverCashoutService
         $mode = $data['mode_retrait'] ?? DriverCashout::MODE_WAVE;
         if (! in_array($mode, DriverCashout::MODES, true)) {
             throw new \InvalidArgumentException('Mode de retrait non supporté.');
+        }
+
+        $this->paymentPhones->assertWithdrawalsOpen($driver);
+        if ($mode !== DriverCashout::MODE_VIREMENT_BANCAIRE) {
+            $this->paymentPhones->assertRegisteredDestination($driver, $data['beneficiary_phone'] ?? null);
         }
 
         if ($mode === DriverCashout::MODE_VIREMENT_BANCAIRE && (empty($data['bank_name']) || empty($data['bank_account_number']))) {

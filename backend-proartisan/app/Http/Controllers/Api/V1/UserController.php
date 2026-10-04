@@ -9,9 +9,11 @@ use App\Models\Trade;
 use App\Models\User;
 use App\Services\Admin\AdminActivityLogger;
 use App\Services\Admin\AdminGdprService;
+use App\Services\Admin\AdminUserService;
+use App\Services\PaymentPhoneService;
+use App\Services\SupplierShopService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\ValidationException;
@@ -21,6 +23,9 @@ class UserController extends Controller
     public function __construct(
         private AdminGdprService $gdpr,
         private AdminActivityLogger $audit,
+        private AdminUserService $accounts,
+        private SupplierShopService $shops,
+        private PaymentPhoneService $paymentPhones,
     ) {}
 
     /**
@@ -84,7 +89,22 @@ class UserController extends Controller
             'experience_years' => ['sometimes', 'integer', 'min:0', 'max:60'],
             'payment_phone' => ['sometimes', 'nullable', 'string', 'regex:/^(\+225)?[0-9]{10}$/'],
             'preferred_payment_provider' => ['sometimes', 'nullable', 'string', 'in:wave,orange_money,mtn_money,moov_money'],
+            'payment_phone_code' => ['sometimes', 'nullable', 'string', 'max:10'],
         ]);
+
+        // Le numéro de paiement suit son propre circuit : code de
+        // confirmation, notification du titulaire, suspension des retraits.
+        $paymentCode = $data['payment_phone_code'] ?? null;
+        unset($data['payment_phone_code']);
+        if (array_key_exists('payment_phone', $data)) {
+            if (filled($data['payment_phone'])) {
+                $this->paymentPhones->update($user, $data['payment_phone'], $data['preferred_payment_provider'] ?? null, $paymentCode);
+                unset($data['payment_phone'], $data['preferred_payment_provider']);
+            } elseif ($this->paymentPhones->isProtected($user)) {
+                // Effacer le numéro renverrait les versements vers le numéro du compte : sans effet utile.
+                unset($data['payment_phone']);
+            }
+        }
 
         $submitted = array_keys($data);
 
@@ -148,6 +168,20 @@ class UserController extends Controller
         ]);
     }
 
+    /**
+     * Envoie au numéro du compte le code qui confirme un changement de numéro
+     * de paiement.
+     */
+    public function requestPaymentPhoneCode(Request $request): JsonResponse
+    {
+        $this->paymentPhones->sendConfirmationCode($request->user());
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Code de confirmation envoyé par SMS au numéro de votre compte.',
+        ]);
+    }
+
     public function updateLocation(Request $request, User $user): JsonResponse
     {
         $own = $this->actsOnOwnAccount($request, $user);
@@ -162,12 +196,9 @@ class UserController extends Controller
 
         $user->setPosition((float) $data['lat'], (float) $data['lng']);
 
-        if ($user->role === 'fournisseur') {
-            $fournisseur = $user->fournisseurAgree;
-            if ($fournisseur) {
-                $fournisseur->setPosition((float) $data['lat'], (float) $data['lng']);
-            }
-        }
+        // La fiche boutique naît de la position réelle du fournisseur, jamais
+        // de coordonnées par défaut.
+        $this->shops->recordPosition($user, (float) $data['lat'], (float) $data['lng']);
 
         if (! $own) {
             $this->audit->log('user.location.updated_by_admin', $user, [], actor: $request->user());
@@ -203,36 +234,13 @@ class UserController extends Controller
             'role.in' => 'Rôle invalide.',
         ]);
 
-        $previousRole = $user->role;
-        DB::transaction(function () use ($user, $data): void {
-            // Un dossier KYC validé pour un rôle ne vaut pas agrément pour un
-            // autre rôle. Le nouveau périmètre doit être revu avant transaction.
-            $user->update([
-                'role' => $data['role'],
-                'kyc_status' => 'en_attente',
-            ]);
-
-            if ($data['role'] === 'artisan') {
-                ArtisanProfile::query()->firstOrCreate(
-                    ['user_id' => $user->id],
-                    ['intervient_la_nuit' => false]
-                );
-            }
-
-            $user->tokens()->delete();
-        });
-
-        $this->audit->log(
-            'user.role.updated',
-            $user,
-            [
-                'before' => $previousRole,
-                'after' => $data['role'],
-                'kyc_reset' => true,
-                'tokens_revoked' => true,
-            ],
-            actor: $actor,
-        );
+        // Même circuit que le backoffice : compte libre de tout engagement,
+        // KYC remis en attente, sessions fermées, ligne d'audit.
+        try {
+            $this->accounts->changeRole($user, $data['role'], $actor);
+        } catch (\LogicException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         return response()->json([
             'success' => true,

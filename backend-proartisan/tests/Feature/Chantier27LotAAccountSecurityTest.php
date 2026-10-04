@@ -130,17 +130,16 @@ test('le titulaire d\'un compte supprimé reçoit un message clair, pas une erre
 
 // ── Récupération d'un compte ────────────────────────────────────────────────
 
-test('un livreur récupère son compte, sous le rôle « livreur » comme « driver »', function (string $role) {
+test('la récupération « SIM perdue » est fermée : le compte ne change pas de numéro', function (string $role) {
+    // Lot A ouvrait cette route aux livreurs ; le lot E la ferme pour tous.
     $livreur = User::factory()->create(['role' => 'livreur', 'name' => 'Ali Livreur', 'phone' => '+2250700000002']);
     $body = ['old_phone' => '+2250700000002', 'new_phone' => '+2250500000010', 'name' => 'Ali Livreur', 'role' => $role];
 
-    $this->postJson('/api/v1/auth/reset-phone-request', $body)->assertOk();
+    $this->postJson('/api/v1/auth/reset-phone-request', $body)->assertStatus(410);
+    $this->postJson('/api/v1/auth/reset-phone-confirm', $body + ['otp' => '1234'])->assertStatus(410);
 
-    $this->postJson('/api/v1/auth/reset-phone-confirm', $body + [
-        'otp' => Otp::where('phone', '+2250500000010')->latest('id')->value('code'),
-    ])->assertOk();
-
-    expect($livreur->fresh()->phone)->toBe('+2250500000010');
+    expect($livreur->fresh()->phone)->toBe('+2250700000002')
+        ->and(Otp::where('phone', '+2250500000010')->count())->toBe(0);
 })->with(['livreur', 'driver']);
 
 // ── Profil modifié par un administrateur ────────────────────────────────────
@@ -185,8 +184,17 @@ test('même habilité, un administrateur ne change pas le moyen de paiement d\'u
 test('le titulaire modifie toujours son profil et son moyen de paiement, sans ligne d\'audit', function () {
     $artisan = c27Artisan();
 
+    // Le changement de numéro de paiement exige le code envoyé au numéro du compte (lot E).
+    $this->actingAs($artisan)->postJson('/api/v1/users/payment-phone/code')->assertOk();
+    $code = Otp::where('phone', $artisan->phone)->where('action', 'payment_phone')->latest('id')->value('code');
+
     $this->actingAs($artisan)
-        ->putJson("/api/v1/users/{$artisan->id}", ['name' => 'Nouveau Nom', 'payment_phone' => '+2250511111111', 'preferred_payment_provider' => 'wave'])
+        ->putJson("/api/v1/users/{$artisan->id}", [
+            'name' => 'Nouveau Nom',
+            'payment_phone' => '+2250511111111',
+            'preferred_payment_provider' => 'wave',
+            'payment_phone_code' => $code,
+        ])
         ->assertOk();
 
     expect($artisan->fresh()->payment_phone)->toBe('+2250511111111')

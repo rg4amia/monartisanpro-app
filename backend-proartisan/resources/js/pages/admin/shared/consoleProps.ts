@@ -118,6 +118,10 @@ export interface AdminPageProps {
     allPermissions?: Array<{ id: number; name: string; description: string; category: string }>;
     // Capacités fines du backoffice (Chantier C6 / P2-10).
     adminCapabilityCatalog?: Record<string, Record<string, string>>;
+    /** Actions qu'aucun retrait ne peut toucher, par rôle. */
+    protectedRolePermissions?: Record<string, string[]>;
+    /** Actions réservées : nom de l'action => rôles auxquels elle s'attribue. */
+    reservedRolePermissions?: Record<string, string[]>;
     admins?: Array<{ id: number; name: string; email: string | null; phone: string | null; capabilities: string[]; protected: boolean }>;
     // Santé & observabilité (Chantier C7 / P2-12).
     observability?: ObservabilitySnapshot;

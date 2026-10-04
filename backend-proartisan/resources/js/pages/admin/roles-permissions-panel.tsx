@@ -37,6 +37,10 @@ interface RolesPermissionsPanelProps {
     /** Catalogue des capacités fines du backoffice : groupe => { nom: description } (Chantier C6 / P2-10). */
     adminCapabilityCatalog: Record<string, Record<string, string>>;
     admins: AdminAccount[];
+    /** Actions indispensables à un rôle : elles ne se retirent pas. */
+    protectedRolePermissions?: Record<string, string[]>;
+    /** Actions réservées : nom de l'action => rôles auxquels elle s'attribue. */
+    reservedRolePermissions?: Record<string, string[]>;
 }
 
 const roleLabels: Record<string, string> = {
@@ -81,6 +85,8 @@ export default function RolesPermissionsPanel({
     rolesPermissions = {},
     adminCapabilityCatalog = {},
     admins = [],
+    protectedRolePermissions = {},
+    reservedRolePermissions = {},
 }: RolesPermissionsPanelProps) {
     const [selectedRole, setSelectedRole] = useState<string>('client');
     const [toggling, setToggling] = useState<string | null>(null);
@@ -366,6 +372,10 @@ export default function RolesPermissionsPanel({
                                     <div className="grid gap-3 sm:grid-cols-2">
                                         {groupedPermissions[category].map((perm) => {
                                             const hasPermission = rolesPermissions[selectedRole]?.includes(perm.name) ?? false;
+                                            // Le serveur refuse ces deux cas ; l'écran les annonce avant le clic.
+                                            const isProtected = hasPermission && (protectedRolePermissions[selectedRole]?.includes(perm.name) ?? false);
+                                            const reservedFor = reservedRolePermissions[perm.name];
+                                            const isReserved = !hasPermission && reservedFor !== undefined && !reservedFor.includes(selectedRole);
 
                                             return (
                                                 <div
@@ -377,12 +387,18 @@ export default function RolesPermissionsPanel({
                                                     <div className="min-w-0">
                                                         <span className="font-mono text-xs font-semibold text-[var(--admin-text)]">{perm.name}</span>
                                                         <p className="text-xs text-[var(--admin-text-soft)] mt-1">{perm.description || 'Aucune description fournie.'}</p>
+                                                        {isProtected ? (
+                                                            <p className="mt-1 text-[11px] font-semibold text-[#7d571b]">Indispensable à ce rôle : ne se retire pas.</p>
+                                                        ) : null}
+                                                        {isReserved ? (
+                                                            <p className="mt-1 text-[11px] font-semibold text-[#7d571b]">Action réservée : ne s’attribue pas à ce rôle.</p>
+                                                        ) : null}
                                                     </div>
 
                                                     <label className="relative inline-flex items-center cursor-pointer shrink-0 mt-0.5">
                                                         <input
                                                             type="checkbox"
-                                                            disabled={toggling === perm.name}
+                                                            disabled={toggling === perm.name || isProtected || isReserved}
                                                             aria-label={perm.name}
                                                             checked={hasPermission}
                                                             onChange={() => handleTogglePermission(perm.name, hasPermission)}

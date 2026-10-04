@@ -33,7 +33,10 @@ class MobileMoneyPayoutEvent extends Model
 
     public const ACTION_CHANGEMENT_DESTINATION = 'changement_destination';
 
+    public const ACTION_REPORT_SECURITE = 'report_securite';
+
     public const ACTION_LABELS = [
+        self::ACTION_REPORT_SECURITE => 'Versement reporté : numéro de paiement modifié récemment',
         self::ACTION_TENTATIVE => 'Tentative de virement',
         self::ACTION_SUCCES => 'Virement réussi',
         self::ACTION_ECHEC => 'Virement échoué',

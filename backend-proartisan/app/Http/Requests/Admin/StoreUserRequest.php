@@ -12,6 +12,19 @@ class StoreUserRequest extends FormRequest
     /** Rôles qu'un administrateur peut attribuer depuis le formulaire. */
     public const ROLES = 'client,artisan,fournisseur,livreur,referent,admin';
 
+    /** Longueur minimale du mot de passe : 12 caractères pour un administrateur, 8 sinon. */
+    public static function passwordMinLength(?string $role): int
+    {
+        return $role === 'admin' ? 12 : 8;
+    }
+
+    public static function passwordMinMessage(?string $role): string
+    {
+        return $role === 'admin'
+            ? 'Le mot de passe d’un administrateur doit contenir au moins 12 caractères.'
+            : 'Le mot de passe doit contenir au moins 8 caractères.';
+    }
+
     public function authorize(): bool
     {
         return true;
@@ -24,8 +37,10 @@ class StoreUserRequest extends FormRequest
             'phone' => ['required', 'string', 'regex:'.self::PHONE_REGEX, 'unique:users,phone'],
             'email' => ['nullable', 'string', 'email', 'max:255', 'unique:users,email'],
             'role' => ['required', 'string', 'in:'.self::ROLES],
-            'password' => ['required', 'string', 'min:6'],
-            'kyc_status' => ['required', 'string', 'in:en_attente,actif,rejete'],
+            'password' => ['required', 'string', 'min:'.self::passwordMinLength($this->input('role'))],
+            // Pris en compte pour un Référent ou un administrateur seulement :
+            // les autres rôles passent par la revue KYC.
+            'kyc_status' => ['nullable', 'string', 'in:en_attente,actif,rejete'],
             'score_frozen' => ['nullable', 'boolean'],
         ];
     }
@@ -42,7 +57,7 @@ class StoreUserRequest extends FormRequest
             'role.required' => 'Le rôle est obligatoire.',
             'role.in' => 'Le rôle sélectionné est invalide.',
             'password.required' => 'Le mot de passe est obligatoire.',
-            'password.min' => 'Le mot de passe doit contenir au moins 6 caractères.',
+            'password.min' => self::passwordMinMessage($this->input('role')),
         ];
     }
 }
