@@ -27,7 +27,7 @@ use Illuminate\Support\Facades\Storage;
  */
 class AdminGdprService
 {
-    public function __construct(private AdminActivityLogger $audit) {}
+    public function __construct(private AdminActivityLogger $audit, private AdminUserService $accounts) {}
 
     /**
      * Instantané structuré de toutes les données personnelles détenues sur un
@@ -105,6 +105,9 @@ class AdminGdprService
         if ($user->anonymized_at !== null) {
             throw new \LogicException('Ce compte est déjà anonymisé.');
         }
+
+        // Anonymiser un administrateur revient à le supprimer : mêmes gardes.
+        $this->accounts->guardProtected($user, $actor);
 
         DB::transaction(function () use ($user, $actor) {
             // Suppression des pièces justificatives KYC (lignes + références fichiers).

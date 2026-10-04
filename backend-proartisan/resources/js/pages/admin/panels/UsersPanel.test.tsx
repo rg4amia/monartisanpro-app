@@ -108,6 +108,28 @@ describe('UsersPanel', () => {
         expect(screen.queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument();
     });
 
+    it('ne propose ni suspension ni suppression pour un super administrateur protégé', () => {
+        renderPanel({ users: makePage([makeUser({ role: 'admin', is_protected: true })]) });
+
+        expect(screen.getByText('Super administrateur protégé')).toBeInTheDocument();
+        expect(screen.getByRole('button', { name: 'Modifier' })).toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Suspendre' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Supprimer' })).not.toBeInTheDocument();
+    });
+
+    it('ne propose ni modification ni changement de statut pour un compte anonymisé', () => {
+        renderPanel({ users: makePage([makeUser({ account_status: 'suspendu', anonymized_at: '2026-09-01T00:00:00Z' })]) });
+
+        expect(screen.queryByRole('button', { name: 'Modifier' })).not.toBeInTheDocument();
+        expect(screen.queryByRole('button', { name: 'Activer' })).not.toBeInTheDocument();
+    });
+
+    it("indique si un appareil est lié, sans afficher son empreinte", () => {
+        renderPanel({ users: makePage([makeUser({ has_device: true })]) });
+
+        expect(screen.getByText('Appareil lié')).toBeInTheDocument();
+    });
+
     it("masque la suppression sans la capacité admin.users.delete même avec admin.users.manage", () => {
         renderPanel({ canManage: true, canDelete: false });
         expect(screen.getByRole('button', { name: 'Modifier' })).toBeInTheDocument();

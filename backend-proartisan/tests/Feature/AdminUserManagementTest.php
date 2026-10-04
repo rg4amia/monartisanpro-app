@@ -51,7 +51,7 @@ class AdminUserManagementTest extends TestCase
         $response = $this->actingAs($admin)
             ->put("/admin/users/{$user->id}", [
                 'name' => 'Nom Modifie',
-                'phone' => '+225111111111',
+                'phone' => '+2250111111111',
                 'email' => 'modifie@test.com',
                 'role' => 'artisan',
                 'kyc_status' => 'actif',
@@ -59,14 +59,15 @@ class AdminUserManagementTest extends TestCase
             ]);
 
         $response->assertRedirect();
+        // Le statut du compte ne se change plus par ce formulaire (Chantier 27, lot B).
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'name' => 'Nom Modifie',
-            'phone' => '+225111111111',
+            'phone' => '+2250111111111',
             'email' => 'modifie@test.com',
             'role' => 'artisan',
             'kyc_status' => 'actif',
-            'account_status' => 'suspendu',
+            'account_status' => 'actif',
         ]);
     }
 

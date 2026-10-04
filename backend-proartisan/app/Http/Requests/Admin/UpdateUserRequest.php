@@ -5,6 +5,11 @@ namespace App\Http\Requests\Admin;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 
+/**
+ * Le statut du compte et l'empreinte de l'appareil ne se modifient pas par ce
+ * formulaire : le statut passe par le changement de statut (motif, date,
+ * audit), l'empreinte est relevée par l'application.
+ */
 class UpdateUserRequest extends FormRequest
 {
     public function authorize(): bool
@@ -14,18 +19,23 @@ class UpdateUserRequest extends FormRequest
 
     public function rules(): array
     {
-        $userId = $this->route('user')->id;
+        $user = $this->route('user');
+
+        // Un numéro enregistré hors format reste accepté tant qu'il n'est pas
+        // modifié : le compte doit rester corrigeable sur ses autres champs.
+        $phoneRules = ['required', 'string', 'max:20', Rule::unique('users', 'phone')->ignore($user->id)];
+        if ($this->input('phone') !== $user->phone) {
+            $phoneRules[] = 'regex:'.StoreUserRequest::PHONE_REGEX;
+        }
 
         return [
             'name' => ['required', 'string', 'max:255'],
-            'phone' => ['required', 'string', 'max:20', Rule::unique('users', 'phone')->ignore($userId)],
-            'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($userId)],
-            'role' => ['required', 'string', 'in:client,artisan,fournisseur,referent,admin'],
+            'phone' => $phoneRules,
+            'email' => ['nullable', 'string', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
+            'role' => ['required', 'string', 'in:'.StoreUserRequest::ROLES],
             'password' => ['nullable', 'string', 'min:6'],
             'kyc_status' => ['required', 'string', 'in:en_attente,actif,rejete'],
-            'account_status' => ['required', 'string', 'in:actif,suspendu'],
             'score_frozen' => ['nullable', 'boolean'],
-            'device_fingerprint' => ['nullable', 'string', 'max:255'],
             'fournisseur_sector_id' => ['nullable', 'integer', 'exists:sectors,id'],
             'fournisseur_trade_id' => ['nullable', 'integer', 'exists:trades,id'],
             'photo' => ['nullable', 'file', 'image', 'mimes:jpeg,jpg,png', 'max:5120'],
@@ -39,10 +49,12 @@ class UpdateUserRequest extends FormRequest
         return [
             'name.required' => 'Le nom complet est obligatoire.',
             'phone.required' => 'Le numéro de téléphone est obligatoire.',
+            'phone.regex' => 'Le numéro doit commencer par +225 et compter dix chiffres.',
             'phone.unique' => 'Ce numéro de téléphone est déjà utilisé.',
             'email.email' => 'L’adresse e-mail doit être valide.',
             'email.unique' => 'Cette adresse e-mail est déjà utilisée.',
             'role.required' => 'Le rôle est obligatoire.',
+            'role.in' => 'Le rôle sélectionné est invalide.',
             'password.min' => 'Le mot de passe doit contenir au moins 6 caractères.',
             'fournisseur_sector_id.exists' => 'Le secteur d’activité sélectionné est invalide.',
             'fournisseur_trade_id.exists' => 'La sous-catégorie (métier) sélectionnée est invalide.',

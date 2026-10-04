@@ -149,6 +149,22 @@ class AdminPermissionService
     }
 
     /**
+     * Le compte peut-il ouvrir ou garder une session du backoffice ?
+     *
+     * Un compte suspendu, banni ou anonymisé ne le peut pas. Les super
+     * administrateurs protégés gardent l'accès quel que soit leur statut :
+     * aucune action du backoffice ne doit pouvoir les verrouiller dehors.
+     */
+    public function hasBackofficeAccess(User $user): bool
+    {
+        if ($this->isProtectedSuperAdmin($user)) {
+            return true;
+        }
+
+        return $user->isAccountActive() && $user->anonymized_at === null;
+    }
+
+    /**
      * Capacités effectives d'un administrateur.
      *
      * @return array<int, string> Liste des capacités, ou `['*']` pour un accès total.

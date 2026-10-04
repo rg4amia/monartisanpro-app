@@ -533,12 +533,15 @@ export function UserFormModal({
     form,
     editing,
     sectors = [],
+    canAssignAdminRole = false,
     onSubmit,
     onClose,
 }: {
     form: InertiaForm;
     editing: AdminUser | null;
     sectors?: SectorItem[];
+    /** Capacité `admin.roles.manage` : seule à donner le rôle administrateur. */
+    canAssignAdminRole?: boolean;
     onSubmit: (event: FormEvent<HTMLFormElement>) => void;
     onClose: () => void;
 }) {
@@ -604,8 +607,11 @@ export function UserFormModal({
                                 <option value="client">Client</option>
                                 <option value="artisan">Artisan</option>
                                 <option value="fournisseur">Fournisseur</option>
+                                <option value="livreur">Livreur</option>
                                 <option value="referent">Référent</option>
-                                <option value="admin">Administrateur</option>
+                                {canAssignAdminRole || editing?.role === 'admin' ? (
+                                    <option value="admin">Administrateur</option>
+                                ) : null}
                             </select>
                             {form.errors.role && <p className="text-xs text-[#b24f43]">{form.errors.role}</p>}
                         </label>
@@ -698,21 +704,6 @@ export function UserFormModal({
                         </label>
 
                         <label className="block space-y-1">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Statut du compte</span>
-                            <select
-                                value={form.data.account_status}
-                                onChange={(e) => form.setData('account_status', e.target.value)}
-                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none bg-transparent"
-                            >
-                                <option value="actif">Actif</option>
-                                <option value="suspendu">Suspendu</option>
-                            </select>
-                            {form.errors.account_status && <p className="text-xs text-[#b24f43]">{form.errors.account_status}</p>}
-                        </label>
-                    </div>
-
-                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                        <label className="block space-y-1">
                             <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Gel de Score ProsArtisan</span>
                             <select
                                 value={form.data.score_frozen ? 'oui' : 'non'}
@@ -724,19 +715,11 @@ export function UserFormModal({
                             </select>
                             {form.errors.score_frozen && <p className="text-xs text-[#b24f43]">{form.errors.score_frozen}</p>}
                         </label>
-
-                        <label className="block space-y-1">
-                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--admin-muted)]">Empreinte de l'appareil (IMEI)</span>
-                            <input
-                                type="text"
-                                value={form.data.device_fingerprint}
-                                onChange={(e) => form.setData('device_fingerprint', e.target.value)}
-                                className="admin-input w-full rounded-2xl px-4 py-3 text-sm outline-none"
-                                placeholder="Empreinte IMEI / Appareil"
-                            />
-                            {form.errors.device_fingerprint && <p className="text-xs text-[#b24f43]">{form.errors.device_fingerprint}</p>}
-                        </label>
                     </div>
+
+                    <p className="text-[11px] text-[var(--admin-muted)]">
+                        Le statut du compte se change par le bouton « Suspendre » ou « Activer » de la liste, qui enregistre le motif.
+                    </p>
 
                     {editing ? (
                         <div className="space-y-4 border-t border-[var(--admin-border)] pt-4">

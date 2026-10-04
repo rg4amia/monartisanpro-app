@@ -251,7 +251,10 @@ export interface AdminUser {
     account_status?: string | null;
     account_status_reason?: string | null;
     score_frozen?: boolean;
-    device_fingerprint?: string | null;
+    /** Un appareil est-il lié au compte ? L'empreinte elle-même n'est pas transmise à la liste. */
+    has_device?: boolean;
+    /** Super administrateur protégé : lui seul modifie son compte. */
+    is_protected?: boolean;
     cgu_accepted_at?: string | null;
     anonymized_at?: string | null;
     photo_url?: string | null;

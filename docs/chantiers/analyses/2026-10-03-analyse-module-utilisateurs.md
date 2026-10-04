@@ -3,7 +3,7 @@
 - **Date** : 2026-10-03
 - **Auteur** : Claude (Opus 5.5), à la demande d'Inza Bamba
 - **Statut** : analyse seule, aucun code modifié
-- **Suite** : `plans/2026-10-03-chantier-27-securisation-comptes-utilisateurs.md` — lot A livré (F1, F3, F4, G2, G3)
+- **Suite** : `plans/2026-10-03-chantier-27-securisation-comptes-utilisateurs.md` — lot A livré (F1, F3, F4, G2, G3) ; lot B livré (A1 à A4, B1 à B5, B7, C2, C3, C7, E1, E2)
 
 ## Question posée
 

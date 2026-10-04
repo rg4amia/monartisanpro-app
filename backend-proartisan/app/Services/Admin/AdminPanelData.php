@@ -244,25 +244,45 @@ class AdminPanelData
             25,
         )->withQueryString();
 
-        // Photo, pièces KYC et secteur/métier fournisseur : chargés uniquement
-        // pour la page courante (25 comptes max), affichés dans la modale d'édition.
+        // Photo, pièces KYC et secteur/métier fournisseur : chargés pour la
+        // page courante seulement, en requêtes groupées. Chaque compte part
+        // sous une forme explicite : sérialiser le modèle entier recalculait
+        // deux soldes et lisait la position ligne par ligne, et envoyait au
+        // navigateur le jeton de notification, l'empreinte de l'appareil et
+        // le numéro de paiement, que l'écran n'affiche pas.
         $usersPage->getCollection()->load(['kycDocuments', 'fournisseurAgree.sector', 'fournisseurAgree.trade']);
-        $usersPage->getCollection()->transform(function (User $user) {
-            $user->append('photo_url');
-            $user->kyc_documents = $user->kycDocuments->map(fn ($doc) => [
+        $permissions = app(AdminPermissionService::class);
+        $usersPage->setCollection($usersPage->getCollection()->map(fn (User $user): array => [
+            'id' => $user->id,
+            'name' => $user->name,
+            'email' => $user->email,
+            'phone' => $user->phone,
+            'role' => $user->role,
+            'kyc_status' => $user->kyc_status,
+            'account_status' => $user->account_status,
+            'account_status_reason' => $user->account_status_reason,
+            'score_prosartisan' => (int) $user->score_prosartisan,
+            'score_frozen' => (bool) $user->score_frozen,
+            'has_device' => filled($user->device_fingerprint),
+            'is_protected' => $permissions->isProtectedSuperAdmin($user),
+            'created_at' => optional($user->created_at)->toIso8601String(),
+            'cgu_accepted_at' => optional($user->cgu_accepted_at)->toIso8601String(),
+            'anonymized_at' => optional($user->anonymized_at)->toIso8601String(),
+            'missions_client_count' => (int) $user->missions_client_count,
+            'missions_artisan_count' => (int) $user->missions_artisan_count,
+            'photo_url' => $user->photo_url,
+            'kyc_documents' => $user->kycDocuments->map(fn ($doc) => [
                 'type' => $doc->type,
                 'statut' => $doc->statut,
                 'file_url' => $doc->file_url,
                 'auto_verified' => (bool) $doc->auto_verified,
                 'ai_confidence_score' => $doc->ai_confidence_score,
-            ]);
-            $user->fournisseur_sector_id = $user->fournisseurAgree?->sector_id;
-            $user->fournisseur_sector_name = $user->fournisseurAgree?->sector?->name;
-            $user->fournisseur_trade_id = $user->fournisseurAgree?->trade_id;
-            $user->fournisseur_trade_name = $user->fournisseurAgree?->trade?->name;
-
-            return $user;
-        });
+            ])->values()->all(),
+            'fournisseur_sector_id' => $user->fournisseurAgree?->sector_id,
+            'fournisseur_sector_name' => $user->fournisseurAgree?->sector?->name,
+            'fournisseur_trade_id' => $user->fournisseurAgree?->trade_id,
+            'fournisseur_trade_name' => $user->fournisseurAgree?->trade?->name,
+        ]));
 
         return [
             'usersPage' => $usersPage,
@@ -272,11 +292,28 @@ class AdminPanelData
                 'clients_actifs' => $stats['clients_actifs'],
                 'fournisseurs_agrees' => $stats['fournisseurs_agrees'],
             ],
-            'pendingFournisseurs' => $this->adminService->pendingFournisseurs(60)->items(),
+            'pendingFournisseurs' => collect($this->adminService->pendingFournisseurs(60)->items())
+                ->map(fn ($fournisseur): array => [
+                    'id' => $fournisseur->id,
+                    'nom_boutique' => $fournisseur->nom_boutique,
+                    'created_at' => optional($fournisseur->created_at)->toIso8601String(),
+                    'user' => $fournisseur->user
+                        ? ['name' => $fournisseur->user->name, 'phone' => $fournisseur->user->phone]
+                        : null,
+                ])
+                ->all(),
             'topArtisans' => User::where('role', 'artisan')
                 ->orderByDesc('score_prosartisan')
                 ->limit(5)
-                ->get(['id', 'name', 'phone', 'score_prosartisan', 'score_frozen']),
+                ->get(['id', 'name', 'phone', 'score_prosartisan', 'score_frozen'])
+                ->map(fn (User $artisan): array => [
+                    'id' => $artisan->id,
+                    'name' => $artisan->name,
+                    'phone' => $artisan->phone,
+                    'score_prosartisan' => (int) $artisan->score_prosartisan,
+                    'score_frozen' => (bool) $artisan->score_frozen,
+                ])
+                ->all(),
             'sectors' => Schema::hasTable('sectors')
                 ? Sector::with(['trades' => fn ($q) => $q->select('id', 'sector_id', 'name')->orderBy('name')])
                     ->select('id', 'name', 'icon')

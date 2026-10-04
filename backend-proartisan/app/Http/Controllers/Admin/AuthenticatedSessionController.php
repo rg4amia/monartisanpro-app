@@ -6,6 +6,7 @@ use App\Http\Controllers\Controller;
 use App\Models\User;
 use App\Services\Admin\AdminActivityLogger;
 use App\Services\Admin\AdminLoginThrottle;
+use App\Services\Admin\AdminPermissionService;
 use App\Services\AntiBotService;
 use App\Services\Google2faService;
 use Illuminate\Http\RedirectResponse;
@@ -25,6 +26,7 @@ class AuthenticatedSessionController extends Controller
         private AdminLoginThrottle $throttle,
         private AdminActivityLogger $audit,
         private AntiBotService $antiBotService,
+        private AdminPermissionService $permissions,
         ?Google2faService $google2faService = null,
     ) {
         $this->google2faService = $google2faService ?? app(Google2faService::class);
@@ -123,6 +125,8 @@ class AuthenticatedSessionController extends Controller
             ]);
         }
 
+        $this->ensureAccountIsOpen($request, $user, $identifier);
+
         // Store user ID and remember preference temporarily in session
         session([
             'admin_2fa_user_id' => $user->id,
@@ -185,6 +189,8 @@ class AuthenticatedSessionController extends Controller
 
         $user = User::findOrFail($userId);
 
+        $this->ensureAccountIsOpen($request, $user, (string) $identifier);
+
         $isNewRegistration = ! $user->google_2fa_secret;
         $secret = $isNewRegistration
             ? session('admin_2fa_temp_secret')
@@ -218,6 +224,30 @@ class AuthenticatedSessionController extends Controller
 
         return redirect()->intended(route('admin.dashboard'))
             ->with('success', 'Connexion réussie.');
+    }
+
+    /**
+     * Un compte suspendu, banni ou anonymisé n'ouvre pas de session, même
+     * avec le bon mot de passe et le bon code.
+     */
+    private function ensureAccountIsOpen(Request $request, User $user, string $identifier): void
+    {
+        if ($this->permissions->hasBackofficeAccess($user)) {
+            return;
+        }
+
+        $this->throttle->hit($request, $identifier);
+        $this->audit->log('admin.login.denied', $user, [
+            'identifier' => $identifier,
+            'reason' => 'compte_inactif',
+            'account_status' => $user->account_status,
+        ], actor: $user);
+
+        session()->forget(['admin_2fa_user_id', 'admin_2fa_identifier', 'admin_2fa_remember', 'admin_2fa_temp_secret']);
+
+        throw ValidationException::withMessages([
+            'identifier' => 'Ce compte est suspendu. Adressez-vous à un super administrateur.',
+        ]);
     }
 
     public function destroy(Request $request): RedirectResponse

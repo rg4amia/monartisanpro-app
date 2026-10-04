@@ -109,6 +109,11 @@ class AdminService
 
     public function reviewKyc(User $admin, User $user, string $decision, ?string $rejectionReason = null): User
     {
+        // Un compte anonymisé ne se réactive par aucune voie (Règle d'or 22).
+        if ($user->anonymized_at !== null) {
+            throw new \LogicException('Ce compte est anonymisé : son dossier KYC ne se traite plus.');
+        }
+
         $documents = KycDocument::where('user_id', $user->id)
             ->whereIn('type', ['cni', 'selfie'])
             ->whereIn('statut', ['en_attente', 'approuve'])
@@ -160,7 +165,7 @@ class AdminService
     {
         $done = 0;
 
-        foreach (User::whereIn('id', $ids)->where('kyc_status', 'en_attente')->get() as $user) {
+        foreach (User::whereIn('id', $ids)->where('kyc_status', 'en_attente')->whereNull('anonymized_at')->get() as $user) {
             try {
                 $this->reviewKyc($admin, $user, $decision, $rejectionReason);
                 $done++;

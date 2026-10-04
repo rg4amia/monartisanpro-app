@@ -1167,6 +1167,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         form={userForm}
                         editing={editingUser}
                         sectors={sectors}
+                        canAssignAdminRole={can(permissions, 'admin.roles.manage')}
                         onSubmit={handleUserFormSubmit}
                         onClose={closeUserModal}
                     />

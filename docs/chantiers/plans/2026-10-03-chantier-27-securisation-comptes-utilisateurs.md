@@ -2,9 +2,9 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | en cours (lot A livré, contrôle manuel à faire) |
+| Statut | en cours (lots A et B livrés, contrôle manuel à faire) |
 | Créé le | 2026-10-03 |
-| Mis à jour le | 2026-10-03 |
+| Mis à jour le | 2026-10-04 |
 | Auteur | Claude Code |
 | Analyses liées | `../analyses/2026-10-03-analyse-module-utilisateurs.md` |
 | Commits | — |
@@ -44,7 +44,7 @@ Les lots sont indépendants et se livrent dans cet ordre, chacun avec ses tests.
 4. **Profil modifié par un administrateur (G2)** — `UserController::update` et `updateCnmci` : un administrateur doit porter `admin.users.manage` ; la modification est auditée (`user.profile.updated_by_admin`, avant et après). Le numéro de paiement n'est plus modifiable par cette voie pour un tiers.
 5. **Carte CNMCI sur disque privé (G3)** — stockage `local`, lien signé de 15 minutes sur le modèle des pièces KYC ; commande `cnmci:migrate-to-private` pour les cartes existantes ; `UserResource` et le backoffice lisent le lien signé.
 
-### Lot B — Droits et statuts dans le backoffice
+### Lot B — Droits et statuts dans le backoffice (livré)
 
 6. **Comptes administrateurs réservés (A1, A3)** — `AdminUserService::create` et `update` : créer un compte `admin`, donner ou retirer le rôle `admin` exige `admin.roles.manage`. Un administrateur créé reçoit une capacité explicite (aucune ligne = accès total, voir étape 16). Le formulaire ne propose le rôle « Administrateur » qu'aux porteurs de la capacité.
 7. **Super administrateurs intouchables (A2, A4)** — garde unique `AdminUserService::guardProtected` appliquée à la modification, au changement de statut unitaire et groupé, à la suppression et à l'anonymisation : seul le super administrateur lui-même modifie son compte, et jamais son rôle ni son adresse e-mail. Modifier un autre administrateur (mot de passe compris) exige `admin.roles.manage`.
@@ -88,7 +88,7 @@ Rien n'est implémenté avant la réponse d'Inza Bamba. Recommandation entre par
 
 ## Règles d'or concernées
 
-1, 6, 16, 17, 21, 22, 24, 29, 35, 36, 39, 40, 49, 55, 67, 68, 74, 80, 81 ; nouvelle Règle d'or 98 à la livraison.
+1, 6, 16, 17, 21, 22, 24, 29, 35, 36, 39, 40, 49, 55, 67, 68, 74, 80, 81 ; Règle d'or 98 (lot A), Règle d'or 99 (lot B).
 
 Points d'attention :
 
@@ -122,3 +122,18 @@ Points d'attention :
 - **Application mobile** : aucune modification ; elle valide déjà le code avant l'inscription et affiche une adresse absolue pour la carte.
 - **Non vérifié** : inscription sur un appareil réel avec une version installée ; déplacement des cartes en production.
 - **Tests** : `Chantier27LotAAccountSecurityTest.php` (17 tests) ; `RegisterPhoneUniquenessTest` aligné.
+
+### Lot B (livré le 2026-10-04)
+
+- **Capacité d'un administrateur créé ou promu** : `admin.full-access`, par une ligne explicite. Créer un administrateur donnait déjà l'accès total ; il est désormais écrit en base et se restreint dans « Rôles & Actions ». Le créateur porte forcément `admin.roles.manage`.
+- **Garde étendue aux autres administrateurs** : suspendre, supprimer ou anonymiser un autre administrateur exige aussi `admin.roles.manage`, pas seulement le modifier.
+- **Anonymisation** : la garde est appelée par `AdminGdprService`, qui dépend maintenant de `AdminUserService`.
+- **Création** : le statut du compte est retiré du formulaire de création aussi ; un compte se crée actif.
+- **Empreinte de l'appareil (C7)** : le champ est retiré des formulaires et de la validation. La liste ne transmettant plus l'empreinte, l'enregistrement du formulaire l'aurait effacée. La liste indique seulement si un appareil est lié.
+- **Soldes (E1)** : la liste ne les affiche pas ; ils ne sont plus calculés du tout, au lieu d'une requête groupée. « Fournisseurs en attente » et « Top artisans » partent aussi sous une forme explicite.
+- **Super administrateur suspendu** : il garde l'accès au backoffice (anti-verrouillage) ; la garde empêche désormais de le suspendre.
+- **Revue KYC d'un compte anonymisé** : refusée dès ce lot dans `AdminService::reviewKyc` (422 sur l'API mobile) ; le service dédié reste prévu au lot C.
+- **Refus affichés** : dans le formulaire (sous le champ concerné) pour la création et la modification ; en message d'erreur pour le statut, la suppression et l'anonymisation.
+- **Référent** : un Référent suspendu ne se connecte plus au backoffice non plus.
+- **Non vérifié** : suite Pest sur MariaDB 11.8 en local (Docker arrêté ; le job CI `tests-mariadb` la rejoue) ; contrôle manuel dans le navigateur.
+- **Tests** : `Chantier27LotBBackofficeAccountsTest.php` (22 tests, dont 21 échouent sans le correctif) ; `AdminUserManagementTest` aligné ; `FormModals.test.tsx`, `UsersPanel.test.tsx`.

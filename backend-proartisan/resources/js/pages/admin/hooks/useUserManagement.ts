@@ -24,9 +24,7 @@ export interface UserFormData {
     role: string;
     password: string;
     kyc_status: string;
-    account_status: string;
     score_frozen: boolean;
-    device_fingerprint: string;
     photo: File | null;
     documents: { cni: File | null; selfie: File | null };
     fournisseur_sector_id: number | '';
@@ -40,9 +38,7 @@ const EMPTY_USER: UserFormData = {
     role: 'client',
     password: '',
     kyc_status: 'en_attente',
-    account_status: 'actif',
     score_frozen: false,
-    device_fingerprint: '',
     photo: null,
     documents: { cni: null, selfie: null },
     fournisseur_sector_id: '',
@@ -92,9 +88,7 @@ export function useUserManagement({ currentAdmin, askConfirm, setActionLoading, 
             role: user.role as string,
             password: '',
             kyc_status: user.kyc_status as string,
-            account_status: (user.account_status ?? 'actif') as string,
             score_frozen: Boolean(user.score_frozen),
-            device_fingerprint: user.device_fingerprint ?? '',
             photo: null,
             documents: { cni: null, selfie: null },
             fournisseur_sector_id: user.fournisseur_sector_id ?? '',

@@ -45,12 +45,16 @@ class AdminController extends Controller
 
     public function reviewKyc(ReviewKycRequest $request, User $user): JsonResponse
     {
-        $updatedUser = $this->adminService->reviewKyc(
-            $request->user(),
-            $user,
-            $request->validated('decision'),
-            $request->validated('rejection_reason')
-        );
+        try {
+            $updatedUser = $this->adminService->reviewKyc(
+                $request->user(),
+                $user,
+                $request->validated('decision'),
+                $request->validated('rejection_reason')
+            );
+        } catch (\LogicException $e) {
+            return response()->json(['success' => false, 'message' => $e->getMessage()], 422);
+        }
 
         return response()->json([
             'success' => true,

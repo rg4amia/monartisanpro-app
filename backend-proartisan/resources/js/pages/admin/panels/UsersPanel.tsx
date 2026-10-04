@@ -256,7 +256,12 @@ export function UsersPanel({
                                             </div>
                                         </td>
                                         <td>
-                                            <RoleBadge role={user.role} />
+                                            <div className="flex flex-col items-start gap-1">
+                                                <RoleBadge role={user.role} />
+                                                {user.is_protected ? (
+                                                    <span className="text-[10px] font-semibold text-[var(--admin-muted)]">Super administrateur protégé</span>
+                                                ) : null}
+                                            </div>
                                         </td>
                                         <td>
                                             <div className="flex flex-col items-start gap-1">
@@ -292,15 +297,9 @@ export function UsersPanel({
                                                         </span>
                                                     )}
                                                 </div>
-                                                {user.device_fingerprint ? (
-                                                    <span className="text-[10px] text-[var(--admin-muted)] truncate max-w-[120px]" title={user.device_fingerprint}>
-                                                        IMEI: {user.device_fingerprint.slice(0, 10)}...
-                                                    </span>
-                                                ) : (
-                                                    <span className="text-[10px] text-[var(--admin-muted)]">
-                                                        Aucun device lié
-                                                    </span>
-                                                )}
+                                                <span className="text-[10px] text-[var(--admin-muted)]">
+                                                    {user.has_device ? 'Appareil lié' : 'Aucun appareil lié'}
+                                                </span>
                                             </div>
                                         </td>
                                         <td className="text-sm text-[var(--admin-text-soft)]">
@@ -308,7 +307,7 @@ export function UsersPanel({
                                         </td>
                                         <td>
                                             <div className="flex justify-end gap-2">
-                                                {canManage ? (
+                                                {canManage && !user.anonymized_at ? (
                                                     <>
                                                         <button
                                                             type="button"
@@ -318,17 +317,19 @@ export function UsersPanel({
                                                         >
                                                             Modifier
                                                         </button>
-                                                        <button
-                                                            type="button"
-                                                            onClick={() => onToggleUserStatus(user)}
-                                                            className={actionButtonClass((user.account_status ?? 'actif') === 'actif' ? 'danger' : 'success')}
-                                                            title={(user.account_status ?? 'actif') === 'actif' ? 'Suspendre' : 'Activer'}
-                                                        >
-                                                            {(user.account_status ?? 'actif') === 'actif' ? 'Suspendre' : 'Activer'}
-                                                        </button>
+                                                        {user.is_protected ? null : (
+                                                            <button
+                                                                type="button"
+                                                                onClick={() => onToggleUserStatus(user)}
+                                                                className={actionButtonClass((user.account_status ?? 'actif') === 'actif' ? 'danger' : 'success')}
+                                                                title={(user.account_status ?? 'actif') === 'actif' ? 'Suspendre' : 'Activer'}
+                                                            >
+                                                                {(user.account_status ?? 'actif') === 'actif' ? 'Suspendre' : 'Activer'}
+                                                            </button>
+                                                        )}
                                                     </>
                                                 ) : null}
-                                                {canDelete ? (
+                                                {canDelete && !user.is_protected ? (
                                                     <button
                                                         type="button"
                                                         onClick={() => onDeleteUser(user)}

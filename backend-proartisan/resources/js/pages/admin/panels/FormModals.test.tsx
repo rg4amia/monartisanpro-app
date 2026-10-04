@@ -174,12 +174,14 @@ function UserHarness({
     onSubmit,
     onClose,
     errors = {},
+    canAssignAdminRole = false,
 }: {
     editing?: AdminUser | null;
     sectors?: SectorItem[];
     onSubmit: (e: React.FormEvent<HTMLFormElement>) => void;
     onClose: () => void;
     errors?: Record<string, string>;
+    canAssignAdminRole?: boolean;
 }) {
     const form = useFakeForm({
         name: editing?.name ?? '',
@@ -188,16 +190,23 @@ function UserHarness({
         role: editing?.role ?? 'client',
         password: '',
         kyc_status: 'en_attente',
-        account_status: 'actif',
         score_frozen: false,
-        device_fingerprint: '',
         photo: null as File | null,
         documents: { cni: null as File | null, selfie: null as File | null },
         fournisseur_sector_id: '' as number | '',
         fournisseur_trade_id: '' as number | '',
     });
     const formWithErrors = { ...form, errors } as typeof form;
-    return <UserFormModal form={formWithErrors} editing={editing} sectors={sectors} onSubmit={onSubmit} onClose={onClose} />;
+    return (
+        <UserFormModal
+            form={formWithErrors}
+            editing={editing}
+            sectors={sectors}
+            canAssignAdminRole={canAssignAdminRole}
+            onSubmit={onSubmit}
+            onClose={onClose}
+        />
+    );
 }
 
 describe('UserFormModal', () => {
@@ -251,6 +260,34 @@ describe('UserFormModal', () => {
 
         fireEvent.click(screen.getByRole('button', { name: 'Annuler' }));
         expect(onClose).toHaveBeenCalledTimes(1);
+    });
+
+    it("ne propose le rôle « Administrateur » qu'au porteur du droit de gérer les rôles", () => {
+        const { unmount } = render(<UserHarness onSubmit={vi.fn((e) => e.preventDefault())} onClose={vi.fn()} />);
+        expect(screen.queryByRole('option', { name: 'Administrateur' })).not.toBeInTheDocument();
+        expect(screen.getByRole('option', { name: 'Livreur' })).toBeInTheDocument();
+        unmount();
+
+        render(<UserHarness canAssignAdminRole onSubmit={vi.fn((e) => e.preventDefault())} onClose={vi.fn()} />);
+        expect(screen.getByRole('option', { name: 'Administrateur' })).toBeInTheDocument();
+    });
+
+    it('garde le rôle « Administrateur » affiché quand le compte modifié est un administrateur', () => {
+        render(
+            <UserHarness
+                editing={{ id: 1, name: 'Admin Test', role: 'admin' } as AdminUser}
+                onSubmit={vi.fn((e) => e.preventDefault())}
+                onClose={vi.fn()}
+            />,
+        );
+        expect(screen.getByRole('option', { name: 'Administrateur' })).toBeInTheDocument();
+    });
+
+    it("ne propose plus de modifier le statut du compte ni l'empreinte de l'appareil", () => {
+        render(<UserHarness onSubmit={vi.fn((e) => e.preventDefault())} onClose={vi.fn()} />);
+        expect(screen.queryByText('Statut du compte')).not.toBeInTheDocument();
+        expect(screen.queryByPlaceholderText('Empreinte IMEI / Appareil')).not.toBeInTheDocument();
+        expect(screen.getByText(/Le statut du compte se change par le bouton/)).toBeInTheDocument();
     });
 
     it("n'affiche pas la section photo/pièces d'identité en création", () => {

@@ -282,12 +282,16 @@ class BackofficeController extends Controller
 
     public function reviewKyc(ReviewKycRequest $request, User $user): RedirectResponse
     {
-        $this->adminService->reviewKyc(
-            $request->user(),
-            $user,
-            $request->validated('decision'),
-            $request->validated('rejection_reason'),
-        );
+        try {
+            $this->adminService->reviewKyc(
+                $request->user(),
+                $user,
+                $request->validated('decision'),
+                $request->validated('rejection_reason'),
+            );
+        } catch (\LogicException $e) {
+            return back()->with('error', $e->getMessage());
+        }
 
         return back()->with('success', 'Dossier KYC traité avec succès.');
     }
@@ -306,9 +310,19 @@ class BackofficeController extends Controller
 
     public function bulkUserStatus(BulkUserStatusRequest $request, AdminUserService $users): RedirectResponse
     {
-        $count = $users->bulkToggleStatus($request->validated('user_ids'), $request->validated());
+        $result = $users->bulkToggleStatus($request->validated('user_ids'), $request->validated());
+        $skipped = count($result['skipped']);
 
-        return back()->with('success', "{$count} compte(s) mis à jour.");
+        if ($skipped === 0) {
+            return back()->with('success', "{$result['updated']} compte(s) mis à jour.");
+        }
+
+        // Un compte refusé (le sien, un administrateur, un compte anonymisé)
+        // est annoncé avec son motif, jamais passé sous silence.
+        $reasons = implode(' ', array_unique(array_values($result['skipped'])));
+        $message = "{$result['updated']} compte(s) mis à jour, {$skipped} ignoré(s). {$reasons}";
+
+        return back()->with($result['updated'] > 0 ? 'success' : 'error', $message);
     }
 
     public function reviewCnmci(ReviewCnmciRequest $request, User $user, AdminUserService $users): RedirectResponse
