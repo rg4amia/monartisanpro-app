@@ -115,6 +115,38 @@ describe('NotificationsPanel', () => {
         expect(screen.getByText('litige')).toBeInTheDocument();
     });
 
+    it('masque l\'historique à un administrateur sans la capacité', () => {
+        renderPanel({ notifTab: 'history', canViewHistory: false, allNotifications: null });
+
+        expect(screen.queryByRole('button', { name: 'Historique Global & Audit' })).not.toBeInTheDocument();
+        expect(screen.queryByText("Aucune notification trouvée dans l'historique global.")).not.toBeInTheDocument();
+        expect(screen.getByRole('button', { name: /Mes Alertes Admin/ })).toBeInTheDocument();
+    });
+
+    it('signale le texte masqué d\'une notification portant un code', () => {
+        renderPanel({
+            notifTab: 'history',
+            allNotifications: {
+                data: [
+                    {
+                        id: 3,
+                        type: 'payment',
+                        title: 'Commande prête',
+                        body: 'Texte masqué : ce message contient un code.',
+                        masked: true,
+                        created_at: '2026-02-01T09:00:00Z',
+                        user: { name: 'Awa Traoré', phone: '+2250700000001', role: 'client' },
+                        data_json: null,
+                    },
+                ],
+                links: [],
+            },
+        });
+
+        expect(screen.getByText('Texte masqué : ce message contient un code.')).toBeInTheDocument();
+        expect(screen.queryByText(/Voir JSON/)).not.toBeInTheDocument();
+    });
+
     it('affiche un état vide sans historique', () => {
         renderPanel({ notifTab: 'history', allNotifications: { data: [], links: [] } });
         expect(screen.getByText("Aucune notification trouvée dans l'historique global.")).toBeInTheDocument();

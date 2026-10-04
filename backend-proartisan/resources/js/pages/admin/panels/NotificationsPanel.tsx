@@ -25,7 +25,9 @@ interface NotificationsPanelProps {
     onTypeNotifChange: (value: string) => void;
     onFilterSubmit: (event: FormEvent) => void;
     onFilterReset: () => void;
-    allNotifications: { data?: any[]; links?: any[] } | undefined;
+    allNotifications: { data?: any[]; links?: any[] } | null | undefined;
+    /** Historique de tous les utilisateurs : capacité `admin.notifications.view`. */
+    canViewHistory?: boolean;
     renderPagination: (links: any) => ReactNode;
 }
 
@@ -48,8 +50,12 @@ export function NotificationsPanel({
     onFilterSubmit,
     onFilterReset,
     allNotifications,
+    canViewHistory = true,
     renderPagination,
 }: NotificationsPanelProps) {
+    // Sans la capacité, seul l'onglet des alertes de l'administrateur existe.
+    const activeTab = canViewHistory ? notifTab : 'alerts';
+
     return (
         <section className="mt-5 space-y-5">
             <div className="flex gap-2 border-b border-[var(--admin-border)] pb-4">
@@ -58,28 +64,30 @@ export function NotificationsPanel({
                     onClick={() => onNotifTabChange('alerts')}
                     className={cn(
                         'rounded-xl px-4 py-2 text-sm font-semibold transition',
-                        notifTab === 'alerts'
+                        activeTab === 'alerts'
                             ? 'bg-[#ebb95e] text-[#241b16]'
                             : 'text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]',
                     )}
                 >
                     Mes Alertes Admin ({liveNotificationsCount})
                 </button>
-                <button
-                    type="button"
-                    onClick={() => onNotifTabChange('history')}
-                    className={cn(
-                        'rounded-xl px-4 py-2 text-sm font-semibold transition',
-                        notifTab === 'history'
-                            ? 'bg-[#ebb95e] text-[#241b16]'
-                            : 'text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]',
-                    )}
-                >
-                    Historique Global & Audit
-                </button>
+                {canViewHistory ? (
+                    <button
+                        type="button"
+                        onClick={() => onNotifTabChange('history')}
+                        className={cn(
+                            'rounded-xl px-4 py-2 text-sm font-semibold transition',
+                            activeTab === 'history'
+                                ? 'bg-[#ebb95e] text-[#241b16]'
+                                : 'text-[var(--admin-text-soft)] hover:bg-[var(--admin-panel)]',
+                        )}
+                    >
+                        Historique Global & Audit
+                    </button>
+                ) : null}
             </div>
 
-            {notifTab === 'alerts' ? (
+            {activeTab === 'alerts' ? (
                 <Surface className="rounded-[32px] p-5 lg:p-6">
                     <div className="flex items-center justify-between gap-4 pb-4 border-b border-[var(--admin-border)]">
                         <div>
@@ -271,7 +279,7 @@ export function NotificationsPanel({
                                         </td>
                                         <td className="max-w-xs md:max-w-md">
                                             <p className="font-bold text-xs text-[var(--admin-text)]">{notif.title}</p>
-                                            <p className="text-[11px] text-[var(--admin-text-soft)] mt-0.5 whitespace-pre-line">{notif.body}</p>
+                                            <p className={cn('text-[11px] mt-0.5 whitespace-pre-line', notif.masked ? 'italic text-[var(--admin-muted)]' : 'text-[var(--admin-text-soft)]')}>{notif.body}</p>
                                         </td>
                                         <td>
                                             {notif.data_json && Object.keys(notif.data_json).length > 0 ? (

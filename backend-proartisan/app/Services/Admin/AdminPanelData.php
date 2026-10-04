@@ -33,6 +33,7 @@ use App\Services\DriverCashoutService;
 use App\Services\GeneratedDocumentService;
 use App\Services\KycService;
 use App\Services\MobileMoneyPayoutService;
+use App\Services\Notifications\NotificationCatalog;
 use App\Services\OrderDisputeDebtService;
 use App\Services\OrderService;
 use App\Services\RolePermissionService;
@@ -86,25 +87,51 @@ class AdminPanelData
      * Onglet « Tableau de bord » — vue consolidée.
      * Conserve volontairement le bundle opérationnel : ses graphiques, tendances
      * et flux d'activité sont calculés côté front à partir de ces collections.
+     *
+     * Le tableau de bord est ouvert à tout administrateur, mais chaque bloc
+     * n'est servi qu'au porteur de la capacité qui ouvre l'onglet
+     * correspondant : un administrateur restreint y recevait sinon les
+     * comptes, les transactions, les litiges et les indicateurs financiers
+     * que ses droits lui refusent ailleurs. Masquer un onglet à l'écran ne
+     * protège rien, les données étant déjà dans le navigateur.
      */
     public function dashboard(): array
     {
+        $can = $this->capabilityChecker();
+
         return [
-            'financialKpis' => $this->adminService->getFinancialKpis(),
-            'fournisseurs' => $this->pendingFournisseurs(),
-            'kycUsers' => collect($this->adminService->pendingKyc(null, 60)->items())
-                ->map(fn (User $user): array => $this->presentKycUser($user))
-                ->all(),
-            'litiges' => $this->adminService->listLitiges(null, 60)->items(),
-            'missions' => $this->adminService->listMissions(null, null, 100)->items(),
-            'orders' => $this->orders(),
-            'transactions' => $this->adminService->listTransactions(null, null, 100)->items(),
-            'users' => $this->presentUsers($this->adminService->listUsers(null, null, null, 100)->getCollection())->all(),
-            'evaluationsList' => $this->adminService->listEvaluations(100)->items(),
-            'artisansScores' => $this->adminService->listArtisansScores(),
-            'whatsappClickStats' => $this->whatsappClickStats(),
-            'faqStats' => $this->faqStats(),
+            'financialKpis' => $can('admin.transactions.view') ? $this->adminService->getFinancialKpis() : [],
+            'fournisseurs' => $can('admin.fournisseurs.review') ? $this->pendingFournisseurs() : [],
+            'kycUsers' => $can('admin.kyc.view')
+                ? collect($this->adminService->pendingKyc(null, 60)->items())
+                    ->map(fn (User $user): array => $this->presentKycUser($user))
+                    ->all()
+                : [],
+            'litiges' => $can('admin.litiges.view') ? $this->adminService->listLitiges(null, 60)->items() : [],
+            'missions' => $can('admin.missions.view') ? $this->adminService->listMissions(null, null, 100)->items() : [],
+            'orders' => $can('admin.missions.view') ? $this->orders() : [],
+            'transactions' => $can('admin.transactions.view') ? $this->adminService->listTransactions(null, null, 100)->items() : [],
+            'users' => $can('admin.users.view')
+                ? $this->presentUsers($this->adminService->listUsers(null, null, null, 100)->getCollection())->all()
+                : [],
+            'evaluationsList' => $can('admin.evaluations.view') ? $this->adminService->listEvaluations(100)->items() : [],
+            'artisansScores' => $can('admin.evaluations.view') ? $this->adminService->listArtisansScores() : [],
+            'whatsappClickStats' => $can('admin.whatsapp.manage') ? $this->whatsappClickStats() : ['total' => 0, 'today' => 0, 'last_7_days' => 0],
+            'faqStats' => $can('admin.faq.manage') ? $this->faqStats() : ['total' => 0, 'actives' => 0, 'roles_covered' => 0],
         ];
+    }
+
+    /**
+     * Capacités de l'administrateur connecté.
+     *
+     * @return \Closure(string): bool
+     */
+    private function capabilityChecker(): \Closure
+    {
+        $admin = Auth::user();
+        $permissions = app(AdminPermissionService::class);
+
+        return fn (string $capability): bool => $admin instanceof User && $permissions->userCan($admin, $capability);
     }
 
     /**
@@ -665,8 +692,15 @@ class AdminPanelData
 
     public function notifications(Request $request): array
     {
+        // L'historique porte les notifications de tous les utilisateurs : il
+        // est réservé au porteur de `admin.notifications.view`. Les alertes
+        // de l'administrateur lui-même viennent des données partagées.
+        if (! $this->capabilityChecker()('admin.notifications.view')) {
+            return ['allNotifications' => null, 'canViewNotificationHistory' => false];
+        }
+
         if (! Schema::hasTable('notifications')) {
-            return ['allNotifications' => []];
+            return ['allNotifications' => [], 'canViewNotificationHistory' => true];
         }
 
         $query = Notification::with('user:id,name,phone,role');
@@ -674,7 +708,6 @@ class AdminPanelData
         if ($search = $request->query('search_notification')) {
             $query->where(function ($q) use ($search) {
                 $q->where('title', 'like', "%{$search}%")
-                    ->orWhere('body', 'like', "%{$search}%")
                     ->orWhere('type', 'like', "%{$search}%")
                     ->orWhereHas('user', function ($u) use ($search) {
                         $u->where('name', 'like', "%{$search}%")
@@ -691,10 +724,42 @@ class AdminPanelData
             $query->where('type', $type);
         }
 
+        /** @var LengthAwarePaginator $page */
+        $page = $query->orderByDesc('created_at')->paginate(50)->withQueryString();
+        $page->setCollection($page->getCollection()->toBase()->map(
+            fn (Notification $notification): array => $this->presentNotification($notification)
+        ));
+
+        return ['allNotifications' => $page, 'canViewNotificationHistory' => true];
+    }
+
+    /**
+     * Notification telle que l'historique l'affiche. Un message qui porte un
+     * code (retrait, prise en charge, bon matériel) n'en montre ni le texte
+     * ni les données : ces codes sont secrets (Règle d'or 38), et les lire
+     * ici suffirait à valider une remise à la place de son destinataire.
+     *
+     * @return array<string, mixed>
+     */
+    private function presentNotification(Notification $notification): array
+    {
+        $masked = NotificationCatalog::carriesCode($notification->event_key)
+            || ($notification->event_key === null && preg_match('/\bcode\b/iu', (string) $notification->body) === 1);
+
         return [
-            'allNotifications' => $query->orderByDesc('created_at')
-                ->paginate(50)
-                ->withQueryString(),
+            'id' => $notification->id,
+            'type' => $notification->type,
+            'title' => $notification->title,
+            'body' => $masked ? 'Texte masqué : ce message contient un code.' : $notification->body,
+            'masked' => $masked,
+            'data_json' => $masked ? null : $notification->data_json,
+            'read_at' => optional($notification->read_at)->toIso8601String(),
+            'created_at' => optional($notification->created_at)->toIso8601String(),
+            'user' => $notification->user ? [
+                'name' => $notification->user->name,
+                'phone' => $notification->user->phone,
+                'role' => $notification->user->role,
+            ] : null,
         ];
     }
 

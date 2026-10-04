@@ -743,6 +743,12 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Dossiers KYC** : la liste à traiter ne contient que les comptes ayant envoyé une pièce ; les comptes en attente sans pièce sont comptés à part.
     * **Données transmises au navigateur** : l'onglet KYC et le tableau de bord ne reçoivent plus que les informations affichées.
     * **Tests automatisés** : `Chantier27LotFAccountFollowUpsTest.php` (5 tests), `AdminMissionsKycListTest.php`, `KycPanel.test.tsx`, `UsersPanel.test.tsx`.
+61. **Backoffice — un administrateur restreint ne reçoit que les données de ses droits :** [COMPLÉTÉ — contrôle dans le navigateur à faire]
+    * **Tableau de bord** : chaque bloc (comptes, transactions et indicateurs financiers, missions, litiges, dossiers KYC, évaluations) n'est transmis qu'à l'administrateur qui a le droit de consulter l'onglet correspondant.
+    * **Centre de notifications** : l'historique des notifications de tous les utilisateurs demande le droit « Consulter le centre de notifications » ; les alertes de l'administrateur restent accessibles à tous.
+    * **Codes secrets** : le texte d'une notification portant un code de retrait, de prise en charge ou de bon matériel n'est plus affiché dans le backoffice.
+    * **Analyse** : `docs/chantiers/analyses/2026-10-04-analyse-module-gestion-des-roles.md` (constats B1 et B2 ; les autres attendent une décision).
+    * **Tests automatisés** : `RestrictedAdminDataLeaksTest.php` (6 tests), `NotificationsPanel.test.tsx`.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

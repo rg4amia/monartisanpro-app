@@ -419,8 +419,16 @@ class BackofficeController extends Controller
         return back()->with('success', 'Décision fournisseur enregistrée.');
     }
 
-    public function markNotificationRead(Notification $notification): RedirectResponse
+    public function markNotificationRead(Request $request, Notification $notification): RedirectResponse
     {
+        // Ses propres alertes, ou une alerte adressée à tous : jamais la
+        // notification d'un utilisateur de l'application.
+        abort_unless(
+            $notification->user_id === null || $notification->user_id === $request->user()->id,
+            403,
+            'Cette notification ne vous est pas adressée.'
+        );
+
         $notification->update(['read_at' => now()]);
 
         return back()->with('success', 'Notification marquée comme lue.');

@@ -931,6 +931,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                                     onFilterSubmit={handleFilterNotifications}
                                     onFilterReset={handleResetFilters}
                                     allNotifications={allNotifications}
+                                    canViewHistory={can(permissions, 'admin.notifications.view')}
                                     renderPagination={renderPagination}
                                 />
                             ) : null}

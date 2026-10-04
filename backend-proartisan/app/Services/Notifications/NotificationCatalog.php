@@ -148,6 +148,17 @@ class NotificationCatalog
     }
 
     /**
+     * Le message porte-t-il un code (retrait, prise en charge, bon matériel) ?
+     * Son texte ne s'affiche alors pas dans le backoffice.
+     */
+    public static function carriesCode(?string $event): bool
+    {
+        return $event !== null
+            && isset(self::EVENTS[$event])
+            && array_key_exists('code', self::EVENTS[$event]['variables'] ?? []);
+    }
+
+    /**
      * Message essentiel, que l'utilisateur ne peut pas couper dans ses
      * préférences : sécurité et fraude, canal imposé (code OTP), et tout
      * message que le catalogue envoie par SMS (paiement reçu, ouverture d'un
