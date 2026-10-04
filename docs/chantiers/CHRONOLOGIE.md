@@ -8,6 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-10-04 | Plan | [Chantier 30 — Corrections des commandes de matériaux et du défi anti-robot](plans/2026-10-04-chantier-30-corrections-commandes-et-anti-robot.md) | livré (contrôle manuel à faire) | — |
 | 2026-10-04 | Plan | [Chantier 29 — Droits accordés dans la limite des siens, libellés des actions, tableau de bord allégé](plans/2026-10-04-chantier-29-droits-accordes-libelles-tableau-de-bord.md) | livré (contrôle dans le navigateur à faire) | — |
 | 2026-10-04 | Plan | [Chantier 28 — Gestion des rôles : un écran qui dit vrai, des garde-fous qui portent](plans/2026-10-04-chantier-28-gestion-des-roles.md) | livré (contrôle dans le navigateur à faire) | — |
 | 2026-10-04 | Analyse | [Module « Gestion des rôles » : droits des rôles de l’application et capacités des administrateurs](analyses/2026-10-04-analyse-module-gestion-des-roles.md) | — | — |

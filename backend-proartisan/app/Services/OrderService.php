@@ -223,7 +223,13 @@ class OrderService
                 $pkgPlatformFee = (int) round($pkgSubtotal * $platformFeeRatio);
                 $pkgDeliveryCost = 0;
                 if ($deliveryMode === 'delivery') {
-                    $from = $supplier->fournisseurAgree?->getPositionCoords() ?? $supplier->getPositionCoords();
+                    if (! $supplier->fournisseurAgree) {
+                        // Même règle qu'à la commande simple : sans fiche boutique,
+                        // le point d'enlèvement n'est pas connu.
+                        throw new \Exception("{$supplier->name} n'a pas encore de boutique enregistrée : la livraison n'est pas proposée. Choisissez le retrait ou un autre fournisseur.");
+                    }
+
+                    $from = $supplier->fournisseurAgree->getPositionCoords();
                     $to = $address?->getPositionCoords() ?? $client->getPositionCoords();
                     $fare = $this->pricingService->estimateFare([
                         'from' => $from,
@@ -1513,29 +1519,65 @@ class OrderService
     }
 
     /**
-     * Notifie les livreurs disponibles dans la zone de couverture du client et du fournisseur,
-     * ou étend à tous les livreurs si aucun n'est disponible localement.
+     * Prévient les livreurs qui peuvent accepter la course : KYC actif et
+     * compte actif. Le prix annoncé est l'estimation du serveur ; sans
+     * estimation possible, le message n'annonce aucun montant — jamais un
+     * prix par défaut, que le livreur prendrait pour celui de la course.
      */
     public function notifyDriversInArea(Order $order): void
     {
         $supplierProfile = $order->supplier->fournisseurAgree;
         $supplierName = $supplierProfile?->nom_boutique ?? ($order->supplier->name ?? 'le fournisseur');
-        $costFormatted = number_format($order->delivery_cost > 0 ? $order->delivery_cost : 1500, 0, ',', ' ');
+        $estimate = $this->estimatedFareForDrivers($order);
 
-        // Trouver tous les livreurs de la plateforme
-        $drivers = User::whereIn('role', ['driver', 'livreur'])->get();
+        $drivers = User::where('role', 'livreur')
+            ->where('kyc_status', 'actif')
+            ->where(fn ($query) => $query->whereNull('account_status')->orWhere('account_status', 'actif'))
+            ->whereNull('anonymized_at')
+            ->get();
 
         foreach ($drivers as $driver) {
             try {
-                app(NotificationService::class)->notify(
-                    $driver,
-                    'course.disponible.livreur',
-                    ['montant' => $costFormatted, 'fournisseur' => $supplierName, 'commande' => $order->id],
-                    ['order_id' => $order->id]
-                );
+                if ($estimate > 0) {
+                    app(NotificationService::class)->notify(
+                        $driver,
+                        'course.disponible.livreur',
+                        ['montant' => number_format($estimate, 0, ',', ' '), 'fournisseur' => $supplierName, 'commande' => $order->id],
+                        ['order_id' => $order->id]
+                    );
+                } else {
+                    app(NotificationService::class)->notify(
+                        $driver,
+                        'course.disponible_sans_estimation.livreur',
+                        ['fournisseur' => $supplierName, 'commande' => $order->id],
+                        ['order_id' => $order->id]
+                    );
+                }
             } catch (\Throwable $e) {
                 Log::warning("Notification livreur échouée pour user {$driver->id}: ".$e->getMessage());
             }
+        }
+    }
+
+    /**
+     * Course estimée pour l'annonce aux livreurs : celle de la commande si
+     * elle est déjà connue, sinon le calcul qu'appliquera l'acceptation.
+     * Zéro quand rien ne se calcule.
+     */
+    private function estimatedFareForDrivers(Order $order): int
+    {
+        if ((int) $order->delivery_cost > 0) {
+            return (int) $order->delivery_cost;
+        }
+
+        try {
+            // Sur une copie : le calcul peut relever la classe de véhicule,
+            // que seule l'acceptation de la course doit enregistrer.
+            return max(0, $this->pricingService->calculateOrderDeliveryCost(clone $order));
+        } catch (\Throwable $e) {
+            Log::warning("Estimation de course impossible pour la commande {$order->id}: ".$e->getMessage());
+
+            return 0;
         }
     }
 }

@@ -117,9 +117,18 @@ class AntiBotService
         // 3. Vérification de la signature cryptographique HMAC
         $receivedSig = $payload['sig'];
         unset($payload['sig']);
-        $expectedSig = $this->signPayload($payload);
 
-        if (! hash_equals($expectedSig, $receivedSig)) {
+        try {
+            $expectedSig = $this->signPayload($payload);
+        } catch (\RuntimeException) {
+            // Sans clé de signature, aucun défi n'est vérifiable : on refuse.
+            return [
+                'success' => false,
+                'message' => 'Vérification de sécurité indisponible. Veuillez réessayer plus tard.',
+            ];
+        }
+
+        if (! is_string($receivedSig) || ! hash_equals($expectedSig, $receivedSig)) {
             return [
                 'success' => false,
                 'message' => 'Signature de sécurité anti-robot non valide.',
@@ -156,13 +165,14 @@ class AntiBotService
         // 6. Protection anti-rejeu (Nonce unique)
         $nonce = (string) $payload['nonce'];
         $cacheKey = "antibot_nonce_{$nonce}";
-        if (Cache::has($cacheKey)) {
+        // `add` réserve le jeton en une seule opération : tester puis écrire
+        // laissait passer deux requêtes simultanées portant le même jeton.
+        if (! Cache::add($cacheKey, 1, self::CHALLENGE_TTL_SECONDS)) {
             return [
                 'success' => false,
                 'message' => 'Ce défi de sécurité a déjà été validé ou rejoué.',
             ];
         }
-        Cache::put($cacheKey, 1, self::CHALLENGE_TTL_SECONDS);
 
         // 7. Vérification de la réponse mathématique
         $answer = $request->input('bot_answer') ?? $request->input('_bot_answer');
@@ -190,10 +200,19 @@ class AntiBotService
 
     /**
      * Calcule la signature HMAC d'un payload avec la clé de l'application.
+     *
+     * Échec fermé : sans clé, rien n'est signé. Une clé de secours écrite
+     * dans le code, donc publique, permettait de forger un défi valide.
+     *
+     * @throws \RuntimeException
      */
     private function signPayload(array $payload): string
     {
-        $appKey = config('app.key') ?: 'prosartisan-default-fallback-key-2026';
+        $appKey = (string) config('app.key');
+
+        if ($appKey === '') {
+            throw new \RuntimeException('Clé d\'application absente : le défi anti-robot ne peut pas être signé.');
+        }
         $data = sprintf(
             '%s:%s:%s:%s:%s',
             $payload['action'] ?? '',

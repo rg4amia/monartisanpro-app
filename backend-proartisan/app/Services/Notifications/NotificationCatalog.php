@@ -619,6 +619,14 @@ class NotificationCatalog
             'body' => 'Une nouvelle livraison de {montant} FCFA est disponible chez {fournisseur} (Commande #{commande}).',
             'sms' => false,
         ],
+        'course.disponible_sans_estimation.livreur' => [
+            'label' => 'Nouvelle course disponible (prix non estimé)',
+            'domain' => 'livraisons', 'audience' => 'livreur', 'type' => 'payment',
+            'variables' => ['fournisseur' => 'Nom de la quincaillerie', 'commande' => 'Numéro de la commande'],
+            'title' => 'Course de livraison disponible',
+            'body' => 'Une nouvelle livraison est disponible chez {fournisseur} (Commande #{commande}).',
+            'sms' => false,
+        ],
         'course.acceptee.livreur' => [
             'label' => 'Course acceptée par le livreur',
             'domain' => 'livraisons', 'audience' => 'livreur', 'type' => 'payment',

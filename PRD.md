@@ -762,6 +762,11 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Libellés des actions** : tenus dans le code, réécrits dans les termes de l'application ; un libellé se corrige sans migration.
     * **Tableau de bord** : litiges, missions et transactions réduits aux champs affichés ; les listes non affichées ne sont plus transmises.
     * **Tests automatisés** : `Chantier29RightsFollowUpsTest.php` (11 tests), `roles-permissions-panel.test.tsx`.
+64. **Chantier 30 — Corrections des commandes de matériaux et du défi anti-robot :** [COMPLÉTÉ — contrôle manuel à faire]
+    * **Annonce d'une course aux livreurs** : le prix annoncé est l'estimation du serveur, plus un montant fixe de 1 500 FCFA ; sans estimation, le message n'annonce aucun prix. Seuls les livreurs en état d'accepter sont prévenus.
+    * **Commande groupée** : refusée en livraison chez un fournisseur sans boutique enregistrée, comme la commande simple.
+    * **Défi anti-robot** : plus de clé de signature de secours dans le code ; un même défi ne passe plus deux fois, même présenté simultanément.
+    * **Tests automatisés** : `Chantier30OrderAndAntiBotFixesTest.php` (7 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.
