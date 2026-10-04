@@ -142,6 +142,12 @@ describe('UsersPanel', () => {
 
         fireEvent.change(screen.getByLabelText('État'), { target: { value: 'supprimes' } });
         expect(onStateFilterChange).toHaveBeenCalledWith('supprimes');
+
+        // Le même filtre porte le statut du compte.
+        const options = Array.from((screen.getByLabelText('État') as HTMLSelectElement).options).map((o) => o.value);
+        expect(options).toEqual(['', 'actif', 'suspendu', 'banni', 'anonymises', 'supprimes']);
+        fireEvent.change(screen.getByLabelText('État'), { target: { value: 'suspendu' } });
+        expect(onStateFilterChange).toHaveBeenCalledWith('suspendu');
     });
 
     it("propose de retirer le KYC d'un compte actif au porteur de la revue KYC", () => {

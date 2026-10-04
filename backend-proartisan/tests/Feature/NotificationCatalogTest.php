@@ -39,6 +39,7 @@ class NotificationCatalogTest extends TestCase
         'jalon.controle_securite.artisan',
         'securite.changement_appareil.artisan',
         'compte.telephone_modifie.utilisateur',
+        'compte.telephone_change.utilisateur',
         'compte.numero_paiement_modifie.utilisateur',
         // Ouverture d'un litige
         'litige.ouvert.partie',

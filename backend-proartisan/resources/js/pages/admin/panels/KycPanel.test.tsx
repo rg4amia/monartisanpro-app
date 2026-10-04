@@ -192,6 +192,16 @@ describe('KycPanel', () => {
         expect(screen.getByRole('button', { name: 'Approuver' })).toBeEnabled();
     });
 
+    it('annonce les comptes en attente qui n’ont envoyé aucune pièce', () => {
+        renderPanel({ kycStats: { ...kycStats, without_documents: 4 } });
+        expect(screen.getByText(/4 compte\(s\) en attente n'ont encore envoyé aucune pièce/)).toBeInTheDocument();
+    });
+
+    it('ne dit rien quand tous les comptes en attente ont un dossier', () => {
+        renderPanel({ kycStats: { ...kycStats, without_documents: 0 } });
+        expect(screen.queryByText(/n'ont encore envoyé aucune pièce/)).not.toBeInTheDocument();
+    });
+
     it('affiche un état vide sans dossier KYC', () => {
         renderPanel({ kycUsersPage: makePage([]) });
         expect(screen.getByText('Rien à afficher')).toBeInTheDocument();

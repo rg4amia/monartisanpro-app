@@ -37,7 +37,7 @@ interface UsersPanelProps {
     onRoleFilterChange: (value: string) => void;
     kycFilter: string;
     onKycFilterChange: (value: string) => void;
-    /** `supprimes` pour les comptes supprimés, vide pour les comptes en place. */
+    /** Statut du compte (`actif`, `suspendu`, `banni`), `anonymises` ou `supprimes` ; vide pour les comptes en place. */
     stateFilter?: string;
     onStateFilterChange?: (value: string) => void;
     onRestoreUser?: (user: AdminUser) => void;
@@ -207,6 +207,10 @@ export function UsersPanel({
                                 className="w-full rounded-xl border border-[var(--admin-border)] bg-[var(--admin-panel-strong)] px-3 py-2 text-xs text-[var(--admin-text)] focus:border-amber-500 focus:outline-none"
                             >
                                 <option value="">Comptes en place</option>
+                                <option value="actif">Actifs</option>
+                                <option value="suspendu">Suspendus</option>
+                                <option value="banni">Bannis</option>
+                                <option value="anonymises">Anonymisés</option>
                                 <option value="supprimes">Supprimés</option>
                             </select>
                         </div>

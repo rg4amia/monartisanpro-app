@@ -2,7 +2,7 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | livré (lots A à E ; contrôle manuel à faire, nouvelle version de l'application à publier) |
+| Statut | livré (lots A à F ; contrôle manuel à faire, nouvelle version de l'application à publier) |
 | Créé le | 2026-10-03 |
 | Mis à jour le | 2026-10-04 |
 | Auteur | Claude Code |
@@ -179,3 +179,13 @@ Décisions prises par Inza Bamba le 04/10/2026 : les onze recommandations sont r
 - **Reste ouvert** : F5 (le changement de numéro par l'utilisateur connecté ne ferme pas ses autres sessions), E3 (filtre sur le statut du compte), H6, I2.
 - **Non vérifié** : suite Pest sur MariaDB 11.8 en local (Docker arrêté) ; contrôle manuel du backoffice et de l'application sur un appareil ; réception réelle des SMS.
 - **Tests** : `Chantier27LotEAccountRulesTest.php` (28 tests, dont 26 échouent sans le correctif) ; `PhoneResetComplianceTest`, `Chantier27LotAAccountSecurityTest`, `Chantier27LotBBackofficeAccountsTest`, `AdminUserManagementTest` et `NotificationCatalogTest` alignés ; `payment_phone_confirmation_test.dart` ; tests Vitest des trois écrans.
+
+### Lot F (04/10/2026) — constats restés ouverts
+
+- **F5 (changement de numéro par le titulaire)** : `AccountPhoneService`. Les autres sessions sont fermées, celle de la demande est conservée ; l'ancien numéro reçoit le SMS (`compte.telephone_change.utilisateur`, envoyé à l'ancien numéro par un paramètre ajouté à `NotificationService::notify`). Le code porte l'action `change_phone`. Un numéro pris, y compris par un compte supprimé, est refusé avant l'envoi du code : la base renvoyait sinon son erreur d'unicité.
+- **E3 (filtres)** : le filtre « État » existant reçoit Actifs, Suspendus, Bannis et Anonymisés, plutôt qu'un filtre de plus.
+- **H6 (liste KYC)** : la liste ne contient plus que les comptes ayant envoyé une pièce ; les compteurs de l'onglet suivent, et les comptes en attente sans pièce sont annoncés à part. Les Référents restent hors de la liste : ils sont créés actifs par un administrateur (lot E).
+- **Liste KYC et tableau de bord (même défaut que E2)** : formes explicites pour les dossiers KYC, les cartes CNMCI, les fournisseurs en attente et les comptes du tableau de bord.
+- **I2** : constat sans correctif (« gérer les rôles » vaut l'accès total, par construction) ; l'écran ne l'impose plus aux autres comptes depuis le lot D.
+- **Reste ouvert** : le tableau de bord transmet encore des missions, litiges et transactions complets avec leurs relations.
+- **Vérifié** : Pest sur SQLite et sur MariaDB 11.8 local, Vitest. **Non vérifié** : réception réelle du SMS à l'ancien numéro, contrôle dans le navigateur.

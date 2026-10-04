@@ -9,11 +9,13 @@ use App\Http\Requests\Auth\VerifyOtpRequest;
 use App\Http\Resources\UserResource;
 use App\Models\Setting;
 use App\Models\User;
+use App\Services\AccountPhoneService;
 use App\Services\AntiBotService;
 use App\Services\AuthService;
 use App\Services\OtpService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Validation\ValidationException;
 
 class AuthController extends Controller
 {
@@ -21,6 +23,7 @@ class AuthController extends Controller
         private OtpService $otpService,
         private AuthService $authService,
         private AntiBotService $antiBotService,
+        private AccountPhoneService $accountPhone,
     ) {}
 
     /**
@@ -297,8 +300,7 @@ class AuthController extends Controller
         $user = $request->user();
 
         if (! $request->has('otp')) {
-            // Envoyer OTP pour validation du nouveau numéro
-            $this->otpService->sendOtp($request->new_phone);
+            $this->accountPhone->sendCode($user, $request->new_phone);
 
             return response()->json([
                 'success' => true,
@@ -307,24 +309,19 @@ class AuthController extends Controller
             ]);
         }
 
-        // Valider l'OTP
-        if (! $this->otpService->verifyOtp($request->new_phone, $request->otp)) {
+        try {
+            $user = $this->accountPhone->change(
+                $user,
+                $request->new_phone,
+                $request->otp,
+                $user->currentAccessToken()?->id ?? null,
+            );
+        } catch (ValidationException $e) {
             return response()->json([
                 'success' => false,
-                'message' => 'Code OTP invalide ou expiré.',
+                'message' => collect($e->errors())->flatten()->first(),
             ], 422);
         }
-
-        // Vérifie si le numéro est déjà pris
-        if (User::where('phone', $request->new_phone)->where('id', '!=', $user->id)->exists()) {
-            return response()->json([
-                'success' => false,
-                'message' => 'Ce numéro de téléphone est déjà associé à un autre compte.',
-            ], 422);
-        }
-
-        // Met à jour le numéro de l'utilisateur
-        $user->update(['phone' => $request->new_phone]);
 
         return response()->json([
             'success' => true,

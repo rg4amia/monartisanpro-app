@@ -178,7 +178,7 @@ export function KycPanel({
                 />
             ) : null}
             <div className="grid gap-4 xl:grid-cols-4">
-                <MetricCard description="Clients, artisans et fournisseurs en attente" tone="amber" trend="À traiter sans friction" value={numberFormat.format(kycStats.pending)}>
+                <MetricCard description="Comptes en attente ayant envoyé au moins une pièce" tone="amber" trend="À traiter sans friction" value={numberFormat.format(kycStats.pending)}>
                     Dossiers ouverts
                 </MetricCard>
                 <MetricCard
@@ -230,6 +230,12 @@ export function KycPanel({
                             </span>
                         ) : null}
                     </form>
+                    {(kycStats.without_documents ?? 0) > 0 ? (
+                        <p className="mb-3 text-[11px] text-[var(--admin-muted)]">
+                            {numberFormat.format(kycStats.without_documents ?? 0)} compte(s) en attente n'ont encore envoyé aucune pièce : ils ne
+                            figurent pas dans cette liste.
+                        </p>
+                    ) : null}
 
                     <DataTable className="mt-5">
                         <thead>

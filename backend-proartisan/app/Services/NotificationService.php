@@ -45,8 +45,11 @@ class NotificationService
      * @param  array<string, scalar|null>  $vars  Variables `{nom}` du message.
      * @param  array<string, mixed>  $data  Données transmises à l'application
      *                                      (identifiants pour ouvrir le bon écran).
+     * @param  string|null  $smsPhone  Numéro qui reçoit le SMS à la place de
+     *                                 celui du compte (ancien numéro prévenu
+     *                                 d'un changement).
      */
-    public function notify(User $user, string $event, array $vars = [], array $data = []): ?Notification
+    public function notify(User $user, string $event, array $vars = [], array $data = [], ?string $smsPhone = null): ?Notification
     {
         $message = $this->templates->render($event, $vars);
         // Préférences du destinataire : il coupe le push ou le SMS d'une
@@ -88,6 +91,7 @@ class NotificationService
             $event,
             $push,
             $channels['sms'] ? $message['sms'] : null,
+            $smsPhone,
         );
 
         return $notification;

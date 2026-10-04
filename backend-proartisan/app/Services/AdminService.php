@@ -54,6 +54,9 @@ class AdminService
         return User::query()
             ->where('kyc_status', 'en_attente')
             ->whereIn('role', ['client', 'artisan', 'fournisseur', 'livreur'])
+            // Sans pièce envoyée, il n'y a rien à examiner : un numéro qui a
+            // validé son code sans aller plus loin n'est pas un dossier.
+            ->whereHas('kycDocuments')
             ->when($role, fn ($q) => $q->where('role', $role))
             ->when($search, function ($q) use ($search): void {
                 $q->where(function ($sub) use ($search): void {
@@ -75,8 +78,12 @@ class AdminService
      */
     public function kycStats(): array
     {
+        // Dossiers à traiter : un compte en attente qui n'a envoyé aucune
+        // pièce n'en est pas un, il est compté à part (`without_documents`).
         $byRole = User::query()
             ->where('kyc_status', 'en_attente')
+            ->whereIn('role', ['client', 'artisan', 'fournisseur', 'livreur'])
+            ->whereHas('kycDocuments')
             ->selectRaw('role, COUNT(*) as c')
             ->groupBy('role')
             ->pluck('c', 'role');
@@ -102,6 +109,10 @@ class AdminService
             'artisans_pending' => (int) ($byRole['artisan'] ?? 0),
             'fournisseurs_pending' => (int) ($byRole['fournisseur'] ?? 0),
             'rejected' => (int) User::where('kyc_status', 'rejete')->count(),
+            'without_documents' => (int) User::where('kyc_status', 'en_attente')
+                ->whereIn('role', ['client', 'artisan', 'fournisseur', 'livreur'])
+                ->whereDoesntHave('kycDocuments')
+                ->count(),
             'registration_trend' => $trend,
         ];
     }
@@ -334,12 +345,19 @@ class AdminService
     /**
      * @param  string|null  $state  `supprimes` pour les comptes supprimés, sinon les comptes en place.
      */
+    /** Statuts de compte proposés par le filtre « État » de la liste. */
+    public const ACCOUNT_STATUS_FILTERS = ['actif', 'suspendu', 'banni'];
+
     public function listUsers(?string $query = null, ?string $role = null, ?string $kycStatus = null, int $perPage = 20, ?string $state = null): LengthAwarePaginator
     {
         $ongoing = fn ($q) => $q->whereIn('status', AccountEngagementService::ONGOING_MISSION_STATES);
 
         return User::query()
             ->when($state === 'supprimes', fn ($q) => $q->onlyTrashed())
+            ->when($state === 'anonymises', fn ($q) => $q->whereNotNull('anonymized_at'))
+            ->when(in_array($state, self::ACCOUNT_STATUS_FILTERS, true), fn ($q) => $q
+                ->where('account_status', $state)
+                ->whereNull('anonymized_at'))
             ->withCount([
                 'missionsClient',
                 'missionsArtisan',

@@ -387,7 +387,8 @@ void showChangePhoneDialog(
             mainAxisSize: MainAxisSize.min,
             children: [
               const Text(
-                'Entrez votre nouveau numéro de téléphone (+225). Un code de validation OTP vous sera envoyé.',
+                'Entrez votre nouveau numéro de téléphone (+225). Un code de validation OTP vous sera envoyé. '
+                'Vos autres appareils seront déconnectés et votre ancien numéro sera prévenu par SMS.',
                 style: TextStyle(color: SettingsColors.muted, fontSize: 13),
               ),
               const SizedBox(height: 16),

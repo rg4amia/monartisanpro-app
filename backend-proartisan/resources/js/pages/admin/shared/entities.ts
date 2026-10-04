@@ -70,7 +70,7 @@ export interface KycUser {
     id: number;
     name: string;
     phone: string;
-    role: 'client' | 'artisan' | 'fournisseur' | 'admin' | 'referent';
+    role: 'client' | 'artisan' | 'fournisseur' | 'livreur' | 'admin' | 'referent';
     created_at: string;
     kyc_documents: KycDocument[];
     /** Motifs ayant empêché l'auto-approbation IA (KycService::autoApprovalBlockers). */
@@ -681,6 +681,8 @@ export interface KycStats {
     artisans_pending: number;
     fournisseurs_pending: number;
     rejected: number;
+    /** Comptes en attente n'ayant envoyé aucune pièce : hors de la liste à traiter. */
+    without_documents?: number;
     registration_trend: Array<{ label: string; value: number }>;
     /** Seuils des badges IA (config prosartisan.kyc). */
     ai_auto_threshold?: number;

@@ -37,8 +37,10 @@ use App\Services\OrderDisputeDebtService;
 use App\Services\OrderService;
 use App\Services\RolePermissionService;
 use App\Services\UploadLimitService;
+use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Http\Request;
 use Illuminate\Pagination\LengthAwarePaginator;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Auth;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Log;
@@ -89,13 +91,15 @@ class AdminPanelData
     {
         return [
             'financialKpis' => $this->adminService->getFinancialKpis(),
-            'fournisseurs' => $this->adminService->pendingFournisseurs(60)->items(),
-            'kycUsers' => $this->adminService->pendingKyc(null, 60)->items(),
+            'fournisseurs' => $this->pendingFournisseurs(),
+            'kycUsers' => collect($this->adminService->pendingKyc(null, 60)->items())
+                ->map(fn (User $user): array => $this->presentKycUser($user))
+                ->all(),
             'litiges' => $this->adminService->listLitiges(null, 60)->items(),
             'missions' => $this->adminService->listMissions(null, null, 100)->items(),
             'orders' => $this->orders(),
             'transactions' => $this->adminService->listTransactions(null, null, 100)->items(),
-            'users' => $this->adminService->listUsers(null, null, null, 100)->items(),
+            'users' => $this->presentUsers($this->adminService->listUsers(null, null, null, 100)->getCollection())->all(),
             'evaluationsList' => $this->adminService->listEvaluations(100)->items(),
             'artisansScores' => $this->adminService->listArtisansScores(),
             'whatsappClickStats' => $this->whatsappClickStats(),
@@ -108,7 +112,7 @@ class AdminPanelData
      */
     public function kyc(Request $request): array
     {
-        $fournisseurs = $this->adminService->pendingFournisseurs(60)->items();
+        $fournisseurs = $this->pendingFournisseurs();
 
         /** @var LengthAwarePaginator $kycUsersPage */
         $kycUsersPage = $this->adminService->pendingKyc(
@@ -117,13 +121,13 @@ class AdminPanelData
             $request->query('search_kyc') ?: null,
         )->withQueryString();
 
-        // Motifs ayant empêché l'auto-approbation IA, pour la page courante
-        // seulement (25 dossiers max) : le modérateur voit d'emblée quoi vérifier.
-        $kycUsersPage->getCollection()->transform(function (User $user) {
-            $user->kyc_ai_blockers = $this->kycService->autoApprovalBlockers($user);
-
-            return $user;
-        });
+        // Chaque dossier part sous une forme explicite, avec les motifs ayant
+        // empêché l'auto-approbation IA (page courante seulement, 25 dossiers
+        // au plus) : le modérateur voit d'emblée quoi vérifier.
+        $kycUsersPage->setCollection($kycUsersPage->getCollection()->map(fn (User $user): array => [
+            ...$this->presentKycUser($user),
+            'kyc_ai_blockers' => $this->kycService->autoApprovalBlockers($user),
+        ]));
 
         return [
             'kycUsersPage' => $kycUsersPage,
@@ -131,7 +135,17 @@ class AdminPanelData
             'cnmciUsers' => User::where('role', 'artisan')
                 ->where('cnmci_status', 'en_attente')
                 ->orderByDesc('updated_at')
-                ->get(),
+                ->get()
+                ->map(fn (User $artisan): array => [
+                    'id' => $artisan->id,
+                    'name' => $artisan->name,
+                    'phone' => $artisan->phone,
+                    'cnmci_number' => $artisan->cnmci_number,
+                    'cnmci_card_url' => $artisan->cnmci_card_url,
+                    'cnmci_status' => $artisan->cnmci_status,
+                    'created_at' => optional($artisan->created_at)->toIso8601String(),
+                ])
+                ->all(),
             'kycStats' => array_merge(
                 $this->adminService->kycStats(),
                 [
@@ -142,6 +156,54 @@ class AdminPanelData
                 ],
             ),
         ];
+    }
+
+    /**
+     * Dossier KYC tel que l'écran l'affiche : jamais le modèle `User` entier,
+     * qui envoyait au navigateur le jeton de notification, l'empreinte de
+     * l'appareil, le numéro de paiement et la position.
+     *
+     * @return array<string, mixed>
+     */
+    private function presentKycUser(User $user): array
+    {
+        return [
+            'id' => $user->id,
+            'name' => $user->name,
+            'phone' => $user->phone,
+            'role' => $user->role,
+            'created_at' => optional($user->created_at)->toIso8601String(),
+            'kyc_documents' => $user->kycDocuments->map(fn ($doc): array => [
+                'id' => $doc->id,
+                'type' => $doc->type,
+                'statut' => $doc->statut,
+                'file_url' => $doc->file_url,
+                'ai_confidence_score' => $doc->ai_confidence_score,
+                'face_matched' => (bool) $doc->face_matched,
+                'auto_verified' => (bool) $doc->auto_verified,
+                'ai_analysis' => $doc->ai_analysis,
+                'ocr_data' => $doc->ocr_data,
+            ])->values()->all(),
+        ];
+    }
+
+    /**
+     * Fournisseurs en attente d'agrément, avec le seul contact utile.
+     *
+     * @return list<array<string, mixed>>
+     */
+    private function pendingFournisseurs(): array
+    {
+        return collect($this->adminService->pendingFournisseurs(60)->items())
+            ->map(fn ($fournisseur): array => [
+                'id' => $fournisseur->id,
+                'nom_boutique' => $fournisseur->nom_boutique,
+                'created_at' => optional($fournisseur->created_at)->toIso8601String(),
+                'user' => $fournisseur->user
+                    ? ['name' => $fournisseur->user->name, 'phone' => $fournisseur->user->phone]
+                    : null,
+            ])
+            ->all();
     }
 
     /**
@@ -246,15 +308,56 @@ class AdminPanelData
             $request->query('etat_users') ?: null,
         )->withQueryString();
 
-        // Photo, pièces KYC et secteur/métier fournisseur : chargés pour la
-        // page courante seulement, en requêtes groupées. Chaque compte part
-        // sous une forme explicite : sérialiser le modèle entier recalculait
-        // deux soldes et lisait la position ligne par ligne, et envoyait au
-        // navigateur le jeton de notification, l'empreinte de l'appareil et
-        // le numéro de paiement, que l'écran n'affiche pas.
-        $usersPage->getCollection()->load(['kycDocuments', 'fournisseurAgree.sector', 'fournisseurAgree.trade']);
+        $usersPage->setCollection($this->presentUsers($usersPage->getCollection()));
+
+        return [
+            'usersPage' => $usersPage,
+            'userStats' => [
+                'total' => $stats['users_total'],
+                'artisans_actifs' => $stats['artisans_actifs'],
+                'clients_actifs' => $stats['clients_actifs'],
+                'fournisseurs_agrees' => $stats['fournisseurs_agrees'],
+            ],
+            'pendingFournisseurs' => $this->pendingFournisseurs(),
+            'topArtisans' => User::where('role', 'artisan')
+                ->orderByDesc('score_prosartisan')
+                ->limit(5)
+                ->get(['id', 'name', 'phone', 'score_prosartisan', 'score_frozen'])
+                ->map(fn (User $artisan): array => [
+                    'id' => $artisan->id,
+                    'name' => $artisan->name,
+                    'phone' => $artisan->phone,
+                    'score_prosartisan' => (int) $artisan->score_prosartisan,
+                    'score_frozen' => (bool) $artisan->score_frozen,
+                ])
+                ->all(),
+            'sectors' => Schema::hasTable('sectors')
+                ? Sector::with(['trades' => fn ($q) => $q->select('id', 'sector_id', 'name')->orderBy('name')])
+                    ->select('id', 'name', 'icon')
+                    ->orderBy('name')
+                    ->get()
+                : [],
+        ];
+    }
+
+    /**
+     * Comptes tels que la liste et le tableau de bord les affichent.
+     *
+     * Photo, pièces KYC et secteur/métier fournisseur sont chargés en requêtes
+     * groupées. Chaque compte part sous une forme explicite : sérialiser le
+     * modèle entier recalculait deux soldes et lisait la position ligne par
+     * ligne, et envoyait au navigateur le jeton de notification, l'empreinte
+     * de l'appareil et le numéro de paiement, que l'écran n'affiche pas.
+     *
+     * @param  EloquentCollection<int, User>  $users
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function presentUsers(EloquentCollection $users): Collection
+    {
+        $users->load(['kycDocuments', 'fournisseurAgree.sector', 'fournisseurAgree.trade']);
         $permissions = app(AdminPermissionService::class);
-        $usersPage->setCollection($usersPage->getCollection()->map(fn (User $user): array => [
+
+        return $users->toBase()->map(fn (User $user): array => [
             'id' => $user->id,
             'name' => $user->name,
             'email' => $user->email,
@@ -287,45 +390,7 @@ class AdminPanelData
             'fournisseur_sector_name' => $user->fournisseurAgree?->sector?->name,
             'fournisseur_trade_id' => $user->fournisseurAgree?->trade_id,
             'fournisseur_trade_name' => $user->fournisseurAgree?->trade?->name,
-        ]));
-
-        return [
-            'usersPage' => $usersPage,
-            'userStats' => [
-                'total' => $stats['users_total'],
-                'artisans_actifs' => $stats['artisans_actifs'],
-                'clients_actifs' => $stats['clients_actifs'],
-                'fournisseurs_agrees' => $stats['fournisseurs_agrees'],
-            ],
-            'pendingFournisseurs' => collect($this->adminService->pendingFournisseurs(60)->items())
-                ->map(fn ($fournisseur): array => [
-                    'id' => $fournisseur->id,
-                    'nom_boutique' => $fournisseur->nom_boutique,
-                    'created_at' => optional($fournisseur->created_at)->toIso8601String(),
-                    'user' => $fournisseur->user
-                        ? ['name' => $fournisseur->user->name, 'phone' => $fournisseur->user->phone]
-                        : null,
-                ])
-                ->all(),
-            'topArtisans' => User::where('role', 'artisan')
-                ->orderByDesc('score_prosartisan')
-                ->limit(5)
-                ->get(['id', 'name', 'phone', 'score_prosartisan', 'score_frozen'])
-                ->map(fn (User $artisan): array => [
-                    'id' => $artisan->id,
-                    'name' => $artisan->name,
-                    'phone' => $artisan->phone,
-                    'score_prosartisan' => (int) $artisan->score_prosartisan,
-                    'score_frozen' => (bool) $artisan->score_frozen,
-                ])
-                ->all(),
-            'sectors' => Schema::hasTable('sectors')
-                ? Sector::with(['trades' => fn ($q) => $q->select('id', 'sector_id', 'name')->orderBy('name')])
-                    ->select('id', 'name', 'icon')
-                    ->orderBy('name')
-                    ->get()
-                : [],
-        ];
+        ]);
     }
 
     /**

@@ -737,6 +737,12 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Liste** : chargée page par page (« Voir plus »), onglets par rubrique fournis par le serveur, nombre de non lues exact sur l'accueil ; toucher une notification de la barre du téléphone la marque comme lue.
     * **Conservation** : les notifications lues depuis plus de 12 mois sont supprimées chaque jour ; les non lues ne le sont jamais.
     * **Tests automatisés** : `Chantier14LotENotificationPreferencesTest.php` (15 tests), `notifications_test.dart` (18 tests).
+60. **Chantier 27 — Sécurisation des comptes utilisateurs, lot F (suites de l'analyse) :** [COMPLÉTÉ — contrôle manuel à faire]
+    * **Changement de numéro dans l'application** : les autres appareils du compte sont déconnectés et l'ancien numéro est prévenu par SMS ; un numéro déjà pris est refusé avant l'envoi du code.
+    * **Liste des utilisateurs** : le filtre « État » propose Actifs, Suspendus, Bannis, Anonymisés et Supprimés.
+    * **Dossiers KYC** : la liste à traiter ne contient que les comptes ayant envoyé une pièce ; les comptes en attente sans pièce sont comptés à part.
+    * **Données transmises au navigateur** : l'onglet KYC et le tableau de bord ne reçoivent plus que les informations affichées.
+    * **Tests automatisés** : `Chantier27LotFAccountFollowUpsTest.php` (5 tests), `AdminMissionsKycListTest.php`, `KycPanel.test.tsx`, `UsersPanel.test.tsx`.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

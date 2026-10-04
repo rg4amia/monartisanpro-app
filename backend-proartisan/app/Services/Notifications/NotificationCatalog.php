@@ -926,6 +926,15 @@ class NotificationCatalog
             'body' => 'Votre compte ProsArtisan utilise maintenant le {telephone}. Reconnectez-vous avec ce numéro. Si ce n\'est pas vous, contactez le support.',
             'sms' => true,
         ],
+        'compte.telephone_change.utilisateur' => [
+            'label' => 'Numéro du compte changé par son titulaire (SMS à l\'ancien numéro)',
+            'domain' => 'securite', 'audience' => 'utilisateur', 'type' => 'security_alert',
+            'variables' => ['telephone' => 'Nouveau numéro du compte'],
+            'required' => ['telephone'],
+            'title' => 'Numéro du compte modifié',
+            'body' => 'Votre compte ProsArtisan utilise maintenant le {telephone}. Vos autres appareils sont déconnectés. Si ce n\'est pas vous, contactez le support.',
+            'sms' => true,
+        ],
         'compte.numero_paiement_modifie.utilisateur' => [
             'label' => 'Numéro de paiement Mobile Money modifié',
             'domain' => 'securite', 'audience' => 'utilisateur', 'type' => 'security_alert',

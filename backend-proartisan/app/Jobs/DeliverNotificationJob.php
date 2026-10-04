@@ -30,6 +30,7 @@ class DeliverNotificationJob
         public string $event,
         public ?array $push,
         public ?string $sms,
+        public ?string $smsPhone = null,
     ) {}
 
     public function handle(OneSignalService $oneSignal, SmsService $smsService): void
@@ -68,14 +69,16 @@ class DeliverNotificationJob
     {
         $provider = $smsService->getProvider();
 
-        if ($user === null || $user->anonymized_at !== null || blank($user->phone)) {
+        $phone = $this->smsPhone ?? $user?->phone;
+
+        if ($user === null || $user->anonymized_at !== null || blank($phone)) {
             $this->record(NotificationDelivery::CHANNEL_SMS, $provider, NotificationDelivery::STATUS_SKIPPED, 'Aucun numéro de téléphone');
 
             return;
         }
 
         try {
-            $response = $smsService->send($user->phone, $this->sms);
+            $response = $smsService->send($phone, $this->sms);
 
             if (($response['status'] ?? null) === 'error') {
                 $this->record(NotificationDelivery::CHANNEL_SMS, $provider, NotificationDelivery::STATUS_FAILED, (string) ($response['message'] ?? 'Échec de la passerelle SMS'));

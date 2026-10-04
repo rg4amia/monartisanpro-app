@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Admin;
 
+use App\Models\KycDocument;
 use App\Models\Mission;
 use App\Models\Order;
 use App\Models\User;
@@ -143,9 +144,12 @@ class AdminMissionsKycListTest extends TestCase
     public function test_kyc_queue_is_paginated_and_searchable(): void
     {
         $admin = $this->admin();
-        User::factory()->count(30)->create(['kyc_status' => 'en_attente', 'role' => 'client']);
-        User::factory()->create(['kyc_status' => 'en_attente', 'role' => 'artisan', 'name' => 'Yao Le Plombier']);
+        User::factory()->count(30)->create(['kyc_status' => 'en_attente', 'role' => 'client'])
+            ->each(fn (User $user) => $this->withKycPiece($user));
+        $this->withKycPiece(User::factory()->create(['kyc_status' => 'en_attente', 'role' => 'artisan', 'name' => 'Yao Le Plombier']));
         User::factory()->count(2)->create(['kyc_status' => 'rejete', 'role' => 'client']);
+        // Comptes en attente sans aucune pièce : rien à examiner, hors de la liste.
+        User::factory()->count(3)->create(['kyc_status' => 'en_attente', 'role' => 'client']);
 
         $this->actingAs($admin)->get('/admin/kyc')->assertInertia(fn (AssertableInertia $page) => $page
             ->component('admin/kyc')
@@ -154,6 +158,7 @@ class AdminMissionsKycListTest extends TestCase
             ->where('kycStats.pending', 31)
             ->where('kycStats.artisans_pending', 1)
             ->where('kycStats.rejected', 2)
+            ->where('kycStats.without_documents', 3)
             ->has('kycStats.registration_trend', 15));
 
         $this->actingAs($admin)->get('/admin/kyc?search_kyc=Yao')
@@ -169,12 +174,40 @@ class AdminMissionsKycListTest extends TestCase
             'prosartisan.kyc.review_threshold' => 60,
         ]);
         $admin = $this->admin();
-        User::factory()->create(['kyc_status' => 'en_attente', 'role' => 'fournisseur']);
+        $this->withKycPiece(User::factory()->create(['kyc_status' => 'en_attente', 'role' => 'fournisseur']));
 
         $this->actingAs($admin)->get('/admin/kyc')->assertInertia(fn (AssertableInertia $page) => $page
             ->where('kycStats.ai_auto_threshold', 90)
             ->where('kycStats.ai_review_threshold', 60)
-            // Fournisseur sans pièce : revue humaine obligatoire, pièces manquantes.
+            // Fournisseur sans selfie : revue humaine obligatoire, pièces manquantes.
             ->where('kycUsersPage.data.0.kyc_ai_blockers', ['role_soumis_a_revue_humaine', 'pieces_incompletes']));
+    }
+
+    public function test_kyc_queue_sends_only_the_fields_the_screen_shows(): void
+    {
+        $admin = $this->admin();
+        $this->withKycPiece(User::factory()->create([
+            'kyc_status' => 'en_attente',
+            'role' => 'artisan',
+            'payment_phone' => '+2250500000009',
+            'device_fingerprint' => 'empreinte-secrete',
+        ]));
+
+        $this->actingAs($admin)->get('/admin/kyc')->assertInertia(fn (AssertableInertia $page) => $page
+            ->has('kycUsersPage.data.0', fn (AssertableInertia $user) => $user
+                ->hasAll(['id', 'name', 'phone', 'role', 'created_at', 'kyc_documents', 'kyc_ai_blockers'])
+                ->missingAll(['payment_phone', 'device_fingerprint', 'wallet_mo', 'wallet_materiaux', 'onesignal_player_id'])));
+    }
+
+    private function withKycPiece(User $user): User
+    {
+        KycDocument::create([
+            'user_id' => $user->id,
+            'type' => 'cni',
+            'file_url' => 'kyc/'.$user->id.'/cni.jpg',
+            'statut' => 'en_attente',
+        ]);
+
+        return $user;
     }
 }
