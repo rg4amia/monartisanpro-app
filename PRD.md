@@ -767,6 +767,14 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Commande groupée** : refusée en livraison chez un fournisseur sans boutique enregistrée, comme la commande simple.
     * **Défi anti-robot** : plus de clé de signature de secours dans le code ; un même défi ne passe plus deux fois, même présenté simultanément.
     * **Tests automatisés** : `Chantier30OrderAndAntiBotFixesTest.php` (7 tests).
+65. **Chantier 31 — Destination d'une livraison figée sur la commande :** [COMPLÉTÉ — contrôle manuel à faire]
+    * **Course vers l'adresse de livraison** : la course estimée à l'acceptation et le montant final se calculent vers l'adresse choisie par le client, plus vers la position de son compte.
+    * **Coordonnées figées** : la commande enregistre les coordonnées de l'adresse à sa création ; le suivi de livraison, la carte de la flotte et les tournées groupées visent ce point, même si le carnet d'adresses change ensuite.
+    * **Commandes en cours au déploiement** : elles prennent les coordonnées actuelles de leur adresse ; les commandes closes ne sont pas modifiées.
+    * **Tests automatisés** : `Chantier31OrderDeliveryDestinationTest.php` (7 tests).
+66. **Fiabilité de la suite de tests :** [COMPLÉTÉ]
+    * **Aucun appel réseau en test** : tout appel non simulé à un service extérieur est bloqué ; les clés OneSignal et Yandex du poste de développement ne servent plus aux tests.
+    * **Délai d'exécution** : la génération des fiches de l'Assistant IA rend au processus son délai d'origine ; la suite complète ne s'interrompt plus après 180 secondes.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

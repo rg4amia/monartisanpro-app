@@ -182,13 +182,7 @@ class DeliveryTrackingService
         $order->loadMissing(['supplier.fournisseurAgree', 'client', 'driver', 'latestTracking']);
 
         $supplierPos = $order->supplier?->fournisseurAgree?->getPositionCoords();
-        $clientPos = $order->client?->getPositionCoords();
-        if (! $clientPos && $order->delivery_latitude && $order->delivery_longitude) {
-            $clientPos = [
-                'lat' => (float) $order->delivery_latitude,
-                'lng' => (float) $order->delivery_longitude,
-            ];
-        }
+        $clientPos = $order->deliveryDestination();
         $latest = $order->latestTracking;
 
         $route = null;
@@ -383,13 +377,7 @@ class DeliveryTrackingService
             $activeOrderData = null;
             if ($activeOrder) {
                 $supplierPos = $activeOrder->supplier?->fournisseurAgree?->getPositionCoords();
-                $clientPos = $activeOrder->client?->getPositionCoords();
-                if (! $clientPos && $activeOrder->delivery_latitude && $activeOrder->delivery_longitude) {
-                    $clientPos = [
-                        'lat' => (float) $activeOrder->delivery_latitude,
-                        'lng' => (float) $activeOrder->delivery_longitude,
-                    ];
-                }
+                $clientPos = $activeOrder->deliveryDestination();
 
                 $activeOrderData = [
                     'id' => $activeOrder->id,
@@ -475,4 +463,3 @@ class DeliveryTrackingService
         return $closestName;
     }
 }
-

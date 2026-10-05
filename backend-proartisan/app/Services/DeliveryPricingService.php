@@ -276,7 +276,7 @@ class DeliveryPricingService
     {
         $supplierProfile = $order->supplier?->fournisseurAgree;
         $from = $supplierProfile?->getPositionCoords();
-        $to = $order->client?->getPositionCoords();
+        $to = $order->deliveryDestination();
 
         $items = [];
         foreach ($order->items as $orderItem) {

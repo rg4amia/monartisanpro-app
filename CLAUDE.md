@@ -81,7 +81,7 @@ routes/api.php
 - `JalonService` — cycle OTP → libération `wallet_mo`, contrôle physique Référent (> 2M FCFA)
 - `JCodeService` — tokens `PA-XXXX`, QR + USSD, vérification GPS fournisseur
 - `OrderService` — e-commerce matériaux, split-cart multi-quincailleries (`order_group_id`), télémétrie livreur par lot, watchdog
-- `DeliveryPricingService` — calcul tarifaire dynamique (OSRM, surge pricing, classe véhicule)
+- `DeliveryPricingService` — calcul tarifaire dynamique (OSRM, surge pricing, classe véhicule) ; la destination d'une commande est `Order::deliveryDestination()` (Règle d'or 109)
 - `WalletService` — gestion `wallet_materiaux` / `wallet_mo` (Event Sourcing strict) ; séquestre hybride cloisonné par mission (`releaseJalon`, `fundHybridJalon`, `getMissionEscrowBalance`)
 - `OrderDisputeService` — litiges de commande : gel à l'ouverture, clôture avec remboursement du client et responsable désigné, historique par acteur ; `OrderDisputeDebtService` — dette du responsable, recouvrement, règlement direct, blocage du profil (Règles d'or 91 et 92)
 - `MissionHistoryService` — lecture de l'historique des états d'une mission (application et backoffice) ; `ReferentHistoryService` — inspections réalisées et litiges à visiter du Référent, sans coordonnées des parties (Règle d'or 90)
@@ -608,3 +608,14 @@ App Router (`src/app/`), composants partagés dans `src/components/`, accès API
 - **Clé de signature du défi anti-robot** : `config('app.key')`, sans repli. Sans clé, `generateChallenge` lève une erreur et `check` refuse. Une clé écrite dans le code est publique : elle permet de forger un défi valide (échec fermé, comme les Règles d'or 8 et 41).
 - **Anti-rejeu** : le jeton se réserve par `Cache::add`, en une seule opération. Tester (`has`) puis écrire (`put`) laisse passer deux requêtes simultanées.
 - **Tests** : `Chantier30OrderAndAntiBotFixesTest.php`.
+109. **Destination d'une livraison figée sur la commande (Chantier 31)** :
+- **Coordonnées figées** : une commande en livraison enregistre à sa création les coordonnées de l'adresse choisie (`orders.delivery_latitude` / `delivery_longitude`, `Order::frozenDestination`), à la commande simple comme à la commande groupée. Une modification ultérieure du carnet ne déplace jamais une commande passée (Règle d'or 34).
+- **Une seule destination** : `Order::deliveryDestination()` — course estimée à l'acceptation et montant final (`DeliveryPricingService::calculateOrderDeliveryCost`), suivi de livraison, carte de la flotte, tournées groupées. Ne jamais lire `$order->client->getPositionCoords()` ni `$order->address` pour situer une livraison : la position du compte du client n'est pas l'endroit où il se fait livrer, et la course se calculait vers le mauvais point (Règle d'or 36).
+- **Commande antérieure** : sans coordonnées figées, elle garde l'adresse du carnet, à défaut la position du client. La migration ne complète que les commandes encore à livrer ; une commande close reste sans coordonnées plutôt que d'en recevoir de déduites après coup (Règle d'or 29).
+- **Sérialisation** : les deux colonnes sont masquées (`$hidden`) ; l'adresse figée reste le seul élément de livraison transmis.
+- **Tests** : `Chantier31OrderDeliveryDestinationTest.php`. Dans un test de course, la boutique, le compte du client et l'adresse de livraison occupent trois points distincts : `Geo::point()` sans argument est aussi la position habituelle du client, et la course tombe alors au forfait plancher.
+110. **Tests sans réseau, délai d'exécution rendu au processus** :
+- **Aucun appel extérieur en test** : `Tests\TestCase` pose `Http::preventStrayRequests()` ; un appel non simulé lève une exception au lieu de partir sur le réseau. Chaque exécution locale envoyait 742 requêtes à OneSignal et 21 à Yandex avec les clés du `.env`, et 26 au serveur public OSRM. Un service qui attrape l'exception se replie : le test passe, mais l'appel reste à simuler (`Http::fake`, ou un simulacre du service).
+- **Clés neutralisées** : `phpunit.xml` vide `ONESIGNAL_*` et `YANDEX_*` ; les clés réelles du `.env` local ne servent jamais aux tests. Un test qui a besoin d'un service configuré pose lui-même sa configuration.
+- **Délai d'exécution** : un traitement qui allonge `set_time_limit` rétablit la valeur précédente dans un `finally` (`GenerateKnowledgeSheetsJob`). Laissé en place, le délai s'applique à tout le processus : la suite de tests, exécutée dans le même processus, était coupée 180 secondes plus tard. La propriété `$timeout` d'un job n'a d'effet que sous un worker de file d'attente, absent en production.
+- **Tests** : `Chantier23LlmKnowledgeTest.php`.

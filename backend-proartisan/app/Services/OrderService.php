@@ -148,6 +148,7 @@ class OrderService
                 'recipient_phone' => $address?->recipient_phone,
                 'delivery_address_line' => $address?->address_line,
                 'delivery_city' => $address?->city,
+                ...($deliveryMode === 'delivery' ? Order::frozenDestination($address) : []),
             ]);
 
             // 6. Création des items de commande et décrémentation des stocks
@@ -274,6 +275,7 @@ class OrderService
                     'recipient_phone' => $address?->recipient_phone,
                     'delivery_address_line' => $address?->address_line,
                     'delivery_city' => $address?->city,
+                    ...($deliveryMode === 'delivery' ? Order::frozenDestination($address) : []),
                 ]);
 
                 foreach ($itemsData as $data) {

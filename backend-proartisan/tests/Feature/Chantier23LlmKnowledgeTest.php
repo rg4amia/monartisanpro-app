@@ -1,5 +1,6 @@
 <?php
 
+use App\Jobs\GenerateKnowledgeSheetsJob;
 use App\Models\AdminActivityLog;
 use App\Models\ImportHistory;
 use App\Models\Litige;
@@ -9,6 +10,7 @@ use App\Models\ProductionItem;
 use App\Models\StagingItem;
 use App\Models\User;
 use App\Services\Admin\AdminPermissionService;
+use App\Services\Llm\KnowledgeBaseService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\DB;
@@ -465,4 +467,14 @@ test('sans IA disponible, la médiation l\'annonce au lieu d\'un texte tout fait
         ->postJson("/api/v1/litiges/{$litige->id}/llm-mediation", ['message' => 'Le toit fuit toujours.'])
         ->assertStatus(503)
         ->assertJsonMissingPath('mediation');
+});
+
+test('la génération des fiches rend au processus son délai d\'exécution d\'origine', function () {
+    $before = ini_get('max_execution_time');
+
+    // Import inconnu : la génération s'arrête aussitôt, seul le délai est en jeu.
+    (new GenerateKnowledgeSheetsJob('import-inexistant', 0))
+        ->handle(app(KnowledgeBaseService::class));
+
+    expect(ini_get('max_execution_time'))->toBe($before);
 });

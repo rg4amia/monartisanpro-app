@@ -40,6 +40,8 @@ class Order extends Model
         'recipient_phone',
         'delivery_address_line',
         'delivery_city',
+        'delivery_latitude',
+        'delivery_longitude',
         'driver_assigned_at',
         'driver_picked_up_at',
         'driver_stalled_alert_at',
@@ -93,6 +95,10 @@ class Order extends Model
     protected $hidden = [
         'pickup_code',
         'reception_code',
+        // Lues par deliveryDestination() ; l'adresse figée reste le seul
+        // élément de livraison sérialisé.
+        'delivery_latitude',
+        'delivery_longitude',
     ];
 
     protected $appends = ['delivery_fare'];
@@ -111,6 +117,8 @@ class Order extends Model
             'delivery_fare_settled_at' => 'datetime',
             'delivery_fare_reminders_count' => 'integer',
             'delivery_fare_last_reminder_at' => 'datetime',
+            'delivery_latitude' => 'float',
+            'delivery_longitude' => 'float',
             'actual_distance_km' => 'float',
             'actual_duration_min' => 'float',
             'payment_expires_at' => 'datetime',
@@ -306,6 +314,41 @@ class Order extends Model
     public function address()
     {
         return $this->belongsTo(Address::class);
+    }
+
+    /**
+     * Point de livraison de la commande : les coordonnées de l'adresse choisie,
+     * figées à la création (Chantier 31). C'est la seule destination à
+     * employer pour la course, le suivi et les tournées — la position du
+     * compte du client n'est pas l'endroit où il se fait livrer.
+     *
+     * Une commande antérieure au Chantier 31 n'a rien de figé : elle garde
+     * l'adresse du carnet, à défaut la position du client.
+     *
+     * @return array{lat: float, lng: float}|null
+     */
+    public function deliveryDestination(): ?array
+    {
+        if ($this->delivery_latitude !== null && $this->delivery_longitude !== null) {
+            return ['lat' => $this->delivery_latitude, 'lng' => $this->delivery_longitude];
+        }
+
+        return $this->address?->getPositionCoords() ?? $this->client?->getPositionCoords();
+    }
+
+    /**
+     * Coordonnées à figer sur une commande livrée à cette adresse.
+     *
+     * @return array{delivery_latitude: float|null, delivery_longitude: float|null}
+     */
+    public static function frozenDestination(?Address $address): array
+    {
+        $coords = $address?->getPositionCoords();
+
+        return [
+            'delivery_latitude' => $coords['lat'] ?? null,
+            'delivery_longitude' => $coords['lng'] ?? null,
+        ];
     }
 
     public function items()

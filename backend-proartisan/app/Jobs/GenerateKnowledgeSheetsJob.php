@@ -20,6 +20,10 @@ class GenerateKnowledgeSheetsJob
 
     public function handle(KnowledgeBaseService $knowledge): void
     {
+        // Le délai ne vaut que pour cette génération : laissé en place, il
+        // s'appliquait à tout le processus (la suite de tests, exécutée dans
+        // le même processus, était coupée 180 s plus tard).
+        $previousLimit = (int) ini_get('max_execution_time');
         @set_time_limit(180);
 
         try {
@@ -31,6 +35,8 @@ class GenerateKnowledgeSheetsJob
                 'status' => ImportHistory::STATUS_FAILED,
                 'error_message' => 'La génération des fiches a échoué. Réessayez plus tard.',
             ]);
+        } finally {
+            @set_time_limit($previousLimit);
         }
     }
 }

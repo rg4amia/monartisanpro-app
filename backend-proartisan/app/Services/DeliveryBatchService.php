@@ -70,15 +70,7 @@ class DeliveryBatchService
                 $vehicleRanks = ['moto' => 1, 'voiture' => 2, 'cargo' => 3];
 
                 foreach ($chunkOrders as $order) {
-                    $destPos = $order->address?->getPositionCoords()
-                        ?? $order->client?->getPositionCoords();
-
-                    if (! $destPos && $order->delivery_latitude && $order->delivery_longitude) {
-                        $destPos = [
-                            'lat' => (float) $order->delivery_latitude,
-                            'lng' => (float) $order->delivery_longitude,
-                        ];
-                    }
+                    $destPos = $order->deliveryDestination();
 
                     if (! $destPos) {
                         continue;
@@ -223,15 +215,7 @@ class DeliveryBatchService
         }
 
         foreach ($activeOrders as $order) {
-            $destPos = $order->address?->getPositionCoords()
-                ?? $order->client?->getPositionCoords();
-
-            if (! $destPos && $order->delivery_latitude && $order->delivery_longitude) {
-                $destPos = [
-                    'lat' => (float) $order->delivery_latitude,
-                    'lng' => (float) $order->delivery_longitude,
-                ];
-            }
+            $destPos = $order->deliveryDestination();
 
             if ($destPos) {
                 $waypoints[] = [

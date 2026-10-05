@@ -34,5 +34,10 @@
         <env name="SMS_BASE_URL" value="https://app.smspro.africa/api/v3"/>
         <env name="SMS_SENDER_ID" value="ProsArtisan"/>
         <env name="GEMINI_API_KEY" value="PLACEHOLDER_KEY"/>
+        <!-- Les clés réelles du .env local ne servent jamais aux tests. -->
+        <env name="ONESIGNAL_APP_ID" value=""/>
+        <env name="ONESIGNAL_REST_API_KEY" value=""/>
+        <env name="YANDEX_DISTANCE_MATRIX_API_KEY" value=""/>
+        <env name="YANDEX_GEOLOCATION_API_KEY" value=""/>
     </php>
 </phpunit>
