@@ -48,6 +48,7 @@ class GoogleMapsService
 
         if (! $this->yandexKey) {
             Log::warning('Aucune clé Yandex Distance Matrix configurée. Fallback Haversine.');
+            $this->health()->recordFailure(RoutingHealthService::YANDEX, 'Clé absente');
         }
 
         return $this->fallbackHaversine($from, $to);
@@ -66,21 +67,43 @@ class GoogleMapsService
             if ($response->successful()) {
                 $element = $response->json('rows.0.elements.0');
                 if (is_array($element) && ($element['status'] ?? null) === 'OK') {
+                    $this->health()->recordSuccess(RoutingHealthService::YANDEX);
+
                     return [
                         'distance' => (int) ($element['distance']['value'] ?? 0),
                         'duration' => (int) ($element['duration']['value'] ?? 0),
                         'source' => 'yandex_distance_matrix',
                     ];
                 }
+                // Le service a répondu : ce trajet n'a pas de route, ce n'est
+                // pas une panne.
                 Log::warning('Yandex Distance Matrix : aucune route.', ['body' => $response->json()]);
+                $this->health()->recordSuccess(RoutingHealthService::YANDEX);
             } else {
                 Log::error('Erreur API Yandex Distance Matrix : '.$response->status());
+                $this->health()->recordFailure(RoutingHealthService::YANDEX, self::failureReason($response->status()));
             }
         } catch (\Throwable $e) {
             Log::error('Exception Yandex Distance Matrix : '.$e->getMessage());
+            $this->health()->recordFailure(RoutingHealthService::YANDEX, 'Service injoignable');
         }
 
         return null;
+    }
+
+    private function health(): RoutingHealthService
+    {
+        return app(RoutingHealthService::class);
+    }
+
+    /** Motif lisible d'un refus, sans la réponse brute du fournisseur. */
+    private static function failureReason(int $status): string
+    {
+        return match (true) {
+            in_array($status, [401, 403], true) => "Clé refusée (HTTP {$status}) : expirée ou invalide",
+            $status === 429 => 'Quota dépassé (HTTP 429)',
+            default => "Erreur HTTP {$status}",
+        };
     }
 
     /**

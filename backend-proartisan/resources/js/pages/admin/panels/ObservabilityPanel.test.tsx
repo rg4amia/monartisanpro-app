@@ -212,4 +212,81 @@ describe('ObservabilityPanel', () => {
 
         expect(screen.queryByText('Notifications push et SMS en échec')).not.toBeInTheDocument();
     });
+    it('annonce que Yandex ne répond plus et qui tarife les courses', () => {
+        render(
+            <ObservabilityPanel
+                snapshot={makeSnapshot({
+                    routing: {
+                        degraded: true,
+                        mode: 'Yandex ne répond plus : les courses sont tarifées par le serveur OSRM.',
+                        osrm_public: true,
+                        providers: [
+                            {
+                                key: 'yandex',
+                                label: 'Yandex Distance Matrix',
+                                failing: true,
+                                consecutive_failures: 12,
+                                last_success_at: null,
+                                last_failure_at: '2026-10-05T09:00:00Z',
+                                last_failure_reason: 'Clé refusée (HTTP 403) : expirée ou invalide',
+                            },
+                            {
+                                key: 'osrm',
+                                label: 'OSRM',
+                                failing: false,
+                                consecutive_failures: 0,
+                                last_success_at: '2026-10-05T09:00:00Z',
+                                last_failure_at: null,
+                                last_failure_reason: null,
+                            },
+                        ],
+                    },
+                })}
+                canManage
+                actionLoading={false}
+                onRetryJobs={vi.fn()}
+                onFlushJobs={vi.fn()}
+            />,
+        );
+
+        expect(screen.getByText('Calcul des courses')).toBeInTheDocument();
+        expect(screen.getByRole('alert')).toHaveTextContent('Vérifiez la clé Yandex Distance Matrix');
+        expect(screen.getByRole('alert')).toHaveTextContent('serveur public de démonstration');
+        expect(screen.getByText('Ne répond plus (12 échecs de suite)')).toBeInTheDocument();
+        expect(screen.getByText('Clé refusée (HTTP 403) : expirée ou invalide')).toBeInTheDocument();
+        expect(screen.getByText('Répond')).toBeInTheDocument();
+    });
+
+    it("n'alerte pas quand Yandex répond, ni sur un service jamais sollicité", () => {
+        render(
+            <ObservabilityPanel
+                snapshot={makeSnapshot({
+                    routing: {
+                        degraded: false,
+                        mode: 'Les courses sont tarifées par Yandex.',
+                        osrm_public: true,
+                        providers: [
+                            {
+                                key: 'osrm',
+                                label: 'OSRM',
+                                failing: false,
+                                consecutive_failures: 0,
+                                last_success_at: null,
+                                last_failure_at: null,
+                                last_failure_reason: null,
+                            },
+                        ],
+                    },
+                })}
+                canManage
+                actionLoading={false}
+                onRetryJobs={vi.fn()}
+                onFlushJobs={vi.fn()}
+            />,
+        );
+
+        expect(screen.getByText('Les courses sont tarifées par Yandex.')).toBeInTheDocument();
+        expect(screen.queryByRole('alert')).not.toBeInTheDocument();
+        expect(screen.getByText('Pas encore sollicité')).toBeInTheDocument();
+    });
 });

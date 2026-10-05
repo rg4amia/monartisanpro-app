@@ -812,6 +812,15 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 - **État exposé** : la commande sérialise `code_suspensions` (`pickup` / `reception` : instant de fin, ou `null`) — ni le code, ni le nombre de codes faux.
 - **Tests sans appel extérieur avalé** : `Tests\TestCase` fait échouer à sa clôture tout test dont un appel extérieur bloqué a été attrapé par un repli (Règle d'or 110). Un parcours qui estime une course sans que le routage soit son objet appelle `Tests\Support\Routing::fakeOsrm()`.
 - **Tests** : `Chantier34OrderFollowUpsTest.php`, `OrderCodeSuspensionBlock.test.tsx`, `address_form_screen_test.dart`.
+150. **Services d'itinéraire surveillés, écran du livreur relu après un rejeu (Chantier 35)** :
+- **Suivi** (`RoutingHealthService`) : pour Yandex et OSRM, dernière réponse correcte, dernier échec, motif et échecs consécutifs, tenus en cache. Un service est défaillant à partir de `FAILURE_THRESHOLD` échecs de suite (3) ; un appel isolé qui échoue n'est pas une panne. « Aucune route » est une réponse, pas un échec ; une clé absente compte comme un échec.
+- **Motif sans secret** : libellé court établi par le code (« Clé refusée (HTTP 403) : expirée ou invalide », « Clé absente », « Quota dépassé (HTTP 429) », « Service injoignable ») — jamais la clé, ni la réponse brute du fournisseur.
+- **Sixième signal critique** (Règle d'or 23) : `criticalCounts()['routing_degraded']` vaut 1 quand Yandex est défaillant ; `admin:health-check` l'annonce sur Telegram. La clé de production avait expiré sans que personne ne soit prévenu.
+- **Écran** : section « Calcul des courses » de Santé & Observabilité (`snapshot()['routing']`) — qui tarife les courses en ce moment, bandeau quand Yandex ne répond plus, mention du serveur public de démonstration d'OSRM (`osrm_public`), état de chaque service.
+- **Tout nouvel appel à un service d'itinéraire** enregistre son issue par `recordSuccess` / `recordFailure`.
+- **Écran du livreur** (`HomeController.refreshDriverMissionsAfterReplay`) : quand la file hors connexion change (`SyncService.pendingCount`, `failures`) et qu'elle est vide, l'accueil du livreur relit ses courses sur le serveur, cache local ignoré (`getMyOrders(forceRefresh: true)`). Tant qu'une validation attend d'être transmise, rien n'est relu. Une course refusée au rejeu restait affichée « en route ».
+- **Suite en séquentiel** : `php vendor/bin/pest` sans `--parallel` va à son terme sous Windows (13 minutes) ; le délai de 180 secondes ne la coupe plus (Règle d'or 110).
+- **Tests** : `Chantier35RoutingHealthTest.php`, `ObservabilityPanel.test.tsx`, `driver_missions_after_replay_test.dart`.
 
 ## 📎 Fichier de référence du flux
 

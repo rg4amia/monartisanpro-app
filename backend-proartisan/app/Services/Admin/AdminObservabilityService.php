@@ -9,6 +9,7 @@ use App\Models\NotificationDelivery;
 use App\Models\ScoreLedgerEntry;
 use App\Models\Transaction;
 use App\Services\Notifications\NotificationCatalog;
+use App\Services\RoutingHealthService;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -17,12 +18,15 @@ use Illuminate\Support\Str;
 /**
  * Chantier C7 (P2-12) — santé opérationnelle du backoffice.
  *
- * Agrège cinq signaux critiques : files d'attente en échec, webhooks de
+ * Agrège six signaux critiques : files d'attente en échec, webhooks de
  * paiement KO, tentatives de fraude GPS J-Code (> 100 m), missions bloquées
- * au seuil Référent (> 2 000 000 FCFA) et envois push/SMS échoués.
+ * au seuil Référent (> 2 000 000 FCFA), envois push/SMS échoués et calcul des
+ * courses sans le fournisseur d'itinéraires officiel.
  */
 class AdminObservabilityService
 {
+    public function __construct(private RoutingHealthService $routing) {}
+
     /** Statuts de mission actifs concernés par la validation Référent. */
     private const REFERENT_BLOCKED_STATUSES = ['funded_locked', 'in_progress', 'disputed'];
 
@@ -37,6 +41,7 @@ class AdminObservabilityService
             'fraud' => $this->fraud(),
             'referent' => $this->referent(),
             'notifications' => $this->notifications(),
+            'routing' => $this->routing->snapshot(),
             'generated_at' => now()->toIso8601String(),
         ];
     }
@@ -44,7 +49,7 @@ class AdminObservabilityService
     /**
      * Compteurs critiques uniquement (pour la décision d'alerte Telegram).
      *
-     * @return array{failed_jobs: int, failed_payments_24h: int, gps_fraud_7d: int, referent_blocked: int, failed_notifications_24h: int}
+     * @return array{failed_jobs: int, failed_payments_24h: int, gps_fraud_7d: int, referent_blocked: int, failed_notifications_24h: int, routing_degraded: int}
      */
     public function criticalCounts(): array
     {
@@ -62,6 +67,9 @@ class AdminObservabilityService
             'failed_notifications_24h' => $this->failedNotifications()
                 ->where('created_at', '>=', now()->subDay())
                 ->count(),
+            // 1 quand Yandex ne répond plus : les courses sont alors tarifées
+            // par OSRM ou sur une distance estimée (Chantier 35).
+            'routing_degraded' => $this->routing->isDegraded() ? 1 : 0,
         ];
     }
 

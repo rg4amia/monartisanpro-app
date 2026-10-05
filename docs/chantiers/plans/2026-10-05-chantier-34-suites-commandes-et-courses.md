@@ -7,7 +7,7 @@
 | Mis à jour le | 2026-10-05 |
 | Auteur | Claude Code |
 | Analyses liées | — (suites consignées en fin des plans des Chantiers 31, 32 et 33) |
-| Commits | — |
+| Commits | `e5dfca4f` |
 
 ## Objectif
 

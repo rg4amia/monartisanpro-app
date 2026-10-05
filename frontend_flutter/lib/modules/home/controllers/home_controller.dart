@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
 
+import '../../../core/network/sync_service.dart';
 import '../../../core/storage/storage_service.dart';
 import '../../../core/theme/app_colors.dart';
 import '../../../core/utils/json_readers.dart';
@@ -159,6 +160,46 @@ class HomeController extends GetxController {
     // masquait toute panne de chargement — le tableau de bord paraissait
     // fonctionner alors qu'il ne montrait rien de réel.
     _loadData();
+    _watchOfflineReplays();
+  }
+
+  Worker? _offlineReplayWorker;
+
+  /// Relit les courses du livreur quand la file hors connexion change.
+  ///
+  /// Une validation mise en file fait avancer la course à l'écran sans
+  /// attendre le serveur. Quand elle est enfin transmise — acceptée ou
+  /// refusée — l'écran doit montrer l'état réel : sans cela, une course
+  /// refusée restait affichée « en route » jusqu'au rafraîchissement suivant.
+  void _watchOfflineReplays() {
+    if (!Get.isRegistered<SyncService>()) return;
+    final sync = Get.find<SyncService>();
+
+    _offlineReplayWorker = everAll(
+      [sync.pendingCount, sync.failures],
+      (_) => refreshDriverMissionsAfterReplay(),
+    );
+  }
+
+  /// Rien à relire tant qu'une validation attend encore d'être transmise :
+  /// le serveur ne la connaît pas, et relire effacerait l'état annoncé.
+  @visibleForTesting
+  Future<bool> refreshDriverMissionsAfterReplay() async {
+    if (role.value != 'driver' && role.value != 'livreur') return false;
+    if (Get.isRegistered<SyncService>() &&
+        Get.find<SyncService>().pendingCount.value > 0) {
+      return false;
+    }
+
+    await _loadDriverMissions(forceRefresh: true);
+
+    return true;
+  }
+
+  @override
+  void onClose() {
+    _offlineReplayWorker?.dispose();
+    super.onClose();
   }
 
   /// Nombre max de tentatives de chargement avant d'afficher l'erreur.
@@ -542,10 +583,13 @@ class HomeController extends GetxController {
     }
   }
 
-  Future<void> _loadDriverMissions() async {
+  Future<void> _loadDriverMissions({bool forceRefresh = false}) async {
     try {
       final availableData = await _orderRepo.getAvailableDeliveries();
-      final myOrdersData = await _orderRepo.getMyOrders();
+      // Après le rejeu d'une validation hors connexion, le cache local des
+      // commandes n'a pas été invalidé : on relit le serveur.
+      final myOrdersData =
+          await _orderRepo.getMyOrders(forceRefresh: forceRefresh);
 
       if (availableData.isNotEmpty) {
         driverAvailableMissions.value = availableData.map((order) {

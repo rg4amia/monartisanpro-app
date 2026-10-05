@@ -792,6 +792,11 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Fiabilité des tests** : plus aucun appel extérieur ; un test qui en déclenche un échoue.
     * **À faire hors code** : réactiver la clé Yandex Distance Matrix, ou brancher une instance OSRM dédiée (`OSRM_BASE_URL`) — d'ici là, chaque course est tarifée par le serveur public de démonstration d'OSRM.
     * **Tests automatisés** : `Chantier34OrderFollowUpsTest.php` (11 tests), `OrderCodeSuspensionBlock.test.tsx` (6 tests), `address_form_screen_test.dart`.
+70. **Chantier 35 — Services d'itinéraire surveillés, écran du livreur relu après un rejeu :** [COMPLÉTÉ — contrôle manuel à faire]
+    * **Alerte** : quand Yandex ne répond plus (clé expirée, absente, quota dépassé), l'écran Santé & Observabilité l'annonce dans une section « Calcul des courses » et le contrôle de santé alerte sur Telegram.
+    * **Qui tarife les courses** : l'écran dit en clair si les courses sont tarifées par Yandex, par OSRM ou sur une distance estimée, et signale le serveur public de démonstration d'OSRM.
+    * **Écran du livreur** : après la transmission d'une validation enregistrée hors connexion, acceptée ou refusée, ses courses sont relues sur le serveur.
+    * **Tests automatisés** : `Chantier35RoutingHealthTest.php` (7 tests), `ObservabilityPanel.test.tsx`, `driver_missions_after_replay_test.dart` (3 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

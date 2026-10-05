@@ -41,6 +41,7 @@ class OsrmRoutingService
             if ($response->successful()) {
                 $data = $response->json();
                 if (! empty($data['routes'][0])) {
+                    app(RoutingHealthService::class)->recordSuccess(RoutingHealthService::OSRM);
                     $route = $data['routes'][0];
                     $distanceMeters = $route['distance'] ?? 0;
                     $durationSeconds = $route['duration'] ?? 0;
@@ -61,9 +62,12 @@ class OsrmRoutingService
                         'source' => 'osrm',
                     ];
                 }
+            } else {
+                app(RoutingHealthService::class)->recordFailure(RoutingHealthService::OSRM, 'Erreur HTTP '.$response->status());
             }
         } catch (\Throwable $e) {
             Log::warning('[OsrmRoutingService] Échec appel OSRM : '.$e->getMessage().' — Bascule sur le repli résilient.');
+            app(RoutingHealthService::class)->recordFailure(RoutingHealthService::OSRM, 'Service injoignable');
         }
 
         // Repli résilient : Calcul Haversine avec facteur de sinuosité
@@ -271,4 +275,3 @@ class OsrmRoutingService
         return round($earthRadiusKm * $c, 3);
     }
 }
-

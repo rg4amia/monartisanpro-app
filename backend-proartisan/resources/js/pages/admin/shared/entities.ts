@@ -335,6 +335,21 @@ export interface ObservabilitySnapshot {
             created_at: string | null;
         }>;
     };
+    /** Services d'itinéraire qui tarifent les courses (Chantier 35). */
+    routing?: {
+        degraded: boolean;
+        mode: string;
+        osrm_public: boolean;
+        providers: Array<{
+            key: string;
+            label: string;
+            failing: boolean;
+            consecutive_failures: number;
+            last_success_at: string | null;
+            last_failure_at: string | null;
+            last_failure_reason: string | null;
+        }>;
+    };
     generated_at: string;
 }
 

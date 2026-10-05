@@ -29,7 +29,7 @@ export function ObservabilityPanel({
     onRetryJobs,
     onFlushJobs,
 }: ObservabilityPanelProps) {
-    const { queue, payments, fraud, referent, notifications } = snapshot;
+    const { queue, payments, fraud, referent, notifications, routing } = snapshot;
 
     return (
         <section className="mt-5 space-y-6">
@@ -159,6 +159,52 @@ export function ObservabilityPanel({
                     </tbody>
                 </DataTable>
             </Surface>
+
+            {routing ? (
+                <Surface className="rounded-[32px] p-5 lg:p-6">
+                    <SectionTitle description={routing.mode} title="Calcul des courses" />
+                    {routing.degraded ? (
+                        <p role="alert" className="mt-4 rounded-2xl border border-rose-300 bg-rose-50 px-4 py-3 text-sm text-rose-900">
+                            Yandex, le fournisseur d’itinéraires officiel, ne répond plus. Vérifiez la clé Yandex Distance Matrix du serveur.
+                            {routing.osrm_public
+                                ? ' En attendant, les courses sont tarifées par le serveur public de démonstration d’OSRM, sans garantie de service.'
+                                : ''}
+                        </p>
+                    ) : null}
+                    <DataTable className="mt-5">
+                        <thead>
+                            <tr>
+                                <th>Service</th>
+                                <th>État</th>
+                                <th>Dernière réponse correcte</th>
+                                <th>Dernier échec</th>
+                                <th>Motif</th>
+                            </tr>
+                        </thead>
+                        <tbody>
+                            {routing.providers.map((provider) => (
+                                <tr key={provider.key}>
+                                    <td className="text-xs font-semibold">{provider.label}</td>
+                                    <td className="text-xs">
+                                        {provider.failing
+                                            ? `Ne répond plus (${numberFormat.format(provider.consecutive_failures)} échecs de suite)`
+                                            : provider.last_success_at
+                                              ? 'Répond'
+                                              : 'Pas encore sollicité'}
+                                    </td>
+                                    <td className="text-xs text-[var(--admin-muted)]">
+                                        {provider.last_success_at ? dateTimeShort(provider.last_success_at) : '—'}
+                                    </td>
+                                    <td className="text-xs text-[var(--admin-muted)]">
+                                        {provider.last_failure_at ? dateTimeShort(provider.last_failure_at) : '—'}
+                                    </td>
+                                    <td className="text-xs text-[var(--admin-text-soft)]">{provider.last_failure_reason ?? '—'}</td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </DataTable>
+                </Surface>
+            ) : null}
 
             {notifications ? (
                 <Surface className="rounded-[32px] p-5 lg:p-6">

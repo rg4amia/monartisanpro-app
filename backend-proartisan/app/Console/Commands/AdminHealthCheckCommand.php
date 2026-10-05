@@ -39,6 +39,7 @@ class AdminHealthCheckCommand extends Command
             sprintf('• Fraude GPS J-Code (7 j) : <b>%d</b>', $counts['gps_fraud_7d']),
             sprintf('• Missions bloquées seuil Référent : <b>%d</b>', $counts['referent_blocked']),
             sprintf('• Notifications push/SMS en échec (24 h) : <b>%d</b>', $counts['failed_notifications_24h']),
+            sprintf('• Calcul des courses : <b>%s</b>', $counts['routing_degraded'] > 0 ? 'Yandex ne répond plus' : 'normal'),
             '',
             now()->format('d/m/Y H:i'),
         ];
