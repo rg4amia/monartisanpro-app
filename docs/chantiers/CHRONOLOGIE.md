@@ -8,7 +8,8 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
-| 2026-10-05 | Plan | [Chantier 35 — Services d'itinéraire surveillés, écran du livreur relu après un rejeu](plans/2026-10-05-chantier-35-sante-itineraires-et-rejeu-livreur.md) | livré (contrôle manuel à faire) | — |
+| 2026-10-05 | Plan | [Chantier 36 — Version de l'application incrémentée à chaque génération](plans/2026-10-05-chantier-36-version-incrementee-a-chaque-generation.md) | livré (installation sur appareil et envoi sur Google Play à faire) | — |
+| 2026-10-05 | Plan | [Chantier 35 — Services d'itinéraire surveillés, écran du livreur relu après un rejeu](plans/2026-10-05-chantier-35-sante-itineraires-et-rejeu-livreur.md) | livré (contrôle manuel à faire) | `af4478cd` |
 | 2026-10-05 | Plan | [Chantier 34 — Livraison à un point connu, estimation de course honnête, suspension levée par un administrateur](plans/2026-10-05-chantier-34-suites-commandes-et-courses.md) | livré (contrôle manuel à faire ; clé Yandex à réactiver) |`e5dfca4f` |
 | 2026-10-05 | Plan | [Chantier 33 — Refus d'une validation de code : dit à l'utilisateur, jamais perdu](plans/2026-10-05-chantier-33-refus-validation-code-mobile.md) | livré (nouvelle version de l'application à publier ; contrôle sur appareil à faire) |`fecdea42` |
 | 2026-10-05 | Plan | [Chantier 32 — Essais limités sur les codes de retrait et de réception](plans/2026-10-05-chantier-32-essais-limites-codes-commande.md) | livré (contrôle manuel à faire) | `48d24bf1` |

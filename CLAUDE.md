@@ -174,6 +174,8 @@ flutter run              # lancer sur émulateur/device
 flutter test             # tests unitaires et widget (tests `integration` ignorés, cf. dart_test.yaml)
 flutter test --tags integration --run-skipped  # tests d'intégration, backend Herd démarré
 flutter build apk        # build Android release → build/app/outputs/flutter-apk/ (emplacement de référence des APK, jamais la racine du dépôt)
+dart run tool/build_apk.dart           # APK de publication, version incrémentée (1.0.1+2 → 1.0.2+3) — Règle d'or 115
+dart run tool/build_apk.dart --bundle  # bundle (.aab) pour Google Play → build/app/outputs/bundle/release/
 ```
 
 ### Architecture Frontend
@@ -652,3 +654,12 @@ App Router (`src/app/`), composants partagés dans `src/components/`, accès API
 - **Écran du livreur** (`HomeController.refreshDriverMissionsAfterReplay`) : quand la file hors connexion change (`SyncService.pendingCount`, `failures`) et qu'elle est vide, l'accueil du livreur relit ses courses sur le serveur, cache local ignoré (`getMyOrders(forceRefresh: true)`). Tant qu'une validation attend d'être transmise, rien n'est relu. Une course refusée au rejeu restait affichée « en route ».
 - **Suite en séquentiel** : `php vendor/bin/pest` sans `--parallel` va à son terme sous Windows (13 minutes) ; le délai de 180 secondes ne la coupe plus (Règle d'or 110).
 - **Tests** : `Chantier35RoutingHealthTest.php`, `ObservabilityPanel.test.tsx`, `driver_missions_after_replay_test.dart`.
+115. **Version de l'application incrémentée à chaque génération (Chantier 36)** :
+- **Une seule commande** : `dart run tool/build_apk.dart`, depuis `frontend_flutter/`, génère l'APK de publication et augmente la version de `pubspec.yaml`. `--bundle` génère le bundle (`.aab`) destiné à Google Play. Ne plus modifier la ligne `version:` à la main ni lancer `flutter build apk --release` directement pour un fichier à distribuer.
+- **Incrément** : par défaut le correctif et le numéro de build (`1.0.1+2` → `1.0.2+3`) ; `--build-only`, `--minor`, `--major` choisissent le niveau, `--no-bump` régénère sans changer la version. Le numéro de build augmente toujours et ne repart jamais de 1 : Android refuse d'installer un numéro qui n'est pas supérieur à celui installé, Google Play refuse un numéro déjà envoyé.
+- **Échec** : `pubspec.yaml` revient à son état d'origine ; aucun numéro n'est consommé par un fichier qui n'existe pas. Une ligne `version:` absente ou sans numéro de build arrête la génération (Règle d'or 29).
+- **Clé Yandex** : la commande porte toujours `--dart-define-from-file=env.json` (Règle d'or 30) ; l'outil s'arrête sans `env.json`.
+- **Bundle** : l'outil s'arrête sans `android/key.properties`, faute de quoi le bundle serait signé avec la clé de débogage, que Google Play refuse. `--split-per-abi` ne s'applique pas à un bundle.
+- **Fichiers produits** : copie nommée d'après la version, que la génération suivante n'écrase pas — `build/app/outputs/flutter-apk/prosartisan-<version>-build<N>[-<architecture>].apk`, `build/app/outputs/bundle/release/prosartisan-<version>-build<N>.aab`.
+- **Hors périmètre** : le workflow `mobile-ci.yml` construit son APK sans passer par l'outil, donc sans incrément. Le changement de version de `pubspec.yaml` se commite avec le reste.
+- **Tests** : `test/tool/version_bump_test.dart`.
