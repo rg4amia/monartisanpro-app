@@ -36,6 +36,7 @@ class Sprint5ComplianceTest extends TestCase
             'city' => 'Abidjan',
             'is_default' => true,
         ]);
+        $address->setPosition(5.3550, -3.9900);
 
         $supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
         $supplier->setPosition(5.3598, -4.0083); // Abidjan Bingerville

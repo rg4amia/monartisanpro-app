@@ -10,6 +10,7 @@ use App\Services\AdminService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
 use Tests\Support\PaysOrders;
+use Tests\Support\Routing;
 use Tests\TestCase;
 
 /**
@@ -35,6 +36,8 @@ class OrderCodeVisibilityTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Routing::fakeOsrm();
 
         $this->client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $this->client->setPosition(5.3599, -4.0083);

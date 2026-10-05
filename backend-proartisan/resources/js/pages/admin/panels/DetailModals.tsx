@@ -17,6 +17,7 @@ import {
 } from '../shared';
 import type { AdminMission, AdminOrder, AdminTransaction, ArtisanScoreItem, ScoreLedgerEntryItem } from '../shared';
 import { MissionStateHistory } from './MissionHistory';
+import { OrderCodeSuspensionBlock } from './OrderCodeSuspensionBlock';
 import { OrderDisputeBlock } from './OrderDisputeBlock';
 
 function CloseButton({ onClose }: { onClose: () => void }) {
@@ -397,10 +398,12 @@ export function OrderDetailModal({
     order,
     onClose,
     canResolveDispute = false,
+    canManageOrder = false,
 }: {
     order: AdminOrder;
     onClose: () => void;
     canResolveDispute?: boolean;
+    canManageOrder?: boolean;
 }) {
     const [liveTelemetry, setLiveTelemetry] = useState<any>(null);
     const [loadingTelemetry, setLoadingTelemetry] = useState(false);
@@ -478,6 +481,7 @@ export function OrderDetailModal({
                 </div>
 
                 <OrderDisputeBlock order={order} canResolve={canResolveDispute} onResolved={onClose} />
+                <OrderCodeSuspensionBlock order={order} canLift={canManageOrder} onLifted={onClose} />
 
                 <div className="mt-6 rounded-2xl border border-[var(--admin-border)] bg-[#fcf8f2]/60 p-4">
                     <p className="text-[11px] font-bold uppercase tracking-wider text-[var(--admin-muted)] mb-3">Progression de la Course</p>

@@ -107,6 +107,7 @@ test('client can create order in delivery mode with dynamic maps calculation', f
         'city' => 'Abidjan',
         'is_default' => true,
     ]);
+    $address->setPosition(5.3550, -3.9900);
 
     $supplier = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);
     $agree = FournisseurAgree::create([

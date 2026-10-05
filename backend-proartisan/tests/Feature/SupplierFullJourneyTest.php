@@ -10,6 +10,7 @@ use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
 use Tests\Support\PaysOrders;
+use Tests\Support\Routing;
 use Tests\TestCase;
 
 /**
@@ -37,6 +38,8 @@ class SupplierFullJourneyTest extends TestCase
     {
         parent::setUp();
 
+        Routing::fakeOsrm();
+
         $this->client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $this->client->setPosition(5.3599, -4.0083);
         $this->clientAddress = Address::create([
@@ -47,6 +50,7 @@ class SupplierFullJourneyTest extends TestCase
             'city' => 'Abidjan',
             'is_default' => true,
         ]);
+        $this->clientAddress->setPosition(5.3550, -3.9900);
 
         $this->supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
         $this->supplier->setPosition(5.3400, -3.9800);

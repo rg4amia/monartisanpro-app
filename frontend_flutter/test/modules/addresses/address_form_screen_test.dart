@@ -174,6 +174,12 @@ void main() {
       // La ville est prérenseignée à "Abidjan" (repli pratique pour la
       // majorité des utilisateurs) : on la vide pour couvrir son propre
       // message de validation plutôt que de la laisser masquer ce cas.
+      // Le champ est sous le pli depuis l'ajout de la mention de position.
+      await tester.scrollUntilVisible(
+        find.byKey(const Key('address_form_city')),
+        120,
+        scrollable: find.byType(Scrollable).first,
+      );
       await tester.enterText(find.byKey(const Key('address_form_city')), '');
 
       await _tapSubmit(tester);
@@ -293,6 +299,23 @@ void main() {
       expect(spy.lastCreated!.lat, 5.36);
       expect(spy.lastCreated!.lng, -3.98);
       expect(spy.lastCreated!.addressLine, 'Cocody Angré, Abidjan');
+    },
+  );
+
+  testWidgets(
+    'sans position, le formulaire prévient que l\'adresse ne servira pas à une livraison',
+    (tester) async {
+      Get.put<AddressController>(_SpyAddressController());
+
+      await _pumpForm(tester);
+      await tester.pump();
+
+      expect(find.byKey(const Key('address_form_position_hint')), findsOneWidget);
+
+      await tester.tap(find.byKey(const Key('address_form_use_current_location')));
+      await tester.pumpAndSettle();
+
+      expect(find.byKey(const Key('address_form_position_hint')), findsNothing);
     },
   );
 }

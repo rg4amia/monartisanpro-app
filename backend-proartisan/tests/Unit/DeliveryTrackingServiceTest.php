@@ -16,6 +16,7 @@ use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Http;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\Geo;
+use Tests\Support\Routing;
 use Tests\TestCase;
 
 class DeliveryTrackingServiceTest extends TestCase
@@ -244,6 +245,8 @@ class DeliveryTrackingServiceTest extends TestCase
 
     public function test_order_tracking_api_endpoint(): void
     {
+        Routing::fakeOsrm();
+
         $order = $this->createTestOrder();
         $client = $order->client;
 
@@ -259,6 +262,8 @@ class DeliveryTrackingServiceTest extends TestCase
 
     public function test_order_pickup_and_delivery_validation(): void
     {
+        Routing::fakeOsrm();
+
         Storage::fake('public');
         $order = $this->createTestOrder();
         $driver = $order->driver;

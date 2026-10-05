@@ -149,6 +149,18 @@ class _AddressFormScreenState extends State<AddressFormScreen> {
                     : 'Utiliser ma position actuelle',
               ),
             ),
+            // Le serveur refuse une livraison à une adresse sans position
+            // (la course se calcule vers ce point) : on le dit ici, avant la
+            // commande, sans empêcher d'enregistrer l'adresse.
+            if (_lat == null || _lng == null) ...[
+              const SizedBox(height: 8),
+              const Text(
+                'Sans position sur la carte, cette adresse ne pourra pas '
+                'servir à une livraison de matériaux.',
+                key: Key('address_form_position_hint'),
+                style: TextStyle(fontSize: 12, color: AppColors.warning),
+              ),
+            ],
             const SizedBox(height: 20),
             _label('Libellé (optionnel)'),
             TextFormField(

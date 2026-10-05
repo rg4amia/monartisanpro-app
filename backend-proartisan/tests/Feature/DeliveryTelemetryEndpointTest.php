@@ -7,6 +7,7 @@ use App\Models\Order;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
+use Tests\Support\Routing;
 use Tests\TestCase;
 
 class DeliveryTelemetryEndpointTest extends TestCase
@@ -128,6 +129,8 @@ class DeliveryTelemetryEndpointTest extends TestCase
 
     public function test_client_can_retrieve_delivery_tracking_data(): void
     {
+        Routing::fakeOsrm();
+
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $client->setPosition(5.3599, -4.0083);
 

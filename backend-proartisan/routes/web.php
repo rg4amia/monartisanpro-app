@@ -5,6 +5,7 @@ use App\Http\Controllers\Admin\AdminCollectionController;
 use App\Http\Controllers\Admin\AdminDocumentController;
 use App\Http\Controllers\Admin\AdminFraudController;
 use App\Http\Controllers\Admin\AdminMissionHistoryController;
+use App\Http\Controllers\Admin\AdminOrderCodeController;
 use App\Http\Controllers\Admin\AdminOrderDisputeController;
 use App\Http\Controllers\Admin\AdminPayoutController;
 use App\Http\Controllers\Admin\AdminSessionController;
@@ -151,6 +152,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         // exigent un jeton et répondaient 401 en production.
         Route::get('/orders/{order}/tracking', [DeliveryTrackingController::class, 'getTracking'])->middleware('can:admin.missions.view')->name('orders.tracking');
         Route::post('/orders/{order}/reassign', [DeliveryTrackingController::class, 'reassign'])->middleware('can:admin.missions.manage')->name('orders.reassign');
+        Route::post('/orders/{order}/codes/unlock', [AdminOrderCodeController::class, 'unlock'])->middleware('can:admin.missions.manage')->name('orders.codes.unlock');
 
         // Litiges
         Route::post('/dispute-debts/{debt}/cancel', [AdminOrderDisputeController::class, 'cancelDebt'])->middleware('can:admin.transactions.manage')->name('dispute-debts.cancel');

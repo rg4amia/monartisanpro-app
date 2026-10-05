@@ -106,7 +106,7 @@ class Order extends Model
         'reception_code_locked_until',
     ];
 
-    protected $appends = ['delivery_fare'];
+    protected $appends = ['delivery_fare', 'code_suspensions'];
 
     protected function casts(): array
     {
@@ -171,6 +171,22 @@ class Order extends Model
         }
 
         return max(0, $this->deliveryFareTotal() - (int) $this->delivery_fare_prepaid);
+    }
+
+    /**
+     * Suspensions en cours sur la saisie des codes (Chantier 32) : pour chaque
+     * code, l'instant où la saisie redevient possible, ou null. Ni le code ni
+     * le nombre de codes faux n'en font partie.
+     */
+    protected function codeSuspensions(): Attribute
+    {
+        return Attribute::get(function () {
+            $until = fn (string $kind): ?string => ($this->{"{$kind}_code_locked_until"}?->isFuture() ?? false)
+                ? $this->{"{$kind}_code_locked_until"}->toIso8601String()
+                : null;
+
+            return ['pickup' => $until('pickup'), 'reception' => $until('reception')];
+        });
     }
 
     /**

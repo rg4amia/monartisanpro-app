@@ -20,6 +20,9 @@ class DeliveryPricingService
 
     public const MINIMUM_FARE = 1000;    // Forfait plancher 1000 FCFA
 
+    /** Distance estimée sans service d'itinéraire : vol d'oiseau corrigé de la sinuosité urbaine. */
+    public const SOURCE_ROAD_ESTIMATE = 'estimation_routiere';
+
     public const FALLBACK_FARE = 2500;   // Forfait de repli sans coordonnées GPS
 
     public const VEHICLE_MULTIPLIERS = [
@@ -119,8 +122,24 @@ class DeliveryPricingService
                     'duration' => (float) $osrmRoute['duration_min'] * 60,
                     'source' => 'osrm',
                 ];
+            } elseif (isset($osrmRoute['distance_km'], $osrmRoute['duration_min'])) {
+                // OSRM n'a pas répondu non plus : on retient son estimation
+                // routière (vol d'oiseau × sinuosité urbaine, à la vitesse
+                // moyenne en ville) plutôt que la ligne droite à 40 km/h. Celle-ci
+                // sous-évalue la course d'environ un tiers ; or ce montant
+                // plafonne aussi le tarif relevé au GPS, si bien qu'un livreur
+                // au trajet honnête se voyait raboter sa course.
+                $directions = [
+                    'distance' => (float) $osrmRoute['distance_km'] * 1000,
+                    'duration' => (float) $osrmRoute['duration_min'] * 60,
+                    'source' => self::SOURCE_ROAD_ESTIMATE,
+                ];
             }
         }
+
+        // Aucun service d'itinéraire n'a répondu : la distance est estimée,
+        // et la réponse le dit (`is_fallback`).
+        $isStraightLine = in_array($directions['source'] ?? null, ['haversine_fallback', self::SOURCE_ROAD_ESTIMATE], true);
 
         $distanceMeters = (float) ($directions['distance'] ?? 0);
         $durationSeconds = (float) ($directions['duration'] ?? 0);
@@ -144,7 +163,8 @@ class DeliveryPricingService
             'surge_multiplier' => $surgeMultiplier,
             'is_peak_hours' => $isPeakHours,
             'recommended_vehicle_class' => $recommendedVehicle,
-            'is_fallback' => false,
+            'is_fallback' => $isStraightLine,
+            'distance_source' => $directions['source'] ?? null,
             'fare_breakdown' => [
                 'minimum_fare' => self::MINIMUM_FARE,
                 'distance_fare' => (int) round($distanceFare),

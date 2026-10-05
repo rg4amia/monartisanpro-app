@@ -82,6 +82,7 @@ test('client can checkout split-cart with multiple suppliers in single transacti
         'city' => 'Abidjan',
         'is_default' => true,
     ]);
+    $address->setPosition(5.3550, -3.9900);
     $supplier1 = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250202020202']);
     $supplier2 = User::factory()->create(['role' => 'fournisseur', 'phone' => '+2250303030303']);
 

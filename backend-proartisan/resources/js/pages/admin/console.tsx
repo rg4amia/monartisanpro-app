@@ -1227,6 +1227,7 @@ export default function AdminConsole({ initialTab }: { initialTab: AdminTab }) {
                         order={selectedOrderForDetails}
                         onClose={() => setSelectedOrderForDetails(null)}
                         canResolveDispute={canArbitrateLitiges}
+                        canManageOrder={can(permissions, 'admin.missions.manage')}
                     />
                 )}
 

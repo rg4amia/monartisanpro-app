@@ -287,6 +287,7 @@ class DriverWalletIntegrityTest extends TestCase
             'city' => 'Abidjan',
             'is_default' => true,
         ]);
+        $address->setPosition(5.3550, -3.9900);
 
         $result = app(OrderService::class)->createMultiSupplierOrders($this->client, [[
             'supplier_id' => $this->supplier->id,

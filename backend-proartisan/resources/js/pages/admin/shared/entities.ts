@@ -195,6 +195,8 @@ export interface AdminOrder {
     waiting_time_minutes?: number | null;
     dispute_reason?: string | null;
     dispute_opened_at?: string | null;
+    /** Saisie d'un code suspendue jusqu'à cet instant (ISO), ou null. */
+    code_suspensions?: { pickup: string | null; reception: string | null } | null;
     created_at: string;
     client?: {
         id: number;

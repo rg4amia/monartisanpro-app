@@ -6,9 +6,13 @@ use Illuminate\Bus\Dispatcher;
 use Illuminate\Foundation\Testing\TestCase as BaseTestCase;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Http;
+use Illuminate\Support\Facades\Log;
 
 abstract class TestCase extends BaseTestCase
 {
+    /** @var list<string> Appels extérieurs bloqués puis avalés par un repli. */
+    private array $strayRequests = [];
+
     protected function setUp(): void
     {
         parent::setUp();
@@ -28,5 +32,27 @@ abstract class TestCase extends BaseTestCase
         // lieu de partir sur le réseau, où il ralentit la suite et rend son
         // résultat dépendant de la connexion.
         Http::preventStrayRequests();
+
+        // Beaucoup de services attrapent cette exception et se replient
+        // (distance à vol d'oiseau, push ignoré) : le test passerait sans que
+        // l'appel soit jamais simulé. On relève donc ces replis dans le journal
+        // pour faire échouer le test à sa clôture.
+        $this->strayRequests = [];
+        Log::listen(function ($entry) {
+            if (is_string($entry->message) && str_contains($entry->message, 'without a matching fake')) {
+                $this->strayRequests[] = $entry->message;
+            }
+        });
+    }
+
+    protected function tearDown(): void
+    {
+        $strays = $this->strayRequests;
+
+        parent::tearDown();
+
+        if ($strays !== []) {
+            $this->fail('Appel extérieur non simulé (Http::fake, ou Tests\Support\Routing::fakeOsrm()) :'.PHP_EOL.implode(PHP_EOL, array_unique($strays)));
+        }
     }
 }

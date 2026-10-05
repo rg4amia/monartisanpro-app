@@ -7,6 +7,7 @@ use App\Models\Transaction;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\Support\Geo;
+use Tests\Support\Routing;
 use Tests\TestCase;
 
 /**
@@ -31,6 +32,8 @@ class OrderValidationIdempotencyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Routing::fakeOsrm();
 
         $this->client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
         $this->client->setPosition(5.3599, -4.0083);

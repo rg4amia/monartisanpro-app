@@ -54,11 +54,28 @@ class OrderService
     }
 
     /**
+     * Une livraison se fait à un point connu : l'adresse choisie doit porter
+     * une position. Sans elle, la course se calculait vers la position du
+     * compte du client, qui n'est pas l'endroit où il se fait livrer.
+     */
+    private function assertAddressLocated(?Address $address, string $deliveryMode): void
+    {
+        if ($deliveryMode !== 'delivery' || $address === null) {
+            return;
+        }
+
+        if ($address->getPositionCoords() === null) {
+            throw new \Exception('Cette adresse n\'a pas de position sur la carte. Ouvrez-la dans votre carnet d\'adresses, indiquez sa position, puis repassez votre commande.');
+        }
+    }
+
+    /**
      * Crée une commande et calcule les coûts associés.
      */
     public function createOrder(User $client, User $supplier, array $items, string $deliveryMode, string $vehicleClass = 'moto', float $surgeMultiplier = 1.0, ?string $promoCode = null, ?Address $address = null, ?int $missionId = null): Order
     {
         $this->assertSupplierAvailable($supplier);
+        $this->assertAddressLocated($address, $deliveryMode);
 
         return DB::transaction(function () use ($client, $supplier, $items, $deliveryMode, $vehicleClass, $surgeMultiplier, $promoCode, $address, $missionId) {
             $subtotal = 0;
@@ -198,6 +215,7 @@ class OrderService
                 $supplier = User::where('role', 'fournisseur')->findOrFail($pkg['supplier_id']);
                 $this->assertSupplierAvailable($supplier);
                 $deliveryMode = $pkg['delivery_mode'] ?? 'delivery';
+                $this->assertAddressLocated($address, $deliveryMode);
                 $vehicleClass = $pkg['vehicle_class'] ?? 'moto';
                 $surgeMultiplier = (float) ($pkg['surge_multiplier'] ?? 1.0);
 

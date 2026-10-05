@@ -39,6 +39,7 @@ beforeEach(function () {
         'city' => 'Abidjan',
         'is_default' => true,
     ]);
+    $this->address->setPosition(5.3550, -3.9900);
     $this->supplier = User::factory()->create(['role' => 'fournisseur', 'kyc_status' => 'actif']);
     $this->product = SupplierProduct::create(['supplier_id' => $this->supplier->id, 'sku' => 'CIM-1', 'name' => 'Ciment', 'unit_price' => 5000, 'stock_quantity' => 50, 'is_active' => true]);
 });

@@ -18,6 +18,7 @@ use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
 use Illuminate\Support\Facades\Storage;
 use Tests\Support\Geo;
+use Tests\Support\Routing;
 use Tests\TestCase;
 
 /**
@@ -51,6 +52,8 @@ class EcosystemJourneyTest extends TestCase
     protected function setUp(): void
     {
         parent::setUp();
+
+        Routing::fakeOsrm();
         Storage::fake('public');
 
         $this->admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif', 'phone' => '+2250000000000']);
@@ -395,6 +398,8 @@ class EcosystemJourneyTest extends TestCase
             'recipient_phone' => '+2250701000001',
             'address_line' => 'Cocody Angré 8e Tranche, villa 12',
             'city' => 'Abidjan',
+            'latitude' => 5.3550,
+            'longitude' => -3.9900,
         ])->assertCreated()->json('data.id');
 
         /** @var User $intrus */

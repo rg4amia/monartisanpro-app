@@ -12,7 +12,7 @@ uses(RefreshDatabase::class);
 
 function createAddress(User $user, array $overrides = []): Address
 {
-    return Address::create(array_merge([
+    $address = Address::create(array_merge([
         'user_id' => $user->id,
         'label' => 'Domicile',
         'recipient_name' => $user->name ?? 'Destinataire',
@@ -21,6 +21,10 @@ function createAddress(User $user, array $overrides = []): Address
         'city' => 'Abidjan',
         'is_default' => false,
     ], $overrides));
+    // Une adresse de livraison porte une position (Chantier 34).
+    $address->setPosition(5.3550, -3.9900);
+
+    return $address;
 }
 
 test('client can create their first address and it becomes the default', function () {

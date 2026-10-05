@@ -7,7 +7,7 @@
 | Mis à jour le | 2026-10-05 |
 | Auteur | Claude Code |
 | Analyses liées | — (suite du Chantier 32 : comportement de la file d'attente hors ligne face à la limite d'essais) |
-| Commits | — |
+| Commits | `fecdea42` |
 
 ## Objectif
 

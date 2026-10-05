@@ -8,7 +8,8 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
-| 2026-10-05 | Plan | [Chantier 33 — Refus d'une validation de code : dit à l'utilisateur, jamais perdu](plans/2026-10-05-chantier-33-refus-validation-code-mobile.md) | livré (nouvelle version de l'application à publier ; contrôle sur appareil à faire) | — |
+| 2026-10-05 | Plan | [Chantier 34 — Livraison à un point connu, estimation de course honnête, suspension levée par un administrateur](plans/2026-10-05-chantier-34-suites-commandes-et-courses.md) | livré (contrôle manuel à faire ; clé Yandex à réactiver) | — |
+| 2026-10-05 | Plan | [Chantier 33 — Refus d'une validation de code : dit à l'utilisateur, jamais perdu](plans/2026-10-05-chantier-33-refus-validation-code-mobile.md) | livré (nouvelle version de l'application à publier ; contrôle sur appareil à faire) |`fecdea42` |
 | 2026-10-05 | Plan | [Chantier 32 — Essais limités sur les codes de retrait et de réception](plans/2026-10-05-chantier-32-essais-limites-codes-commande.md) | livré (contrôle manuel à faire) | `48d24bf1` |
 | 2026-10-05 | Plan | [Chantier 31 — Destination d'une livraison figée sur la commande, et suite de tests sans réseau](plans/2026-10-05-chantier-31-destination-livraison-et-tests-sans-reseau.md) | livré (contrôle manuel à faire) | `e1da17a3` |
 | 2026-10-04 | Plan | [Chantier 30 — Corrections des commandes de matériaux et du défi anti-robot](plans/2026-10-04-chantier-30-corrections-commandes-et-anti-robot.md) | livré (contrôle manuel à faire) | — |
