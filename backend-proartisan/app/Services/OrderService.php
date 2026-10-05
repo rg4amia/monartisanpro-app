@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Enums\PaymentProvider;
 use App\Enums\PaymentStatus;
 use App\Enums\WalletType;
+use App\Exceptions\OrderCodeLockedException;
 use App\Models\Address;
 use App\Models\DeliveryTracking;
 use App\Models\Order;
@@ -882,27 +883,109 @@ class OrderService
     }
 
     /**
+     * Contrôle un code saisi et tient le compte des codes faux de la commande.
+     *
+     * Le code ne fait que 4 chiffres : sans limite, il se trouve par essais
+     * successifs. Après `max_attempts` codes faux, la validation de ce code est
+     * suspendue — tout essai est alors refusé sans être comparé, le bon code
+     * compris — pour une durée qui s'allonge à chaque nouvelle série.
+     *
+     * Le compte s'enregistre dans sa propre transaction, close avant le
+     * refus : dans celle de la validation, l'exception l'annulerait. La ligne
+     * est verrouillée pour que des essais simultanés ne se comptent pas pour un.
+     *
+     * @param  'pickup'|'reception'  $kind
+     * @param  list<string>  $prefixes
+     *
+     * @throws OrderCodeLockedException
+     * @throws \Exception
+     */
+    private function assertCodeAccepted(Order $order, string $kind, string $code, array $prefixes, string $wrongCodeMessage): void
+    {
+        $attemptsColumn = "{$kind}_code_attempts";
+        $lockColumn = "{$kind}_code_locked_until";
+        $maxAttempts = max(1, (int) config('prosartisan.order_codes.max_attempts', 5));
+        $inputCode = strtoupper(trim($code));
+
+        $outcome = DB::transaction(function () use ($order, $kind, $inputCode, $prefixes, $attemptsColumn, $lockColumn, $maxAttempts) {
+            $locked = Order::whereKey($order->id)->lockForUpdate()->firstOrFail();
+
+            if ($locked->{$lockColumn} !== null && $locked->{$lockColumn}->isFuture()) {
+                return ['status' => 'locked', 'until' => $locked->{$lockColumn}];
+            }
+
+            $expectedCode = strtoupper(trim((string) $locked->{"{$kind}_code"}));
+            if ($this->codeMatches($inputCode, $expectedCode, $prefixes)) {
+                if ($locked->{$attemptsColumn} > 0 || $locked->{$lockColumn} !== null) {
+                    $locked->forceFill([$attemptsColumn => 0, $lockColumn => null])->saveQuietly();
+                }
+
+                return ['status' => 'ok'];
+            }
+
+            $attempts = $locked->{$attemptsColumn} + 1;
+            if ($attempts % $maxAttempts !== 0) {
+                $locked->forceFill([$attemptsColumn => $attempts])->saveQuietly();
+
+                return ['status' => 'wrong'];
+            }
+
+            $steps = array_values((array) config('prosartisan.order_codes.lock_minutes', [5, 30, 60]));
+            $minutes = (int) ($steps[min(intdiv($attempts, $maxAttempts), count($steps)) - 1] ?? 5);
+            $until = now()->addMinutes($minutes);
+            $locked->forceFill([$attemptsColumn => $attempts, $lockColumn => $until])->saveQuietly();
+
+            return ['status' => 'just_locked', 'until' => $until, 'attempts' => $attempts, 'minutes' => $minutes];
+        });
+
+        if ($outcome['status'] === 'ok') {
+            return;
+        }
+
+        if ($outcome['status'] === 'wrong') {
+            throw new \Exception($wrongCodeMessage);
+        }
+
+        if ($outcome['status'] === 'just_locked') {
+            Log::warning("[Commande] Code de {$kind} suspendu après {$outcome['attempts']} codes faux", ['order_id' => $order->id]);
+
+            try {
+                app(NotificationService::class)->notifyAdmins(
+                    'commande.code_suspendu.admin',
+                    [
+                        'commande' => $order->id,
+                        'type_code' => $kind === 'pickup' ? 'retrait' : 'réception',
+                        'essais' => $outcome['attempts'],
+                        'duree' => OrderCodeLockedException::durationLabel($outcome['minutes']),
+                    ],
+                    ['order_id' => $order->id]
+                );
+            } catch (\Throwable $e) {
+                Log::warning('[Commande] Alerte admin non envoyée : '.$e->getMessage());
+            }
+        }
+
+        throw new OrderCodeLockedException($outcome['until']);
+    }
+
+    /**
      * Validation du code de retrait (chez le fournisseur).
      * Libère immédiatement la part des matériaux au profit du fournisseur.
      */
     public function verifyPickup(Order $order, string $code, ?string $photoUrl = null): Order
     {
-        return DB::transaction(function () use ($order, $code, $photoUrl) {
-            $inputCode = strtoupper(trim($code));
-            $expectedCode = strtoupper(trim($order->pickup_code));
+        // Seules sont acceptées les formes qui contiennent réellement le
+        // secret tiré à la création de la commande (4 chiffres aléatoires,
+        // cf. la génération de `pickup_code`). Les variantes dérivées de
+        // l'identifiant de commande — « RET-42 » — ont été retirées : cet
+        // identifiant n'est pas secret, et les accepter permettait à un
+        // livreur de valider un retrait sans jamais s'être présenté chez le
+        // fournisseur, donc de déclencher une libération de fonds. Une
+        // constante universelle (« RET-5561 »), valable pour n'importe
+        // quelle commande, traînait également.
+        $this->assertCodeAccepted($order, 'pickup', $code, ['RET', 'RETRAIT', 'LIVREUR'], 'Le code de retrait ou de prise en charge est incorrect.');
 
-            // Seules sont acceptées les formes qui contiennent réellement le
-            // secret tiré à la création de la commande (4 chiffres aléatoires,
-            // cf. la génération de `pickup_code`). Les variantes dérivées de
-            // l'identifiant de commande — « RET-42 » — ont été retirées : cet
-            // identifiant n'est pas secret, et les accepter permettait à un
-            // livreur de valider un retrait sans jamais s'être présenté chez le
-            // fournisseur, donc de déclencher une libération de fonds. Une
-            // constante universelle (« RET-5561 »), valable pour n'importe
-            // quelle commande, traînait également.
-            if (! $this->codeMatches($inputCode, $expectedCode, ['RET', 'RETRAIT', 'LIVREUR'])) {
-                throw new \Exception('Le code de retrait ou de prise en charge est incorrect.');
-            }
+        return DB::transaction(function () use ($order, $photoUrl) {
 
             // Idempotence : la même validation peut arriver deux fois — le
             // fournisseur confirme depuis son appareil pendant que celle du
@@ -989,21 +1072,17 @@ class OrderService
      */
     public function verifyDelivery(Order $order, string $code, ?string $photoUrl = null): Order
     {
-        return DB::transaction(function () use ($order, $code, $photoUrl) {
-            if ($order->delivery_mode !== 'delivery') {
-                throw new \Exception("Cette commande n'implique pas de livraison.");
-            }
+        if ($order->delivery_mode !== 'delivery') {
+            throw new \Exception("Cette commande n'implique pas de livraison.");
+        }
 
-            $inputCode = strtoupper(trim($code));
-            $expectedCode = strtoupper(trim($order->reception_code));
+        // Même resserrement qu'au retrait : le code de réception est remis
+        // au livreur par le client, en main propre. C'est sa seule preuve
+        // de présence. « REC-42 », dérivable de l'identifiant de commande,
+        // permettait au livreur de se payer sans avoir livré.
+        $this->assertCodeAccepted($order, 'reception', $code, ['REC', 'RECEPTION'], 'Le code de réception de livraison est incorrect.');
 
-            // Même resserrement qu'au retrait : le code de réception est remis
-            // au livreur par le client, en main propre. C'est sa seule preuve
-            // de présence. « REC-42 », dérivable de l'identifiant de commande,
-            // permettait au livreur de se payer sans avoir livré.
-            if (! $this->codeMatches($inputCode, $expectedCode, ['REC', 'RECEPTION'])) {
-                throw new \Exception('Le code de réception de livraison est incorrect.');
-            }
+        return DB::transaction(function () use ($order, $photoUrl) {
 
             // Idempotence : le client peut confirmer la réception depuis son
             // appareil au moment où celle du livreur, mise en file faute de

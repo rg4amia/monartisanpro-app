@@ -778,6 +778,14 @@ class NotificationCatalog
             'body' => "La course de votre commande #{commande} ({montant}) n'a pas été réglée malgré nos rappels. Vous ne pouvez plus commander ni publier de mission jusqu'à son paiement depuis l'application.",
             'sms' => false,
         ],
+        'commande.code_suspendu.admin' => [
+            'label' => 'Validation d\'un code suspendue après des codes faux',
+            'domain' => 'livraisons', 'audience' => 'admin', 'type' => 'fraud_alert',
+            'variables' => ['commande' => 'Numéro de la commande', 'type_code' => 'Code concerné (retrait ou réception)', 'essais' => 'Nombre de codes faux saisis', 'duree' => 'Durée de la suspension'],
+            'title' => 'Codes faux répétés sur une commande',
+            'body' => 'Commande #{commande} : {essais} codes de {type_code} faux. La validation est suspendue pendant {duree}.',
+            'sms' => false,
+        ],
         'course.impayee.admin' => [
             'label' => 'Client restreint pour course impayée',
             'domain' => 'livraisons', 'audience' => 'admin', 'type' => 'delivery_fare_unpaid',

@@ -7,7 +7,7 @@
 | Mis à jour le | 2026-10-05 |
 | Auteur | Claude Code |
 | Analyses liées | — (relecture d'un rapport d'audit global fourni par Inza Bamba, le 05/10/2026) |
-| Commits | — |
+| Commits | `e1da17a3` |
 
 ## Objectif
 

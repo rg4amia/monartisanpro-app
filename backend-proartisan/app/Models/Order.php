@@ -99,6 +99,11 @@ class Order extends Model
         // élément de livraison sérialisé.
         'delivery_latitude',
         'delivery_longitude',
+        // Compteurs d'essais des codes : état interne (Chantier 32).
+        'pickup_code_attempts',
+        'pickup_code_locked_until',
+        'reception_code_attempts',
+        'reception_code_locked_until',
     ];
 
     protected $appends = ['delivery_fare'];
@@ -117,6 +122,10 @@ class Order extends Model
             'delivery_fare_settled_at' => 'datetime',
             'delivery_fare_reminders_count' => 'integer',
             'delivery_fare_last_reminder_at' => 'datetime',
+            'pickup_code_attempts' => 'integer',
+            'pickup_code_locked_until' => 'datetime',
+            'reception_code_attempts' => 'integer',
+            'reception_code_locked_until' => 'datetime',
             'delivery_latitude' => 'float',
             'delivery_longitude' => 'float',
             'actual_distance_km' => 'float',

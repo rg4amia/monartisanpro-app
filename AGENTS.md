@@ -788,6 +788,15 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 - **Clés neutralisées** : `phpunit.xml` vide `ONESIGNAL_*` et `YANDEX_*` ; les clés réelles du `.env` local ne servent jamais aux tests. Un test qui a besoin d'un service configuré pose lui-même sa configuration.
 - **Délai d'exécution** : un traitement qui allonge `set_time_limit` rétablit la valeur précédente dans un `finally` (`GenerateKnowledgeSheetsJob`). Laissé en place, le délai s'applique à tout le processus : la suite de tests, exécutée dans le même processus, était coupée 180 secondes plus tard. La propriété `$timeout` d'un job n'a d'effet que sous un worker de file d'attente, absent en production.
 - **Tests** : `Chantier23LlmKnowledgeTest.php`.
+147. **Codes de retrait et de réception : essais limités, livreur de la commande seulement (Chantier 32)** :
+- **Essais comptés par commande et par code** (`OrderService::assertCodeAccepted`, colonnes `orders.pickup_code_attempts` / `reception_code_attempts` et `*_locked_until`) : après `prosartisan.order_codes.max_attempts` codes faux (5), la validation de ce code est suspendue. Le code ne fait que 4 chiffres : sans limite, un livreur le trouvait par essais successifs et se faisait régler une course non livrée.
+- **Pendant la suspension** : tout essai est refusé sans être comparé, le bon code compris, et ne prolonge rien (`OrderCodeLockedException`, message en français, même réponse HTTP que les autres refus de la route). Un bon code accepté remet le compteur à zéro.
+- **Durées** (`prosartisan.order_codes.lock_minutes`, décision du 05/10/2026) : 5 minutes, puis 30 minutes, puis 1 heure pour chaque série suivante. La suspension se lève seule ; il n'existe pas de déblocage manuel.
+- **Compte hors de la transaction de validation** : le compteur s'enregistre dans sa propre transaction, close avant le refus — dans celle de la validation, l'exception l'annulerait. La ligne est verrouillée (`lockForUpdate`) pour que des essais simultanés ne se comptent pas pour un.
+- **Une seule voie** : toute validation d'un code passe par `OrderService::verifyPickup` / `verifyDelivery` ; ne jamais comparer un code ailleurs.
+- **USSD et SMS** (`UssdController::orderFor`) : le rôle livreur ne suffit pas, seul le livreur de la commande ou un administrateur présente un code (`Order::canValidatePickup` / `canValidateDelivery`, Règle d'or 36). Un autre livreur reçoit la réponse d'une commande inconnue et ne fait pas avancer le compteur.
+- **Alerte** : chaque suspension prévient les administrateurs (`commande.code_suspendu.admin`, push seul, jamais le code — Règles d'or 38 et 80).
+- **Tests** : `Chantier32OrderCodeAttemptLimitTest.php`.
 
 ## 📎 Fichier de référence du flux
 

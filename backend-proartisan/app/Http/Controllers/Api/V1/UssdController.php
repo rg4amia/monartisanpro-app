@@ -65,7 +65,7 @@ class UssdController extends Controller
             $cleaned = strtoupper($text);
 
             if ($parsed = $this->parseValidationInstruction($cleaned)) {
-                return $this->executeValidation($parsed);
+                return $this->executeValidation($parsed, $user);
             }
 
             if ($this->looksLikeValidationInstruction($cleaned)) {
@@ -106,7 +106,7 @@ class UssdController extends Controller
                 $orderId = $parts[1];
                 $code = $parts[2];
 
-                return $this->executePickup($orderId, $code);
+                return $this->executePickup($orderId, $code, $user);
             }
         } elseif ($choice === '2') {
             // Livraison
@@ -124,7 +124,7 @@ class UssdController extends Controller
                 $orderId = $parts[1];
                 $code = $parts[2];
 
-                return $this->executeDelivery($orderId, $code);
+                return $this->executeDelivery($orderId, $code, $user);
             }
         }
 
@@ -175,20 +175,38 @@ class UssdController extends Controller
     /**
      * @param  array{type: string, order_id: string, code: string}  $parsed
      */
-    private function executeValidation(array $parsed)
+    private function executeValidation(array $parsed, User $user)
     {
         return $parsed['type'] === 'pickup'
-            ? $this->executePickup($parsed['order_id'], $parsed['code'])
-            : $this->executeDelivery($parsed['order_id'], $parsed['code']);
+            ? $this->executePickup($parsed['order_id'], $parsed['code'], $user)
+            : $this->executeDelivery($parsed['order_id'], $parsed['code'], $user);
+    }
+
+    /**
+     * Le rôle livreur ne suffit pas : seul le livreur de cette commande (ou un
+     * administrateur) présente son code. Sans cela, tout livreur tentait le
+     * code de n'importe quelle commande et en faisait suspendre la validation.
+     * La réponse est celle d'une commande inconnue.
+     */
+    private function orderFor(string $orderId, string $type, User $user): ?Order
+    {
+        $order = Order::find($orderId);
+        if (! $order) {
+            return null;
+        }
+
+        $allowed = $type === 'pickup' ? $order->canValidatePickup($user) : $order->canValidateDelivery($user);
+
+        return $allowed ? $order : null;
     }
 
     /**
      * Valider la récupération de commande.
      */
-    private function executePickup(string $orderId, string $code)
+    private function executePickup(string $orderId, string $code, User $user)
     {
         try {
-            $order = Order::find($orderId);
+            $order = $this->orderFor($orderId, 'pickup', $user);
             if (! $order) {
                 return response("END Erreur: Commande #{$orderId} introuvable.", 200)
                     ->header('Content-Type', 'text/plain');
@@ -207,10 +225,10 @@ class UssdController extends Controller
     /**
      * Valider la livraison finale.
      */
-    private function executeDelivery(string $orderId, string $code)
+    private function executeDelivery(string $orderId, string $code, User $user)
     {
         try {
-            $order = Order::find($orderId);
+            $order = $this->orderFor($orderId, 'delivery', $user);
             if (! $order) {
                 return response("END Erreur: Commande #{$orderId} introuvable.", 200)
                     ->header('Content-Type', 'text/plain');
@@ -256,7 +274,7 @@ class UssdController extends Controller
             $orderId = $parsed['order_id'];
 
             try {
-                $order = Order::find($orderId);
+                $order = $this->orderFor($orderId, $parsed['type'], $user);
                 if (! $order) {
                     $reply = "Erreur ProsArtisan: La commande #{$orderId} n'existe pas.";
                 } elseif ($parsed['type'] === 'pickup') {

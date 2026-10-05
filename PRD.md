@@ -775,6 +775,11 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
 66. **Fiabilité de la suite de tests :** [COMPLÉTÉ]
     * **Aucun appel réseau en test** : tout appel non simulé à un service extérieur est bloqué ; les clés OneSignal et Yandex du poste de développement ne servent plus aux tests.
     * **Délai d'exécution** : la génération des fiches de l'Assistant IA rend au processus son délai d'origine ; la suite complète ne s'interrompt plus après 180 secondes.
+67. **Chantier 32 — Essais limités sur les codes de retrait et de réception :** [COMPLÉTÉ — contrôle manuel à faire]
+    * **Suspension après 5 codes faux** : la validation du code concerné est suspendue 5 minutes, puis 30 minutes, puis 1 heure pour chaque série suivante ; elle se lève seule. Le code de retrait et le code de réception sont comptés séparément.
+    * **USSD et SMS** : seul le livreur de la commande peut présenter un code ; un autre livreur ne valide rien et ne fait suspendre aucun code.
+    * **Alerte** : les administrateurs sont prévenus à chaque suspension.
+    * **Tests automatisés** : `Chantier32OrderCodeAttemptLimitTest.php` (11 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

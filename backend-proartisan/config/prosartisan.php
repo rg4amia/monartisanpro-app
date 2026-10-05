@@ -36,6 +36,16 @@ return [
         ],
     ],
 
+    /*
+     * Codes de retrait et de réception des commandes (4 chiffres) : nombre de
+     * codes faux tolérés avant suspension, et durée de chaque suspension
+     * successive en minutes — la dernière vaut pour toutes les suivantes.
+     */
+    'order_codes' => [
+        'max_attempts' => 5,
+        'lock_minutes' => [5, 30, 60],
+    ],
+
     'mission' => [
         'referent_threshold' => env('REFERENT_THRESHOLD', 2000000), // FCFA
     ],

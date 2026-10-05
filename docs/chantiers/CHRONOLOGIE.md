@@ -8,7 +8,8 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
-| 2026-10-05 | Plan | [Chantier 31 — Destination d'une livraison figée sur la commande, et suite de tests sans réseau](plans/2026-10-05-chantier-31-destination-livraison-et-tests-sans-reseau.md) | livré (contrôle manuel à faire) | — |
+| 2026-10-05 | Plan | [Chantier 32 — Essais limités sur les codes de retrait et de réception](plans/2026-10-05-chantier-32-essais-limites-codes-commande.md) | livré (contrôle manuel à faire) | — |
+| 2026-10-05 | Plan | [Chantier 31 — Destination d'une livraison figée sur la commande, et suite de tests sans réseau](plans/2026-10-05-chantier-31-destination-livraison-et-tests-sans-reseau.md) | livré (contrôle manuel à faire) | `e1da17a3` |
 | 2026-10-04 | Plan | [Chantier 30 — Corrections des commandes de matériaux et du défi anti-robot](plans/2026-10-04-chantier-30-corrections-commandes-et-anti-robot.md) | livré (contrôle manuel à faire) | — |
 | 2026-10-04 | Plan | [Chantier 29 — Droits accordés dans la limite des siens, libellés des actions, tableau de bord allégé](plans/2026-10-04-chantier-29-droits-accordes-libelles-tableau-de-bord.md) | livré (contrôle dans le navigateur à faire) | — |
 | 2026-10-04 | Plan | [Chantier 28 — Gestion des rôles : un écran qui dit vrai, des garde-fous qui portent](plans/2026-10-04-chantier-28-gestion-des-roles.md) | livré (contrôle dans le navigateur à faire) | — |
