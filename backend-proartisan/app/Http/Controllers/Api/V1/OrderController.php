@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Api\V1;
 
 use App\Enums\PaymentProvider;
+use App\Exceptions\OrderCodeLockedException;
 use App\Exceptions\PaymentException;
 use App\Http\Controllers\Controller;
 use App\Models\Address;
@@ -301,6 +302,20 @@ class OrderController extends Controller
     }
 
     /**
+     * Validation suspendue après trop de codes faux : 429 et non 400, pour que
+     * l'application garde une validation mise en file hors connexion et la
+     * représente une fois la suspension levée, au lieu de l'abandonner.
+     */
+    private function codeLockedResponse(OrderCodeLockedException $e): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => $e->getMessage(),
+            'retry_after' => $e->retryAfterSeconds(),
+        ], 429)->header('Retry-After', (string) $e->retryAfterSeconds());
+    }
+
+    /**
      * Validation du code de retrait (chez le fournisseur).
      * POST /api/v1/orders/{order}/verify-pickup
      */
@@ -347,6 +362,12 @@ class OrderController extends Controller
                 'message' => 'Prise en charge / Retrait validé avec succès. Fonds matériels libérés.',
                 'data' => $order->fresh(),
             ]);
+        } catch (OrderCodeLockedException $e) {
+            if ($request->header('X-Inertia')) {
+                return back()->withErrors(['message' => $e->getMessage()]);
+            }
+
+            return $this->codeLockedResponse($e);
         } catch (\Exception $e) {
             if ($request->header('X-Inertia')) {
                 return back()->withErrors(['message' => $e->getMessage()]);
@@ -396,6 +417,8 @@ class OrderController extends Controller
                 'delivery_fare' => $order->delivery_fare,
                 'data' => $order,
             ]);
+        } catch (OrderCodeLockedException $e) {
+            return $this->codeLockedResponse($e);
         } catch (\Exception $e) {
             return response()->json([
                 'success' => false,

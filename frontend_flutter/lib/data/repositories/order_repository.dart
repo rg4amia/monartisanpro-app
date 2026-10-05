@@ -7,6 +7,7 @@ import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/network/sync_service.dart';
 import '../../core/storage/storage_service.dart';
+import '../../core/utils/json_readers.dart';
 import '../models/history_models.dart';
 
 class OrderRepository {
@@ -198,6 +199,9 @@ class OrderRepository {
           ? res.data as Map<String, dynamic>
           : <String, dynamic>{'success': true};
     } on DioException catch (e) {
+      final refusal = _serverRefusal(e);
+      if (refusal != null) return refusal;
+
       if (!_isNetworkFailure(e) || !Get.isRegistered<SyncService>()) rethrow;
 
       await Get.find<SyncService>().enqueueRequest(
@@ -214,6 +218,30 @@ class OrderRepository {
             'pour un traitement immédiat.',
       };
     }
+  }
+
+  /// Refus du serveur (code faux, saisie suspendue, acteur non habilité) :
+  /// rendu avec son message, pour que l'écran le montre tel quel.
+  ///
+  /// Laissé en exception, il s'affichait « Vérifiez votre connexion et
+  /// réessayez » : un livreur au code faux réessayait jusqu'à la suspension,
+  /// sans jamais apprendre pourquoi. La session expirée (401) et les erreurs du
+  /// serveur (5xx) restent des exceptions.
+  Map<String, dynamic>? _serverRefusal(DioException e) {
+    final status = e.response?.statusCode;
+    if (status == null || status == 401 || status < 400 || status >= 500) {
+      return null;
+    }
+
+    final body = e.response?.data;
+
+    return <String, dynamic>{
+      'success': false,
+      'status': status,
+      'message': readApiMessage(body) ??
+          readString(readMap(body)?['error']) ??
+          'La validation a été refusée.',
+    };
   }
 
   bool _isNetworkFailure(DioException e) =>

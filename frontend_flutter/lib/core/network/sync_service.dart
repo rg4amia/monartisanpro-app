@@ -6,6 +6,7 @@ import 'package:flutter/foundation.dart';
 import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:hive_flutter/hive_flutter.dart';
 
+import '../utils/json_readers.dart';
 import 'api_client.dart';
 
 /// Modèle pour une requête en file d'attente
@@ -53,26 +54,144 @@ class QueuedRequest {
       );
 }
 
+/// Action enregistrée hors connexion qui n'a finalement pas abouti : refusée
+/// par le serveur au rejeu, ou jamais transmise dans le délai.
+///
+/// L'utilisateur a vu « Enregistré hors connexion » : sans cette trace, il
+/// croit l'action faite — pour une validation de livraison, un livreur non
+/// payé sans le savoir.
+class SyncFailure {
+  final String id;
+
+  /// Ce que l'utilisateur avait fait (« Validation de la livraison… »).
+  final String label;
+
+  /// Pourquoi cela n'a pas abouti, dans les mots du serveur quand il en donne.
+  final String reason;
+  final DateTime at;
+
+  SyncFailure({
+    required this.id,
+    required this.label,
+    required this.reason,
+    required this.at,
+  });
+
+  Map<String, dynamic> toJson() => {
+        'id': id,
+        'label': label,
+        'reason': reason,
+        'at': at.toIso8601String(),
+      };
+
+  /// `null` sur une entrée illisible : une trace abîmée ne bloque pas les autres.
+  static SyncFailure? tryParse(dynamic raw) {
+    final map = readMap(raw);
+    final id = readString(map?['id']);
+    final label = readString(map?['label']);
+    final reason = readString(map?['reason']);
+    final at = DateTime.tryParse(readString(map?['at']) ?? '');
+    if (id == null || label == null || reason == null || at == null) {
+      return null;
+    }
+
+    return SyncFailure(id: id, label: label, reason: reason, at: at);
+  }
+}
+
+/// Suite à donner à une requête rejouée qui échoue.
+enum ReplayOutcome {
+  /// Panne passagère ou refus temporaire : la requête reste en file.
+  retryLater,
+
+  /// Refus définitif du serveur : la requête ne passera jamais.
+  rejected,
+}
+
+/// Une requête n'est retirée de la file que sur un refus définitif.
+///
+/// 429 est temporaire : c'est ce que répond le serveur quand la saisie d'un
+/// code de commande est suspendue après des codes faux. Le bon code, mis en
+/// file hors connexion, doit être représenté une fois la suspension levée.
+ReplayOutcome classifyReplayError(DioException e) {
+  final status = e.response?.statusCode;
+
+  final transient = e.type == DioExceptionType.connectionError ||
+      e.type == DioExceptionType.connectionTimeout ||
+      e.type == DioExceptionType.receiveTimeout ||
+      e.type == DioExceptionType.sendTimeout ||
+      status == 401 || // jeton pas encore rafraîchi
+      status == 408 ||
+      status == 429 ||
+      (status != null && status >= 500);
+
+  return transient ? ReplayOutcome.retryLater : ReplayOutcome.rejected;
+}
+
+/// Délai annoncé par le serveur avant un nouvel essai (`Retry-After`, en
+/// secondes), borné entre 30 secondes et 1 heure. `null` s'il n'en donne pas.
+Duration? retryDelayOf(DioException e) {
+  final header = e.response?.headers.value('retry-after');
+  final seconds = int.tryParse(header ?? '') ??
+      readInt(readMap(e.response?.data)?['retry_after']);
+  if (seconds == null || seconds <= 0) return null;
+
+  return Duration(seconds: seconds.clamp(30, 3600));
+}
+
+/// Motif d'un refus, dans les mots du serveur quand il en donne.
+String rejectionReasonOf(DioException e) {
+  final body = e.response?.data;
+
+  return readApiMessage(body) ??
+      readString(readMap(body)?['error']) ??
+      'Le serveur a refusé cette action.';
+}
+
+/// Nomme, pour l'utilisateur, l'action portée par une requête en file.
+String describeQueuedAction(String url) {
+  final order =
+      RegExp(r'/orders/(\d+)/(verify-pickup|verify-delivery)').firstMatch(url);
+  if (order != null) {
+    final what = order.group(2) == 'verify-pickup' ? 'du retrait' : 'de la livraison';
+
+    return 'Validation $what de la commande #${order.group(1)}';
+  }
+
+  if (RegExp(r'/jalons/\d+/photos').hasMatch(url)) {
+    return "Envoi des photos d'une étape de chantier";
+  }
+
+  return 'Action enregistrée hors connexion';
+}
+
 /// Service pour gérer la file d'attente des requêtes et l'état du réseau
 class SyncService extends GetxService {
   static const String _queueBoxName = 'offline_sync_queue';
+  static const String _failuresBoxName = 'offline_sync_failures';
 
   /// Durée maximale de conservation d'une requête en file (au-delà, on abandonne).
   static const Duration _maxRequestAge = Duration(days: 3);
 
   Box<Map>? _queueBox;
+  Box<Map>? _failuresBox;
+
+  /// Nouvel essai programmé quand le serveur demande d'attendre (429).
+  Timer? _retryTimer;
 
   final RxBool isOffline = false.obs;
 
   /// Nombre de requêtes en attente de rejeu.
   final RxInt pendingCount = 0.obs;
 
-  /// Requêtes abandonnées faute d'avoir pu être rejouées dans le délai.
+  /// Actions enregistrées hors connexion qui n'ont pas abouti : refusées par
+  /// le serveur au rejeu, ou jamais transmises dans le délai.
   ///
-  /// L'abandon était jusqu'ici silencieux (un simple `debugPrint`). Pour une
-  /// validation de livraison, cela signifie un livreur non payé sans que
-  /// personne ne le sache : la perte doit être visible.
-  final RxList<QueuedRequest> abandoned = <QueuedRequest>[].obs;
+  /// Conservées jusqu'à ce que l'utilisateur les ait lues ([dismissFailure]) et
+  /// affichées par `OfflineBanner`. Elles n'étaient signalées nulle part : pour
+  /// une validation de livraison, un livreur non payé sans que personne ne le
+  /// sache.
+  final RxList<SyncFailure> failures = <SyncFailure>[].obs;
   late StreamSubscription<List<ConnectivityResult>> _connectivitySubscription;
 
   /// On rejoue les requêtes via le client applicatif : il porte le baseUrl
@@ -87,6 +206,10 @@ class SyncService extends GetxService {
   Future<SyncService> init() async {
     await Hive.initFlutter();
     _queueBox = await Hive.openBox<Map>(_queueBoxName);
+    _failuresBox = await Hive.openBox<Map>(_failuresBoxName);
+    failures.assignAll(
+      _failuresBox!.values.map(SyncFailure.tryParse).whereType<SyncFailure>(),
+    );
 
     // Vérification initiale
     final results = await Connectivity().checkConnectivity();
@@ -161,6 +284,30 @@ class SyncService extends GetxService {
   /// Force une tentative de synchronisation (ex: après un login réussi).
   Future<void> flush() => _syncQueue();
 
+  /// Consigne une action qui n'a pas abouti, pour l'annoncer à l'utilisateur.
+  Future<void> recordFailure(QueuedRequest request, String reason) async {
+    final failure = SyncFailure(
+      id: request.id,
+      label: describeQueuedAction(request.url),
+      reason: reason,
+      at: DateTime.now(),
+    );
+
+    failures.add(failure);
+    await _failuresBox?.put(failure.id, failure.toJson());
+  }
+
+  /// L'utilisateur a lu l'annonce : elle disparaît.
+  Future<void> dismissFailure(String id) async {
+    failures.removeWhere((f) => f.id == id);
+    await _failuresBox?.delete(id);
+  }
+
+  void _scheduleRetry(Duration delay) {
+    _retryTimer?.cancel();
+    _retryTimer = Timer(delay, _syncQueue);
+  }
+
   /// Tente de rejouer toutes les requêtes en file d'attente.
   Future<void> _syncQueue() async {
     if (_queueBox == null || _queueBox!.isEmpty || _syncing) return;
@@ -179,7 +326,10 @@ class SyncService extends GetxService {
         // mutation obsolète (statut déjà changé, jalon déjà soumis…).
         if (DateTime.now().difference(request.timestamp) > _maxRequestAge) {
           await _queueBox!.delete(key);
-          abandoned.add(request);
+          await recordFailure(
+            request,
+            "Elle n'a pas pu être transmise dans les ${_maxRequestAge.inDays} jours.",
+          );
           pendingCount.value = _queueBox!.length;
           debugPrint(
             '[SyncService] Requête expirée abandonnée: ${request.url}',
@@ -226,15 +376,12 @@ class SyncService extends GetxService {
         } on DioException catch (e) {
           final status = e.response?.statusCode;
 
-          if (e.type == DioExceptionType.connectionError ||
-              e.type == DioExceptionType.connectionTimeout ||
-              e.type == DioExceptionType.receiveTimeout ||
-              e.type == DioExceptionType.sendTimeout ||
-              status == 401 || // token pas encore rafraîchi → on retentera
-              status == 408 ||
-              status == 429 ||
-              (status != null && status >= 500)) {
-            // Problème transitoire : on garde la requête pour un prochain essai.
+          if (classifyReplayError(e) == ReplayOutcome.retryLater) {
+            // Problème transitoire : on garde la requête pour un prochain
+            // essai. Rien d'autre ne relance la file tant que le réseau ne
+            // change pas : si le serveur donne un délai, on s'y tient.
+            final delay = retryDelayOf(e);
+            if (delay != null) _scheduleRetry(delay);
             debugPrint(
               '[SyncService] Report de ${request.url} (status=$status)',
             );
@@ -242,8 +389,9 @@ class SyncService extends GetxService {
           }
 
           // 4xx définitif (400/403/404/409/422…) : la requête ne passera
-          // jamais, on la retire pour ne pas bloquer la file.
+          // jamais, on la retire pour ne pas bloquer la file — et on le dit.
           await _queueBox!.delete(key);
+          await recordFailure(request, rejectionReasonOf(e));
           debugPrint(
             '[SyncService] Requête rejetée définitivement '
             '(${status ?? e.type}): ${request.url}',
@@ -265,7 +413,9 @@ class SyncService extends GetxService {
   @override
   void onClose() {
     _connectivitySubscription.cancel();
+    _retryTimer?.cancel();
     _queueBox?.close();
+    _failuresBox?.close();
     super.onClose();
   }
 }

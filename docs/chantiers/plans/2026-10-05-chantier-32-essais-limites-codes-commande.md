@@ -7,7 +7,7 @@
 | Mis à jour le | 2026-10-05 |
 | Auteur | Claude Code |
 | Analyses liées | — (suite relevée au Chantier 31, à la relecture d'un rapport d'audit global du 05/10/2026) |
-| Commits | — |
+| Commits | `48d24bf1` |
 
 ## Objectif
 
@@ -56,3 +56,8 @@ Décisions d'Inza Bamba du 05/10/2026 :
 - **File d'attente hors ligne du mobile** : il n'a pas été vérifié si une validation refusée est rejouée automatiquement ; un code faux mis en file consommerait alors plusieurs essais.
 - **Déblocage manuel** : aucun écran du backoffice ne lève une suspension.
 - Suites du Chantier 31 non traitées : adresse du carnet sans position, tarif dépendant du serveur public OSRM, `is_fallback` trompeur, appels OSRM des tests à simuler.
+
+## Écarts constatés après livraison
+
+- **Code de réponse de la suspension** (Chantier 33, 05/10/2026) : la suspension répond désormais 429 avec `Retry-After`, et non plus 400, pour que l'application garde en file un bon code rejoué pendant une suspension.
+- **File d'attente hors ligne** (Chantier 33) : vérifiée — un code mis en file ne consomme qu'un essai au rejeu. Les refus n'étaient en revanche jamais montrés à l'utilisateur ; corrigé au Chantier 33.

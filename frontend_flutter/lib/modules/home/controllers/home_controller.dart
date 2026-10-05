@@ -762,7 +762,7 @@ class HomeController extends GetxController {
       }
 
       Get.snackbar(
-        'Code invalide',
+        'Validation refusée',
         res['message'] ?? 'Le code d\'enlèvement du magasin est incorrect.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.danger,
@@ -838,7 +838,7 @@ class HomeController extends GetxController {
       }
 
       Get.snackbar(
-        'Code invalide',
+        'Validation refusée',
         res['message'] ?? 'Le code de réception du client est incorrect.',
         snackPosition: SnackPosition.BOTTOM,
         backgroundColor: AppColors.danger,

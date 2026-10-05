@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\OrderCodeLockedException;
 use App\Http\Controllers\Controller;
 use App\Models\Order;
 use App\Services\Admin\AdminActivityLogger;
@@ -152,6 +153,13 @@ class DeliveryTrackingController extends Controller
                 'message' => 'Enlèvement validé avec succès.',
                 'order' => $updatedOrder,
             ]);
+        } catch (OrderCodeLockedException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
+                'retry_after' => $e->retryAfterSeconds(),
+            ], 429)->header('Retry-After', (string) $e->retryAfterSeconds());
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,
@@ -202,6 +210,13 @@ class DeliveryTrackingController extends Controller
                 'delivery_fare' => $updatedOrder->delivery_fare,
                 'order' => $updatedOrder,
             ]);
+        } catch (OrderCodeLockedException $e) {
+            return response()->json([
+                'success' => false,
+                'error' => $e->getMessage(),
+                'message' => $e->getMessage(),
+                'retry_after' => $e->retryAfterSeconds(),
+            ], 429)->header('Retry-After', (string) $e->retryAfterSeconds());
         } catch (\Throwable $e) {
             return response()->json([
                 'success' => false,

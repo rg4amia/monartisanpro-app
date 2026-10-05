@@ -17,6 +17,12 @@ class OrderCodeLockedException extends \Exception
         parent::__construct('Trop de codes incorrects : la validation est suspendue pendant '.self::durationLabel($minutes).'.');
     }
 
+    /** Secondes restantes avant la fin de la suspension (en-tête Retry-After). */
+    public function retryAfterSeconds(): int
+    {
+        return max(1, (int) ceil(now()->diffInSeconds($this->lockedUntil, false)));
+    }
+
     public static function durationLabel(int $minutes): string
     {
         if ($minutes < 60) {

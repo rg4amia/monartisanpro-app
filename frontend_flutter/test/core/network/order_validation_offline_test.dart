@@ -74,14 +74,14 @@ void main() {
       expect(Get.isRegistered<SyncService>(), isFalse);
     });
 
-    test('expose un compteur observable et une liste d abandons', () {
+    test('expose un compteur observable et une liste d actions non abouties', () {
       final service = SyncService();
 
       // L'abandon d'une requête était jusqu'ici silencieux. Pour une libération
       // de fonds, cela signifie un livreur non payé sans alerte : la perte doit
       // être observable par l'interface.
       expect(service.pendingCount.value, 0);
-      expect(service.abandoned, isEmpty);
+      expect(service.failures, isEmpty);
     });
   });
 

@@ -780,6 +780,11 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **USSD et SMS** : seul le livreur de la commande peut présenter un code ; un autre livreur ne valide rien et ne fait suspendre aucun code.
     * **Alerte** : les administrateurs sont prévenus à chaque suspension.
     * **Tests automatisés** : `Chantier32OrderCodeAttemptLimitTest.php` (11 tests).
+68. **Chantier 33 — Refus d'une validation de code : dit à l'utilisateur, jamais perdu :** [COMPLÉTÉ — nouvelle version de l'application à publier, contrôle sur appareil à faire]
+    * **Message exact** : un code faux ou une saisie suspendue affiche le message du serveur, plus « Vérifiez votre connexion ».
+    * **Action hors connexion non aboutie** : un bandeau annonce toute action enregistrée hors connexion que le serveur a refusée ou qui n'a pas pu être transmise, avec son motif, jusqu'à ce que l'utilisateur l'ait lue.
+    * **Bon code pendant une suspension** : mis en file hors connexion, il est représenté de lui-même à la fin de la suspension au lieu d'être abandonné.
+    * **Tests automatisés** : `sync_failures_test.dart` (11 tests), `Chantier32OrderCodeAttemptLimitTest.php` (12 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

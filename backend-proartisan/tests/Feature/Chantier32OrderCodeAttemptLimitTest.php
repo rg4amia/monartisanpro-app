@@ -126,15 +126,18 @@ test('les administrateurs sont alertés à chaque suspension', function () {
 });
 
 test('par l\'application, le livreur ne trouve pas le code de réception par essais successifs', function () {
+    // Les quatre premiers codes faux sont des refus ordinaires (400) ; le
+    // cinquième déclenche la suspension, annoncée en 429.
     for ($i = 0; $i < 5; $i++) {
         $this->actingAs($this->driver, 'sanctum')
             ->postJson("/api/v1/orders/{$this->order->id}/verify-delivery", ['code' => sprintf('%04d', $i)])
-            ->assertStatus(400);
+            ->assertStatus($i < 4 ? 400 : 429);
     }
 
     $this->actingAs($this->driver, 'sanctum')
         ->postJson("/api/v1/orders/{$this->order->id}/verify-delivery", ['code' => '7390'])
-        ->assertStatus(400)
+        ->assertStatus(429)
+        ->assertHeader('Retry-After')
         ->assertJsonPath('success', false);
 
     expect($this->order->fresh()->status)->toBe('driver_picked_up');
@@ -174,4 +177,15 @@ test('par SMS, un livreur étranger à la commande ne peut ni valider ni faire s
     expect($order->status)->toBe('driver_picked_up')
         ->and($order->reception_code_attempts)->toBe(0)
         ->and($order->reception_code_locked_until)->toBeNull();
+});
+
+test('la suspension répond 429 sur la route de suivi de livraison aussi', function () {
+    c32WrongPickups($this->order, 5);
+
+    $response = $this->actingAs($this->driver, 'sanctum')
+        ->postJson("/api/v1/orders/{$this->order->id}/pickup", ['code' => '4821']);
+
+    $response->assertStatus(429)->assertHeader('Retry-After');
+    expect($response->json('message'))->toContain('suspendue')
+        ->and((int) $response->headers->get('Retry-After'))->toBeGreaterThan(0)->toBeLessThanOrEqual(300);
 });
