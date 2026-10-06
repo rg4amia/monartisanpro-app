@@ -2,12 +2,12 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | livré (contrôle sur le serveur à faire) |
+| Statut | livré (rapport et reçu à vérifier sur appareil) |
 | Créé le | 2026-10-06 |
 | Mis à jour le | 2026-10-06 |
 | Auteur | Claude Code (Opus 5.5) |
 | Analyses liées | `../audits/2026-10-06-audit-securite-api-et-deploiement.md` (constats 5, 6, 7 et 9) |
-| Commits | — |
+| Commits | `54560140` |
 
 ## Objectif
 
@@ -58,3 +58,4 @@ Le constat 7 laissait le choix : téléphone transmis à partir d'un engagement 
 - Le test « aucun PDF sur le disque public » passait avant correctif : l'ancien code écrivait par `storage_path()`, hors du disque simulé. Il contrôle maintenant aussi le dossier réel.
 - Les reçus consultés par `GeneratedDocumentService` restent conservés sur le disque privé (copie de travail du backoffice) ; seuls les rapports remis par l'API sont supprimés après l'envoi.
 - Une facture de décaissement d'un litige arbitré avant ce chantier, dont le chemin enregistré pointait vers le disque public, n'est plus téléchargeable après la purge (aucune n'existe sur le serveur : le dossier `invoices/` est absent).
+- Contrôle du 06/10/2026 après déploiement (`54560140`) : les cinq PDF qui répondaient 200 répondent 404 ; les dossiers `reports/` et `receipts/` de `storage/app/public` sont vides, constaté sur le serveur.
