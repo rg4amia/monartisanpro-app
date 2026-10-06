@@ -135,11 +135,17 @@ Correctif : supprimer ces routes (le backoffice a les siennes) ou leur donner `a
 
 ### Constats 2, 3 et 4 fermés par le Chantier 37
 
-Voir `../plans/2026-10-06-chantier-37-failles-critiques-api.md`. Du constat 2, il reste le second volet (une photo n'est pas lue par le filtre anti-contournement) et le contrôle des fichiers déjà déposés sur le serveur.
+Voir `../plans/2026-10-06-chantier-37-failles-critiques-api.md`. Du constat 2, il reste le second volet (une photo n'est pas lue par le filtre anti-contournement). Contrôle du serveur fait le 06/10/2026 : le dossier `storage/app/public/chat/` n'existe pas, aucun fichier n'a été déposé par la messagerie. Le disque public ne contient que `receipts/`, `reports/` et `vitrine/` ; le contenu de `reports/` (constat 6) et de `receipts/` reste à examiner.
+
+### Constats 5, 6, 7 et 9 fermés par le Chantier 38
+
+Voir `../plans/2026-10-06-chantier-38-donnees-de-tiers-et-documents.md`.
+
+Constat nouveau, relevé le 06/10/2026 sur le serveur : `PdfService::generatePaymentReceipt` écrivait lui aussi sur le disque public, comme la facture de décaissement et le bordereau de cash-out. Deux rapports de solvabilité (`reports/`) et trois reçus de paiement (`receipts/`) répondaient 200 sans authentification. Fermé par le même chantier.
 
 ### Autres constats
 
-Les constats 5 à 19 restent ouverts.
+Les constats 8 et 10 à 19 restent ouverts.
 
 1. **Immédiat, sur le serveur** : confirmer le constat 1 par la commande indiquée ; si elle répond 200, interdire l'accès au dossier, renouveler les secrets du `.env` et le jeton, puis sortir le dépôt de la racine web.
 2. **Chantier 37 (proposé)** — fermer les constats 2, 3 et 4, chacun avec son test Pest qui échoue avant correctif.

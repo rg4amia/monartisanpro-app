@@ -10,6 +10,7 @@ use App\Models\RecruitmentWorkday;
 use App\Models\Setting;
 use App\Models\Transaction;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -43,6 +44,15 @@ class RecruitmentEngagementService
         if ($offer->creator_id !== $recruiter->id && $recruiter->role !== 'admin') {
             throw ValidationException::withMessages([
                 'application' => ["Cette candidature n'appartient pas à l'une de vos offres."],
+            ]);
+        }
+
+        // Le séquestre d'accès aux candidatures précède tout engagement : sans
+        // lui, un engagement créé sur un identifiant de candidature donnait le
+        // nom de l'artisan sans rien avoir payé (Règle d'or 33).
+        if ($recruiter->role !== 'admin' && ! $offer->applicantsUnlocked()) {
+            throw ValidationException::withMessages([
+                'application' => ["Réglez d'abord l'accès aux candidatures de cette offre avant de retenir un artisan."],
             ]);
         }
 
@@ -234,6 +244,51 @@ class RecruitmentEngagementService
     public function unpaidAmount(RecruitmentEngagement $engagement): int
     {
         return (int) $engagement->workdays()->where('status', 'awaiting_payment')->sum('montant');
+    }
+
+    /**
+     * États à partir desquels les deux parties ont besoin de se joindre :
+     * l'artisan a accepté et le séquestre est payé.
+     */
+    public const CONTACT_STATUSES = ['active', 'completed'];
+
+    /**
+     * Engagements de l'utilisateur, comme artisan ou comme recruteur.
+     *
+     * @return Collection<int, RecruitmentEngagement>
+     */
+    public function listFor(User $user): Collection
+    {
+        return RecruitmentEngagement::query()
+            ->where(fn ($query) => $query->where('artisan_id', $user->id)->orWhere('recruiter_id', $user->id))
+            ->orderByDesc('created_at')
+            ->get()
+            ->map(fn (RecruitmentEngagement $engagement) => $this->present($engagement, $user));
+    }
+
+    /**
+     * Charge l'engagement pour l'affichage. Le téléphone de l'autre partie
+     * n'est transmis qu'une fois l'engagement accepté et financé : avant, il
+     * permettait au recruteur de joindre l'artisan sans passer par la
+     * plateforme (Règle d'or 33). Chacun voit toujours son propre numéro.
+     */
+    public function present(RecruitmentEngagement $engagement, User $viewer): RecruitmentEngagement
+    {
+        $engagement->load(['workdays', 'artisan:id,name,phone', 'recruiter:id,name,phone', 'offer:id,title']);
+
+        $contactShared = $viewer->role === 'admin'
+            || in_array($engagement->status, self::CONTACT_STATUSES, true);
+
+        foreach (['artisan', 'recruiter'] as $relation) {
+            $party = $engagement->getRelation($relation);
+            // Nom et téléphone seulement : jamais la position du compte.
+            $party?->setAppends([]);
+            if ($party && ! $contactShared && $party->id !== $viewer->id) {
+                $party->makeHidden('phone');
+            }
+        }
+
+        return $engagement;
     }
 
     public function assertRecruiterOwnsEngagement(User $recruiter, RecruitmentEngagement $engagement): void

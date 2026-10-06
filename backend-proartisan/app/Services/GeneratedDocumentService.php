@@ -217,8 +217,10 @@ class GeneratedDocumentService
      */
     public function getPdfPath(GeneratedDocument $doc): string
     {
-        // Si un fichier existe déjà et est valide
-        if ($doc->file_path && file_exists($doc->file_path)) {
+        // Si un fichier existe déjà et est valide. Une copie restée sur le
+        // disque public (avant le Chantier 38) n'est jamais resservie : le
+        // document est régénéré sur le disque privé.
+        if ($doc->file_path && file_exists($doc->file_path) && ! $this->pdfService->isPublicPath($doc->file_path)) {
             return $doc->file_path;
         }
 

@@ -51,7 +51,12 @@ class RecruitmentEngagementTest extends TestCase
     }
 
     /** @return array{offer: RecruitmentOffer, application: RecruitmentApplication, client: User, artisan: User, admin: User} */
-    private function setupConfirmableApplication(): array
+    /**
+     * L'offre est par défaut déjà ouverte à la consultation des candidatures :
+     * aucun engagement ne se crée sans cet accès (Chantier 38). `$unlocked`
+     * à false laisse le test payer lui-même le séquestre d'accès.
+     */
+    private function setupConfirmableApplication(bool $unlocked = true): array
     {
         $trade = $this->trade();
         $client = User::factory()->create(['role' => 'client', 'kyc_status' => 'actif']);
@@ -71,6 +76,10 @@ class RecruitmentEngagementTest extends TestCase
             'deadline_at' => now()->addDays(3)->toDateString(),
             'status' => 'active',
         ]);
+
+        if ($unlocked) {
+            $offer->forceFill(['applicants_unlocked_at' => now()])->save();
+        }
 
         $application = RecruitmentApplication::create([
             'offer_id' => $offer->id,
@@ -123,6 +132,7 @@ class RecruitmentEngagementTest extends TestCase
             'commune' => 'Cocody',
             'status' => 'active',
         ]);
+        $offer->forceFill(['applicants_unlocked_at' => now()])->save();
 
         $application = RecruitmentApplication::create([
             'offer_id' => $offer->id,
@@ -336,7 +346,7 @@ class RecruitmentEngagementTest extends TestCase
 
     public function test_confirmed_payment_unlocks_offer_applicants_without_app_call(): void
     {
-        ['offer' => $offer, 'client' => $client] = $this->setupConfirmableApplication();
+        ['offer' => $offer, 'client' => $client] = $this->setupConfirmableApplication(unlocked: false);
 
         $transactionId = $this->actingAs($client)->postJson("/api/v1/recruitment-offers/{$offer->id}/unlock-applicants", [
             'daily_rate' => 10000,
@@ -371,7 +381,7 @@ class RecruitmentEngagementTest extends TestCase
 
     public function test_engagement_reuses_prepaid_offer_escrow_fully_and_credits_surplus(): void
     {
-        ['offer' => $offer, 'application' => $application, 'client' => $client, 'artisan' => $artisan] = $this->setupConfirmableApplication();
+        ['offer' => $offer, 'application' => $application, 'client' => $client, 'artisan' => $artisan] = $this->setupConfirmableApplication(unlocked: false);
 
         // Le client sur-estime le taux journalier (12000) pour débloquer les
         // candidatures ; l'engagement réel négocié à 10000/jour est donc
@@ -412,7 +422,7 @@ class RecruitmentEngagementTest extends TestCase
 
     public function test_engagement_partially_covers_from_prepaid_offer_escrow_and_requires_topup(): void
     {
-        ['offer' => $offer, 'application' => $application, 'client' => $client, 'artisan' => $artisan] = $this->setupConfirmableApplication();
+        ['offer' => $offer, 'application' => $application, 'client' => $client, 'artisan' => $artisan] = $this->setupConfirmableApplication(unlocked: false);
 
         // Séquestre d'accès payé pour un seul jour à 10000 FCFA, mais
         // l'engagement réel porte sur 3 jours au même taux.

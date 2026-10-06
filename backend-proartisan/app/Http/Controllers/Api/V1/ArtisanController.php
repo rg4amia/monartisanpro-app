@@ -145,14 +145,29 @@ class ArtisanController extends Controller
     /**
      * Télécharger le rapport de solvabilité PDF.
      */
-    public function downloadReport(User $user)
+    public function downloadReport(Request $request, User $user)
     {
         if ($user->role !== 'artisan') {
             abort(404);
         }
 
+        // Score détaillé et gains cumulés : le titulaire, ou un administrateur
+        // qui consulte les utilisateurs — jamais tout compte connecté.
+        $viewer = $request->user();
+        $isOwner = $viewer->id === $user->id;
+        $isAllowedAdmin = $viewer->role === 'admin' && $viewer->can('admin.users.view');
+
+        if (! $isOwner && ! $isAllowedAdmin) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Ce rapport de solvabilité ne vous appartient pas.',
+            ], 403);
+        }
+
         $path = $this->pdfService->generateSolvabilityReport($user);
 
-        return response()->download($path);
+        return response()
+            ->download($path, 'rapport-solvabilite-prosartisan-'.$user->id.'.pdf')
+            ->deleteFileAfterSend(true);
     }
 }

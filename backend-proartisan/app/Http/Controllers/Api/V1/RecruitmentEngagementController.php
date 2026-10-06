@@ -56,23 +56,12 @@ class RecruitmentEngagementController extends Controller
             return response()->json(['success' => false, 'message' => 'Cet engagement ne vous appartient pas.'], 403);
         }
 
-        $engagement->load(['workdays', 'artisan:id,name,phone', 'recruiter:id,name,phone', 'offer:id,title']);
-
-        return response()->json(['success' => true, 'data' => $engagement]);
+        return response()->json(['success' => true, 'data' => $this->engagements->present($engagement, $user)]);
     }
 
     public function mine(Request $request): JsonResponse
     {
-        $user = $request->user();
-
-        $engagements = RecruitmentEngagement::query()
-            ->where('artisan_id', $user->id)
-            ->orWhere('recruiter_id', $user->id)
-            ->with(['workdays', 'artisan:id,name,phone', 'recruiter:id,name,phone', 'offer:id,title'])
-            ->orderByDesc('created_at')
-            ->get();
-
-        return response()->json(['success' => true, 'data' => $engagements]);
+        return response()->json(['success' => true, 'data' => $this->engagements->listFor($request->user())]);
     }
 
     public function accept(Request $request, RecruitmentEngagement $engagement): JsonResponse

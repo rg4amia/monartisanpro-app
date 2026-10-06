@@ -291,6 +291,20 @@ class DevisController extends Controller
             ], 403);
         }
 
+        if ($mission->artisan_id !== $user->id) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Cette mission est réservée à un autre artisan.',
+            ], 403);
+        }
+
+        if (! AiMonitoringService::checkUserLimit($user->id)) {
+            return response()->json([
+                'success' => false,
+                'message' => "Quota d'assistance IA atteint pour aujourd'hui. Saisissez votre devis manuellement ou réessayez demain.",
+            ], 429);
+        }
+
         $suggestion = $geminiService->suggestDevis($mission);
 
         return response()->json([

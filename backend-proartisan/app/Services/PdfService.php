@@ -7,10 +7,73 @@ use App\Models\SupplierCashout;
 use App\Models\Transaction;
 use App\Models\User;
 use Barryvdh\DomPDF\Facade\Pdf;
+use Barryvdh\DomPDF\PDF as DomPdf;
+use Illuminate\Support\Facades\Storage;
 
 class PdfService
 {
+    /**
+     * Dossiers du disque public où ces documents étaient écrits avant le
+     * Chantier 38 : ils y restaient lisibles par une adresse devinable.
+     */
+    private const FORMER_PUBLIC_DIRECTORIES = ['reports', 'invoices', 'receipts', 'cashouts'];
+
     public function __construct(private ScoreService $scoreService) {}
+
+    /**
+     * Enregistre un PDF sur le disque privé et renvoie son chemin. Jamais le
+     * disque public : un rapport de solvabilité ou un reçu porte un nom, des
+     * montants et une référence de paiement, et son nom de fichier (identifiant
+     * et date à la seconde) se devine.
+     */
+    private function store(DomPdf $pdf, string $directory, string $filename): string
+    {
+        $path = Storage::disk('local')->path("documents/{$directory}/{$filename}");
+
+        if (! file_exists(dirname($path))) {
+            mkdir(dirname($path), 0755, true);
+        }
+
+        $pdf->save($path);
+
+        return $path;
+    }
+
+    /**
+     * Un chemin enregistré avant le Chantier 38 pointe-t-il vers le disque public ?
+     */
+    public function isPublicPath(?string $path): bool
+    {
+        if ($path === null || $path === '') {
+            return false;
+        }
+
+        $publicRoot = str_replace('\\', '/', Storage::disk('public')->path(''));
+
+        return str_starts_with(str_replace('\\', '/', $path), $publicRoot);
+    }
+
+    /**
+     * Supprime les PDF laissés sur le disque public par les versions
+     * précédentes. Chaque document se régénère à la demande.
+     *
+     * @return int nombre de fichiers supprimés
+     */
+    public function purgePublicCopies(): int
+    {
+        $disk = Storage::disk('public');
+        $deleted = 0;
+
+        foreach (self::FORMER_PUBLIC_DIRECTORIES as $directory) {
+            foreach ($disk->files($directory) as $file) {
+                if (str_ends_with(strtolower($file), '.pdf') && $disk->delete($file)) {
+                    $deleted++;
+                }
+            }
+        }
+
+        return $deleted;
+    }
 
     /**
      * Génère le rapport PDF de solvabilité pour microfinances.
@@ -31,17 +94,9 @@ class PdfService
         // Générer PDF
         $pdf = Pdf::loadView('pdf.solvability_report', $data);
 
-        // Stocker sur disque temporairement
         $filename = "solvability_report_{$artisan->id}_".now()->format('YmdHis').'.pdf';
-        $path = storage_path("app/public/reports/{$filename}");
 
-        if (! file_exists(dirname($path))) {
-            mkdir(dirname($path), 0755, true);
-        }
-
-        $pdf->save($path);
-
-        return $path;
+        return $this->store($pdf, 'reports', $filename);
     }
 
     /**
@@ -61,17 +116,9 @@ class PdfService
         // Générer PDF
         $pdf = Pdf::loadView('pdf.disbursement_invoice', $data);
 
-        // Stocker sur disque
         $filename = "disbursement_invoice_{$mission->id}_".now()->format('YmdHis').'.pdf';
-        $path = storage_path("app/public/invoices/{$filename}");
 
-        if (! file_exists(dirname($path))) {
-            mkdir(dirname($path), 0755, true);
-        }
-
-        $pdf->save($path);
-
-        return $path;
+        return $this->store($pdf, 'invoices', $filename);
     }
 
     /**
@@ -162,15 +209,8 @@ class PdfService
         $pdf = Pdf::loadView('pdf.payment_receipt', $data);
 
         $filename = "recu_paiement_{$transaction->id}_".now()->format('YmdHis').'.pdf';
-        $path = storage_path("app/public/receipts/{$filename}");
 
-        if (! file_exists(dirname($path))) {
-            mkdir(dirname($path), 0755, true);
-        }
-
-        $pdf->save($path);
-
-        return $path;
+        return $this->store($pdf, 'receipts', $filename);
     }
 
     /**
@@ -185,14 +225,7 @@ class PdfService
         ]);
 
         $filename = "cashout_receipt_{$cashout->id}_".now()->format('YmdHis').'.pdf';
-        $path = storage_path("app/public/cashouts/{$filename}");
 
-        if (! file_exists(dirname($path))) {
-            mkdir(dirname($path), 0755, true);
-        }
-
-        $pdf->save($path);
-
-        return $path;
+        return $this->store($pdf, 'cashouts', $filename);
     }
 }

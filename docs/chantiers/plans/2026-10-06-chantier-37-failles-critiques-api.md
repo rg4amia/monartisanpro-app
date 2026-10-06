@@ -2,12 +2,12 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | livré (contrôle sur le serveur à faire ; note vocale à vérifier sur appareil) |
+| Statut | livré (note vocale à vérifier sur appareil) |
 | Créé le | 2026-10-06 |
 | Mis à jour le | 2026-10-06 |
 | Auteur | Claude Code (Opus 5.5) |
 | Analyses liées | `../audits/2026-10-06-audit-securite-api-et-deploiement.md` (constats 2, 3 et 4) |
-| Commits | — |
+| Commits | `0672517f` |
 
 ## Objectif
 
@@ -46,6 +46,6 @@ Fermer les trois failles critiques de l'audit du 06/10/2026 qui restaient ouvert
 
 ## Écarts
 
-- Les fichiers déjà déposés sur le serveur ne sont ni listés ni supprimés par ce chantier : seul un contrôle sur le serveur dit s'il y en a.
+- Contrôle du 06/10/2026 après déploiement (`0672517f`) : `/storage/essai.php` répond 403, `/api/v1/sms` et `/api/v1/promo-codes` répondent 404. Le dossier `storage/app/public/chat/` n'existe pas sur le serveur : aucun fichier n'a jamais été déposé par la messagerie, rien à nettoyer. Seuls `receipts/`, `reports/` et `vitrine/` existent sur le disque public (`reports/` relève du constat 6 de l'audit).
 - Une image GIF ou BMP choisie dans la galerie est désormais refusée.
 - La photo d'un message n'est toujours pas analysée par le filtre anti-contournement, qui ne lit que le texte (constat 2 de l'audit, second volet) : à traiter à part.

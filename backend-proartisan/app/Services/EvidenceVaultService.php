@@ -3,6 +3,7 @@
 namespace App\Services;
 
 use App\Models\EvidenceVault;
+use App\Models\JuryReview;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
@@ -20,7 +21,7 @@ class EvidenceVaultService
     /**
      * Scelle une preuve dans le coffre-fort avec empreinte SHA-256.
      *
-     * @param UploadedFile|string $file Fichier uploadé ou chemin relatif sur le disque
+     * @param  UploadedFile|string  $file  Fichier uploadé ou chemin relatif sur le disque
      */
     public function seal(UploadedFile|string $file, User $uploader, array $context = []): EvidenceVault
     {
@@ -139,12 +140,48 @@ class EvidenceVaultService
         ];
     }
 
+    /** Accès complet : parties à la mission, déposant, administrateur habilité. */
+    public const ACCESS_FULL = 'complet';
+
+    /** Accès anonymisé : juré du litige, sans identité ni position (Règle d'or 76). */
+    public const ACCESS_JUROR = 'jure';
+
+    /**
+     * Niveau d'accès d'un utilisateur à une preuve, ou null s'il n'y a pas droit.
+     * Les identifiants étant séquentiels, le rôle seul ne suffit jamais : il
+     * faut un lien avec la mission ou le litige de la preuve.
+     */
+    public function accessLevel(User $user, EvidenceVault $entry): ?string
+    {
+        if ($user->role === 'admin') {
+            return $user->can('admin.litiges.view') ? self::ACCESS_FULL : null;
+        }
+
+        if ($entry->uploaded_by === $user->id) {
+            return self::ACCESS_FULL;
+        }
+
+        $mission = $entry->mission ?? $entry->litige?->mission;
+        if ($mission && in_array($user->id, [$mission->client_id, $mission->artisan_id], true)) {
+            return self::ACCESS_FULL;
+        }
+
+        if ($entry->litige_id && JuryReview::where('litige_id', $entry->litige_id)->where('jure_id', $user->id)->exists()) {
+            return self::ACCESS_JUROR;
+        }
+
+        return null;
+    }
+
     /**
      * Génère un certificat d'authenticité numérique pour une pièce de preuve.
+     * Le téléphone du déposant n'y figure jamais ; un juré ne reçoit ni son
+     * identité ni la position du dépôt.
      */
-    public function generateCertificate(EvidenceVault $entry): array
+    public function generateCertificate(EvidenceVault $entry, string $access = self::ACCESS_FULL): array
     {
         $isAuthentic = ! $entry->is_tampered;
+        $anonymous = $access !== self::ACCESS_FULL;
 
         return [
             'certificate_id' => 'CERT-VAULT-'.str_pad((string) $entry->id, 6, '0', STR_PAD_LEFT).'-'.substr($entry->sha256_hash, 0, 8),
@@ -154,12 +191,11 @@ class EvidenceVaultService
             'file_size' => $entry->file_size,
             'mime_type' => $entry->mime_type,
             'uploaded_at' => $entry->uploaded_at?->toIso8601String(),
-            'uploader' => [
+            'uploader' => $anonymous ? null : [
                 'id' => $entry->uploader?->id,
                 'name' => $entry->uploader?->name,
-                'phone' => $entry->uploader?->phone,
             ],
-            'gps' => ($entry->gps_lat && $entry->gps_lng) ? ['lat' => (float) $entry->gps_lat, 'lng' => (float) $entry->gps_lng] : null,
+            'gps' => (! $anonymous && $entry->gps_lat && $entry->gps_lng) ? ['lat' => (float) $entry->gps_lat, 'lng' => (float) $entry->gps_lng] : null,
             'is_authentic' => $isAuthentic,
             'integrity_status' => [
                 'is_valid' => $isAuthentic,

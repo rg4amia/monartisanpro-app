@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Services\MicroCreditService;
+use App\Services\PdfService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 
@@ -142,7 +143,7 @@ class MicroCreditController extends Controller
         }
     }
 
-    public function report(Request $request, \App\Services\PdfService $pdfService)
+    public function report(Request $request, PdfService $pdfService)
     {
         $user = $request->user();
 
@@ -155,6 +156,8 @@ class MicroCreditController extends Controller
 
         $path = $pdfService->generateSolvabilityReport($user);
 
-        return response()->download($path, 'rapport-solvabilite-prosartisan-'.$user->id.'.pdf');
+        return response()
+            ->download($path, 'rapport-solvabilite-prosartisan-'.$user->id.'.pdf')
+            ->deleteFileAfterSend(true);
     }
 }

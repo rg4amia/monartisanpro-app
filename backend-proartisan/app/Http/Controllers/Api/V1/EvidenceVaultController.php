@@ -17,11 +17,16 @@ class EvidenceVaultController extends Controller
     /**
      * Génère et retourne le certificat d'intégrité cryptographique SHA-256 pour une pièce scellée.
      */
-    public function certificate(int $id): JsonResponse
+    public function certificate(Request $request, int $id): JsonResponse
     {
-        $vault = EvidenceVault::with(['mission', 'litige', 'uploader'])->findOrFail($id);
+        $vault = EvidenceVault::with(['mission', 'litige.mission', 'uploader'])->find($id);
 
-        $certificate = $this->vaultService->generateCertificate($vault);
+        $access = $vault ? $this->vaultService->accessLevel($request->user(), $vault) : null;
+        if ($vault === null || $access === null) {
+            return $this->notFound();
+        }
+
+        $certificate = $this->vaultService->generateCertificate($vault, $access);
 
         return response()->json([
             'success' => true,
@@ -32,9 +37,13 @@ class EvidenceVaultController extends Controller
     /**
      * Vérification d'intégrité en temps réel d'une pièce du coffre-fort.
      */
-    public function verify(int $id): JsonResponse
+    public function verify(Request $request, int $id): JsonResponse
     {
-        $vault = EvidenceVault::findOrFail($id);
+        $vault = EvidenceVault::with(['mission', 'litige.mission'])->find($id);
+
+        if ($vault === null || $this->vaultService->accessLevel($request->user(), $vault) === null) {
+            return $this->notFound();
+        }
 
         $isValid = $this->vaultService->verifyIntegrity($vault);
 
@@ -48,5 +57,17 @@ class EvidenceVaultController extends Controller
                 'verified_at' => now()->toIso8601String(),
             ],
         ]);
+    }
+
+    /**
+     * Même réponse qu'une preuve inexistante : les identifiants sont
+     * séquentiels, un refus distinct révélerait lesquels existent.
+     */
+    private function notFound(): JsonResponse
+    {
+        return response()->json([
+            'success' => false,
+            'message' => 'Preuve introuvable.',
+        ], 404);
     }
 }
