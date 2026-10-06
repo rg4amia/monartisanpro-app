@@ -58,9 +58,14 @@ class SolvencyPassportService
             ? 50000 + (($score - 700) * 1500)
             : 0;
 
+        $appKey = (string) config('app.key');
+        if (empty($appKey)) {
+            throw new \RuntimeException("Clé d'application app.key manquante.");
+        }
+
         // 4. Jeton cryptographique d'authentification HMAC (anti-falsification)
         $payloadToSign = "passport:{$artisan->id}:{$score}:{$artisan->phone}";
-        $signature = hash_hmac('sha256', $payloadToSign, config('app.key') ?? 'prosartisan-secret');
+        $signature = hash_hmac('sha256', $payloadToSign, $appKey);
 
         $token = base64_encode(json_encode([
             'artisan_id' => $artisan->id,
@@ -109,7 +114,17 @@ class SolvencyPassportService
     {
         try {
             $data = json_decode(base64_decode($token), true);
-            if (! is_array($data) || ! isset($data['artisan_id'], $data['score'], $data['sig'])) {
+            if (! is_array($data) || ! isset($data['artisan_id'], $data['score'], $data['sig'], $data['issued_at'])) {
+                return null;
+            }
+
+            // Expiration du jeton : 30 jours max (anti-rejeu à long terme)
+            if (now()->timestamp - (int) $data['issued_at'] > 30 * 86400) {
+                return null;
+            }
+
+            $appKey = (string) config('app.key');
+            if (empty($appKey)) {
                 return null;
             }
 
@@ -119,7 +134,7 @@ class SolvencyPassportService
             }
 
             $payloadToSign = "passport:{$artisan->id}:{$data['score']}:{$artisan->phone}";
-            $expectedSignature = hash_hmac('sha256', $payloadToSign, config('app.key') ?? 'prosartisan-secret');
+            $expectedSignature = hash_hmac('sha256', $payloadToSign, $appKey);
 
             if (! hash_equals($expectedSignature, $data['sig'])) {
                 return null;

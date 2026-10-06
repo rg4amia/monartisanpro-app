@@ -31,9 +31,9 @@ class UploadController extends Controller
         // Stocke dans le dossier 'fileshare' du disque public
         $path = $file->store('fileshare', 'public');
 
-        // Récupère l'URL publique (chemin absolu garanti en HTTPS)
+        // Récupère l'URL publique (garantie en HTTPS en production)
         $baseUrl = config('app.url') ?: 'https://prosartisan.net';
-        if (str_contains($baseUrl, 'localhost') || str_contains($baseUrl, '127.0.0.1') || app()->environment('production')) {
+        if (app()->environment('production')) {
             $baseUrl = 'https://prosartisan.net';
         }
         $baseUrl = rtrim(str_replace('http://', 'https://', $baseUrl), '/');

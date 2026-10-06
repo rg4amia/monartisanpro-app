@@ -233,4 +233,77 @@ class Chantier39SecurityAndApiFixesTest extends TestCase
         // Doit répondre 200 avec la structure de litiges, jamais 404 ni modèle introuvable
         $response->assertOk();
     }
+
+    // ── Constat 16 : Hygiène publique et CORS ─────────────────────────────────────
+
+    public function test_opcache_clear_nest_pas_present_dans_public(): void
+    {
+        $this->assertFileDoesNotExist(public_path('opcache_clear.php'));
+    }
+
+    public function test_cors_wildcard_nest_pas_present_dans_htaccess(): void
+    {
+        $htaccess = file_get_contents(public_path('.htaccess'));
+        $this->assertStringNotContainsString('Access-Control-Allow-Origin "*"', $htaccess);
+    }
+
+    // ── Constat 12 : SolvencyPassportService et jetons ────────────────────────────
+
+    public function test_solvency_passport_rejette_ancien_secret_par_defaut(): void
+    {
+        $artisan = $this->user('artisan');
+
+        // Signature générée avec l'ancien secret statique 'prosartisan-secret'
+        $score = 750;
+        $payload = "passport:{$artisan->id}:{$score}:{$artisan->phone}";
+        $fakeSig = hash_hmac('sha256', $payload, 'prosartisan-secret');
+
+        $token = base64_encode(json_encode([
+            'artisan_id' => $artisan->id,
+            'score' => $score,
+            'sig' => $fakeSig,
+            'issued_at' => now()->timestamp,
+        ]));
+
+        $service = app(\App\Services\SolvencyPassportService::class);
+        $result = $service->verifyPassportToken($token);
+
+        // Doit être rejeté (null) car config('app.key') doit être respectée
+        $this->assertNull($result);
+    }
+
+    public function test_solvency_passport_rejette_jeton_expire(): void
+    {
+        $artisan = $this->user('artisan');
+        $score = 750;
+        $payload = "passport:{$artisan->id}:{$score}:{$artisan->phone}";
+        $sig = hash_hmac('sha256', $payload, config('app.key'));
+
+        // Jeton émis il y a 35 jours (expiration fixée à 30 jours max)
+        $token = base64_encode(json_encode([
+            'artisan_id' => $artisan->id,
+            'score' => $score,
+            'sig' => $sig,
+            'issued_at' => now()->subDays(35)->timestamp,
+        ]));
+
+        $service = app(\App\Services\SolvencyPassportService::class);
+        $result = $service->verifyPassportToken($token);
+
+        $this->assertNull($result);
+    }
+
+    public function test_solvency_passport_accepte_jeton_valide(): void
+    {
+        $artisan = $this->user('artisan');
+
+        $service = app(\App\Services\SolvencyPassportService::class);
+        $passport = $service->generatePassport($artisan);
+        $token = $passport['certification']['token'];
+
+        $result = $service->verifyPassportToken($token);
+
+        $this->assertNotNull($result);
+        $this->assertEquals($artisan->id, $result['artisan']['id']);
+    }
 }

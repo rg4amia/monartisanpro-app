@@ -136,8 +136,10 @@ Route::prefix('v1')->group(function () {
     });
 
     // ── Passeport de Solvabilité & Assurance Chantier (Chantier 9C) ───────────
-    Route::get('/solvency-passports/verify', [SolvencyPassportController::class, 'verify']);
-    Route::get('/solvency-passports/insurance-quote', [SolvencyPassportController::class, 'calculateInsurance']);
+    Route::middleware('throttle:api')->group(function () {
+        Route::get('/solvency-passports/verify', [SolvencyPassportController::class, 'verify']);
+        Route::get('/solvency-passports/insurance-quote', [SolvencyPassportController::class, 'calculateInsurance']);
+    });
 
     // ─────────────────────────────────────────────────────────────────────────
     // ROUTES PROTÉGÉES (Sanctum token)

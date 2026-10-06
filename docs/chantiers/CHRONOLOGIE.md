@@ -8,7 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
-| 2026-10-06 | Plan | [Chantier 39 — Clôture des anomalies résiduelles de sécurité et d'API](plans/2026-10-06-chantier-39-cloture-anomalies-securite-et-api.md) | en cours (Lot A validé) | `dc4a8b7b` |
+| 2026-10-06 | Plan | [Chantier 39 — Clôture des anomalies résiduelles de sécurité et d'API](plans/2026-10-06-chantier-39-cloture-anomalies-securite-et-api.md) | en cours (Lots A et B validés) | `b8aa8b91` (Lot A) |
 | 2026-10-06 | Plan | [Chantier 38 — Données d'un tiers et documents nominatifs](plans/2026-10-06-chantier-38-donnees-de-tiers-et-documents.md) | livré (rapport et reçu à vérifier sur appareil) | `54560140` |
 | 2026-10-06 | Plan | [Chantier 37 — Routes SMS, codes promo et fichiers de la messagerie de chantier](plans/2026-10-06-chantier-37-failles-critiques-api.md) | livré (note vocale à vérifier sur appareil) | `0672517f` |
 | 2026-10-06 | Audit | [Sécurité de l'API mobile, des téléversements et du déploiement](audits/2026-10-06-audit-securite-api-et-deploiement.md) | — | audité : `a9237da5` |

@@ -72,7 +72,7 @@ class PaymentController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'initiation du paiement: '.$e->getMessage(),
+                'message' => 'Erreur lors de l\'initiation du paiement.',
             ], 500);
         }
     }
@@ -177,9 +177,11 @@ class PaymentController extends Controller
                 'message' => $e->getMessage(),
             ], $e->getStatus());
         } catch (\Exception $e) {
+            Log::error('Erreur initiation paiement jalon', ['message' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Erreur lors de l\'initiation du paiement du jalon.',
             ], 400);
         }
     }
@@ -215,9 +217,11 @@ class PaymentController extends Controller
                 'message' => $e->getMessage(),
             ], $e->getStatus());
         } catch (\Exception $e) {
+            Log::error('Erreur initiation paiement course', ['message' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Erreur lors de l\'initiation du règlement de la course.',
             ], 400);
         }
     }
@@ -253,9 +257,11 @@ class PaymentController extends Controller
                 'message' => $e->getMessage(),
             ], $e->getStatus());
         } catch (\Exception $e) {
+            Log::error('Erreur initiation paiement commande', ['message' => $e->getMessage()]);
+
             return response()->json([
                 'success' => false,
-                'message' => $e->getMessage(),
+                'message' => 'Erreur lors de l\'initiation du paiement de la commande.',
             ], 400);
         }
     }
