@@ -11,6 +11,7 @@ import {
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { api, Slide, Artisan, ArtisanDuMois, Article, Video, Formation } from '@/lib/api';
+import { sanitizeHtml } from '@/lib/sanitize';
 
 function formatEmbedUrl(rawUrl: string): string {
   if (!rawUrl) return '';
@@ -610,7 +611,7 @@ export default function HomePage() {
                     </h3>
                     <div 
                       className="text-xs text-[#746251] leading-relaxed line-clamp-3"
-                      dangerouslySetInnerHTML={{ __html: article.contenu }}
+                      dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.contenu) }}
                     />
                   </div>
 

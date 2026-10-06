@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react';
 import { api, Article } from '@/lib/api';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { Calendar, ArrowRight, BookOpen } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -113,7 +114,7 @@ export default function ActualitesPage() {
                                         </h3>
                                         <div
                                             className="text-xs text-[#746251] leading-relaxed line-clamp-3"
-                                            dangerouslySetInnerHTML={{ __html: article.contenu }}
+                                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.contenu) }}
                                         />
                                     </div>
 

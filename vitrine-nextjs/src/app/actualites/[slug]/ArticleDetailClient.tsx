@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import { api, Article } from '@/lib/api';
+import { sanitizeHtml } from '@/lib/sanitize';
 import { Calendar, ChevronLeft, ArrowRight } from 'lucide-react';
 import Link from 'next/link';
 import Image from 'next/image';
@@ -112,7 +113,7 @@ export default function ArticleDetailClient() {
                 {/* Article Content */}
                 <div 
                     className="prose max-w-none text-[#241b16] text-sm leading-relaxed space-y-6"
-                    dangerouslySetInnerHTML={{ __html: article.contenu }}
+                    dangerouslySetInnerHTML={{ __html: sanitizeHtml(article.contenu) }}
                 />
 
                 {/* Call to action at the bottom */}
