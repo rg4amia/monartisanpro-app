@@ -837,7 +837,14 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 - **Tout nouveau dossier servi au public** passe par `backend-proartisan/public/` (ou par une règle de routage vers lui), jamais par une exception à la règle 0.
 - **Contrôle après un changement du `.htaccess`** : `curl -I` sur `monartisanpro-app/backend-proartisan/.env` et `monartisanpro-app/.git/config` répond 403 ; sur `api/v1/settings/app-access`, 200.
 - **Correction de fond à prévoir** : sortir le dépôt de `public_html`.
-- **Constats restant ouverts** (routes SMS et codes promo de l'API sans contrôle d'administrateur, fichiers de la messagerie de chantier, coffre de preuves, rapport de solvabilité, recrutement) : `docs/chantiers/audits/2026-10-06-audit-securite-api-et-deploiement.md`.
+- **Constats restant ouverts** (coffre de preuves, rapport de solvabilité, recrutement, téléversement générique) : `docs/chantiers/audits/2026-10-06-audit-securite-api-et-deploiement.md`.
+153. **Aucune route d'administration ouverte à tout compte, aucun fichier publié sous l'extension de l'expéditeur (Chantier 37)** :
+- **Routes supprimées** : `POST /api/v1/sms/send`, `GET /api/v1/sms`, `GET /api/v1/sms/{uid}` (`SmsController`) et la ressource `promo-codes` de l'API avec sa route `toggle`. Elles n'exigeaient que d'être connecté : tout compte envoyait un SMS libre sous le nom de ProsArtisan, lisait les SMS envoyés (codes compris) ou créait un code promo à 100 %. Rien ne les appelait.
+- **Ce qui reste** : l'envoi de SMS passe par `NotificationService` ; les codes promo se gèrent dans le backoffice (`/admin/promo-codes`, `admin.promo.manage`) ; l'API n'expose que `POST /promo-codes/verify`.
+- **Toute route du groupe authentifié de `routes/api.php` qui n'appartient pas à l'utilisateur connecté** porte `admin.only` et la capacité `can:admin.<x>` de son équivalent du backoffice — ou n'existe pas. Un commentaire « Admin » au-dessus d'une route ne protège rien.
+- **Fichier téléversé sur le disque public** : liste fermée de types, jugée sur le contenu (`getMimeType()`), et extension d'enregistrement tirée de ce type — jamais `getClientOriginalExtension()` (`MissionChatController::acceptedMedia` : photos JPEG, PNG, WEBP, HEIC ; notes vocales M4A, AAC, MP3, WAV, OGG). Une note vocale au contenu non reconnu est admise sur son extension, prise dans la liste fermée des formats audio.
+- **Aucun script sous `/storage`** : `public/.htaccess` refuse toute adresse de `/storage` finissant par une extension de script. Ne pas retirer cette règle.
+- **Tests** : `Chantier37CriticalApiFixesTest.php`. Dans un test d'envoi de fichier, `Storage::fake('public')` puis contrôle de `allFiles()`.
 
 ## 📎 Fichier de référence du flux
 

@@ -8,6 +8,7 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-10-06 | Plan | [Chantier 37 — Routes SMS, codes promo et fichiers de la messagerie de chantier](plans/2026-10-06-chantier-37-failles-critiques-api.md) | livré (contrôle sur le serveur à faire ; note vocale à vérifier sur appareil) | — |
 | 2026-10-06 | Audit | [Sécurité de l'API mobile, des téléversements et du déploiement](audits/2026-10-06-audit-securite-api-et-deploiement.md) | — | audité : `a9237da5` |
 | 2026-10-05 | Plan | [Chantier 36 — Version de l'application incrémentée à chaque génération](plans/2026-10-05-chantier-36-version-incrementee-a-chaque-generation.md) | livré (installation sur appareil et envoi sur Google Play à faire) | — |
 | 2026-10-05 | Plan | [Chantier 35 — Services d'itinéraire surveillés, écran du livreur relu après un rejeu](plans/2026-10-05-chantier-35-sante-itineraires-et-rejeu-livreur.md) | livré (contrôle manuel à faire) | `af4478cd` |

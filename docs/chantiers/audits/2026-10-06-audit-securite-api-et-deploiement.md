@@ -133,9 +133,13 @@ Correctif : supprimer ces routes (le backoffice a les siennes) ou leur donner `a
 - Les mêmes règles sont ajoutées au `.htaccess` qu'écrit `backend-ci.yml` (règle 0), sans quoi le déploiement suivant effaçait la correction manuelle.
 - Reste à faire : renouveler les secrets du `.env`, qui ont pu être lus tant que le dossier était ouvert (aucun moyen de l'établir depuis le dépôt) ; sortir le dépôt de `public_html` reste la correction de fond.
 
+### Constats 2, 3 et 4 fermés par le Chantier 37
+
+Voir `../plans/2026-10-06-chantier-37-failles-critiques-api.md`. Du constat 2, il reste le second volet (une photo n'est pas lue par le filtre anti-contournement) et le contrôle des fichiers déjà déposés sur le serveur.
+
 ### Autres constats
 
-Aucun autre correctif n'a été appliqué.
+Les constats 5 à 19 restent ouverts.
 
 1. **Immédiat, sur le serveur** : confirmer le constat 1 par la commande indiquée ; si elle répond 200, interdire l'accès au dossier, renouveler les secrets du `.env` et le jeton, puis sortir le dépôt de la racine web.
 2. **Chantier 37 (proposé)** — fermer les constats 2, 3 et 4, chacun avec son test Pest qui échoue avant correctif.

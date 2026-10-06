@@ -11,16 +11,74 @@ use App\Services\NotificationService;
 use App\Services\RealtimeEventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class MissionChatController extends Controller
 {
+    /**
+     * Types de fichier acceptés : type détecté dans le contenu → extension
+     * d'enregistrement. L'extension ne vient jamais du nom transmis : le
+     * fichier est publié sur le disque public, où un « .php » ou un « .html »
+     * envoyé par un participant était servi tel quel.
+     */
+    private const IMAGE_TYPES = [
+        'image/jpeg' => 'jpg',
+        'image/png' => 'png',
+        'image/webp' => 'webp',
+        'image/heic' => 'heic',
+        'image/heif' => 'heic',
+    ];
+
+    private const AUDIO_TYPES = [
+        'audio/mp4' => 'm4a',
+        'audio/x-m4a' => 'm4a',
+        'audio/m4a' => 'm4a',
+        'video/mp4' => 'm4a', // conteneur MP4 d'une note vocale, lu comme une vidéo
+        'audio/aac' => 'aac',
+        'audio/x-aac' => 'aac',
+        'audio/x-hx-aac-adts' => 'aac',
+        'audio/mpeg' => 'mp3',
+        'audio/wav' => 'wav',
+        'audio/x-wav' => 'wav',
+        'audio/ogg' => 'ogg',
+    ];
+
+    /** Extensions de note vocale admises quand le contenu n'est pas reconnu. */
+    private const AUDIO_EXTENSIONS = ['m4a', 'aac', 'mp3', 'wav', 'ogg'];
+
     public function __construct(
         private AntiCircumventionService $antiCircumvention,
         private NotificationService $notificationService
     ) {}
+
+    /**
+     * @return array{0: string, 1: string}|null [type du message, extension], ou null si le fichier est refusé
+     */
+    private function acceptedMedia(UploadedFile $file): ?array
+    {
+        $mime = strtolower((string) $file->getMimeType());
+
+        if (isset(self::IMAGE_TYPES[$mime])) {
+            return ['image', self::IMAGE_TYPES[$mime]];
+        }
+
+        if (isset(self::AUDIO_TYPES[$mime])) {
+            return ['audio', self::AUDIO_TYPES[$mime]];
+        }
+
+        // Certains téléphones produisent une note vocale dont le contenu n'est
+        // pas reconnu : elle est admise sur son extension, prise dans une liste
+        // fermée de formats audio que le serveur n'exécute pas.
+        $clientExtension = strtolower($file->getClientOriginalExtension());
+        if ($mime === 'application/octet-stream' && in_array($clientExtension, self::AUDIO_EXTENSIONS, true)) {
+            return ['audio', $clientExtension];
+        }
+
+        return null;
+    }
 
     /**
      * Liste les messages d'une mission avec pagination.
@@ -94,13 +152,15 @@ class MissionChatController extends Controller
             $file = $request->file('file');
             $mime = $file->getMimeType() ?: '';
 
-            if (str_starts_with($mime, 'image/')) {
-                $type = 'image';
-            } elseif (str_starts_with($mime, 'audio/') || in_array($file->getClientOriginalExtension(), ['m4a', 'mp3', 'wav', 'aac', 'ogg'])) {
-                $type = 'audio';
+            $media = $this->acceptedMedia($file);
+            if ($media === null) {
+                return response()->json([
+                    'success' => false,
+                    'message' => 'Fichier refusé : seules les photos (JPEG, PNG, WEBP, HEIC) et les notes vocales sont acceptées.',
+                ], 422);
             }
 
-            $extension = $file->getClientOriginalExtension() ?: 'bin';
+            [$type, $extension] = $media;
             $filename = 'chat_'.Str::random(24).'.'.$extension;
             $path = $file->storeAs("chat/{$mission->id}", $filename, 'public');
             $mediaUrl = Storage::disk('public')->url($path);

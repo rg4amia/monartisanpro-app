@@ -29,6 +29,10 @@
 
     RewriteEngine On
 
+    # Aucun script n'est exécuté depuis les fichiers téléversés : /storage ne
+    # sert que des médias (audit du 06/10/2026, Chantier 37).
+    RewriteRule ^storage/.*\.(php\d?|phtml|phar|pht|cgi|pl|py|sh)$ - [F,NC,L]
+
     # Handle Authorization Header
     RewriteCond %{HTTP:Authorization} .
     RewriteRule .* - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]

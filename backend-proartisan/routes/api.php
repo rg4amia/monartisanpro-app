@@ -42,7 +42,6 @@ use App\Http\Controllers\Api\V1\RecruitmentEngagementController;
 use App\Http\Controllers\Api\V1\ReferentController;
 use App\Http\Controllers\Api\V1\SectorController;
 use App\Http\Controllers\Api\V1\SettingController;
-use App\Http\Controllers\Api\V1\SmsController;
 use App\Http\Controllers\Api\V1\SmsWebhookController;
 use App\Http\Controllers\Api\V1\SolvencyPassportController;
 use App\Http\Controllers\Api\V1\Supplier\SupplierCashoutController;
@@ -186,9 +185,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/orders/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);
         Route::post('/orders/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
 
-        // ── Codes Promo ──────────────────────────────────────────────────────
-        Route::apiResource('promo-codes', PromoCodeController::class)->except(['create', 'edit']);
-        Route::post('/promo-codes/{promoCode}/toggle', [PromoCodeController::class, 'toggle']);
+        // Codes promo et SMS : aucune route de gestion ici. Les codes promo se
+        // gèrent dans le backoffice (`/admin/promo-codes`, `admin.promo.manage`) ;
+        // seule la vérification d'un code (`/promo-codes/verify`) est exposée.
+        // Les anciennes routes `promo-codes` et `sms/*` n'exigeaient que d'être
+        // connecté : tout compte créait un code à 100 % ou envoyait un SMS libre.
 
         // ── Logistique & Livraisons (Courses) ──────────────────────────────────
         Route::post('/deliveries/estimate', [OrderController::class, 'estimateDelivery']);
@@ -429,13 +430,6 @@ Route::prefix('v1')->group(function () {
 
         // ── Communications (app mobile — publications actives) ─────────────
         Route::get('/communications/active', [CommunicationController::class, 'activeForUser']);
-
-        // ── SMS (Admin/Testing) ───────────────────────────────────────────────
-        Route::prefix('sms')->group(function () {
-            Route::post('/send', [SmsController::class, 'send']);
-            Route::get('/', [SmsController::class, 'viewAll']);
-            Route::get('/{uid}', [SmsController::class, 'view']);
-        });
 
         // ── Administration ─────────────────────────────────────────────────────
         // Miroir mobile des routes du backoffice web (routes/web.php) : chaque
