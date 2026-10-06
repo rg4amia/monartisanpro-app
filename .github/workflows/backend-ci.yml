@@ -463,7 +463,11 @@ jobs:
             # /kyc/documents/{id}/file, photo de profil /users/{id}/photo) :
             # sans ce préfixe, la règle 3 (front statique) les intercepte et
             # aucune pièce KYC réelle n'est jamais consultable en production.
-            RewriteCond %{REQUEST_URI} ^/(api|admin|sanctum|storage|build|assistant|kyc|users|client\.(html|js|css)|config\.js|db\.js) [NC]
+            # Chantier 41 : les liens signés des reçus (/receipts/), des notes
+            # vocales de candidature (/recruitment/) et des fichiers privés
+            # (/media/) n'étaient pas routés vers Laravel : ils tombaient sur
+            # la page « introuvable » de l'hébergeur.
+            RewriteCond %{REQUEST_URI} ^/(api|admin|sanctum|storage|build|assistant|kyc|users|receipts/|recruitment/|media/|client\.(html|js|css)|config\.js|db\.js) [NC]
             RewriteCond %{REQUEST_URI} !^/monartisanpro-app/backend-proartisan/public/
             RewriteRule ^(.*)$ monartisanpro-app/backend-proartisan/public/$1 [L]
 

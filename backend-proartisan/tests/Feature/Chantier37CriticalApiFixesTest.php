@@ -136,6 +136,7 @@ class Chantier37CriticalApiFixesTest extends TestCase
     public function test_un_fichier_executable_est_refuse_dans_la_messagerie(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
         [$client, , $mission] = $this->missionWithParticipants();
 
         foreach (['porte.php', 'page.html', 'image.svg', 'archive.zip'] as $name) {
@@ -153,6 +154,7 @@ class Chantier37CriticalApiFixesTest extends TestCase
     public function test_l_extension_enregistree_ne_vient_jamais_du_nom_du_fichier(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
         [$client, , $mission] = $this->missionWithParticipants();
 
         // Une vraie image, présentée sous un nom en .php.
@@ -163,7 +165,9 @@ class Chantier37CriticalApiFixesTest extends TestCase
             ->post("/api/v1/missions/{$mission->id}/messages", ['file' => $disguised], ['Accept' => 'application/json'])
             ->assertCreated();
 
-        $files = Storage::disk('public')->allFiles();
+        // Chantier 41 : les médias de discussion vivent sur le disque privé.
+        $this->assertSame([], Storage::disk('public')->allFiles());
+        $files = Storage::disk('local')->allFiles('media/chat');
         $this->assertCount(1, $files);
         $this->assertStringEndsWith('.jpg', $files[0]);
         $this->assertSame('image', MissionMessage::sole()->type);
@@ -172,6 +176,7 @@ class Chantier37CriticalApiFixesTest extends TestCase
     public function test_une_photo_et_une_note_vocale_passent_toujours(): void
     {
         Storage::fake('public');
+        Storage::fake('local');
         [$client, $artisan, $mission] = $this->missionWithParticipants();
 
         $this->actingAs($client)
@@ -189,7 +194,9 @@ class Chantier37CriticalApiFixesTest extends TestCase
             ->assertCreated()
             ->assertJsonPath('data.type', 'audio');
 
-        $files = Storage::disk('public')->allFiles();
+        // Chantier 41 : les médias de discussion vivent sur le disque privé.
+        $this->assertSame([], Storage::disk('public')->allFiles());
+        $files = Storage::disk('local')->allFiles('media/chat');
         $this->assertCount(2, $files);
         foreach ($files as $file) {
             $this->assertMatchesRegularExpression('/\.(png|m4a)$/', $file);

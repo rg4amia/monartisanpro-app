@@ -138,6 +138,14 @@ return [
         'force_release_delay_hours' => env('JALON_FORCE_RELEASE_HOURS', 72),
     ],
 
+    // Fichiers privés des utilisateurs (App\Support\PrivateMedia) : durée de
+    // validité d'un lien de lecture signé. Le lien est régénéré à chaque
+    // réponse de l'API ; une liste gardée hors connexion ne montre plus ses
+    // photos passé ce délai.
+    'private_media' => [
+        'url_ttl_minutes' => (int) env('PRIVATE_MEDIA_URL_TTL_MINUTES', 120),
+    ],
+
     // Vérification KYC par IA (OCR de la pièce + biométrie faciale Gemini).
     // L'auto-approbation n'est qu'un raccourci : tout dossier qui ne franchit
     // pas l'ensemble des contrôles reste en revue humaine au backoffice.

@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\PrivateMediaUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -29,6 +30,7 @@ class LitigeEvidence extends Model
             'longitude' => 'float',
             'taken_at' => 'datetime',
             'metadata' => 'array',
+            'media_url' => PrivateMediaUrl::class,
         ];
     }
 

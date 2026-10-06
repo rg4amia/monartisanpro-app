@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\PrivateMediaUrlList;
 use App\States\Mission\CompletedState;
 use App\States\Mission\DisputedState;
 use App\States\Mission\FundedLockedState;
@@ -44,7 +45,7 @@ class Mission extends Model
         return [
             'status' => MissionState::class,
             'address_id' => 'integer',
-            'photos_json' => 'array',
+            'photos_json' => PrivateMediaUrlList::class,
             'diagnostic_media_analysis' => 'array',
             'montant_total' => 'integer',
             'montant_materiaux' => 'integer',

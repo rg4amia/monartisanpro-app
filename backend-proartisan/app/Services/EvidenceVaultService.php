@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\EvidenceVault;
 use App\Models\JuryReview;
 use App\Models\User;
+use App\Support\PrivateMedia;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -32,20 +33,21 @@ class EvidenceVaultService
         $mimeType = null;
 
         if ($file instanceof UploadedFile) {
-            $disk = Storage::disk('public');
-            $filePath = $context['file_path'] ?? $file->store('vault', 'public');
-            $sha256 = hash('sha256', $disk->get($filePath));
+            // Disque privé (Chantier 41) : une preuve ne vit jamais à une
+            // adresse publique. L'empreinte se calcule sur le fichier reçu.
+            $filePath = $context['file_path'] ?? PrivateMedia::store($file, 'vault');
+            $sha256 = hash_file('sha256', $file->getRealPath());
             $fileSize = $file->getSize();
             $mimeType = $file->getMimeType();
-            $fileUrl = $context['file_url'] ?? $disk->url($filePath);
+            $fileUrl = PrivateMedia::toStored($context['file_url'] ?? null) ?? PrivateMedia::canonicalUrl($filePath);
         } elseif (is_string($file)) {
             $filePath = $file;
-            $disk = Storage::disk('public');
+            $contents = $this->contents($file);
 
-            if ($disk->exists($file)) {
-                $sha256 = hash('sha256', $disk->get($file));
-                $fileSize = $disk->size($file);
-                $mimeType = $disk->mimeType($file);
+            if ($contents !== null) {
+                $sha256 = hash('sha256', $contents);
+                $fileSize = strlen($contents);
+                $mimeType = PrivateMedia::mimeType($file) ?? (Storage::disk('public')->exists($file) ? Storage::disk('public')->mimeType($file) : null);
             } else {
                 $sha256 = hash('sha256', $file);
             }
@@ -75,22 +77,35 @@ class EvidenceVaultService
     }
 
     /**
+     * Contenu d'une preuve : sur le disque privé, à défaut sur le disque
+     * public pour une preuve scellée avant le Chantier 41.
+     */
+    private function contents(string $target): ?string
+    {
+        $path = PrivateMedia::pathFromUrl($target) ?? $target;
+
+        if (PrivateMedia::isSafePath($path) && PrivateMedia::exists($path)) {
+            return PrivateMedia::contents($path);
+        }
+
+        return Storage::disk('public')->exists($target) ? Storage::disk('public')->get($target) : null;
+    }
+
+    /**
      * Vérifie l'intégrité cryptographique d'une preuve scellée.
      */
     public function verifyIntegrity(EvidenceVault $entry): bool
     {
-        $disk = Storage::disk('public');
         $target = $entry->file_path ?? $entry->file_url;
 
         if (! $target) {
             return false;
         }
 
-        $currentHash = null;
+        $contents = $this->contents($target);
+        $currentHash = $contents !== null ? hash('sha256', $contents) : null;
 
-        if ($disk->exists($target)) {
-            $currentHash = hash('sha256', $disk->get($target));
-        } elseif (file_exists($target)) {
+        if ($currentHash === null && file_exists($target)) {
             $currentHash = hash_file('sha256', $target);
         }
 

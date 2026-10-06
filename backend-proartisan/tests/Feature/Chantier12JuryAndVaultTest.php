@@ -34,6 +34,7 @@ class Chantier12JuryAndVaultTest extends TestCase
     {
         parent::setUp();
         Storage::fake('public');
+        Storage::fake('local');
 
         $this->client = User::factory()->create([
             'role' => 'client',
@@ -122,7 +123,8 @@ class Chantier12JuryAndVaultTest extends TestCase
         );
 
         // Simulation d'une altération malveillante du fichier sur le disque
-        Storage::disk('public')->put($sealed->file_path, 'CONTENU_MODIFIE_ILLICITE');
+        // Chantier 41 : la preuve vit sur le disque privé.
+        Storage::disk('local')->put('media/'.$sealed->file_path, 'CONTENU_MODIFIE_ILLICITE');
 
         $isValid = $vaultService->verifyIntegrity($sealed);
         $this->assertFalse($isValid);

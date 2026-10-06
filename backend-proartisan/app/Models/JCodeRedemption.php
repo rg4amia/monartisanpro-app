@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\PrivateMediaUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
@@ -21,6 +22,7 @@ class JCodeRedemption extends Model
     ];
 
     protected $casts = [
+        'recu_photo_url' => PrivateMediaUrl::class,
         'montant' => 'integer',
         'latitude' => 'float',
         'longitude' => 'float',

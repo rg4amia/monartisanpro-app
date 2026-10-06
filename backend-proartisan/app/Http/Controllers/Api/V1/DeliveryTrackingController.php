@@ -8,11 +8,11 @@ use App\Models\Order;
 use App\Services\Admin\AdminActivityLogger;
 use App\Services\DeliveryTrackingService;
 use App\Services\OrderService;
+use App\Support\PrivateMedia;
 use App\Support\UserFacingError;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
-use Illuminate\Support\Facades\Storage;
 
 class DeliveryTrackingController extends Controller
 {
@@ -144,8 +144,7 @@ class DeliveryTrackingController extends Controller
 
         $photoUrl = null;
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('orders/pickup', 'public');
-            $photoUrl = Storage::url($path);
+            $photoUrl = PrivateMedia::storeAndSign($request->file('photo'), 'orders/pickup');
         }
 
         try {
@@ -201,8 +200,7 @@ class DeliveryTrackingController extends Controller
 
         $photoUrl = null;
         if ($request->hasFile('photo')) {
-            $path = $request->file('photo')->store('orders/delivery', 'public');
-            $photoUrl = Storage::url($path);
+            $photoUrl = PrivateMedia::storeAndSign($request->file('photo'), 'orders/delivery');
         }
 
         try {

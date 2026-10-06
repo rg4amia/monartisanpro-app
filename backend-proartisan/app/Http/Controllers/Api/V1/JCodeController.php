@@ -16,6 +16,7 @@ use App\Services\NotificationService;
 use App\Services\PaymentPhoneService;
 use App\Services\PhotoService;
 use App\Services\RealtimeEventService;
+use App\Support\PrivateMedia;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Log;
@@ -141,8 +142,7 @@ class JCodeController extends Controller
 
         $recuPhotoUrl = null;
         if ($request->hasFile('recu_photo')) {
-            $path = $request->file('recu_photo')->store('jcode_receipts', 'public');
-            $recuPhotoUrl = asset('storage/'.$path);
+            $recuPhotoUrl = PrivateMedia::storeAndSign($request->file('recu_photo'), 'jcode_receipts');
         }
 
         $result = $this->jCodeService->scan(

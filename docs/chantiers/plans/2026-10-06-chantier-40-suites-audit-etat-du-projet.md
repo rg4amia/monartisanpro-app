@@ -2,12 +2,12 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | partiel (anomalie 4 : décision produit attendue ; contrôle sur le serveur à faire) |
+| Statut | livré (anomalie 4 reprise par le Chantier 41) |
 | Créé le | 2026-10-06 |
 | Mis à jour le | 2026-10-06 |
 | Auteur | Claude Code (Opus 5.5) |
 | Analyses liées | `../audits/2026-10-06-audit-etat-du-projet-apres-chantier-39.md` |
-| Commits | `842b1649` (lot A) |
+| Commits | `842b1649` (lot A), `cc75c295` (lots B et C) |
 
 ## Objectif
 
@@ -48,3 +48,5 @@ Corriger les anomalies relevées par l'audit de l'état du projet après le Chan
 - **Anomalie 11** : `driver` retiré d'`UssdController`. Le repli sans clé Gemini (suggestion de devis, analyse des fichiers) et les requêtes Eloquent dans des contrôleurs restent ouverts.
 - **Anomalie 12** : `X-Powered-By` retiré par `public/.htaccess` ; à contrôler sur le serveur, l'hébergeur pouvant le rétablir.
 - **Vérification** : `Chantier40AuditFollowUpsTest` (7 tests) ; suite Pest complète ; Vitest du backoffice (489 tests) et de la vitrine (72 tests) ; compilation du backoffice et de la vitrine.
+- **Contrôle du 06/10/2026 après déploiement de `cc75c295`** : origine `www.` autorisée, origine étrangère refusée, `X-Powered-By` absent, `.env` en 403.
+- **Anomalie 4** : décision produit rendue le 06/10/2026, mise en œuvre par le Chantier 41.

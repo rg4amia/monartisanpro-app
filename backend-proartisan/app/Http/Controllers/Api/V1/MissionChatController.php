@@ -10,11 +10,11 @@ use App\Services\AntiCircumventionService;
 use App\Services\MissionHistoryService;
 use App\Services\NotificationService;
 use App\Services\RealtimeEventService;
+use App\Support\PrivateMedia;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
 
 class MissionChatController extends Controller
@@ -162,9 +162,7 @@ class MissionChatController extends Controller
             }
 
             [$type, $extension] = $media;
-            $filename = 'chat_'.Str::random(24).'.'.$extension;
-            $path = $file->storeAs("chat/{$mission->id}", $filename, 'public');
-            $mediaUrl = Storage::disk('public')->url($path);
+            $mediaUrl = PrivateMedia::storeAndSign($file, "chat/{$mission->id}", $extension);
 
             $mediaMetadata = [
                 'original_name' => $file->getClientOriginalName(),

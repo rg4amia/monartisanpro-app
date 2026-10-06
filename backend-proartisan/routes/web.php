@@ -26,6 +26,7 @@ use App\Http\Controllers\Api\V1\AssistantController;
 use App\Http\Controllers\Api\V1\DeliveryTrackingController;
 use App\Http\Controllers\Api\V1\PaymentController;
 use App\Http\Controllers\KycDocumentController;
+use App\Http\Controllers\PrivateMediaController;
 use App\Http\Controllers\ReceiptController;
 use App\Http\Controllers\RecruitmentVoiceNoteController;
 use App\Http\Controllers\UserPhotoController;
@@ -74,6 +75,14 @@ Route::get('/receipts/transactions/{transaction}', [ReceiptController::class, 's
 Route::get('/recruitment/voice-notes/{application}/file', [RecruitmentVoiceNoteController::class, 'show'])
     ->middleware('signed')
     ->name('recruitment.voice-note.file');
+
+// Fichiers privés des utilisateurs (photos de course, reçus, photos d'étape
+// et de litige, médias de discussion, photos de mission) : lien signé à durée
+// limitée produit par App\Support\PrivateMedia (Chantier 41).
+Route::get('/media/prive/{path}', [PrivateMediaController::class, 'show'])
+    ->where('path', '.*')
+    ->middleware('signed')
+    ->name('media.private.file');
 
 // Photo de profil : même principe que la route ci-dessus (User::photoUrl).
 Route::get('/users/{user}/photo', [UserPhotoController::class, 'show'])

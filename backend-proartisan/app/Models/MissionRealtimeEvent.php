@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\PrivateMediaPayload;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -21,7 +22,7 @@ class MissionRealtimeEvent extends Model
     protected function casts(): array
     {
         return [
-            'payload_json' => 'array',
+            'payload_json' => PrivateMediaPayload::class,
             'created_at' => 'datetime',
         ];
     }

@@ -5,6 +5,7 @@ namespace App\Services;
 use App\Models\Jalon;
 use App\Models\Litige;
 use App\Models\Mission;
+use App\Support\PrivateMedia;
 use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Http;
@@ -886,6 +887,24 @@ Retourne obligatoirement ce format JSON uniquement:
                 $path = str_replace('/storage/', '', parse_url($photo['url'], PHP_URL_PATH) ?? '');
             }
 
+            $privatePath = is_array($photo) ? (PrivateMedia::pathFromUrl($photo['url'] ?? null) ?? ($photo['path'] ?? null)) : null;
+
+            if ($privatePath && PrivateMedia::exists($privatePath)) {
+                // Photo sur le disque privé (Chantier 41).
+                $path = $privatePath;
+                $raw = PrivateMedia::contents($privatePath);
+                $mime = PrivateMedia::mimeType($privatePath) ?? 'image/jpeg';
+                $parts[] = [
+                    'inline_data' => [
+                        'mime_type' => $mime,
+                        'data' => base64_encode((string) $raw),
+                    ],
+                ];
+                $imageCount++;
+
+                continue;
+            }
+
             if ($path && Storage::disk('public')->exists($path)) {
                 $raw = Storage::disk('public')->get($path);
                 /** @var FilesystemAdapter $disk */
@@ -1190,7 +1209,12 @@ Retourne obligatoirement ce format JSON uniquement:
                 $dataBase64 = base64_encode(file_get_contents($media->getPathname()));
             } elseif (is_string($media)) {
                 $path = $media;
-                if (Storage::disk('public')->exists($path)) {
+                $privatePath = PrivateMedia::pathFromUrl($media) ?? $media;
+                if (PrivateMedia::isSafePath($privatePath) && PrivateMedia::exists($privatePath)) {
+                    // Média sur le disque privé (Chantier 41).
+                    $mimeType = PrivateMedia::mimeType($privatePath) ?: 'image/jpeg';
+                    $dataBase64 = base64_encode((string) PrivateMedia::contents($privatePath));
+                } elseif (Storage::disk('public')->exists($path)) {
                     /** @var FilesystemAdapter $disk */
                     $disk = Storage::disk('public');
                     $mimeType = $disk->mimeType($path) ?: 'image/jpeg';

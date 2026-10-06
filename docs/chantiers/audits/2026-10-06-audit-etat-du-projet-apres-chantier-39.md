@@ -125,3 +125,9 @@ Le plan prévoyait le disque privé et une adresse signée. Le commit ne change 
 - Anomalie 4 : partielle — voir les « Écarts » du plan du Chantier 40.
 - Anomalie 11 : `driver` retiré d'`UssdController` ; le repli sans clé Gemini et les requêtes dans des contrôleurs restent ouverts.
 - Anomalie 3 : inchangée, hors code.
+
+### Suites données le 06/10/2026 (Chantier 41)
+
+- Anomalie 4 : fermée. Décision produit — seules les images de catalogue et les réalisations d'un artisan sont publiques ; tout le reste passe sur le disque privé, lu par lien signé.
+- `composer audit --locked`, non couvert par cet audit : deux alertes de gravité faible (`laravel/framework` < 12.69.0, `league/flysystem` ≤ 3.35.2), corrigées par mise à jour.
+- Constat nouveau : les routes signées `/receipts/transactions/{id}` (reçus PDF) et `/recruitment/voice-notes/{id}/file` n'étaient pas routées vers Laravel en production (page « introuvable » de l'hébergeur). Préfixes ajoutés à la règle 2 du `.htaccess` racine.

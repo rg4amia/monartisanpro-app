@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\PrivateMediaUrlList;
 use Illuminate\Database\Eloquent\Model;
 
 class Jalon extends Model
@@ -16,7 +17,7 @@ class Jalon extends Model
     {
         return [
             'montant' => 'integer',
-            'photos_json' => 'array',
+            'photos_json' => PrivateMediaUrlList::class,
             'conformity_score' => 'integer',
             'vision_analysis_json' => 'array',
             'otp_expires_at' => 'datetime',

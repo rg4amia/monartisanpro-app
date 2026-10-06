@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Support\PrivateMedia;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Storage;
@@ -36,28 +37,12 @@ class PhotoService
             // Validation des coordonnées GPS
             $this->validateCoordinates($latitude, $longitude);
 
-            // Génération du nom de fichier unique
-            $filename = $this->generatePhotoFilename($type, $relatedId);
-            $extension = $photo->getClientOriginalExtension();
-            $fullFilename = $filename.'.'.$extension;
-
-            // Chemin de stockage
-            $directory = $this->getStorageDirectory($type);
-            $path = $directory.'/'.$fullFilename;
-
-            // Upload vers storage (local ou S3)
-            $storedPath = Storage::disk('public')->putFileAs(
-                $directory,
-                $photo,
-                $fullFilename
-            );
-
-            if (! $storedPath) {
-                throw new \Exception('Échec de l\'upload de la photo');
-            }
-
-            // URL publique
-            $url = Storage::disk('public')->url($storedPath);
+            // Disque privé, nom aléatoire, extension tirée du contenu : une
+            // photo d'étape, de bon matériel ou de litige est une preuve, lue
+            // par lien signé (Chantier 41). L'ancien nom portait l'identifiant
+            // et la date, et l'extension venait du nom transmis.
+            $storedPath = PrivateMedia::store($photo, $this->getStorageDirectory($type));
+            $url = PrivateMedia::signedUrl($storedPath);
 
             Log::info('Photo géolocalisée uploadée', [
                 'type' => $type,
@@ -210,6 +195,11 @@ class PhotoService
     public function deletePhoto(string $path): bool
     {
         try {
+            if (PrivateMedia::delete($path)) {
+                return true;
+            }
+
+            // Photo d'avant le Chantier 41, restée sur le disque public.
             if (Storage::disk('public')->exists($path)) {
                 return Storage::disk('public')->delete($path);
             }

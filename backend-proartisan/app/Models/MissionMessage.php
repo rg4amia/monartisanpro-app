@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\PrivateMediaUrl;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -25,6 +26,7 @@ class MissionMessage extends Model
     {
         return [
             'media_metadata' => 'array',
+            'media_url' => PrivateMediaUrl::class,
             'is_redacted' => 'boolean',
             'flagged_for_review' => 'boolean',
             'read_at' => 'datetime',

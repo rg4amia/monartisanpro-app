@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Casts\PrivateMediaUrl;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Support\Facades\DB;
 
@@ -19,6 +20,7 @@ class JCode extends Model
     protected $hidden = ['position_scan'];
 
     protected $casts = [
+        'photo_materiaux_url' => PrivateMediaUrl::class,
         'montant' => 'integer',
         'montant_consomme' => 'integer',
         'expires_at' => 'datetime',
