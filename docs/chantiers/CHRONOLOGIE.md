@@ -8,6 +8,8 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
+| 2026-10-06 | Plan | [Chantier 40 — Suites de l'audit de l'état du projet](plans/2026-10-06-chantier-40-suites-audit-etat-du-projet.md) | en cours | — |
+| 2026-10-06 | Audit | [État du projet après le Chantier 39](audits/2026-10-06-audit-etat-du-projet-apres-chantier-39.md) | — | audité : `361c800f` |
 | 2026-10-06 | Plan | [Chantier 39 — Clôture des anomalies résiduelles de sécurité et d'API](plans/2026-10-06-chantier-39-cloture-anomalies-securite-et-api.md) | livré | `b8aa8b91` (Lot A), `858129f5` (Lot B), `50350207` (Lot C) |
 | 2026-10-06 | Plan | [Chantier 38 — Données d'un tiers et documents nominatifs](plans/2026-10-06-chantier-38-donnees-de-tiers-et-documents.md) | livré (rapport et reçu à vérifier sur appareil) | `54560140` |
 | 2026-10-06 | Plan | [Chantier 37 — Routes SMS, codes promo et fichiers de la messagerie de chantier](plans/2026-10-06-chantier-37-failles-critiques-api.md) | livré (note vocale à vérifier sur appareil) | `0672517f` |

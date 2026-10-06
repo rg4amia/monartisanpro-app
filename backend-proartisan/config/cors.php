@@ -23,7 +23,11 @@ return [
     // Pas de wildcard '*' en production si les cookies/tokens d'authentification sont supportés.
     'allowed_origins' => array_filter(explode(',', env('ALLOWED_ORIGINS', 'https://prosartisan.ci,https://admin.prosartisan.ci,https://prosartisan.net,https://admin.prosartisan.net'))),
 
-    'allowed_origins_patterns' => [],
+    // Les sites publics répondent aussi sous `www.` : sans cette origine, le
+    // navigateur bloque chaque appel de la vitrine, qui se replie en silence
+    // sur son contenu par défaut. Motif indépendant d'`ALLOWED_ORIGINS`, pour
+    // qu'une liste saisie dans le `.env` ne l'oublie pas.
+    'allowed_origins_patterns' => ['#^https://www\.prosartisan\.(net|ci)$#'],
 
     'allowed_headers' => ['Content-Type', 'X-Requested-With', 'Authorization', 'Accept', 'X-XSRF-TOKEN'],
 
