@@ -173,31 +173,11 @@ Route::prefix('v1')->group(function () {
         Route::put('/addresses/{address}', [AddressController::class, 'update']);
         Route::delete('/addresses/{address}', [AddressController::class, 'destroy']);
         Route::post('/addresses/{address}/default', [AddressController::class, 'setDefault']);
-
-        // ── Commandes Catalogue E-Commerce ───────────────────────────────────
-        // Avant `orders/{order}` : historique des litiges de commande (Chantier 21).
-        Route::get('/orders/disputes', [OrderController::class, 'disputes']);
-        Route::apiResource('orders', OrderController::class)->only(['index', 'store', 'show']);
-        Route::post('/orders/estimate-delivery', [OrderController::class, 'estimateDelivery']);
-        Route::post('/orders/multi-estimate', [OrderController::class, 'estimateMultiDelivery']);
-        Route::post('/orders/multi-store', [OrderController::class, 'multiStore'])->middleware(['kyc.verified', 'payment.unrestricted']);
-        Route::post('/orders/{order}/prepared', [OrderController::class, 'markPrepared']);
-        Route::post('/orders/{order}/verify-pickup', [OrderController::class, 'verifyPickup']);
-        Route::post('/orders/{order}/verify-delivery', [OrderController::class, 'verifyDelivery']);
-
         // Codes promo et SMS : aucune route de gestion ici. Les codes promo se
         // gèrent dans le backoffice (`/admin/promo-codes`, `admin.promo.manage`) ;
         // seule la vérification d'un code (`/promo-codes/verify`) est exposée.
         // Les anciennes routes `promo-codes` et `sms/*` n'exigeaient que d'être
         // connecté : tout compte créait un code à 100 % ou envoyait un SMS libre.
-
-        // ── Logistique & Livraisons (Courses) ──────────────────────────────────
-        Route::post('/deliveries/estimate', [OrderController::class, 'estimateDelivery']);
-        Route::get('/deliveries/available', [DeliveryController::class, 'available'])->middleware('kyc.verified');
-        Route::get('/deliveries/batches', [DeliveryBatchController::class, 'index'])->middleware('kyc.verified');
-        Route::post('/deliveries/batch-accept', [DeliveryBatchController::class, 'accept'])->middleware(['kyc.verified', 'dispute.debt_free']);
-        Route::get('/deliveries/active-tour', [DeliveryBatchController::class, 'activeTour'])->middleware('kyc.verified');
-        Route::post('/deliveries/{order}/accept', [DeliveryController::class, 'accept'])->middleware(['kyc.verified', 'dispute.debt_free']);
 
         // ── Utilisateurs ─────────────────────────────────────────────────────
         Route::post('/users/payment-phone/code', [UserController::class, 'requestPaymentPhoneCode'])->middleware('throttle:auth');
@@ -384,6 +364,12 @@ Route::prefix('v1')->group(function () {
 
         // ── Commandes e-Commerce (Fournisseurs & Livraison) ─────────────────────
         Route::prefix('orders')->group(function () {
+            // Routes statiques avant `/{order}`
+            Route::get('/disputes', [OrderController::class, 'disputes']);
+            Route::post('/estimate-delivery', [OrderController::class, 'estimateDelivery']);
+            Route::post('/multi-estimate', [OrderController::class, 'estimateMultiDelivery']);
+            Route::post('/multi-store', [OrderController::class, 'multiStore'])->middleware(['kyc.verified', 'payment.unrestricted']);
+
             Route::get('/', [OrderController::class, 'index']);
             // Création refusée à un client restreint pour course impayée (Chantier 11).
             Route::post('/', [OrderController::class, 'store'])->middleware(['kyc.verified', 'payment.unrestricted']);
@@ -402,7 +388,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/{order}/reassign', [DeliveryTrackingController::class, 'reassign'])->middleware('can:admin.missions.manage');
         });
 
-        Route::get('/deliveries/fleet-map', [DeliveryTrackingController::class, 'getFleetOverview']);
+        Route::post('/deliveries/estimate', [OrderController::class, 'estimateDelivery']);
+        Route::get('/deliveries/fleet-map', [DeliveryTrackingController::class, 'getFleetOverview'])->middleware('can:admin.missions.view');
 
         // ── Courses de Livraison (Livreurs agréés KYC) ─────────────────────────
         Route::prefix('deliveries')->middleware('kyc.verified')->group(function () {

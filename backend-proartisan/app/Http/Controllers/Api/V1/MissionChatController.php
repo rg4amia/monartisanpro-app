@@ -250,7 +250,12 @@ class MissionChatController extends Controller
             return response()->json(['success' => false, 'message' => 'Message introuvable.'], 404);
         }
 
-        if ($message->sender_id !== $request->user()->id && ! $message->read_at) {
+        $user = $request->user();
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! ($user->role === 'admin' && $user->can('admin.missions.view'))) {
+            return response()->json(['success' => false, 'message' => 'Accès non autorisé à ce message.'], 403);
+        }
+
+        if ($message->sender_id !== $user->id && ! $message->read_at) {
             $message->update(['read_at' => now()]);
         }
 

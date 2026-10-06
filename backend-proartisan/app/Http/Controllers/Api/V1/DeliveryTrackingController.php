@@ -90,8 +90,8 @@ class DeliveryTrackingController extends Controller
     {
         $user = $request->user();
 
-        // Contrôle d'accès : Client, Livreur, Fournisseur de la commande ou Admin
-        $isAuthorized = $user->role === 'admin'
+        // Contrôle d'accès : Client, Livreur, Fournisseur de la commande ou Admin habilité
+        $isAuthorized = ($user->role === 'admin' && $user->can('admin.missions.view'))
             || $order->client_id === $user->id
             || $order->driver_id === $user->id
             || $order->supplier_id === $user->id;
@@ -275,8 +275,8 @@ class DeliveryTrackingController extends Controller
     public function getFleetOverview(Request $request): JsonResponse
     {
         $user = $request->user();
-        if ($user->role !== 'admin' && ! $user->can('admin.missions.view')) {
-            return response()->json(['error' => 'Action réservée aux administrateurs.'], 403);
+        if ($user->role !== 'admin' || ! $user->can('admin.missions.view')) {
+            return response()->json(['error' => 'Action réservée aux administrateurs habilités.'], 403);
         }
 
         $commune = $request->query('commune');
