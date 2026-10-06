@@ -13,13 +13,19 @@ class SupplierCashout extends Model
     protected $table = 'supplier_cashouts';
 
     public const STATUT_EN_ATTENTE = 'en_attente';
+
     public const STATUT_APPROUVE = 'approuve';
+
     public const STATUT_COMPLETE = 'complete';
+
     public const STATUT_REJETE = 'rejete';
 
     public const MODE_ESPECES_GUICHET = 'especes_guichet';
+
     public const MODE_WAVE = 'wave';
+
     public const MODE_ORANGE_MONEY = 'orange_money';
+
     public const MODE_VIREMENT_BANCAIRE = 'virement_bancaire';
 
     protected $fillable = [

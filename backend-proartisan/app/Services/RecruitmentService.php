@@ -215,7 +215,7 @@ class RecruitmentService
 
         $offer = $application->offer;
 
-        if ($offer->creator_id !== $actor->id && $actor->role !== 'admin') {
+        if ($offer->creator_id !== $actor->id && ! $actor->isAdminWith('admin.recruitment.manage')) {
             throw ValidationException::withMessages([
                 'application' => ["Cette candidature n'appartient pas à l'une de vos offres."],
             ]);
@@ -249,7 +249,7 @@ class RecruitmentService
     {
         $offer = $application->offer;
 
-        if ($offer->creator_id !== $client->id && $client->role !== 'admin') {
+        if ($offer->creator_id !== $client->id && ! $client->isAdminWith('admin.recruitment.manage')) {
             throw ValidationException::withMessages([
                 'application' => ["Cette candidature n'appartient pas à l'une de vos offres."],
             ]);

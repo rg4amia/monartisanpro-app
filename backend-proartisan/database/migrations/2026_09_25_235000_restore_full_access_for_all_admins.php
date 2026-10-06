@@ -1,6 +1,5 @@
 <?php
 
-use App\Models\Permission;
 use App\Models\User;
 use App\Services\Admin\AdminPermissionService;
 use Illuminate\Database\Migrations\Migration;

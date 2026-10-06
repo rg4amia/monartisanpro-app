@@ -74,7 +74,7 @@ class SolvencyPassportService
             'issued_at' => now()->timestamp,
         ]));
 
-        $verificationUrl = url("/api/v1/solvency-passports/verify?token=".urlencode($token));
+        $verificationUrl = url('/api/v1/solvency-passports/verify?token='.urlencode($token));
 
         return [
             'artisan' => [

@@ -837,7 +837,7 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 - **Tout nouveau dossier servi au public** passe par `backend-proartisan/public/` (ou par une règle de routage vers lui), jamais par une exception à la règle 0.
 - **Contrôle après un changement du `.htaccess`** : `curl -I` sur `monartisanpro-app/backend-proartisan/.env` et `monartisanpro-app/.git/config` répond 403 ; sur `api/v1/settings/app-access`, 200.
 - **Correction de fond à prévoir** : sortir le dépôt de `public_html`.
-- **Constats restant ouverts** (téléversement générique sur le disque public, capacités fines des routes de l'API ouvertes aux administrateurs) : `docs/chantiers/audits/2026-10-06-audit-securite-api-et-deploiement.md`.
+- **Constats restant ouverts** (fichiers de preuve et téléversements encore sur le disque public, repli sans clé Gemini) : `docs/chantiers/audits/2026-10-06-audit-etat-du-projet-apres-chantier-39.md`.
 153. **Aucune route d'administration ouverte à tout compte, aucun fichier publié sous l'extension de l'expéditeur (Chantier 37)** :
 - **Routes supprimées** : `POST /api/v1/sms/send`, `GET /api/v1/sms`, `GET /api/v1/sms/{uid}` (`SmsController`) et la ressource `promo-codes` de l'API avec sa route `toggle`. Elles n'exigeaient que d'être connecté : tout compte envoyait un SMS libre sous le nom de ProsArtisan, lisait les SMS envoyés (codes compris) ou créait un code promo à 100 %. Rien ne les appelait.
 - **Ce qui reste** : l'envoi de SMS passe par `NotificationService` ; les codes promo se gèrent dans le backoffice (`/admin/promo-codes`, `admin.promo.manage`) ; l'API n'expose que `POST /promo-codes/verify`.
@@ -855,7 +855,13 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 155. **Suites de l'audit de l'état du projet du 06/10/2026 (Chantier 40)** :
 - **Origines autorisées à appeler l'API** (`config/cors.php`) : la liste fermée `ALLOWED_ORIGINS`, plus le motif `https://www.prosartisan.(net|ci)`. Le site public répond aussi sous `www.` et appelle l'API par son adresse absolue : sans cette origine, le navigateur bloque chaque appel et la vitrine se replie en silence sur son contenu par défaut. Jamais d'en-tête `Access-Control-Allow-Origin: *` dans `public/.htaccess` ; toute nouvelle adresse publique du site s'ajoute à `config/cors.php`.
 - **Un déploiement échoué après la mise à jour du code laisse la production dans un état intermédiaire** : code à jour, mais ni migrations, ni caches de configuration et de routes, ni vitrine. Il se relance (`gh run rerun --failed`) ; un chantier n'est « livré » qu'une fois son déploiement réussi et contrôlé.
-- **Tests** : `Chantier40AuditFollowUpsTest.php`.
+- **Capacité fine, jamais le seul rôle `admin`** : `User::isAdminWith('admin.<x>')` remplace tout `role === 'admin'` qui ouvre une donnée ou une action dans l'API — litiges (`admin.litiges.view`, arbitrage et jury `admin.litiges.arbitrate`), missions, devis, étapes, bons matériels, discussions et flux (`admin.missions.view`), courses (`admin.missions.manage`), recrutement (`admin.recruitment.manage`), passeport de solvabilité (`admin.users.view`). Un Référent ne suit la discussion et le flux que d'un chantier de son ressort (`MissionHistoryService::staffMayFollow`). Dans un test, un administrateur restreint se crée avec ses capacités explicites.
+- **Message d'erreur montré à l'utilisateur** : `App\Support\UserFacingError::message($e, $repli)`. Un refus métier (`\Exception` nue ou exception de l'application, au message rédigé en français) garde son message ; toute autre exception est journalisée et remplacée par le repli. Ne jamais renvoyer `$e->getMessage()` d'un `\Throwable` (Règle d'or 35).
+- **Téléversement générique** (`POST /upload`) : photos et vidéos seulement ; un PDF, que l'analyse des données sensibles ne lit pas, est refusé. Le fichier reste sur le disque public sous un nom aléatoire : les adresses sont enregistrées et affichées par les versions installées de l'application. Le passage au disque privé demande une décision produit et une nouvelle version mobile (plan du Chantier 40, « Écarts »).
+- **Filtre HTML de la vitrine** (`sanitizeHtml`) : DOMPurify dans le navigateur ; hors navigateur, liste fermée de balises de mise en forme, sans aucun attribut — jamais un retrait des seuls motifs dangereux connus.
+- **Dépendances** : `npm audit --omit=dev` ne signale rien, backoffice et vitrine (Next 16.4.0). Un outil de développement (`concurrently`) se range dans `devDependencies`.
+- **En-tête** : `public/.htaccess` retire `X-Powered-By`.
+- **Tests** : `Chantier40AuditFollowUpsTest.php`, `sanitize.test.ts`.
 
 ## 📎 Fichier de référence du flux
 

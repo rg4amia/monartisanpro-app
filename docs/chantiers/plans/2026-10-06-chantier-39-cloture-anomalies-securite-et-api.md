@@ -2,7 +2,7 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | livré |
+| Statut | partiel (constats 8, 10 et 14 repris par le Chantier 40) |
 | Créé le | 2026-10-06 |
 | Mis à jour le | 2026-10-06 |
 | Auteur | Antigravity |
@@ -92,3 +92,12 @@ Fermer l'ensemble des constats de sécurité et d'intégrité de l'API restant o
    - Exécution complète de `php artisan test --parallel` (doit conserver 100% de succès).
    - Exécution de `npm test` dans `backend-proartisan` et `vitrine-nextjs`.
    - Vérification de la liste des routes via `php artisan route:list`.
+
+## Écarts
+
+Relevés par l'audit du 06/10/2026 (`../audits/2026-10-06-audit-etat-du-projet-apres-chantier-39.md`) :
+
+- Le déploiement du commit `361c800f` a échoué à la copie SSH, après la mise à jour du code ; il a été repris par celui de `842b1649`.
+- Le retrait de l'en-tête CORS général a coupé le site public sous `www.prosartisan.net` de l'API ; corrigé par le Chantier 40.
+- Constat 8 : non corrigé (seul le calcul de l'adresse a changé). Constat 10 : deux routes traitées. Constat 14 : un contrôleur traité. Repris par le Chantier 40.
+- `CLAUDE.md`, `AGENTS.md` et `PRD.md` n'ont pas été mis à jour par ce chantier.

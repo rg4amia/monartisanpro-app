@@ -268,7 +268,7 @@ class FraudDetectionService
         // 1. Détection même appareil (Alerte ROUGE / Critical, score 95)
         if (! empty($clientFingerprint) && ! empty($artisanFingerprint) && $clientFingerprint === $artisanFingerprint) {
             $reasons[] = "Client et artisan partagent le même identifiant d'appareil physique ({$clientFingerprint}) sur la mission #{$mission->id}.";
-            $reasons[] = "Suspicion critique de mission fictive ou de collusion pour détournement de fonds.";
+            $reasons[] = 'Suspicion critique de mission fictive ou de collusion pour détournement de fonds.';
             $riskScore = 95;
             $severity = 'critical';
             $type = 'collusion_same_device';

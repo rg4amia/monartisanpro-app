@@ -2,10 +2,12 @@
 
 namespace Tests\Feature;
 
-use App\Models\FraudAlert;
 use App\Models\Jalon;
 use App\Models\Mission;
 use App\Models\User;
+use App\Services\FraudDetectionService;
+use App\Services\OtpService;
+use App\Services\RealtimeEventService;
 use App\States\Mission\InProgressState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -15,6 +17,7 @@ class DeviceCollusionTest extends TestCase
     use RefreshDatabase;
 
     private User $client;
+
     private User $artisan;
 
     protected function setUp(): void
@@ -54,7 +57,7 @@ class DeviceCollusionTest extends TestCase
             'artisan_ip' => '102.164.12.5',
         ]);
 
-        $fraudService = app(\App\Services\FraudDetectionService::class);
+        $fraudService = app(FraudDetectionService::class);
         $alert = $fraudService->analyzeDeviceCollusion($mission);
 
         $this->assertNotNull($alert);
@@ -98,11 +101,11 @@ class DeviceCollusionTest extends TestCase
         ]);
 
         // Simule le service OTP qui valide le code
-        $otpServiceMock = \Mockery::mock(\App\Services\OtpService::class);
+        $otpServiceMock = \Mockery::mock(OtpService::class);
         $otpServiceMock->shouldReceive('verifyOtp')
             ->with($this->client->phone, '4321')
             ->andReturn(true);
-        $this->app->instance(\App\Services\OtpService::class, $otpServiceMock);
+        $this->app->instance(OtpService::class, $otpServiceMock);
 
         $response = $this->actingAs($this->client)
             ->withHeaders([
@@ -145,7 +148,7 @@ class DeviceCollusionTest extends TestCase
             'ratio_materiaux' => 0.50,
         ]);
 
-        $eventService = app(\App\Services\RealtimeEventService::class);
+        $eventService = app(RealtimeEventService::class);
         $eventService->broadcast($mission->id, 'jalon_updated', [
             'jalon_id' => 1,
             'statut' => 'soumis',

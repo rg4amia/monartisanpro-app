@@ -19,7 +19,7 @@ class DisputeMediationService
     {
         $mission = $litige->mission;
 
-        return $user->role === 'admin'
+        return $user->isAdminWith('admin.litiges.view')
             || ($mission !== null && in_array($user->id, [$mission->client_id, $mission->artisan_id], true));
     }
 

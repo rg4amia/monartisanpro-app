@@ -32,7 +32,7 @@ class ReferentController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'referent' && $user->role !== 'admin') {
+        if ($user->role !== 'referent' && ! $user->isAdminWith('admin.missions.view')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Seul un référent de zone peut accéder à cette liste.',

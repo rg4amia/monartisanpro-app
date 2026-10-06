@@ -7,6 +7,7 @@ use App\Models\MissionMessage;
 use App\Models\Order;
 use App\Models\Permission;
 use App\Models\User;
+use App\Services\SolvencyPassportService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
 use Tests\TestCase;
@@ -265,7 +266,7 @@ class Chantier39SecurityAndApiFixesTest extends TestCase
             'issued_at' => now()->timestamp,
         ]));
 
-        $service = app(\App\Services\SolvencyPassportService::class);
+        $service = app(SolvencyPassportService::class);
         $result = $service->verifyPassportToken($token);
 
         // Doit être rejeté (null) car config('app.key') doit être respectée
@@ -287,7 +288,7 @@ class Chantier39SecurityAndApiFixesTest extends TestCase
             'issued_at' => now()->subDays(35)->timestamp,
         ]));
 
-        $service = app(\App\Services\SolvencyPassportService::class);
+        $service = app(SolvencyPassportService::class);
         $result = $service->verifyPassportToken($token);
 
         $this->assertNull($result);
@@ -297,7 +298,7 @@ class Chantier39SecurityAndApiFixesTest extends TestCase
     {
         $artisan = $this->user('artisan');
 
-        $service = app(\App\Services\SolvencyPassportService::class);
+        $service = app(SolvencyPassportService::class);
         $passport = $service->generatePassport($artisan);
         $token = $passport['certification']['token'];
 

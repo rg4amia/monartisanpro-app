@@ -14,6 +14,11 @@
     </IfModule>
 </FilesMatch>
 
+# La version exacte de PHP n'est pas annoncée aux visiteurs.
+<IfModule mod_headers.c>
+    Header always unset X-Powered-By
+    Header unset X-Powered-By
+</IfModule>
 
 <IfModule mod_rewrite.c>
     <IfModule mod_negotiation.c>

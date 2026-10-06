@@ -28,7 +28,7 @@ class JalonController extends Controller
     public function index(Mission $mission, Request $request): JsonResponse
     {
         $user = $request->user();
-        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && $user->role !== 'admin') {
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! $user->isAdminWith('admin.missions.view')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Non autorisé.',

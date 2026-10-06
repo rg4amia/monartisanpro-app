@@ -2,10 +2,8 @@
 
 namespace Tests\Feature;
 
-use App\Models\User;
 use App\Services\AntiBotService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Support\Facades\Cache;
 use Tests\TestCase;
 
 class AntiBotSecurityTest extends TestCase
@@ -46,7 +44,7 @@ class AntiBotSecurityTest extends TestCase
     public function test_service_blocks_tampered_token(): void
     {
         $challenge = $this->antiBotService->generateChallenge('test_action');
-        $tamperedToken = $challenge['token'] . 'bad';
+        $tamperedToken = $challenge['token'].'bad';
         $request = request()->merge([
             '_bot_token' => $tamperedToken,
             '_bot_answer' => (string) $challenge['answer'],

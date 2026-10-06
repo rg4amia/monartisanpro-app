@@ -19,7 +19,7 @@ class SolvencyPassportController extends Controller
     {
         $user = $request->user();
 
-        if ($user->role !== 'admin' && $user->id !== $artisan->id) {
+        if (! $user->isAdminWith('admin.users.view') && $user->id !== $artisan->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Non autorisé.',

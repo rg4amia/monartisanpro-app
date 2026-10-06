@@ -116,3 +116,12 @@ Le plan prévoyait le disque privé et une adresse signée. Le commit ne change 
 3. **Chantier 40 (proposé)** : finir les constats 8, 10 et 14 (anomalies 4, 5 et 6), chacun avec son test qui échoue avant correctif, et mettre à jour les fichiers de règles et l'audit du matin (anomalie 7).
 4. **Au fil de l'eau** : `npm audit fix` et montée de `next` (anomalie 8), `./vendor/bin/pint` (anomalie 10), anomalies 9, 11 et 12.
 5. À compléter : `composer audit`, et une revue du code de l'application mobile.
+
+### Suites données le 06/10/2026 (Chantier 40)
+
+- Anomalies 1 et 2 : fermées. Le déploiement de `842b1649` a réussi ; `Access-Control-Allow-Origin` est renvoyé pour `https://www.prosartisan.net` et `https://prosartisan.net`, pas pour une origine étrangère ; la vitrine publiée contient l'assainissement HTML.
+- Anomalies 5, 6, 7, 9, 10 et 12 : fermées par le Chantier 40.
+- Anomalie 8 : fermée pour les dépendances de production (`npm audit --omit=dev` : 0, backoffice et vitrine). Reste `vitest` du backoffice, outil de test, dont la correction demande une montée de version majeure.
+- Anomalie 4 : partielle — voir les « Écarts » du plan du Chantier 40.
+- Anomalie 11 : `driver` retiré d'`UssdController` ; le repli sans clé Gemini et les requêtes dans des contrôleurs restent ouverts.
+- Anomalie 3 : inchangée, hors code.

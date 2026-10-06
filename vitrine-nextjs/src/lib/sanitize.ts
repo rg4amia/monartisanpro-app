@@ -1,29 +1,29 @@
 import DOMPurify from 'dompurify';
 
+/** Balises de mise en forme conservées hors navigateur, toujours sans attribut. */
+const SERVER_ALLOWED_TAGS = new Set([
+  'p', 'br', 'strong', 'b', 'em', 'i', 'u', 'ul', 'ol', 'li',
+  'h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'blockquote',
+]);
+
 /**
- * Nettoie défensivement le HTML en environnement serveur (SSR)
- * Élimine les scripts, handlers d'événements inline, iframes et protocoles suspects.
+ * Nettoie le HTML hors navigateur (rendu serveur), où DOMPurify n'a pas de DOM.
+ * Liste fermée : seules des balises de mise en forme passent, et sans aucun
+ * attribut. Retirer les seuls motifs dangereux connus se contournait
+ * (`<svg/onload=…>`, `href=javascript:…` sans guillemets).
  */
 function sanitizeServerHtml(dirty: string): string {
   if (!dirty) return '';
 
-  let clean = dirty;
-
-  // Supprimer les balises script et leur contenu
-  clean = clean.replace(/<script\b[^<]*(?:(?!<\/script>)<[^<]*)*<\/script>/gi, '');
-
-  // Supprimer les balises iframe, object, embed
-  clean = clean.replace(/<iframe\b[^<]*(?:(?!<\/iframe>)<[^<]*)*<\/iframe>/gi, '');
-  clean = clean.replace(/<object\b[^<]*(?:(?!<\/object>)<[^<]*)*<\/object>/gi, '');
-  clean = clean.replace(/<embed\b[^>]*>/gi, '');
-
-  // Supprimer les attributs on* (onclick, onerror, onload, etc.)
-  clean = clean.replace(/\s+on[a-z]+(\s*=\s*(?:'[^']*'|"[^"]*"|[^\s>]+))?/gi, '');
-
-  // Supprimer les schémas javascript: et data: dangereux
-  clean = clean.replace(/(href|src)\s*=\s*(['"])\s*(?:javascript|vbscript|data):.*?\2/gi, '$1="#"');
-
-  return clean;
+  return dirty
+    // Contenu des balises dont le texte n'est pas du texte à afficher.
+    .replace(/<(script|style|iframe|object|noscript|template)\b[\s\S]*?<\/\1\s*>/gi, '')
+    .replace(/<!--[\s\S]*?-->/g, '')
+    .replace(/<\/?([a-zA-Z][a-zA-Z0-9]*)\b[^>]*>?/g, (tag, name: string) => {
+      const lower = name.toLowerCase();
+      if (!SERVER_ALLOWED_TAGS.has(lower)) return '';
+      return tag.startsWith('</') ? `</${lower}>` : `<${lower}>`;
+    });
 }
 
 /**

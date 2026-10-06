@@ -5,8 +5,9 @@ use App\Models\DeliveryTracking;
 use App\Models\FournisseurAgree;
 use App\Models\Order;
 use App\Models\User;
-use App\Services\DeliveryTrackingService;
+use App\Services\Admin\AdminPanelData;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\Request;
 use Tests\Support\Geo;
 
 uses(RefreshDatabase::class);
@@ -200,9 +201,9 @@ test('fleet map can filter drivers by commune', function () {
 
 test('admin missions panel data includes fleet overview', function () {
     $admin = User::factory()->create(['role' => 'admin', 'kyc_status' => 'actif']);
-    $panelData = app(\App\Services\Admin\AdminPanelData::class);
+    $panelData = app(AdminPanelData::class);
 
-    $request = \Illuminate\Http\Request::create('/admin/missions', 'GET');
+    $request = Request::create('/admin/missions', 'GET');
     $data = $panelData->missions($request);
 
     expect($data)->toHaveKey('fleetOverview');
@@ -225,4 +226,3 @@ test('web route admin.deliveries.fleet-map returns fleet data for authenticated 
             ],
         ]);
 });
-

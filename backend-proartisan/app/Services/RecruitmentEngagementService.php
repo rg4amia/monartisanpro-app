@@ -41,7 +41,7 @@ class RecruitmentEngagementService
     ): RecruitmentEngagement {
         $offer = $application->offer;
 
-        if ($offer->creator_id !== $recruiter->id && $recruiter->role !== 'admin') {
+        if ($offer->creator_id !== $recruiter->id && ! $recruiter->isAdminWith('admin.recruitment.manage')) {
             throw ValidationException::withMessages([
                 'application' => ["Cette candidature n'appartient pas à l'une de vos offres."],
             ]);
@@ -50,7 +50,7 @@ class RecruitmentEngagementService
         // Le séquestre d'accès aux candidatures précède tout engagement : sans
         // lui, un engagement créé sur un identifiant de candidature donnait le
         // nom de l'artisan sans rien avoir payé (Règle d'or 33).
-        if ($recruiter->role !== 'admin' && ! $offer->applicantsUnlocked()) {
+        if (! $recruiter->isAdminWith('admin.recruitment.manage') && ! $offer->applicantsUnlocked()) {
             throw ValidationException::withMessages([
                 'application' => ["Réglez d'abord l'accès aux candidatures de cette offre avant de retenir un artisan."],
             ]);
@@ -276,7 +276,7 @@ class RecruitmentEngagementService
     {
         $engagement->load(['workdays', 'artisan:id,name,phone', 'recruiter:id,name,phone', 'offer:id,title']);
 
-        $contactShared = $viewer->role === 'admin'
+        $contactShared = $viewer->isAdminWith('admin.recruitment.manage')
             || in_array($engagement->status, self::CONTACT_STATUSES, true);
 
         foreach (['artisan', 'recruiter'] as $relation) {
@@ -293,7 +293,7 @@ class RecruitmentEngagementService
 
     public function assertRecruiterOwnsEngagement(User $recruiter, RecruitmentEngagement $engagement): void
     {
-        if ($engagement->recruiter_id !== $recruiter->id && $recruiter->role !== 'admin') {
+        if ($engagement->recruiter_id !== $recruiter->id && ! $recruiter->isAdminWith('admin.recruitment.manage')) {
             throw ValidationException::withMessages([
                 'engagement' => ["Cet engagement n'appartient pas à l'un de vos recrutements."],
             ]);
@@ -522,7 +522,7 @@ class RecruitmentEngagementService
 
     public function assertRecruiterOwnsOffer(User $recruiter, RecruitmentOffer $offer): void
     {
-        if ($offer->creator_id !== $recruiter->id && $recruiter->role !== 'admin') {
+        if ($offer->creator_id !== $recruiter->id && ! $recruiter->isAdminWith('admin.recruitment.manage')) {
             throw ValidationException::withMessages([
                 'offer' => ['Cette offre ne vous appartient pas.'],
             ]);

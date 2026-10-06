@@ -3,7 +3,6 @@
 use App\Models\Address;
 use App\Models\FournisseurAgree;
 use App\Models\Order;
-use App\Models\SupplierProduct;
 use App\Models\User;
 use App\Services\OsrmRoutingService;
 use Illuminate\Foundation\Testing\RefreshDatabase;

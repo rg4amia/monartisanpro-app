@@ -2,9 +2,7 @@
 
 namespace Tests\Feature;
 
-use App\Enums\WalletType;
 use App\Models\DoubleEntryLedgerEntry;
-use App\Models\EvidenceVault;
 use App\Models\JuryReview;
 use App\Models\Litige;
 use App\Models\Mission;
@@ -13,7 +11,6 @@ use App\Services\DoubleEntryLedgerService;
 use App\Services\EvidenceVaultService;
 use App\Services\LitigeService;
 use App\States\Mission\DisputedState;
-use App\States\Mission\FundedLockedState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Facades\Artisan;
@@ -26,8 +23,11 @@ class Chantier12JuryAndVaultTest extends TestCase
     use RefreshDatabase;
 
     private User $client;
+
     private User $artisan;
+
     private Mission $mission;
+
     private Litige $litige;
 
     protected function setUp(): void

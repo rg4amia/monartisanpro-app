@@ -87,7 +87,7 @@ class JCodeController extends Controller
     public function show(JCode $jcode, Request $request): JsonResponse
     {
         $user = $request->user();
-        if ($jcode->artisan_id !== $user->id && $user->role !== 'admin') {
+        if ($jcode->artisan_id !== $user->id && ! $user->isAdminWith('admin.missions.view')) {
             $hasRedeemed = $jcode->redemptions()->where('fournisseur_id', $user->id)->exists();
             $isDesignatedSupplier = ($jcode->fournisseur_id !== null && $jcode->fournisseur_id === $user->id);
             $isMultiSupplierCandidate = ($jcode->fournisseur_id === null && $user->role === 'fournisseur');
@@ -275,7 +275,7 @@ class JCodeController extends Controller
 
             return response()->json([
                 'success' => false,
-                'message' => 'Erreur lors de l\'upload de la photo: '.$e->getMessage(),
+                'message' => "La photo n'a pas pu être enregistrée. Réessayez.",
             ], 500);
         }
     }
@@ -288,7 +288,7 @@ class JCodeController extends Controller
     {
         $user = $request->user();
 
-        if ($jcode->artisan_id !== $user->id && $user->role !== 'admin') {
+        if ($jcode->artisan_id !== $user->id && ! $user->isAdminWith('admin.missions.view')) {
             $hasRedeemed = $jcode->redemptions()->where('fournisseur_id', $user->id)->exists();
             $isDesignatedSupplier = ($jcode->fournisseur_id !== null && $jcode->fournisseur_id === $user->id);
 

@@ -2,7 +2,6 @@
 
 namespace Tests\Feature;
 
-use App\Models\Evaluation;
 use App\Models\Mission;
 use App\Models\Order;
 use App\Models\User;

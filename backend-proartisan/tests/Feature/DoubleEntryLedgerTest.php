@@ -9,6 +9,7 @@ use App\Models\User;
 use App\Services\DoubleEntryLedgerService;
 use App\States\Mission\InProgressState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 class DoubleEntryLedgerTest extends TestCase
@@ -16,7 +17,9 @@ class DoubleEntryLedgerTest extends TestCase
     use RefreshDatabase;
 
     private User $client;
+
     private User $artisan;
+
     private Mission $mission;
 
     protected function setUp(): void
@@ -150,7 +153,7 @@ class DoubleEntryLedgerTest extends TestCase
 
         // Insérer une écriture volontairement déséquilibrée (source == destination)
         DoubleEntryLedgerEntry::create([
-            'transaction_group_id' => (string) \Illuminate\Support\Str::uuid(),
+            'transaction_group_id' => (string) Str::uuid(),
             'account_source' => DoubleEntryLedgerService::ACCOUNT_CLIENT_ESCROW,
             'account_destination' => DoubleEntryLedgerService::ACCOUNT_CLIENT_ESCROW,
             'amount' => 15000,

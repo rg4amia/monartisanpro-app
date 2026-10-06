@@ -8,6 +8,7 @@ use App\Models\Order;
 use App\Services\Admin\AdminActivityLogger;
 use App\Services\DeliveryTrackingService;
 use App\Services\OrderService;
+use App\Support\UserFacingError;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -27,11 +28,11 @@ class DeliveryTrackingController extends Controller
     {
         $user = $request->user();
 
-        if (! in_array($user->role, ['livreur', 'driver', 'admin'])) {
+        if ($user->role !== 'livreur' && ! $user->isAdminWith('admin.missions.manage')) {
             return response()->json(['error' => 'Accès réservé aux livreurs enregistrés.'], 403);
         }
 
-        if ($order->driver_id !== $user->id && $user->role !== 'admin') {
+        if ($order->driver_id !== $user->id && ! $user->isAdminWith('admin.missions.manage')) {
             return response()->json(['error' => "Vous n'êtes pas assigné à cette livraison."], 403);
         }
 
@@ -76,9 +77,12 @@ class DeliveryTrackingController extends Controller
                 'tracking' => $tracking,
             ]);
         } catch (\Throwable $e) {
+            $message = UserFacingError::message($e, "La position n'a pas pu être enregistrée. Réessayez.");
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => $message,
+                'message' => $message,
             ], 400);
         }
     }
@@ -161,9 +165,12 @@ class DeliveryTrackingController extends Controller
                 'retry_after' => $e->retryAfterSeconds(),
             ], 429)->header('Retry-After', (string) $e->retryAfterSeconds());
         } catch (\Throwable $e) {
+            $message = UserFacingError::message($e, "L'enlèvement n'a pas pu être validé. Réessayez.");
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => $message,
+                'message' => $message,
             ], 400);
         }
     }
@@ -218,9 +225,12 @@ class DeliveryTrackingController extends Controller
                 'retry_after' => $e->retryAfterSeconds(),
             ], 429)->header('Retry-After', (string) $e->retryAfterSeconds());
         } catch (\Throwable $e) {
+            $message = UserFacingError::message($e, "La livraison n'a pas pu être validée. Réessayez.");
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => $message,
+                'message' => $message,
             ], 400);
         }
     }
@@ -231,8 +241,8 @@ class DeliveryTrackingController extends Controller
     public function reassign(Request $request, Order $order, AdminActivityLogger $audit): JsonResponse|RedirectResponse
     {
         $user = $request->user();
-        if ($user->role !== 'admin') {
-            return response()->json(['error' => 'Action réservée aux administrateurs.'], 403);
+        if (! $user->isAdminWith('admin.missions.manage')) {
+            return response()->json(['error' => 'Action réservée aux administrateurs habilités.'], 403);
         }
 
         $reason = $request->input('reason', 'Réassignation administrative');
@@ -262,9 +272,12 @@ class DeliveryTrackingController extends Controller
                 return back()->with('error', "La course de la commande #{$order->id} n'a pas pu être réaffectée.");
             }
 
+            $message = UserFacingError::message($e, "La course n'a pas pu être réaffectée. Réessayez.");
+
             return response()->json([
                 'success' => false,
-                'error' => $e->getMessage(),
+                'error' => $message,
+                'message' => $message,
             ], 400);
         }
     }

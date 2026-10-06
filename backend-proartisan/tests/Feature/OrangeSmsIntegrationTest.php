@@ -3,7 +3,6 @@
 namespace Tests\Feature;
 
 use App\Models\Setting;
-use App\Services\CircuitBreakerService;
 use App\Services\OrangeSmsService;
 use App\Services\SmsService;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -28,7 +27,7 @@ class OrangeSmsIntegrationTest extends TestCase
 
     public function test_orange_sms_service_formats_addresses_correctly(): void
     {
-        $service = new OrangeSmsService();
+        $service = new OrangeSmsService;
 
         $this->assertEquals('tel:+2250141498409', $service->formatAddress('0141498409'));
         $this->assertEquals('tel:+2250700000001', $service->formatAddress('+2250700000001'));
@@ -53,7 +52,7 @@ class OrangeSmsIntegrationTest extends TestCase
             ], 201),
         ]);
 
-        $service = new OrangeSmsService();
+        $service = new OrangeSmsService;
         $result = $service->send('0700000001', 'Bonjour ProsArtisan');
 
         $this->assertEquals('success', $result['status']);
@@ -93,7 +92,7 @@ class OrangeSmsIntegrationTest extends TestCase
             ], 201),
         ]);
 
-        $service = new OrangeSmsService();
+        $service = new OrangeSmsService;
         $result = $service->send('0700000001', 'Test OAuth');
 
         $this->assertEquals('success', $result['status']);
@@ -116,7 +115,7 @@ class OrangeSmsIntegrationTest extends TestCase
             ], 400),
         ]);
 
-        $service = new OrangeSmsService();
+        $service = new OrangeSmsService;
         $result = $service->send('0700000001', 'Trop long');
 
         $this->assertEquals('error', $result['status']);

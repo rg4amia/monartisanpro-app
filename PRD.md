@@ -808,7 +808,7 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Constat** : le dépôt, cloné sous la racine web, se lisait par une simple adresse (fichier d'environnement, dossier git, pièces privées, journaux). Confirmé en production, fermé le même jour.
     * **Correctif** : le `.htaccess` racine écrit par le déploiement refuse tout le dossier du dépôt, sauf le dossier public de Laravel.
     * **Reste à faire** : renouveler les secrets du fichier d'environnement et la clé d'application ; sortir le dépôt de la racine web.
-    * **Constats ouverts** : téléversement générique sur le disque public, capacités fines des routes de l'API ouvertes aux administrateurs — `docs/chantiers/audits/2026-10-06-audit-securite-api-et-deploiement.md`.
+    * **Constats ouverts** : fichiers de preuve et téléversements encore sur le disque public, repli sans clé Gemini — `docs/chantiers/audits/2026-10-06-audit-etat-du-projet-apres-chantier-39.md`.
 73. **Chantier 37 — Routes SMS, codes promo et fichiers de la messagerie de chantier :** [COMPLÉTÉ — contrôle sur le serveur et sur appareil à faire]
     * **SMS** : plus aucune route de l'API ne permet à un compte d'envoyer un SMS libre ni de lire les SMS envoyés.
     * **Codes promo** : ils ne se créent et ne se modifient que dans le backoffice ; l'application ne peut que vérifier un code.
@@ -822,9 +822,13 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Recrutement** : aucun engagement sans accès payé aux candidatures ; le téléphone de l'autre partie n'apparaît qu'une fois l'engagement accepté et financé.
     * **Suggestion de devis** : réservée à l'artisan de la mission, comptée dans le quota IA.
     * **Tests automatisés** : `Chantier38OwnershipFixesTest.php` (15 tests).
-75. **Chantier 40 — Suites de l'audit de l'état du projet :** [EN COURS]
+75. **Chantier 40 — Suites de l'audit de l'état du projet :** [COMPLÉTÉ — contrôle sur le serveur à faire]
     * **Site public sous `www.`** : la vitrine et l'espace fournisseur appellent de nouveau l'API depuis `www.prosartisan.net`.
-    * **Tests automatisés** : `Chantier40AuditFollowUpsTest.php`.
+    * **Administrateurs restreints** : litiges, discussions de chantier, devis, courses, recrutement et passeport de solvabilité ne s'ouvrent dans l'API qu'à l'administrateur qui en porte la capacité ; un Référent ne lit que la discussion d'un chantier de son ressort.
+    * **Messages d'erreur** : plus aucun message technique affiché lors d'une validation de course, d'un envoi de photo de bon matériel ou d'un paiement de recrutement.
+    * **Téléversement** : seules les photos et les vidéos sont acceptées.
+    * **Dépendances** : vulnérabilités signalées corrigées (vitrine et backoffice).
+    * **Tests automatisés** : `Chantier40AuditFollowUpsTest.php` (7 tests), `sanitize.test.ts`.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

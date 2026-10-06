@@ -3,7 +3,6 @@
 namespace App\Http\Controllers\Api\V1\Supplier;
 
 use App\Http\Controllers\Controller;
-use App\Models\GeneratedDocument;
 use App\Models\SupplierCashout;
 use App\Services\GeneratedDocumentService;
 use App\Services\SupplierCashoutService;

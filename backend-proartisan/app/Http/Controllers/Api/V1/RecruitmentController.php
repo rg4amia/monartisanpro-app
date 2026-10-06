@@ -94,11 +94,11 @@ class RecruitmentController extends Controller
     {
         $user = $request->user();
 
-        if ($offer->creator_id !== $user->id && $user->role !== 'admin') {
+        if ($offer->creator_id !== $user->id && ! $user->isAdminWith('admin.recruitment.manage')) {
             return response()->json(['success' => false, 'message' => 'Cette offre ne vous appartient pas.'], 403);
         }
 
-        if ($user->role !== 'admin' && ! $offer->applicantsUnlocked()) {
+        if (! $user->isAdminWith('admin.recruitment.manage') && ! $offer->applicantsUnlocked()) {
             return response()->json([
                 'success' => false,
                 'message' => 'Payez le séquestre d\'accès aux candidatures pour consulter les postulants.',

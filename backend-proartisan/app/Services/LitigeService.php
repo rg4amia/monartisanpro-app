@@ -56,7 +56,7 @@ class LitigeService
             ->when($statut, fn ($q) => $q->where('statut', $statut))
             ->orderByDesc('created_at');
 
-        if ($user->role !== 'admin') {
+        if (! $user->isAdminWith('admin.litiges.view')) {
             $query->where(function ($outer) use ($user): void {
                 // Les dossiers d'un juré se consultent dans l'espace juré,
                 // anonymisés : cette liste expose les noms et téléphones des
@@ -370,7 +370,7 @@ class LitigeService
     {
         $litige->loadMissing(['mission.client', 'mission.artisan', 'mission.jcodes', 'declencheur', 'preuves.user']);
 
-        if ($admin !== null && $admin->role !== 'admin') {
+        if ($admin !== null && ! $admin->isAdminWith('admin.litiges.arbitrate')) {
             throw ValidationException::withMessages([
                 'admin' => ['Seul un administrateur peut arbitrer un litige.'],
             ]);
@@ -513,7 +513,7 @@ class LitigeService
 
     private function ensureMissionParticipant(Mission $mission, User $user): void
     {
-        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && $user->role !== 'admin') {
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! $user->isAdminWith('admin.litiges.view')) {
             throw ValidationException::withMessages([
                 'mission_id' => ['Accès refusé à cette mission.'],
             ]);

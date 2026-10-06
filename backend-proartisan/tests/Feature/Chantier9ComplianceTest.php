@@ -2,14 +2,11 @@
 
 namespace Tests\Feature;
 
-use App\Models\DoubleEntryLedgerEntry;
 use App\Models\Litige;
 use App\Models\Mission;
 use App\Models\ScoreLedgerEntry;
 use App\Models\User;
 use App\Services\DoubleEntryLedgerService;
-use App\Services\ScoreService;
-use App\States\Mission\DisputedState;
 use App\States\Mission\InProgressState;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
@@ -19,7 +16,9 @@ class Chantier9ComplianceTest extends TestCase
     use RefreshDatabase;
 
     private User $client;
+
     private User $artisan;
+
     private Mission $mission;
 
     protected function setUp(): void
@@ -129,7 +128,7 @@ class Chantier9ComplianceTest extends TestCase
         $this->assertNotEmpty($token);
 
         // 2. Vérification publique du passeport via jeton cryptographique HMAC
-        $verifyResponse = $this->getJson("/api/v1/solvency-passports/verify?token=".urlencode($token));
+        $verifyResponse = $this->getJson('/api/v1/solvency-passports/verify?token='.urlencode($token));
         $verifyResponse->assertStatus(200);
         $verifyResponse->assertJson([
             'success' => true,
@@ -144,7 +143,7 @@ class Chantier9ComplianceTest extends TestCase
         ]);
 
         // 3. Devis Micro-Assurance « Garantie Chantier Sérénité »
-        $insuranceResponse = $this->getJson("/api/v1/solvency-passports/insurance-quote?amount=200000");
+        $insuranceResponse = $this->getJson('/api/v1/solvency-passports/insurance-quote?amount=200000');
         $insuranceResponse->assertStatus(200);
         $insuranceResponse->assertJson([
             'success' => true,

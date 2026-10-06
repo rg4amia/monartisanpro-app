@@ -34,6 +34,18 @@ class MissionHistoryService
     }
 
     /**
+     * Un membre de l'équipe peut-il suivre la discussion et le flux d'un
+     * chantier ? Un administrateur porteur de la capacité des missions, ou le
+     * Référent dont le chantier relève — jamais le seul rôle (Règles d'or 36
+     * et 105).
+     */
+    public function staffMayFollow(Mission $mission, User $user): bool
+    {
+        return $user->isAdminWith('admin.missions.view')
+            || ($user->role === 'referent' && $this->concernsReferent($mission, $user));
+    }
+
+    /**
      * @return array{mission_id: int, current_state: string, current_state_label: string, transitions: list<array<string, mixed>>}
      */
     public function timeline(Mission $mission, bool $maskStaff = false, bool $maskParties = false): array

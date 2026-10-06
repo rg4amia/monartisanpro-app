@@ -15,6 +15,7 @@ class PreDiagnosticMediaTest extends TestCase
     use RefreshDatabase;
 
     private User $clientActive;
+
     private User $clientPending;
 
     protected function setUp(): void

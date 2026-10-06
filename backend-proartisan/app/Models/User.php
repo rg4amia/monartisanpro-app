@@ -459,6 +459,15 @@ class User extends Authenticatable
         return $this->hasMany(DeviceFingerprint::class, 'user_id');
     }
 
+    /**
+     * Administrateur porteur d'une capacité fine. Le rôle `admin` seul ne
+     * suffit jamais à ouvrir une donnée ou une action (Règles d'or 36 et 105).
+     */
+    public function isAdminWith(string $capability): bool
+    {
+        return $this->role === 'admin' && $this->can($capability);
+    }
+
     public function isGoldenMarker(): bool
     {
         return (int) $this->score_prosartisan >= (int) config('prosartisan.score_prosartisan.golden_marker_threshold', 700);

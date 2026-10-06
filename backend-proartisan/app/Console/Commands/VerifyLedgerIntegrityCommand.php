@@ -34,10 +34,12 @@ class VerifyLedgerIntegrityCommand extends Command
 
         if (! $result['balanced'] || $result['anomalies_count'] > 0) {
             $this->error('Échec de conformité comptable : des écarts ont été constatés.');
+
             return self::FAILURE;
         }
 
         $this->info('✅ Audit réussi : le grand livre en partie double est 100% conforme et équilibré.');
+
         return self::SUCCESS;
     }
 }

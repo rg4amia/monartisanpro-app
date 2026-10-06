@@ -7,6 +7,7 @@ use App\Models\Mission;
 use App\Models\MissionMessage;
 use App\Models\User;
 use App\Services\AntiCircumventionService;
+use App\Services\MissionHistoryService;
 use App\Services\NotificationService;
 use App\Services\RealtimeEventService;
 use Illuminate\Http\JsonResponse;
@@ -88,7 +89,7 @@ class MissionChatController extends Controller
         $user = $request->user();
 
         // Seuls les participants ou administrateurs ont accès au chat de chantier
-        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! in_array($user->role, ['admin', 'referent'])) {
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! app(MissionHistoryService::class)->staffMayFollow($mission, $user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Accès non autorisé à la discussion de ce chantier.',
@@ -129,7 +130,7 @@ class MissionChatController extends Controller
     {
         $user = $request->user();
 
-        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! in_array($user->role, ['admin', 'referent'])) {
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! app(MissionHistoryService::class)->staffMayFollow($mission, $user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Seuls les participants peuvent poster un message.',

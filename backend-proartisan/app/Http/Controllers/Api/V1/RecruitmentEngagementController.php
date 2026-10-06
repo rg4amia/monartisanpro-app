@@ -52,7 +52,7 @@ class RecruitmentEngagementController extends Controller
     public function show(Request $request, RecruitmentEngagement $engagement): JsonResponse
     {
         $user = $request->user();
-        if (! in_array($user->id, [$engagement->artisan_id, $engagement->recruiter_id], true) && $user->role !== 'admin') {
+        if (! in_array($user->id, [$engagement->artisan_id, $engagement->recruiter_id], true) && ! $user->isAdminWith('admin.recruitment.manage')) {
             return response()->json(['success' => false, 'message' => 'Cet engagement ne vous appartient pas.'], 403);
         }
 
@@ -160,7 +160,7 @@ class RecruitmentEngagementController extends Controller
         } catch (\Exception $e) {
             Log::error('Erreur initiation paiement séquestre recrutement', ['message' => $e->getMessage()]);
 
-            return response()->json(['success' => false, 'message' => "Erreur lors de l'initiation du paiement : ".$e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => "Le paiement n'a pas pu être lancé. Réessayez dans un instant."], 500);
         }
 
         return response()->json(['success' => true] + $result);
@@ -209,7 +209,7 @@ class RecruitmentEngagementController extends Controller
         } catch (\Exception $e) {
             Log::error("Erreur initiation paiement séquestre d'accès aux candidatures", ['message' => $e->getMessage()]);
 
-            return response()->json(['success' => false, 'message' => "Erreur lors de l'initiation du paiement : ".$e->getMessage()], 500);
+            return response()->json(['success' => false, 'message' => "Le paiement n'a pas pu être lancé. Réessayez dans un instant."], 500);
         }
 
         return response()->json(['success' => true] + $result);

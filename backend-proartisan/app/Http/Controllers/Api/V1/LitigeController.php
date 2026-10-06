@@ -87,7 +87,7 @@ class LitigeController extends Controller
         // Fiche réservée aux parties et à l'admin : elle expose noms et
         // téléphones. Un juré instruit le dossier anonymisé de son espace
         // (`/jury/dossiers`, Chantier 12 — anonymisation bilatérale).
-        if ($user->role !== 'admin' && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id) {
+        if (! $user->isAdminWith('admin.litiges.view') && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acces refuse.',
@@ -118,7 +118,7 @@ class LitigeController extends Controller
         $user = $request->user();
         $mission = $litige->mission;
 
-        if ($user->role !== 'admin' && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id) {
+        if (! $user->isAdminWith('admin.litiges.view') && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Acces refuse.',
@@ -152,7 +152,7 @@ class LitigeController extends Controller
         $user = $request->user();
         $mission = $litige->mission;
 
-        if ($user->role !== 'admin' && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id) {
+        if (! $user->isAdminWith('admin.litiges.view') && $mission->client_id !== $user->id && $mission->artisan_id !== $user->id) {
             return response()->json([
                 'success' => false,
                 'message' => 'Accès refusé.',

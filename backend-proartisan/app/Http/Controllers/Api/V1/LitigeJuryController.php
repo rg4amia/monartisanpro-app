@@ -19,7 +19,7 @@ class LitigeJuryController extends Controller
      */
     public function assign(Request $request, Litige $litige): JsonResponse
     {
-        if ($request->user()->role !== 'admin') {
+        if (! $request->user()->isAdminWith('admin.litiges.arbitrate')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Action non autorisée. Seul un administrateur peut assigner un jury.',

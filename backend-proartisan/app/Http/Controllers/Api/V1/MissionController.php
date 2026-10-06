@@ -215,7 +215,7 @@ class MissionController extends Controller
         if (
             $mission->client_id !== $user->id
             && $mission->artisan_id !== $user->id
-            && $user->role !== 'admin'
+            && ! $user->isAdminWith('admin.missions.view')
         ) {
             return response()->json([
                 'success' => false,
@@ -225,7 +225,7 @@ class MissionController extends Controller
 
         // La position exacte du client n'est révélée à l'artisan qu'une fois la
         // mission financée (séquestre constitué) — cohérent avec MissionResource.
-        $revealClient = $user->role === 'admin'
+        $revealClient = $user->isAdminWith('admin.missions.view')
             || $user->id === $mission->client_id
             || ($user->id === $mission->artisan_id && $mission->isFunded());
 
@@ -490,7 +490,7 @@ class MissionController extends Controller
         $isParty = (int) $mission->client_id === (int) $user->id || (int) $mission->artisan_id === (int) $user->id;
         $isReferent = $user->role === 'referent' && $history->concernsReferent($mission, $user);
 
-        if ($user->role !== 'admin' && ! $isParty && ! $isReferent) {
+        if (! $user->isAdminWith('admin.missions.view') && ! $isParty && ! $isReferent) {
             return response()->json([
                 'success' => false,
                 'message' => 'Accès non autorisé à l\'historique de cette mission.',

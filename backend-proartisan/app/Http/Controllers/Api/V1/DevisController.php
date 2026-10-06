@@ -26,7 +26,7 @@ class DevisController extends Controller
     public function index(Mission $mission, Request $request): JsonResponse
     {
         $user = $request->user();
-        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && $user->role !== 'admin') {
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! $user->isAdminWith('admin.missions.view')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Non autorisé.',
@@ -98,7 +98,7 @@ class DevisController extends Controller
     {
         $user = $request->user();
         $devis->loadMissing('mission');
-        if ($devis->artisan_id !== $user->id && $devis->mission->client_id !== $user->id && $user->role !== 'admin') {
+        if ($devis->artisan_id !== $user->id && $devis->mission->client_id !== $user->id && ! $user->isAdminWith('admin.missions.view')) {
             return response()->json([
                 'success' => false,
                 'message' => 'Non autorisé.',

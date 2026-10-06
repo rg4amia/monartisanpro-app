@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Api\V1;
 
 use App\Http\Controllers\Controller;
 use App\Models\Mission;
+use App\Services\MissionHistoryService;
 use App\Services\RealtimeEventService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -21,7 +22,7 @@ class MissionStreamController extends Controller
     {
         $user = $request->user();
 
-        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! in_array($user->role, ['admin', 'referent'])) {
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! app(MissionHistoryService::class)->staffMayFollow($mission, $user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Accès non autorisé au flux de cette mission.',
@@ -96,7 +97,7 @@ class MissionStreamController extends Controller
     {
         $user = $request->user();
 
-        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! in_array($user->role, ['admin', 'referent'])) {
+        if ($mission->client_id !== $user->id && $mission->artisan_id !== $user->id && ! app(MissionHistoryService::class)->staffMayFollow($mission, $user)) {
             return response()->json([
                 'success' => false,
                 'message' => 'Accès non autorisé.',

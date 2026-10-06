@@ -50,7 +50,7 @@ class UssdController extends Controller
                 ->header('Content-Type', 'text/plain');
         }
 
-        if ($user->role !== 'livreur' && $user->role !== 'driver' && $user->role !== 'admin') {
+        if ($user->role !== 'livreur' && $user->role !== 'admin') {
             return response('END Acces refuse. Role livreur requis.', 200)
                 ->header('Content-Type', 'text/plain');
         }
@@ -261,7 +261,7 @@ class UssdController extends Controller
             return response()->json(['success' => false, 'error' => 'Numero de telephone non enregistre.'], 404);
         }
 
-        if ($user->role !== 'livreur' && $user->role !== 'driver' && $user->role !== 'admin') {
+        if ($user->role !== 'livreur' && $user->role !== 'admin') {
             return response()->json(['success' => false, 'error' => 'Acces refuse.'], 403);
         }
 

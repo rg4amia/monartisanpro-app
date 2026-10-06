@@ -143,9 +143,13 @@ Voir `../plans/2026-10-06-chantier-38-donnees-de-tiers-et-documents.md`.
 
 Constat nouveau, relevé le 06/10/2026 sur le serveur : `PdfService::generatePaymentReceipt` écrivait lui aussi sur le disque public, comme la facture de décaissement et le bordereau de cash-out. Deux rapports de solvabilité (`reports/`) et trois reçus de paiement (`receipts/`) répondaient 200 sans authentification. Fermé par le même chantier.
 
-### Autres constats
+### Constats 8 et 10 à 19 : Chantiers 39 et 40
 
-Les constats 8 et 10 à 19 restent ouverts.
+- Fermés par le Chantier 39 : 12, 13, 16, 19, et 18 dans le navigateur.
+- Fermés par le Chantier 40 : 10, 14, 15, le filtre de secours du 18.
+- Restent ouverts : 8 (fichiers encore sur le disque public, décision produit attendue), 11 (repli sans clé Gemini), 17, et le second volet du 2.
+
+Détail : `2026-10-06-audit-etat-du-projet-apres-chantier-39.md` et `../plans/2026-10-06-chantier-40-suites-audit-etat-du-projet.md`.
 
 1. **Immédiat, sur le serveur** : confirmer le constat 1 par la commande indiquée ; si elle répond 200, interdire l'accès au dossier, renouveler les secrets du `.env` et le jeton, puis sortir le dépôt de la racine web.
 2. **Chantier 37 (proposé)** — fermer les constats 2, 3 et 4, chacun avec son test Pest qui échoue avant correctif.

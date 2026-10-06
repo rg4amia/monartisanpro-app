@@ -45,7 +45,7 @@ class AdminResetPasswordCommand extends Command
             $isEmail = filter_var($identifier, FILTER_VALIDATE_EMAIL);
             $this->warn("L'administrateur [{$identifier}] n'existe pas encore.");
 
-            if (! $this->confirm("Voulez-vous créer ce compte administrateur maintenant ?", true)) {
+            if (! $this->confirm('Voulez-vous créer ce compte administrateur maintenant ?', true)) {
                 return self::FAILURE;
             }
 
@@ -96,13 +96,13 @@ class AdminResetPasswordCommand extends Command
         $this->newLine();
         $this->info("✓ Mot de passe mis à jour avec succès pour l'administrateur :");
         $this->line("  - Nom      : {$user->name}");
-        $this->line("  - Email    : ".($user->email ?? 'Non renseigné'));
+        $this->line('  - Email    : '.($user->email ?? 'Non renseigné'));
         $this->line("  - Téléphone: {$user->phone}");
         $this->line("  - Mot de passe : {$password}");
         if ($reset2fa) {
-            $this->line("  - 2FA      : Réinitialisé (un nouveau QR code sera proposé)");
+            $this->line('  - 2FA      : Réinitialisé (un nouveau QR code sera proposé)');
         } else {
-            $this->line("  - 2FA      : ".($user->google_2fa_secret ? 'Actif' : 'Non configuré (QR code à la prochaine connexion)'));
+            $this->line('  - 2FA      : '.($user->google_2fa_secret ? 'Actif' : 'Non configuré (QR code à la prochaine connexion)'));
         }
 
         return self::SUCCESS;

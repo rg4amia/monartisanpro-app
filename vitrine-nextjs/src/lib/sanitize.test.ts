@@ -60,4 +60,19 @@ describe('sanitizeHtml', () => {
       globalThis.window = originalWindow;
     }
   });
+  it('ne laisse passer hors navigateur ni attribut ni balise hors liste', () => {
+    const originalWindow = globalThis.window;
+    try {
+      // @ts-expect-error suppression de window pour simuler le rendu serveur
+      delete globalThis.window;
+      const dirty =
+        '<p class="x" onclick="evil()">Texte</p><svg/onload=alert(1)>' +
+        '<a href=javascript:alert(1)>lien</a><img src=x onerror=alert(1)>' +
+        '<STRONG style="x">gras</STRONG><iframe src="https://evil.example">';
+      const result = sanitizeHtml(dirty);
+      expect(result).toBe('<p>Texte</p>lien<strong>gras</strong>');
+    } finally {
+      globalThis.window = originalWindow;
+    }
+  });
 });

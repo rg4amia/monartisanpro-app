@@ -28,10 +28,12 @@ class VerifyEvidenceVaultIntegrityCommand extends Command
 
         if ($result['tampered'] > 0) {
             $this->error('⚠️ Alerte : des altérations de preuves ont été détectées sur les ID : '.implode(', ', $result['tampered_ids']));
+
             return self::FAILURE;
         }
 
         $this->info('✅ Audit terminé : 100% des preuves du coffre-fort sont intègres et conformes.');
+
         return self::SUCCESS;
     }
 }

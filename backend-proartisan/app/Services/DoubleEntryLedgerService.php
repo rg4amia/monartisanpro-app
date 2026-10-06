@@ -4,8 +4,10 @@ namespace App\Services;
 
 use App\Models\DoubleEntryLedgerEntry;
 use App\Models\Jalon;
+use App\Models\JuryReview;
+use App\Models\Litige;
 use App\Models\Mission;
-use App\Models\Order;
+use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 use Illuminate\Support\Str;
@@ -15,11 +17,17 @@ class DoubleEntryLedgerService
 {
     // Comptes comptables standardisés conformes BCEAO
     public const ACCOUNT_CLIENT_ESCROW = 'client_escrow';
+
     public const ACCOUNT_PLATFORM_ESCROW_MO = 'platform_escrow_mo';
+
     public const ACCOUNT_PLATFORM_ESCROW_MATERIALS = 'platform_escrow_materials';
+
     public const ACCOUNT_ARTISAN_CASHABLE = 'artisan_cashable_mo';
+
     public const ACCOUNT_SUPPLIER_PAYABLE = 'supplier_payable';
+
     public const ACCOUNT_PLATFORM_COMMISSION = 'platform_commission';
+
     public const ACCOUNT_CLIENT_REFUND = 'client_refund';
 
     /**
@@ -27,9 +35,9 @@ class DoubleEntryLedgerService
      */
     public function recordJurorCompensation(
         int $amount,
-        \App\Models\User $juror,
-        \App\Models\Litige $litige,
-        \App\Models\JuryReview $review
+        User $juror,
+        Litige $litige,
+        JuryReview $review
     ): DoubleEntryLedgerEntry {
         return $this->recordDoubleEntry(
             self::ACCOUNT_PLATFORM_COMMISSION,

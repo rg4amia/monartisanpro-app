@@ -32,6 +32,7 @@ class JuryController extends Controller
 
         $anonymized = $reviews->through(function (JuryReview $review) {
             $litige = $review->litige;
+
             return [
                 'review_id' => $review->id,
                 'litige_id' => $litige->id,

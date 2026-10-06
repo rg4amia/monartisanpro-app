@@ -21,7 +21,7 @@ return new class extends Migration
                 $table->unsignedBigInteger('amount')->comment('Montant en FCFA (entier strict, jamais de flottant)');
                 $table->string('currency', 3)->default('XOF')->comment('Devise officielle (XOF / FCFA)');
                 $table->string('entry_type', 50)->index()->comment('Type d opération (escrow_deposit, milestone_release, etc.)');
-                
+
                 $table->foreignId('mission_id')->nullable()->constrained('missions')->nullOnDelete();
                 $table->foreignId('jalon_id')->nullable()->constrained('jalons')->nullOnDelete();
                 $table->foreignId('order_id')->nullable()->constrained('orders')->nullOnDelete();
