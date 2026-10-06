@@ -804,6 +804,11 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Fichiers** : chaque APK ou bundle est copié sous un nom portant sa version (`prosartisan-1.0.3-build4.aab`).
     * **Version courante** : `1.0.3+4` (APK `1.0.2+3` et bundle `1.0.3+4` générés le 05/10/2026).
     * **Tests automatisés** : `version_bump_test.dart` (6 tests).
+72. **Audit du 06/10/2026 — Dépôt déployé inaccessible depuis internet :** [COMPLÉTÉ pour le déploiement — secrets à renouveler ; autres constats ouverts]
+    * **Constat** : le dépôt, cloné sous la racine web, se lisait par une simple adresse (fichier d'environnement, dossier git, pièces privées, journaux). Confirmé en production, fermé le même jour.
+    * **Correctif** : le `.htaccess` racine écrit par le déploiement refuse tout le dossier du dépôt, sauf le dossier public de Laravel.
+    * **Reste à faire** : renouveler les secrets du fichier d'environnement et la clé d'application ; sortir le dépôt de la racine web.
+    * **Constats ouverts** : routes SMS et codes promo de l'API sans contrôle d'administrateur, fichiers de la messagerie de chantier, coffre de preuves, rapport de solvabilité, recrutement — `docs/chantiers/audits/2026-10-06-audit-securite-api-et-deploiement.md`.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

@@ -441,6 +441,15 @@ jobs:
             RewriteEngine On
             RewriteBase /
 
+            # 0. DÉPÔT DÉPLOYÉ INACCESSIBLE DEPUIS INTERNET
+            # Le dépôt est cloné sous public_html : sans cette règle, .env,
+            # .git/config (jeton de déploiement), storage/app/private (pièces
+            # KYC) et les journaux étaient servis tels quels (audit du
+            # 06/10/2026). Seul le dossier public/ de Laravel reste atteignable,
+            # ce qui laisse passer les réécritures des règles 1 et 2.
+            RewriteRule ^monartisanpro-app/?$ - [F,L]
+            RewriteRule ^monartisanpro-app/(?!backend-proartisan/public/) - [F,L]
+
             # 1. ROUTAGE DU SOUS-DOMAINE API (api.prosartisan.net)
             # Redirige api.prosartisan.net vers Laravel public/
             RewriteCond %{HTTP_HOST} ^api\.prosartisan\.net$ [NC]

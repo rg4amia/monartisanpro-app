@@ -663,3 +663,10 @@ App Router (`src/app/`), composants partagés dans `src/components/`, accès API
 - **Fichiers produits** : copie nommée d'après la version, que la génération suivante n'écrase pas — `build/app/outputs/flutter-apk/prosartisan-<version>-build<N>[-<architecture>].apk`, `build/app/outputs/bundle/release/prosartisan-<version>-build<N>.aab`.
 - **Hors périmètre** : le workflow `mobile-ci.yml` construit son APK sans passer par l'outil, donc sans incrément. Le changement de version de `pubspec.yaml` se commite avec le reste.
 - **Tests** : `test/tool/version_bump_test.dart`.
+116. **Dépôt déployé inaccessible depuis internet (audit du 06/10/2026)** :
+- **Constat** : le dépôt est cloné sous `public_html/monartisanpro-app`. Sans règle d'interdiction, tout fichier s'y lisait par une simple adresse : `.env`, `.git/config` (où le déploiement inscrit son jeton), `storage/app/private` (pièces KYC, cartes CNMCI), journaux. Vérifié en production le 06/10/2026 (`composer.json` servi en 200), fermé le même jour (403).
+- **Règle 0 du `.htaccess` racine** (écrit par `backend-ci.yml` à chaque déploiement) : tout `monartisanpro-app/` est refusé, sauf `backend-proartisan/public/`, par lequel passent l'API, le backoffice et `/storage`. Ne jamais retirer cette règle ni la placer après les règles de routage ; une correction faite à la main sur le serveur est effacée au déploiement suivant si elle n'est pas dans le workflow.
+- **Tout nouveau dossier servi au public** passe par `backend-proartisan/public/` (ou par une règle de routage vers lui), jamais par une exception à la règle 0.
+- **Contrôle après un changement du `.htaccess`** : `curl -I` sur `monartisanpro-app/backend-proartisan/.env` et `monartisanpro-app/.git/config` répond 403 ; sur `api/v1/settings/app-access`, 200.
+- **Correction de fond à prévoir** : sortir le dépôt de `public_html`.
+- **Constats restant ouverts** (routes SMS et codes promo de l'API sans contrôle d'administrateur, fichiers de la messagerie de chantier, coffre de preuves, rapport de solvabilité, recrutement) : `docs/chantiers/audits/2026-10-06-audit-securite-api-et-deploiement.md`.
