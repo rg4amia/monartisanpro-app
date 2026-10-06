@@ -2,12 +2,12 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | en cours (Lots A et B validés) |
+| Statut | livré |
 | Créé le | 2026-10-06 |
 | Mis à jour le | 2026-10-06 |
 | Auteur | Antigravity |
 | Analyses liées | `../audits/2026-10-06-audit-securite-api-et-deploiement.md` (constats 8, 10, 12, 13, 16, 18, 19) |
-| Commits | `b8aa8b91` (Lot A), `858129f5` (Lot B) |
+| Commits | `b8aa8b91` (Lot A), `858129f5` (Lot B), `50350207` (Lot C) |
 
 ## Objectif
 
