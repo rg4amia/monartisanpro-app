@@ -75,6 +75,12 @@ class AuthController extends GetxController {
     return null;
   }
 
+  void _discardChallenge() {
+    challengeToken.value = null;
+    challengeQuestion.value = null;
+    botAnswer.value = '';
+  }
+
   /// Attend le SMS du code. À lancer avant l'envoi : un SMS arrivé avant le
   /// début de l'écoute n'est pas remis à l'application.
   void listenForOtpSms() {
@@ -115,11 +121,14 @@ class AuthController extends GetxController {
         botTrap: botTrap.value,
       );
       otpSent.value = true;
+      // Le serveur n'accepte un défi qu'une fois : gardé, il était renvoyé
+      // par « Renvoyer le code » et refusé (« déjà validé ou rejoué »).
+      _discardChallenge();
     } catch (e) {
       errorMsg.value = _parseError(e);
       stopListeningForOtpSms();
-      // Renouveler le défi si échec
-      unawaited(fetchSecurityChallenge());
+      // Le défi est consommé ou refusé : le prochain envoi en demande un neuf.
+      _discardChallenge();
     } finally {
       isLoading.value = false;
     }

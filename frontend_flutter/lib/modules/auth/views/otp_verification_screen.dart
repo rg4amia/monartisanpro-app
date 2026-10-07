@@ -9,6 +9,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/config/env_config.dart';
 import '../../../core/theme/app_colors.dart';
 import '../controllers/auth_controller.dart';
+import '../widgets/security_challenge_dialog.dart';
 
 // ─── Design Tokens ───────────────────────────────────────────────────────────
 
@@ -259,7 +260,19 @@ class _OtpVerificationScreenState extends State<OtpVerificationScreen> {
     _c.errorMsg.value = null;
     if (_autoFilled) setState(() => _autoFilled = false);
 
-    // Resend OTP
+    // Chaque envoi demande un défi neuf : celui de la connexion est consommé.
+    await _c.fetchSecurityChallenge();
+    if (_c.challengeToken.value == null) {
+      _c.errorMsg.value =
+          'Impossible de préparer le renvoi du code. Vérifiez votre connexion.';
+      return;
+    }
+    if (!mounted) return;
+    if (_c.challengeQuestion.value != null) {
+      final confirmed = await showSecurityChallengeDialog(_c);
+      if (!confirmed) return;
+    }
+
     await _c.sendOtp();
 
     if (_c.errorMsg.value == null) {

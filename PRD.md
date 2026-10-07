@@ -853,6 +853,11 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **iOS** : mention du micro ajoutée, mentions en français.
     * **Publication** : l'outil de génération refuse un APK signé avec la clé de débogage.
     * **Tests automatisés** : `Chantier43DriverRouteTest.php` (7 tests), `chantier43_guards_test.dart`, `driver_route_and_checkout_test.dart`, `untested_modules_test.dart`, `splash_screen_test.dart` (47 tests) — les modules discussion, artisans, parrainage client, onglets, stock et démarrage ont désormais des tests.
+79. **Chantier 44 — Code de connexion : renvoi du code et envoi refusé :** [COMPLÉTÉ — nouvelle version de l'application à publier ; contrôle sur appareil à faire]
+    * **Renvoyer le code** : le bouton pose de nouveau le petit calcul anti-robot, puis renvoie le code. Auparavant, le renvoi était toujours refusé (« Ce défi de sécurité a déjà été validé ou rejoué. »).
+    * **Envoi refusé** : quand le fournisseur de SMS refuse l'envoi, l'utilisateur lit « Le code n'a pas pu être envoyé… » au lieu d'attendre un SMS qui n'est jamais parti. Le motif reste dans le journal du serveur.
+    * **Limite** : un SMS accepté par le fournisseur puis retardé par l'opérateur reste annoncé « envoyé ».
+    * **Tests automatisés** : `OtpDeliveryFailureTest.php` (6 tests), `auth_controller_test.dart` (2 tests ajoutés).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

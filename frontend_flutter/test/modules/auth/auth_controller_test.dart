@@ -163,6 +163,74 @@ void main() {
       expect(body['bot_answer'], '7');
       expect(body['bot_trap'], '');
     });
+
+    test('un défi consommé ne repart jamais par « Renvoyer le code »',
+        () async {
+      // Le serveur n'accepte un défi qu'une fois. Gardé après le premier
+      // envoi, il repartait au renvoi : « Ce défi de sécurité a déjà été
+      // validé ou rejoué. »
+      adapter.on(
+        'POST',
+        '/auth/send-otp',
+        const CannedResponse(statusCode: 200),
+      );
+
+      final controller = AuthController()
+        ..phone.value = '+2250700000001'
+        ..challengeToken.value = 'tok_premier_envoi'
+        ..challengeQuestion.value = '3 + 4 = ?';
+
+      await controller.sendOtp(answer: '7');
+
+      expect(controller.challengeToken.value, isNull);
+      expect(controller.challengeQuestion.value, isNull);
+      expect(controller.botAnswer.value, isEmpty);
+
+      // Le renvoi charge un défi neuf avant de repartir.
+      adapter.on(
+        'GET',
+        '/auth/security-challenge',
+        const CannedResponse(
+          statusCode: 200,
+          body: {
+            'success': true,
+            'data': {'token': 'tok_renvoi', 'question': '2 + 5 = ?'},
+          },
+        ),
+      );
+      await controller.fetchSecurityChallenge();
+      await controller.sendOtp(answer: '7');
+
+      final sent = adapter.requests
+          .where((r) => r.path.contains('send-otp'))
+          .map((r) => (r.data as Map<String, dynamic>)['bot_token'])
+          .toList();
+      expect(sent, ['tok_premier_envoi', 'tok_renvoi']);
+    });
+
+    test('un défi refusé est abandonné lui aussi', () async {
+      adapter.on(
+        'POST',
+        '/auth/send-otp',
+        const CannedResponse(
+          statusCode: 422,
+          body: {
+            'success': false,
+            'message': 'Réponse au calcul de sécurité incorrecte.',
+          },
+        ),
+      );
+
+      final controller = AuthController()
+        ..phone.value = '+2250700000001'
+        ..challengeToken.value = 'tok_faux'
+        ..challengeQuestion.value = '3 + 4 = ?';
+
+      await controller.sendOtp(answer: '9');
+
+      expect(controller.errorMsg.value, contains('incorrecte'));
+      expect(controller.challengeToken.value, isNull);
+    });
   });
 
   group('AuthController — écoute du SMS du code', () {

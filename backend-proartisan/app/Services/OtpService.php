@@ -2,6 +2,7 @@
 
 namespace App\Services;
 
+use App\Exceptions\OtpDeliveryException;
 use App\Models\Otp;
 use App\Models\Setting;
 use App\Models\User;
@@ -33,7 +34,47 @@ class OtpService
      */
     public function sendOtp(string $phone, ?string $action = null, ?string $channel = null): string
     {
+        return $this->issue($phone, $action, $channel)['code'];
+    }
+
+    /**
+     * Comme sendOtp, mais lève une OtpDeliveryException quand aucun canal n'a
+     * accepté le message : répondre « code envoyé » laissait l'utilisateur
+     * attendre un SMS qui n'était jamais parti. Le code émis est alors brûlé.
+     */
+    public function sendOtpOrFail(string $phone, ?string $action = null, ?string $channel = null): string
+    {
+        $issued = $this->issue($phone, $action, $channel);
+
+        if (! $issued['delivered']) {
+            Otp::where('phone', $phone)
+                ->where('code', $issued['code'])
+                ->whereNull('used_at')
+                ->update(['used_at' => now()]);
+
+            throw new OtpDeliveryException;
+        }
+
+        return $issued['code'];
+    }
+
+    /**
+     * Un canal n'est tenu pour défaillant que sur un refus explicite du
+     * fournisseur (`status: error`) ; une réponse de forme inattendue ne
+     * ferme pas la connexion à tous les utilisateurs.
+     */
+    private function refused(array $result): bool
+    {
+        return ($result['status'] ?? null) === 'error';
+    }
+
+    /**
+     * @return array{code: string, delivered: bool}
+     */
+    private function issue(string $phone, ?string $action, ?string $channel): array
+    {
         $otp = $this->generate();
+        $delivered = true;
 
         $user = User::where('phone', $phone)->first();
 
@@ -51,7 +92,7 @@ class OtpService
         if (strtolower($resolvedChannel) === 'both') {
             // Envoi par SMS
             $smsResult = $this->smsService->sendOtp($phone, $otp);
-            if ($smsResult['status'] !== 'success') {
+            if (($smsResult['status'] ?? null) !== 'success') {
                 Log::error('[OTP] Failed to send SMS (both)', [
                     'phone' => $phone,
                     'error' => $smsResult['message'] ?? 'Unknown error',
@@ -60,17 +101,19 @@ class OtpService
 
             // Envoi par WhatsApp
             $waResult = $this->whatsAppService->sendOtp($phone, $otp);
-            if ($waResult['status'] !== 'success') {
+            if (($waResult['status'] ?? null) !== 'success') {
                 Log::error('[OTP] Failed to send WhatsApp (both)', [
                     'phone' => $phone,
                     'error' => $waResult['message'] ?? 'Unknown error',
                 ]);
             }
+
+            $delivered = ! ($this->refused($smsResult) && $this->refused($waResult));
         } elseif (strtolower($resolvedChannel) === 'whatsapp') {
             // Send via WhatsApp
             $result = $this->whatsAppService->sendOtp($phone, $otp);
 
-            if ($result['status'] !== 'success') {
+            if (($result['status'] ?? null) !== 'success') {
                 Log::error('[OTP] Failed to send WhatsApp', [
                     'phone' => $phone,
                     'error' => $result['message'] ?? 'Unknown error',
@@ -80,26 +123,30 @@ class OtpService
                 // endpoint invalide...) ne doit jamais bloquer totalement la
                 // livraison de l'OTP, qui est le mécanisme de connexion.
                 $fallbackResult = $this->smsService->sendOtp($phone, $otp);
-                if ($fallbackResult['status'] !== 'success') {
+                if (($fallbackResult['status'] ?? null) !== 'success') {
                     Log::error('[OTP] Failed to send SMS (repli WhatsApp)', [
                         'phone' => $phone,
                         'error' => $fallbackResult['message'] ?? 'Unknown error',
                     ]);
                 }
+
+                $delivered = ! ($this->refused($result) && $this->refused($fallbackResult));
             }
         } else {
             // Send via SMS
             $result = $this->smsService->sendOtp($phone, $otp);
 
-            if ($result['status'] !== 'success') {
+            if (($result['status'] ?? null) !== 'success') {
                 Log::error('[OTP] Failed to send SMS', [
                     'phone' => $phone,
                     'error' => $result['message'] ?? 'Unknown error',
                 ]);
             }
+
+            $delivered = ! $this->refused($result);
         }
 
-        return $otp;
+        return ['code' => $otp, 'delivered' => $delivered];
     }
 
     /**

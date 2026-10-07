@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers\Api\V1;
 
+use App\Exceptions\OtpDeliveryException;
 use App\Http\Controllers\Controller;
 use App\Http\Requests\Auth\RegisterRequest;
 use App\Http\Requests\Auth\SendOtpRequest;
@@ -99,7 +100,15 @@ class AuthController extends Controller
         }
 
         $channel = $request->input('channel');
-        $this->otpService->sendOtp($request->phone, null, $channel);
+        try {
+            $this->otpService->sendOtpOrFail($request->phone, null, $channel);
+        } catch (OtpDeliveryException $e) {
+            return response()->json([
+                'success' => false,
+                'error_code' => 'OTP_DELIVERY_FAILED',
+                'message' => $e->getMessage(),
+            ], 503);
+        }
 
         $globalChannel = Setting::getValueByKey('otp_delivery_channel', 'sms');
         $effectiveChannel = $channel ?: $globalChannel;
