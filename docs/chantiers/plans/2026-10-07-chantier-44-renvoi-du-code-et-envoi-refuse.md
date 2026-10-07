@@ -7,7 +7,7 @@
 | Mis à jour le | 2026-10-07 |
 | Auteur | Claude Code (Opus 5.5) |
 | Analyses liées | — (signalement du 07/10/2026 : capture de l'écran « Vérification OTP ») |
-| Commits | — |
+| Commits | `0869e068` |
 
 ## Objectif
 
