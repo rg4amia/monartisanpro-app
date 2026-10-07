@@ -103,6 +103,14 @@ class HomeController extends GetxController {
   final driverGpsCoords = ''.obs;
   final driverAddress = ''.obs;
   final driverAvailableMissions = <MissionModel>[].obs;
+
+  /// Le dernier chargement des courses a échoué : les listes affichées sont
+  /// les dernières connues, pas l'état du serveur. Sans cela, une panne se
+  /// lisait « aucune course disponible ».
+  final driverMissionsLoadFailed = false.obs;
+
+  /// Relance le chargement des courses depuis l'écran du livreur.
+  Future<void> retryDriverMissions() => _loadDriverMissions(forceRefresh: true);
   final driverActiveMissions = <MissionModel>[].obs;
 
   bool get isNightModeActive {
@@ -717,7 +725,10 @@ class HomeController extends GetxController {
       } else {
         driverActiveMissions.clear();
       }
+      driverMissionsLoadFailed.value = false;
     } catch (e) {
+      // Les listes gardent leur dernier état connu ; l'écran annonce l'échec.
+      driverMissionsLoadFailed.value = true;
       debugPrint('Erreur chargement livraisons: $e');
     }
   }

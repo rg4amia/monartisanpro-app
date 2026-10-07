@@ -1,3 +1,5 @@
+import '../../core/utils/json_readers.dart';
+
 class SupplierCashoutStatsModel {
   final int walletMateriaux;
   final int availableBalance;
@@ -15,11 +17,11 @@ class SupplierCashoutStatsModel {
 
   factory SupplierCashoutStatsModel.fromJson(Map<String, dynamic> json) {
     return SupplierCashoutStatsModel(
-      walletMateriaux: (json['wallet_materiaux'] as num?)?.toInt() ?? 0,
-      availableBalance: (json['available_balance'] as num?)?.toInt() ?? 0,
-      pendingAmount: (json['pending_amount'] as num?)?.toInt() ?? 0,
-      totalWithdrawn: (json['total_withdrawn'] as num?)?.toInt() ?? 0,
-      totalRequests: (json['total_requests'] as num?)?.toInt() ?? 0,
+      walletMateriaux: readInt(json['wallet_materiaux']) ?? 0,
+      availableBalance: readInt(json['available_balance']) ?? 0,
+      pendingAmount: readInt(json['pending_amount']) ?? 0,
+      totalWithdrawn: readInt(json['total_withdrawn']) ?? 0,
+      totalRequests: readInt(json['total_requests']) ?? 0,
     );
   }
 
@@ -77,21 +79,21 @@ class SupplierCashoutModel {
 
   factory SupplierCashoutModel.fromJson(Map<String, dynamic> json) {
     return SupplierCashoutModel(
-      id: (json['id'] as num?)?.toInt() ?? 0,
-      reference: (json['reference'] as String?) ?? '',
-      supplierId: (json['supplier_id'] as num?)?.toInt() ?? 0,
-      beneficiaryName: (json['beneficiary_name'] as String?) ?? '',
-      beneficiaryPhone: (json['beneficiary_phone'] as String?) ?? '',
-      bankName: json['bank_name'] as String?,
-      bankAccountNumber: json['bank_account_number'] as String?,
-      montantBrut: (json['montant_brut'] as num?)?.toInt() ?? 0,
-      commissionRate: (json['commission_rate'] as num?)?.toDouble() ?? 0.025,
-      montantCommission: (json['montant_commission'] as num?)?.toInt() ?? 0,
-      montantNet: (json['montant_net'] as num?)?.toInt() ?? 0,
-      statut: (json['statut'] as String?) ?? 'en_attente',
-      modeRetrait: (json['mode_retrait'] as String?) ?? 'wave',
-      notes: json['notes'] as String?,
-      batchReference: json['batch_reference'] as String?,
+      id: readInt(json['id']) ?? 0,
+      reference: readString(json['reference']) ?? '',
+      supplierId: readInt(json['supplier_id']) ?? 0,
+      beneficiaryName: readString(json['beneficiary_name']) ?? '',
+      beneficiaryPhone: readString(json['beneficiary_phone']) ?? '',
+      bankName: readString(json['bank_name']),
+      bankAccountNumber: readString(json['bank_account_number']),
+      montantBrut: readInt(json['montant_brut']) ?? 0,
+      commissionRate: readDouble(json['commission_rate']) ?? 0.025,
+      montantCommission: readInt(json['montant_commission']) ?? 0,
+      montantNet: readInt(json['montant_net']) ?? 0,
+      statut: readString(json['statut']) ?? 'en_attente',
+      modeRetrait: readString(json['mode_retrait']) ?? 'wave',
+      notes: readString(json['notes']),
+      batchReference: readString(json['batch_reference']),
       processedAt: json['processed_at'] != null
           ? DateTime.tryParse(json['processed_at'].toString())
           : null,

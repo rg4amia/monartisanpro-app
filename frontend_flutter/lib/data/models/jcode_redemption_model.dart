@@ -1,3 +1,4 @@
+import '../../core/utils/json_readers.dart';
 import 'supplier_model.dart';
 
 class JcodeRedemptionModel {
@@ -35,7 +36,7 @@ class JcodeRedemptionModel {
       recuPhotoUrl: (json['recuPhotoUrl'] ?? json['recu_photo_url'])?.toString(),
       latitude: _parseDouble(json['latitude']),
       longitude: _parseDouble(json['longitude']),
-      items: (json['items'] as List<dynamic>?) ?? const [],
+      items: readList(json['items']) ?? const [],
       scannedAt: (json['scannedAt'] ?? json['scanned_at'])?.toString(),
       fournisseur: fournisseurRaw is Map<String, dynamic>
           ? SupplierModel.fromJson(fournisseurRaw)

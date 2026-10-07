@@ -5,6 +5,7 @@ import '../../../app/routes/app_routes.dart';
 import '../../../core/network/api_client.dart';
 import '../../../core/network/api_endpoints.dart';
 import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/json_readers.dart';
 import '../../../data/models/mission_model.dart';
 
 class LitigeController extends GetxController {
@@ -37,7 +38,7 @@ class LitigeController extends GetxController {
     } else if (arg is int) {
       missionId = arg;
     } else if (arg is Map) {
-      missionId = (arg['missionId'] as int?) ?? 0;
+      missionId = readInt(arg['missionId']) ?? 0;
     } else {
       missionId = 0;
     }
@@ -77,8 +78,8 @@ class LitigeController extends GetxController {
         },
       );
 
-      final body = response.data as Map<String, dynamic>;
-      final litigeId = (body['data'] as Map<String, dynamic>?)?['id'];
+      final body = requireMap(response.data);
+      final litigeId = readMap(body['data'])?['id'];
       if (litigeId is int) {
         unawaited(
           Get.offNamed(
@@ -98,7 +99,7 @@ class LitigeController extends GetxController {
     } on DioException catch (e) {
       final responseData = e.response?.data;
       final message = (responseData is Map
-              ? responseData['message'] as String?
+              ? readString(responseData['message'])
               : null) ??
           'Impossible d\'ouvrir le litige. Vérifiez votre connexion et réessayez.';
       Get.snackbar('Erreur', message, snackPosition: SnackPosition.TOP);

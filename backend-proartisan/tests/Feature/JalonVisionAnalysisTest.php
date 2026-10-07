@@ -43,7 +43,7 @@ class JalonVisionAnalysisTest extends TestCase
             ->putJson("/api/v1/jalons/{$jalon->id}/submit", [
                 'photos' => [
                     [
-                        'url' => 'https://example.com/photos/plumbing_copper.jpg',
+                        'url' => '/storage/jalons/plumbing_copper.jpg',
                         'lat' => 5.3484,
                         'lng' => -4.0169,
                     ],
@@ -107,7 +107,7 @@ class JalonVisionAnalysisTest extends TestCase
             ->putJson("/api/v1/jalons/{$jalon->id}/submit", [
                 'photos' => [
                     [
-                        'url' => 'https://example.com/photos/fake_screen.jpg',
+                        'url' => '/storage/jalons/fake_screen.jpg',
                         'lat' => 5.3484,
                         'lng' => -4.0169,
                     ],

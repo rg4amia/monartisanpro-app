@@ -86,35 +86,6 @@ class EnvConfig {
     return 'http://localhost:8000/api/v1';
   }
 
-  // ── Telegram Logger Configuration ──────────────────────────────────────────
-  // Passez ces valeurs via dart-define au build :
-  //   flutter run --dart-define=TELEGRAM_BOT_TOKEN=xxx --dart-define=TELEGRAM_CHAT_ID=yyy
-  static const String telegramBotToken = String.fromEnvironment(
-    'TELEGRAM_BOT_TOKEN',
-    defaultValue: '',
-  );
-
-  static const String telegramChatId = String.fromEnvironment(
-    'TELEGRAM_CHAT_ID',
-    defaultValue: '',
-  );
-
-  // Active les logs Telegram en debug/release.
-  // En production le logger est DÉSACTIVÉ par défaut : il expose des données
-  // potentiellement personnelles (URLs, payloads d'erreur, téléphones) à un
-  // service tiers, ce qui est incompatible avec le RGPD / la Loi CI n° 2013-450.
-  // L'activer explicitement au build si un canal d'audit dédié est en place :
-  //   --dart-define=TELEGRAM_LOGGER_RELEASE=true
-  static const bool telegramLoggerDebug = bool.fromEnvironment(
-    'TELEGRAM_LOGGER_DEBUG',
-    defaultValue: true,
-  );
-
-  static const bool telegramLoggerRelease = bool.fromEnvironment(
-    'TELEGRAM_LOGGER_RELEASE',
-    defaultValue: false,
-  );
-
   // ── Clés de services tiers ────────────────────────────────────────────────
   // AUCUNE clé n'est stockée en dur : elles sont injectées au build via
   //   flutter run --dart-define-from-file=env.json
@@ -143,16 +114,5 @@ class EnvConfig {
   static const String oneSignalAppId = String.fromEnvironment(
     'ONESIGNAL_APP_ID',
     defaultValue: '00d061c8-977b-405a-a207-e2d87846670b',
-  );
-
-  /// Serveur de calcul d'itinéraire (OSRM) pour la carte livreur.
-  ///
-  /// La valeur par défaut est le serveur de démonstration public d'OSRM :
-  /// rate-limité, sans SLA, NON destiné à la production. En prod, pointer vers
-  /// une instance dédiée :
-  ///   flutter build apk --dart-define=OSRM_BASE_URL=https://osrm.prosartisan.net
-  static const String osrmBaseUrl = String.fromEnvironment(
-    'OSRM_BASE_URL',
-    defaultValue: 'https://router.project-osrm.org',
   );
 }

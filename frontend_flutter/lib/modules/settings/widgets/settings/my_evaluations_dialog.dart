@@ -82,6 +82,24 @@ void showMyEvaluationsDialog(BuildContext context) {
                     return const Center(child: CircularProgressIndicator());
                   }
 
+                  // Une panne n'est pas « aucun avis donné ».
+                  if (snapshot.hasError) {
+                    return const Center(
+                      child: Padding(
+                        padding: EdgeInsets.all(32),
+                        child: Text(
+                          'Impossible de charger vos avis. Vérifiez votre '
+                          'connexion, puis rouvrez cette fenêtre.',
+                          textAlign: TextAlign.center,
+                          style: TextStyle(
+                            fontSize: 14,
+                            color: SettingsColors.muted,
+                          ),
+                        ),
+                      ),
+                    );
+                  }
+
                   final data = snapshot.data;
                   final given = data != null && data['given'] is List
                       ? List<Map<String, dynamic>>.from(data['given'])

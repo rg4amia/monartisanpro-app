@@ -19,6 +19,13 @@ Future<void> main() async {
     () async {
       WidgetsFlutterBinding.ensureInitialized();
 
+      // `debugPrint` écrit aussi dans une version de publication : ce qui y
+      // passe (adresses, corps de réponses d'erreur) se lit par `adb logcat`
+      // et figure dans tout rapport de bogue du téléphone.
+      if (kReleaseMode) {
+        debugPrint = (String? message, {int? wrapWidth}) {};
+      }
+
       // Erreurs framework Flutter.
       FlutterError.onError = (FlutterErrorDetails details) {
         FlutterError.presentError(details);

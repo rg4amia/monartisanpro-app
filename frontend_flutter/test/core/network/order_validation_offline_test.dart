@@ -97,7 +97,7 @@ void main() {
         timestamp: DateTime.parse('2026-09-12T10:00:00Z'),
       );
 
-      final restored = QueuedRequest.fromJson(original.toJson());
+      final restored = QueuedRequest.tryParse(original.toJson())!;
 
       expect(restored.id, original.id);
       expect(restored.method, 'POST');

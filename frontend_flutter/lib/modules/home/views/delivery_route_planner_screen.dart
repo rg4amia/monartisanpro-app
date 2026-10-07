@@ -1,17 +1,14 @@
 import 'dart:async';
-import 'dart:convert';
 import 'dart:math';
 
 import 'package:flutter/material.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:get/get.dart';
-import 'package:http/http.dart' as http;
-import 'package:url_launcher/url_launcher.dart';
 import 'package:yandex_maps_mapkit/mapkit.dart' as mk;
 import 'package:yandex_maps_mapkit/yandex_map.dart';
 
-import '../../../core/config/env_config.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/external_maps.dart';
 import '../../../core/utils/formatters.dart';
 import '../../../data/models/mission_model.dart';
 import '../../../data/repositories/order_repository.dart';
@@ -49,20 +46,24 @@ class _DeliveryRoutePlannerScreenState
   double _driverLat = 5.3484;
   double _driverLng = -4.0169;
 
-  late double _supplierLat;
-  late double _supplierLng;
-  late double _clientLat;
-  late double _clientLng;
+  // Positions de la boutique et de la livraison : celles de la course, puis
+  // celles que rend le serveur avec l'itinéraire. `null` tant qu'elles ne sont
+  // pas connues — jamais un point fabriqué (Règle d'or 29).
+  double? _supplierLat;
+  double? _supplierLng;
+  double? _clientLat;
+  double? _clientLng;
 
-  /// `true` tant qu'au moins une position affichée est dérivée (fournisseur ou
-  /// client absent de la mission) et non une vraie coordonnée GPS.
-  bool _coordsApproximate = false;
+  /// La destination de l'étape en cours est connue.
+  bool get _targetKnown => _currentPhase == DeliveryPhase.pickup
+      ? _supplierLat != null && _supplierLng != null
+      : _clientLat != null && _clientLng != null;
 
   String? _routeDistanceText;
   String? _routeDurationText;
 
-  /// `true` quand la distance affichée est une estimation à vol d'oiseau
-  /// (aucun itinéraire routier OSRM disponible).
+  /// `true` quand la distance affichée est une estimation (aucun service
+  /// d'itinéraire n'a répondu).
   bool _routeIsEstimate = false;
 
   // ── Télémétrie en direct (Option 3 / Lot 4) ──
@@ -212,31 +213,12 @@ class _DeliveryRoutePlannerScreenState
       }
     }
 
-    // Positions dérivées (repli) si la mission ne porte pas les vraies
-    // coordonnées du fournisseur / client. Utilisées uniquement pour cadrer la
-    // carte : l'UI signale alors qu'elles sont approximatives.
-    final rand = Random(widget.mission.id);
-    final derivedSupplierLat = _driverLat + (rand.nextDouble() * 0.012 + 0.005);
-    final derivedSupplierLng = _driverLng + (rand.nextDouble() * 0.012 + 0.005);
-    final derivedClientLat =
-        derivedSupplierLat + (rand.nextDouble() * 0.015 + 0.008);
-    final derivedClientLng =
-        derivedSupplierLng - (rand.nextDouble() * 0.015 + 0.008);
-
-    final supplierLat = widget.mission.supplierLatitude;
-    final supplierLng = widget.mission.supplierLongitude;
-    final clientLat = widget.mission.clientLatitude;
-    final clientLng = widget.mission.clientLongitude;
-
-    final hasSupplier = supplierLat != null && supplierLng != null;
-    final hasClient = clientLat != null && clientLng != null;
-
-    _supplierLat = hasSupplier ? supplierLat : derivedSupplierLat;
-    _supplierLng = hasSupplier ? supplierLng : derivedSupplierLng;
-    _clientLat = hasClient ? clientLat : derivedClientLat;
-    _clientLng = hasClient ? clientLng : derivedClientLng;
-
-    _coordsApproximate = !hasSupplier || !hasClient;
+    // Positions portées par la course ; le serveur les confirme ou les
+    // complète avec l'itinéraire.
+    _supplierLat = widget.mission.supplierLatitude;
+    _supplierLng = widget.mission.supplierLongitude;
+    _clientLat = widget.mission.clientLatitude;
+    _clientLng = widget.mission.clientLongitude;
   }
 
   /// Tente d'obtenir la position GPS réelle du livreur ; ne bloque pas l'écran.
@@ -279,81 +261,89 @@ class _DeliveryRoutePlannerScreenState
     _updateMapElements();
   }
 
-  /// Récupère la géométrie réelle du réseau routier via OSRM (Open Source Routing Machine)
-  Future<List<mk.Point>> _fetchRoadRoutePoints(
-    double lat1,
-    double lng1,
-    double lat2,
-    double lng2,
-  ) async {
+  /// Tracé de l'étape en cours, demandé au serveur.
+  ///
+  /// Le téléphone appelait lui-même un serveur d'itinéraire public. Le
+  /// serveur de ProsArtisan rend le tracé et les deux extrémités, qui font foi.
+  /// Sans réponse, une ligne droite entre deux points connus, annoncée comme
+  /// estimation ; sans destination connue, aucun tracé.
+  Future<List<mk.Point>> _fetchLegPoints(DeliveryPhase phase) async {
+    final isPickup = phase == DeliveryPhase.pickup;
+
     try {
-      final base = EnvConfig.osrmBaseUrl.replaceAll(RegExp(r'/+$'), '');
-      final url = Uri.parse(
-        '$base/route/v1/driving/$lng1,$lat1;$lng2,$lat2?overview=full&geometries=geojson',
+      final route = await _orderRepo.getDriverRoute(
+        widget.mission.id,
+        leg: isPickup ? 'pickup' : 'delivery',
+        fromLat: isPickup ? _driverLat : null,
+        fromLng: isPickup ? _driverLng : null,
       );
-      // 10 s : le serveur OSRM public est lent depuis l'Afrique de l'Ouest et
-      // 4 s suffisaient rarement → l'itinéraire routier ne s'affichait jamais et
-      // on retombait systématiquement sur l'estimation à vol d'oiseau.
-      final response = await http.get(url).timeout(const Duration(seconds: 10));
-      if (response.statusCode == 200) {
-        final data = json.decode(response.body) as Map<String, dynamic>;
-        final routes = data['routes'];
-        if (data['code'] == 'Ok' && routes is List && routes.isNotEmpty) {
-          final route = routes[0] as Map<String, dynamic>;
-          final geometry = route['geometry'] as Map<String, dynamic>;
-          final coords = geometry['coordinates'] as List?;
 
-          if (route['distance'] != null) {
-            final distKm =
-                ((route['distance'] as num) / 1000).toStringAsFixed(1);
-            _routeDistanceText = '$distKm km';
-          }
-          if (route['duration'] != null) {
-            final durMin = ((route['duration'] as num) / 60).round();
-            _routeDurationText = '$durMin min';
-          }
-
-          if (coords != null && coords.isNotEmpty) {
-            _routeIsEstimate = false;
-            return coords.map((c) {
-              final pair = c as List;
-              final lng = (pair[0] as num).toDouble();
-              final lat = (pair[1] as num).toDouble();
-              return mk.Point(latitude: lat, longitude: lng);
-            }).toList();
-          }
-        }
+      if (isPickup) {
+        _supplierLat = route.to.latitude;
+        _supplierLng = route.to.longitude;
+      } else {
+        _supplierLat = route.from.latitude;
+        _supplierLng = route.from.longitude;
+        _clientLat = route.to.latitude;
+        _clientLng = route.to.longitude;
       }
+
+      _routeIsEstimate = route.isEstimate;
+      final distance = route.distanceKm;
+      final duration = route.durationMin;
+      _routeDistanceText = distance == null
+          ? null
+          : '${route.isEstimate ? '~ ' : ''}${distance.toStringAsFixed(1)} km';
+      _routeDurationText = duration == null || route.isEstimate
+          ? null
+          : '${duration.round()} min';
+
+      return route.path
+          .map((p) => mk.Point(latitude: p.latitude, longitude: p.longitude))
+          .toList();
     } catch (e) {
-      debugPrint('[RoutePlanner] OSRM routing fallback: $e');
+      debugPrint('[RoutePlanner] itinéraire indisponible: $e');
     }
 
-    // Repli : pas d'itinéraire routier disponible → estimation à vol d'oiseau
-    // (clairement signalée comme « ~ » dans l'UI, jamais présentée comme exacte).
-    final straightKm = _haversineKm(lat1, lng1, lat2, lng2);
+    final fromLat = isPickup ? _driverLat : _supplierLat;
+    final fromLng = isPickup ? _driverLng : _supplierLng;
+    final toLat = isPickup ? _supplierLat : _clientLat;
+    final toLng = isPickup ? _supplierLng : _clientLng;
+    if (fromLat == null || fromLng == null || toLat == null || toLng == null) {
+      _routeDistanceText = null;
+      _routeDurationText = null;
+      return const [];
+    }
+
+    final straightKm = _haversineKm(fromLat, fromLng, toLat, toLng);
     _routeIsEstimate = true;
     _routeDistanceText = '~ ${straightKm.toStringAsFixed(1)} km';
     _routeDurationText = null;
 
-    final points = <mk.Point>[];
-    const steps = 12;
-    for (int i = 0; i <= steps; i++) {
-      final t = i / steps;
-      final latInterp = lat1 + (lat2 - lat1) * t;
-      final lngInterp = lng1 + (lng2 - lng1) * t;
+    return [
+      mk.Point(latitude: fromLat, longitude: fromLng),
+      mk.Point(latitude: toLat, longitude: toLng),
+    ];
+  }
 
-      // Création d'une courbure simulant un parcours en grille urbaine
-      final offsetLat = sin(t * pi) * 0.0025;
-      final offsetLng = cos(t * pi * 2) * 0.0015;
+  void _drawRoute(
+    mk.MapObjectCollection routes,
+    List<mk.Point> points,
+    Color color,
+  ) {
+    if (points.length < 2) return;
+    try {
+      final poly = routes.addPolyline();
+      poly.geometry = mk.Polyline(points);
+      poly.setStrokeColor(color);
+      // ignore: deprecated_member_use
+      poly.strokeWidth = 5.0;
+    } catch (_) {}
+  }
 
-      points.add(
-        mk.Point(
-          latitude: latInterp + (i % 2 == 0 ? offsetLat : -offsetLat * 0.5),
-          longitude: lngInterp + offsetLng,
-        ),
-      );
-    }
-    return points;
+  void _addPin(mk.MapObjectCollection pins, double? lat, double? lng) {
+    if (lat == null || lng == null) return;
+    pins.addPlacemark().geometry = mk.Point(latitude: lat, longitude: lng);
   }
 
   Future<void> _updateMapElements() async {
@@ -379,59 +369,28 @@ class _DeliveryRoutePlannerScreenState
             mk.Point(latitude: _driverLat, longitude: _driverLng);
         _driverPlacemark = pDriver;
 
-        final pSupplier = pins.addPlacemark();
-        pSupplier.geometry =
-            mk.Point(latitude: _supplierLat, longitude: _supplierLng);
-
-        final points = await _fetchRoadRoutePoints(
-          _driverLat,
-          _driverLng,
-          _supplierLat,
-          _supplierLng,
-        );
-        try {
-          final poly = routes.addPolyline();
-          poly.geometry = mk.Polyline(points);
-          poly.setStrokeColor(const Color(0xFFF59E0B)); // Orange
-          // ignore: deprecated_member_use
-          poly.strokeWidth = 5.0;
-        } catch (_) {}
+        final points = await _fetchLegPoints(DeliveryPhase.pickup);
+        _addPin(pins, _supplierLat, _supplierLng);
+        _drawRoute(routes, points, const Color(0xFFF59E0B)); // Orange
 
         _focusCamera(
           lat1: _driverLat,
           lng1: _driverLng,
-          lat2: _supplierLat,
-          lng2: _supplierLng,
+          lat2: _supplierLat ?? _driverLat,
+          lng2: _supplierLng ?? _driverLng,
         );
       } else if (_currentPhase == DeliveryPhase.delivery) {
         // ── ÉTAPE 2 : Fournisseur -> Client ──
-        final pPickup = pins.addPlacemark();
-        pPickup.geometry =
-            mk.Point(latitude: _supplierLat, longitude: _supplierLng);
-
-        final pClient = pins.addPlacemark();
-        pClient.geometry =
-            mk.Point(latitude: _clientLat, longitude: _clientLng);
-
-        final points = await _fetchRoadRoutePoints(
-          _supplierLat,
-          _supplierLng,
-          _clientLat,
-          _clientLng,
-        );
-        try {
-          final poly = routes.addPolyline();
-          poly.geometry = mk.Polyline(points);
-          poly.setStrokeColor(const Color(0xFF10B981)); // Vert
-          // ignore: deprecated_member_use
-          poly.strokeWidth = 5.0;
-        } catch (_) {}
+        final points = await _fetchLegPoints(DeliveryPhase.delivery);
+        _addPin(pins, _supplierLat, _supplierLng);
+        _addPin(pins, _clientLat, _clientLng);
+        _drawRoute(routes, points, const Color(0xFF10B981)); // Vert
 
         _focusCamera(
-          lat1: _supplierLat,
-          lng1: _supplierLng,
-          lat2: _clientLat,
-          lng2: _clientLng,
+          lat1: _supplierLat ?? _driverLat,
+          lng1: _supplierLng ?? _driverLng,
+          lat2: _clientLat ?? _supplierLat ?? _driverLat,
+          lng2: _clientLng ?? _supplierLng ?? _driverLng,
         );
       }
 
@@ -496,33 +455,29 @@ class _DeliveryRoutePlannerScreenState
   double _deg2rad(double deg) => deg * pi / 180.0;
 
   Future<void> _launchExternalNavigation(
-    double destLat,
-    double destLng,
+    double? destLat,
+    double? destLng,
     String label,
   ) async {
-    final googleUrl = Uri.parse(
-      'https://www.google.com/maps/dir/?api=1&destination=$destLat,$destLng',
-    );
-    final appleUrl = Uri.parse('maps://?daddr=$destLat,$destLng');
-
-    try {
-      if (await canLaunchUrl(googleUrl)) {
-        await launchUrl(googleUrl, mode: LaunchMode.externalApplication);
-      } else if (await canLaunchUrl(appleUrl)) {
-        await launchUrl(appleUrl, mode: LaunchMode.externalApplication);
-      } else {
-        Get.snackbar(
-          'Navigation GPS',
-          'Coordonnées : $destLat, $destLng',
-          backgroundColor: AppColors.primary,
-          colorText: Colors.white,
-        );
-      }
-    } catch (_) {
+    // Sans position connue, aucun guidage : mener le livreur à un point
+    // supposé serait pire que de le lui dire.
+    if (destLat == null || destLng == null) {
       Get.snackbar(
-        'Erreur GPS',
-        'Impossible de lancer l\'application de navigation.',
+        'Guidage indisponible',
+        'La position de cette adresse n\'est pas connue. '
+            'Appelez la boutique ou le client.',
         backgroundColor: AppColors.danger,
+        colorText: Colors.white,
+      );
+      return;
+    }
+
+    final opened = await openInMaps(destLat, destLng, label: label);
+    if (!opened) {
+      Get.snackbar(
+        'Navigation GPS',
+        'Aucune application de cartes. Coordonnées : $destLat, $destLng',
+        backgroundColor: AppColors.primary,
         colorText: Colors.white,
       );
     }
@@ -898,8 +853,7 @@ class _DeliveryRoutePlannerScreenState
                       ],
                     ),
                   ],
-                  if ((_coordsApproximate || _routeIsEstimate) &&
-                      !isCompleted) ...[
+                  if ((!_targetKnown || _routeIsEstimate) && !isCompleted) ...[
                     const SizedBox(height: 3),
                     Row(
                       children: [
@@ -911,9 +865,9 @@ class _DeliveryRoutePlannerScreenState
                         const SizedBox(width: 4),
                         Expanded(
                           child: Text(
-                            _coordsApproximate
-                                ? 'Positions approximatives — GPS partenaire indisponible. Utilisez le bouton GPS pour la navigation.'
-                                : 'Distance estimée à vol d\'oiseau (itinéraire routier indisponible).',
+                            !_targetKnown
+                                ? 'Position de cette adresse inconnue : aucun guidage possible. Appelez la boutique ou le client.'
+                                : 'Distance estimée (itinéraire routier indisponible).',
                             style: const TextStyle(
                               fontSize: 10.5,
                               height: 1.25,

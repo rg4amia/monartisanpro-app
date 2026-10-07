@@ -175,6 +175,48 @@ class DeliveryTrackingService
     }
 
     /**
+     * Itinéraire d'une étape de la course, pour la carte du livreur.
+     *
+     * `pickup` : de la position du livreur à la boutique. `delivery` : de la
+     * boutique à la destination figée sur la commande (Règle d'or 109).
+     *
+     * Le téléphone appelait lui-même un serveur d'itinéraire public, et
+     * plaçait la boutique ou le client à un point tiré au hasard quand leurs
+     * coordonnées manquaient. Le serveur seul connaît ces deux points : sans
+     * eux, il ne rend rien plutôt qu'un trajet inventé (Règle d'or 29).
+     *
+     * @param  array{lat: float, lng: float}|null  $driverPosition
+     * @return array{leg: string, from: array{lat: float, lng: float}, to: array{lat: float, lng: float}, route: array<string, mixed>}|null
+     */
+    public function driverRoute(Order $order, string $leg, ?array $driverPosition = null): ?array
+    {
+        $order->loadMissing(['supplier.fournisseurAgree']);
+
+        $supplier = $order->supplier?->fournisseurAgree?->getPositionCoords();
+        if (! $supplier) {
+            return null;
+        }
+
+        [$from, $to] = $leg === 'pickup'
+            ? [$driverPosition, $supplier]
+            : [$supplier, $order->deliveryDestination()];
+
+        if (! $from || ! $to) {
+            return null;
+        }
+
+        $from = ['lat' => (float) $from['lat'], 'lng' => (float) $from['lng']];
+        $to = ['lat' => (float) $to['lat'], 'lng' => (float) $to['lng']];
+
+        return [
+            'leg' => $leg,
+            'from' => $from,
+            'to' => $to,
+            'route' => $this->osrmService->calculateRoute($from['lat'], $from['lng'], $to['lat'], $to['lng']),
+        ];
+    }
+
+    /**
      * Récupère le package complet de suivi 360° de la livraison pour mobile et backoffice.
      */
     public function getDeliveryTrackingData(Order $order, ?User $viewer = null): array

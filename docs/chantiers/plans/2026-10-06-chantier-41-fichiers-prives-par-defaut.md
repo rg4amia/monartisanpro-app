@@ -2,12 +2,12 @@
 
 | Champ | Valeur |
 | --- | --- |
-| Statut | livré (contrôle sur le serveur et sur appareil à faire) |
+| Statut | livré (contrôle sur appareil à faire) |
 | Créé le | 2026-10-06 |
 | Mis à jour le | 2026-10-06 |
 | Auteur | Claude Code (Opus 5.5) |
 | Analyses liées | `../audits/2026-10-06-audit-etat-du-projet-apres-chantier-39.md` (anomalie 4), `../audits/2026-10-06-audit-securite-api-et-deploiement.md` (constat 8) |
-| Commits | — |
+| Commits | `da83928d` |
 
 ## Objectif
 
@@ -56,3 +56,4 @@ Appliquer la décision produit du 06/10/2026 : **seules les images de catalogue 
 - Un lien gardé en cache par l'application expire au bout de deux heures : les photos d'une liste relue hors connexion après ce délai ne s'affichent plus tant que la liste n'est pas rechargée. Durée réglable par `PRIVATE_MEDIA_URL_TTL_MINUTES`.
 - Le lien signé posté par l'application à la création d'une mission doit être encore valide : au-delà de deux heures entre l'envoi de la photo et la validation de la demande, la photo est écartée.
 - La distinction catalogue / mission repose, pour les versions installées, sur le rôle de l'expéditeur. Une prochaine version de l'application devrait envoyer `usage`.
+- **Contrôle après déploiement de `da83928d`** : `/media/prive/chat/1/x.jpg` répond 403 « Invalid signature » (Laravel) ; `/receipts/transactions/999999` et `/recruitment/voice-notes/999999/file` répondent 404 en JSON (Laravel, et non plus la page de l'hébergeur) ; vitrine, espace fournisseur, origine `www.` et protection du dépôt inchangés.

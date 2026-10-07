@@ -2,6 +2,7 @@ import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
+import '../../core/utils/json_readers.dart';
 import '../models/faq_model.dart';
 import '../models/support_contact_model.dart';
 
@@ -34,7 +35,7 @@ class SupportRepository {
         );
         final data = res.data;
         final list = data is Map<String, dynamic> && data['data'] is List
-            ? data['data'] as List<dynamic>
+            ? (readList(data['data']) ?? const [])
             : <dynamic>[];
         return list
             .whereType<Map<String, dynamic>>()
@@ -51,7 +52,7 @@ class SupportRepository {
       );
       final data = res.data;
       final settings = data is Map<String, dynamic> && data['data'] is Map
-          ? Map<String, dynamic>.from(data['data'] as Map)
+          ? requireMap(data['data'])
           : <String, dynamic>{};
       return SupportContactModel.fromSettings(settings);
     } catch (_) {

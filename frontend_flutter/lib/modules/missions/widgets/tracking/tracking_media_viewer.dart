@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:flutter/material.dart';
-import 'package:url_launcher/url_launcher.dart';
 
+import '../../../../core/utils/platform_media.dart';
 import '../../../../shared/widgets/image_viewer.dart';
 
 /// `true` si l'URL pointe vers un fichier vidéo (extensions courantes).
@@ -21,9 +21,7 @@ bool isTrackingVideoUrl(String url) {
 /// jalon.
 void openTrackingMedia(BuildContext context, String url, bool isVideo) {
   if (isVideo) {
-    unawaited(
-      launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
-    );
+    unawaited(openPlatformVideo(url));
     return;
   }
   openImageViewer(context, urls: [url]);

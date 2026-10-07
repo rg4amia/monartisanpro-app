@@ -248,7 +248,7 @@ class EcosystemJourneyTest extends TestCase
             $this->step("Étape {$jalon->ordre} : preuves photo, OTP envoyé au client, validation");
             $this->actingAs($this->artisanB)->putJson("/api/v1/jalons/{$jalon->id}/submit", [
                 'photos' => [[
-                    'url' => "https://example.test/jalon-{$jalon->id}.jpg",
+                    'url' => "/storage/jalons/jalon-{$jalon->id}.jpg",
                     'lat' => 5.351 + ($index / 1000),
                     'lng' => -4.021,
                     'taken_at' => now()->toIso8601String(),

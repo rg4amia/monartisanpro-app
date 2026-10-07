@@ -835,6 +835,24 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Reçus PDF et notes vocales de candidature** : leurs liens n'aboutissaient pas en production ; ils sont de nouveau servis.
     * **Dépendances PHP** : deux alertes de gravité faible corrigées (Laravel, Flysystem).
     * **Tests automatisés** : `Chantier41PrivateMediaTest.php` (8 tests).
+77. **Chantier 42 — Application mobile : fin de session, file hors connexion, pannes annoncées :** [COMPLÉTÉ — nouvelle version de l'application à publier ; contrôle sur appareil à faire]
+    * **Origine** : audit du code de l'application mobile du 07/10/2026 (six anomalies élevées).
+    * **Fin de session** : une session expirée ou un compte supprimé ne laisse plus le nom, le téléphone ni les données du compte sur le téléphone ; l'appareil garde ses réglages et son empreinte.
+    * **Actions hors connexion** : une action enregistrée hors connexion n'est transmise et annoncée qu'au compte qui l'a faite, et son contenu (codes de retrait et de réception) est chiffré sur le téléphone.
+    * **Journal du téléphone** : plus aucune trace technique en version de publication ; le jeton de session n'y est plus écrit à l'ouverture de l'Assistant IA.
+    * **Pannes annoncées** : sans réseau, le livreur voit « Impossible de charger vos courses » et « Réessayer », au lieu de « Aucune course » ; de même pour les évaluations.
+    * **Photos et vidéos** : une demande de mission ou une étape n'accepte que des fichiers envoyés depuis l'application ; l'application n'ouvre plus une adresse étrangère à ProsArtisan.
+    * **Tests automatisés** : `sync_queue_ownership_test.dart`, `session_end_test.dart`, `platform_media_test.dart`, `driver_missions_load_failure_test.dart` (21 tests), `Chantier42PlatformFileUrlTest.php` (4 tests).
+78. **Chantier 43 — Application mobile : suites de l'audit du 07/10/2026 :** [COMPLÉTÉ — nouvelle version de l'application à publier ; contrôle sur appareil à faire ; paquets Dart à mettre à jour]
+    * **Itinéraire du livreur** : le tracé d'une course est calculé par le serveur, vers la boutique puis vers l'adresse de livraison de la commande. L'application ne place plus jamais la boutique ou le client à un point supposé : sans position connue, elle l'annonce et ne propose aucun guidage.
+    * **Guidage** : le bouton GPS ouvre l'application de cartes du téléphone, à défaut Yandex Maps ; plus aucun lien Google Maps.
+    * **Robustesse** : une réponse inattendue du serveur donne une erreur annoncée, plus un arrêt de l'écran ; une action hors connexion abîmée ne bloque plus les suivantes.
+    * **Confidentialité** : les données de l'application ne partent plus dans la sauvegarde du téléphone ; plus aucun journal d'erreurs vers un service tiers ; l'Assistant IA ne quitte pas le site de ProsArtisan.
+    * **Accès** : un écran de l'application ne s'ouvre plus sans compte connecté ; le lien de retour de paiement n'ouvre aucun écran par lui-même.
+    * **Messages** : plus de texte technique affiché dans les services et les réglages.
+    * **iOS** : mention du micro ajoutée, mentions en français.
+    * **Publication** : l'outil de génération refuse un APK signé avec la clé de débogage.
+    * **Tests automatisés** : `Chantier43DriverRouteTest.php` (7 tests), `chantier43_guards_test.dart`, `driver_route_and_checkout_test.dart`, `untested_modules_test.dart`, `splash_screen_test.dart` (47 tests) — les modules discussion, artisans, parrainage client, onglets, stock et démarrage ont désormais des tests.
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

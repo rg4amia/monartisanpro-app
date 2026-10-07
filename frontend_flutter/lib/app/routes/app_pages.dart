@@ -84,9 +84,12 @@ import '../../modules/support/views/support_screen.dart';
 import '../../modules/wallet/bindings/wallet_binding.dart';
 import '../../modules/wallet/views/wallet_screen.dart';
 import 'app_routes.dart';
+import 'session_guard.dart';
 
 class AppPages {
-  static final pages = [
+  static final pages = SessionGuard.protect(_pages);
+
+  static final List<GetPage<dynamic>> _pages = [
     // Onboarding
     GetPage(
       name: Routes.splash,

@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests\Jalon;
 
+use App\Rules\PlatformFileUrl;
 use Illuminate\Foundation\Http\FormRequest;
 
 class SubmitJalonRequest extends FormRequest
@@ -15,7 +16,7 @@ class SubmitJalonRequest extends FormRequest
     {
         return [
             'photos' => ['nullable', 'array'],
-            'photos.*.url' => ['required_with:photos', 'string'],
+            'photos.*.url' => ['required_with:photos', 'string', 'max:2048', new PlatformFileUrl],
             'photos.*.lat' => ['required_with:photos', 'numeric'],
             'photos.*.lng' => ['required_with:photos', 'numeric'],
             'photos.*.taken_at' => ['nullable', 'date'],

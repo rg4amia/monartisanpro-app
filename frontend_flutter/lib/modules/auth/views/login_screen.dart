@@ -92,8 +92,6 @@ class _LoginScreenState extends State<LoginScreen>
         //   mini: true,
         //   backgroundColor: Colors.red,
         //   onPressed: () async {
-        //     await DebugHelper.printStorageState();
-        //     await DebugHelper.clearAllData();
         //     Get.snackbar(
         //       'Debug',
         //       'Storage cleared. Restart the app.',
@@ -245,7 +243,7 @@ class _LoginScreenState extends State<LoginScreen>
             appSettings.isBlocked('LIVREUR', isNewUser: false),
             () {
               _selectedProfile.value = 'LIVREUR';
-              _c.role.value = 'driver';
+              _c.role.value = 'livreur';
               HapticFeedback.mediumImpact();
             },
           ),

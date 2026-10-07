@@ -121,9 +121,9 @@ class MissionRepository {
       final Map<String, dynamic> missionData;
 
       if (data is Map && data.containsKey('data')) {
-        missionData = data['data'] as Map<String, dynamic>;
+        missionData = requireMap(data['data']);
       } else if (data is Map) {
-        missionData = data as Map<String, dynamic>;
+        missionData = requireMap(data);
       } else {
         throw Exception('Format de réponse inattendu pour getMission');
       }
@@ -154,7 +154,7 @@ class MissionRepository {
     final data = res.data;
     final Map<String, dynamic> payload;
     if (data is Map && data['data'] is Map) {
-      payload = Map<String, dynamic>.from(data['data'] as Map);
+      payload = requireMap(data['data']);
     } else if (data is Map) {
       payload = Map<String, dynamic>.from(data);
     } else {
@@ -203,9 +203,9 @@ class MissionRepository {
     final Map<String, dynamic> missionData;
 
     if (data is Map && data.containsKey('data')) {
-      missionData = data['data'] as Map<String, dynamic>;
+      missionData = requireMap(data['data']);
     } else if (data is Map) {
-      missionData = data as Map<String, dynamic>;
+      missionData = requireMap(data);
     } else {
       throw Exception('Format de réponse inattendu pour createMission');
     }
@@ -229,6 +229,8 @@ class MissionRepository {
         filePath,
         filename: filePath.split('/').last,
       ),
+      // Fichier privé : le serveur ne se fie plus au seul rôle de l'appelant.
+      'usage': 'mission',
     });
     final res = await _client.postMultipart('/upload', formData);
     final url = readString(readMap(res.data)?['url']);
@@ -263,9 +265,9 @@ class MissionRepository {
     if (data is Map) {
       // Si la réponse contient un wrapper 'data', l'extraire
       if (data.containsKey('data')) {
-        return data['data'] as Map<String, dynamic>;
+        return requireMap(data['data']);
       }
-      return data as Map<String, dynamic>;
+      return requireMap(data);
     }
 
     throw Exception('Format de réponse inattendu pour estimate');
@@ -312,7 +314,7 @@ class MissionRepository {
 
     final data = res.data;
     if (data is Map && data.containsKey('data')) {
-      return Map<String, dynamic>.from(data['data'] as Map);
+      return requireMap(data['data']);
     } else if (data is Map) {
       return Map<String, dynamic>.from(data);
     }
@@ -325,9 +327,9 @@ class MissionRepository {
     final data = res.data;
     final Map<String, dynamic> missionData;
     if (data is Map && data.containsKey('data')) {
-      missionData = data['data'] as Map<String, dynamic>;
+      missionData = requireMap(data['data']);
     } else {
-      missionData = data as Map<String, dynamic>;
+      missionData = requireMap(data);
     }
     return MissionModel.fromJson(missionData);
   }
@@ -338,9 +340,9 @@ class MissionRepository {
     final data = res.data;
     final Map<String, dynamic> missionData;
     if (data is Map && data.containsKey('data')) {
-      missionData = data['data'] as Map<String, dynamic>;
+      missionData = requireMap(data['data']);
     } else {
-      missionData = data as Map<String, dynamic>;
+      missionData = requireMap(data);
     }
     return MissionModel.fromJson(missionData);
   }
@@ -394,9 +396,9 @@ class MissionRepository {
     final data = res.data;
     final Map<String, dynamic> missionData;
     if (data is Map && data.containsKey('data')) {
-      missionData = data['data'] as Map<String, dynamic>;
+      missionData = requireMap(data['data']);
     } else {
-      missionData = data as Map<String, dynamic>;
+      missionData = requireMap(data);
     }
     return MissionModel.fromJson(missionData);
   }
@@ -426,7 +428,7 @@ class MissionRepository {
       formData,
     );
 
-    return res.data as Map<String, dynamic>;
+    return requireMap(res.data);
   }
 
   /// Récupère les missions nécessitant la validation d'un référent de zone
@@ -447,9 +449,9 @@ class MissionRepository {
 
     final raw = res.data;
     final List listData =
-        raw is Map && raw['data'] is List ? raw['data'] as List : [];
+        readList(readMap(raw)?['data']) ?? [];
     return listData
-        .map((e) => MissionModel.fromJson(e as Map<String, dynamic>))
+        .map((e) => MissionModel.fromJson(requireMap(e)))
         .toList();
   }
 

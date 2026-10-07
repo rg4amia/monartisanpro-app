@@ -36,14 +36,14 @@ class AddressModel {
 
     return AddressModel(
       id: readInt(json['id']) ?? 0,
-      label: json['label'] is String ? json['label'] as String : null,
+      label: readString(json['label']),
       recipientName: readString(json['recipientName']) ?? '',
       recipientPhone: readString(json['recipientPhone']) ?? '',
       addressLine:
-          json['addressLine'] is String ? json['addressLine'] as String : '',
-      city: json['city'] is String ? json['city'] as String : '',
-      region: json['region'] is String ? json['region'] as String : null,
-      country: json['country'] is String ? json['country'] as String : null,
+          readString(json['addressLine']) ?? '',
+      city: readString(json['city']) ?? '',
+      region: readString(json['region']),
+      country: readString(json['country']),
       isDefault: json['isDefault'] == true,
       lat: readDouble(locationMap?['lat']),
       lng: readDouble(locationMap?['lng']),

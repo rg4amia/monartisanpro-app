@@ -2,11 +2,12 @@ import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 
-import '../services/telegram_logger.dart';
-
+/// Erreurs de l'application : trace locale et message pour l'utilisateur.
+///
+/// Rien ne part vers un service tiers. Un journal d'erreurs envoyé depuis le
+/// téléphone supposait d'embarquer le jeton d'un bot dans l'application, où
+/// il se lit ; un tel journal passe par le serveur.
 class ErrorHandler {
-  static final TelegramLogger _telegram = TelegramLogger();
-
   /// Gère une erreur générique
   static Future<void> handle(
     dynamic error, {
@@ -18,13 +19,6 @@ class ErrorHandler {
     if (stackTrace != null) {
       debugPrint('Stack: $stackTrace');
     }
-
-    // Log vers Telegram
-    await _telegram.logError(
-      error,
-      stackTrace: stackTrace,
-      context: context,
-    );
 
     // Affiche un snackbar à l'utilisateur
     if (showSnackbar) {
@@ -41,9 +35,6 @@ class ErrorHandler {
     debugPrint('🌐 HTTP Error: ${error.type}');
     debugPrint('URL: ${error.requestOptions.uri}');
     debugPrint('Response: ${error.response?.data}');
-
-    // Log vers Telegram
-    await _telegram.logHttpError(error, context: context);
 
     // Affiche un snackbar à l'utilisateur
     if (showSnackbar) {
@@ -143,33 +134,5 @@ class ErrorHandler {
         borderRadius: 8,
       );
     }
-  }
-
-  /// Log un warning vers Telegram
-  static Future<void> logWarning(
-    String message, {
-    String? context,
-  }) async {
-    debugPrint('⚠️ Warning: $message');
-    await _telegram.logWarning(message, context: context);
-  }
-
-  /// Log une info vers Telegram (debug uniquement)
-  static Future<void> logInfo(
-    String message, {
-    String? context,
-  }) async {
-    debugPrint('ℹ️ Info: $message');
-    await _telegram.logInfo(message, context: context);
-  }
-
-  /// Log un événement custom vers Telegram
-  static Future<void> logEvent(
-    String event, {
-    Map<String, dynamic>? data,
-    String? context,
-  }) async {
-    debugPrint('📊 Event: $event');
-    await _telegram.logEvent(event, data: data, context: context);
   }
 }

@@ -91,3 +91,17 @@ String? readApiMessage(dynamic body) {
   final message = readString(readMap(body)?['message'])?.trim();
   return (message == null || message.isEmpty) ? null : message;
 }
+
+/// Objet JSON attendu : lève une [FormatException] s'il manque, plutôt qu'une
+/// erreur de type au premier accès.
+Map<String, dynamic> requireMap(dynamic value) {
+  final map = readMap(value);
+  if (map == null) {
+    throw const FormatException('Réponse inattendue du serveur.');
+  }
+  return map;
+}
+
+/// Objet `data` d'une réponse d'API (`{data: {...}}`), attendu.
+Map<String, dynamic> requireDataMap(dynamic body) =>
+    requireMap(readMap(body)?['data']);

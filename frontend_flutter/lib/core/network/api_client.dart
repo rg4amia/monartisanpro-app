@@ -6,7 +6,7 @@ import 'package:get/get.dart' hide Response, FormData, MultipartFile;
 import 'package:pretty_dio_logger/pretty_dio_logger.dart';
 import '../../app/routes/app_routes.dart';
 import '../services/device_fingerprint_service.dart';
-import '../services/push_identity.dart';
+import '../services/session_end.dart';
 import '../storage/storage_service.dart';
 import '../utils/error_handler.dart';
 import 'api_endpoints.dart';
@@ -97,10 +97,10 @@ class _AuthInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
     if (err.response?.statusCode == 401) {
-      StorageService.clearToken();
-      // Session révoquée ou expirée : l'appareil ne doit plus recevoir les
-      // notifications de ce compte tant que personne ne s'est reconnecté.
-      unawaited(PushIdentity.unlink());
+      // Session révoquée ou expirée : le jeton, l'identité du compte, ses
+      // caches et son rattachement aux notifications quittent le téléphone,
+      // comme à une déconnexion volontaire.
+      unawaited(SessionEnd.wipeLocalData());
 
       // Redirect to login if not already there (safeguarded for tests)
       try {
@@ -115,11 +115,11 @@ class _AuthInterceptor extends Interceptor {
   }
 }
 
-/// Interceptor pour logger automatiquement les erreurs HTTP vers Telegram
+/// Trace locale des erreurs HTTP (hors version de publication).
 class _ErrorLoggerInterceptor extends Interceptor {
   @override
   void onError(DioException err, ErrorInterceptorHandler handler) {
-    // Log automatiquement vers Telegram (sans bloquer la requête).
+    // Sans bloquer la requête.
     unawaited(
       ErrorHandler.handleDioError(
         err,
@@ -169,4 +169,3 @@ class _DeviceFingerprintInterceptor extends Interceptor {
     handler.next(options);
   }
 }
-

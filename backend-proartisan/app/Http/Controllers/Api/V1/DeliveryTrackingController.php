@@ -116,6 +116,53 @@ class DeliveryTrackingController extends Controller
     }
 
     /**
+     * Itinéraire d'une étape de la course, pour la carte du livreur.
+     * GET /api/v1/orders/{order}/route?leg=pickup|delivery&from_lat=&from_lng=
+     */
+    public function route(Request $request, Order $order): JsonResponse
+    {
+        $user = $request->user();
+
+        // Le livreur de la course ; ou, tant qu'elle cherche un livreur, tout
+        // livreur à qui elle est proposée, qui en voit déjà les deux adresses.
+        $isAuthorized = $order->driver_id === $user->id
+            || ($user->role === 'livreur' && $order->driver_id === null && $order->status === 'searching_driver')
+            || $user->isAdminWith('admin.missions.view');
+
+        if (! $isAuthorized) {
+            return response()->json(['success' => false, 'message' => 'Cette course ne vous est pas attribuée.'], 403);
+        }
+
+        $validated = $request->validate([
+            'leg' => 'required|in:pickup,delivery',
+            'from_lat' => 'required_if:leg,pickup|numeric|between:-90,90',
+            'from_lng' => 'required_if:leg,pickup|numeric|between:-180,180',
+        ], [
+            'leg.required' => "L'étape de la course est obligatoire.",
+            'leg.in' => "L'étape de la course est inconnue.",
+            'from_lat.required_if' => 'Votre position est nécessaire pour tracer le trajet vers la boutique.',
+            'from_lng.required_if' => 'Votre position est nécessaire pour tracer le trajet vers la boutique.',
+        ]);
+
+        $driverPosition = $validated['leg'] === 'pickup'
+            ? ['lat' => (float) $validated['from_lat'], 'lng' => (float) $validated['from_lng']]
+            : null;
+
+        $route = $this->tracking->driverRoute($order, $validated['leg'], $driverPosition);
+
+        if ($route === null) {
+            return response()->json([
+                'success' => false,
+                'message' => $validated['leg'] === 'pickup'
+                    ? "La position de la boutique n'est pas connue."
+                    : "La position de la livraison n'est pas connue.",
+            ], 422);
+        }
+
+        return response()->json(['success' => true, 'data' => $route]);
+    }
+
+    /**
      * Validation du code d'enlèvement (Pickup) chez le commerçant avec photo du chargement.
      */
     public function verifyPickup(Request $request, Order $order): JsonResponse

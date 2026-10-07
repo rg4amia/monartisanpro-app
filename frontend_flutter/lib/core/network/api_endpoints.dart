@@ -229,6 +229,7 @@ class ApiEndpoints {
 
   // Livraisons & Courses
   static const String deliveriesEstimate = '/deliveries/estimate';
+  static const String promoCodeVerify = '/promo-codes/verify';
   static const String ordersEstimateDelivery = '/orders/estimate-delivery';
   static const String deliveriesAvailable = '/deliveries/available';
   static const String deliveryBatches = '/deliveries/batches';
@@ -241,6 +242,7 @@ class ApiEndpoints {
       '/orders/$orderId/verify-delivery';
   static String orderLocation(int orderId) => '/orders/$orderId/location';
   static String orderTracking(int orderId) => '/orders/$orderId/tracking';
+  static String orderRoute(int orderId) => '/orders/$orderId/route';
 
   // Fournisseur & Cash-out
   static const String supplierCashouts = '/supplier/cashouts';

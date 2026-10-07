@@ -52,7 +52,7 @@ class DevisRepository {
           () => _client.get(ApiEndpoints.devis(id)),
         );
         return DevisModel.fromJson(
-          (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+          requireDataMap(res.data),
         );
       },
     );
@@ -83,7 +83,7 @@ class DevisRepository {
       },
     );
     final devis = DevisModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
     await _invalidate(missionId: missionId, devisId: devis.id);
     return devis;
@@ -102,7 +102,7 @@ class DevisRepository {
       },
     );
     final devis = DevisModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
     await _invalidate(missionId: devis.missionId, devisId: id);
     return devis;
@@ -114,7 +114,7 @@ class DevisRepository {
       data: {'transaction_id': transactionId},
     );
     final devis = DevisModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
     await _invalidate(missionId: devis.missionId, devisId: id);
     return devis;
@@ -129,7 +129,7 @@ class DevisRepository {
     final res = await NetworkExecutor.run(
       () => _client.get(ApiEndpoints.missionDevisSuggest(missionId)),
     );
-    return (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
+    return requireDataMap(res.data);
   }
 
   Future<Map<String, dynamic>> parseVoiceQuote(
@@ -150,7 +150,7 @@ class DevisRepository {
       ),
     );
 
-    return (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
+    return requireDataMap(res.data);
   }
 
   Future<void> _invalidate({int? missionId, int? devisId}) async {

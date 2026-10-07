@@ -32,7 +32,7 @@ class UserRepository {
       ApiEndpoints.updateCnmci(userId),
       formData,
     );
-    return response.data as Map<String, dynamic>;
+    return requireMap(response.data);
   }
 
   Future<Map<String, dynamic>> updateProfile({
@@ -69,7 +69,7 @@ class UserRepository {
           'payment_phone_code': paymentPhoneCode,
       },
     );
-    return response.data as Map<String, dynamic>;
+    return requireMap(response.data);
   }
 
   /// Demande le code qui confirme un changement de numéro de paiement. Il
@@ -90,7 +90,7 @@ class UserRepository {
         'lng': lng,
       },
     );
-    return response.data as Map<String, dynamic>;
+    return requireMap(response.data);
   }
 
   Future<Map<String, dynamic>> setRole({
@@ -101,14 +101,14 @@ class UserRepository {
       ApiEndpoints.setRole(userId),
       data: {'role': role},
     );
-    return response.data as Map<String, dynamic>;
+    return requireMap(response.data);
   }
 
   Future<Map<String, dynamic>> getDashboardStats() async {
     final response = await NetworkExecutor.run(
       () => _client.get(ApiEndpoints.dashboard),
     );
-    return response.data as Map<String, dynamic>;
+    return requireMap(response.data);
   }
 
   Future<Map<String, dynamic>> deleteAccount({required int userId}) async {

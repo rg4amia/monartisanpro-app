@@ -203,7 +203,7 @@ class MissionModel {
               : (json['statusGemini'] ?? json['status']).toString(),
       hasDevis: json['has_devis'] == true || json['hasDevis'] == true,
       photos: (json['photos'] is List
-              ? (json['photos'] as List).map((e) => e.toString()).toList()
+              ? (readList(json['photos']) ?? const []).map((e) => e.toString()).toList()
               : null) ??
           [],
       clientPhone: _asString(client?['phone'] ?? json['clientPhone']),

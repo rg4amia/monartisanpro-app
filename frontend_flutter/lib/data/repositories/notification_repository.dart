@@ -125,6 +125,6 @@ class NotificationRepository {
     final res = await NetworkExecutor.run(
       () => _client.get(ApiEndpoints.litige(id)),
     );
-    return res.data as Map<String, dynamic>;
+    return requireMap(res.data);
   }
 }

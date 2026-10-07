@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
+import '../../core/utils/json_readers.dart';
 import '../models/chat_message_model.dart';
 
 class ChatRepository {
@@ -19,15 +20,15 @@ class ChatRepository {
       ),
     );
 
-    final data = res.data as Map<String, dynamic>;
-    final rawList = (data['data'] as List<dynamic>?) ?? [];
+    final data = requireMap(res.data);
+    final rawList = readList(data['data']) ?? [];
     final messages = rawList
-        .map((m) => ChatMessageModel.fromJson(m as Map<String, dynamic>))
+        .map((m) => ChatMessageModel.fromJson(requireMap(m)))
         .toList();
 
     return {
-      'is_funded': data['is_funded'] as bool? ?? false,
-      'chat_mode': data['chat_mode'] as String? ?? 'unlimited',
+      'is_funded': readBool(data['is_funded']) ?? false,
+      'chat_mode': readString(data['chat_mode']) ?? 'unlimited',
       'messages': messages,
     };
   }
@@ -53,8 +54,8 @@ class ChatRepository {
         ),
       );
 
-      final data = res.data as Map<String, dynamic>;
-      return ChatMessageModel.fromJson(data['data'] as Map<String, dynamic>);
+      final data = requireMap(res.data);
+      return ChatMessageModel.fromJson(requireMap(data['data']));
     }
 
     final res = await NetworkExecutor.run(
@@ -67,8 +68,8 @@ class ChatRepository {
       ),
     );
 
-    final data = res.data as Map<String, dynamic>;
-    return ChatMessageModel.fromJson(data['data'] as Map<String, dynamic>);
+    final data = requireMap(res.data);
+    return ChatMessageModel.fromJson(requireMap(data['data']));
   }
 
   Future<void> markAsRead(int missionId, int messageId) async {

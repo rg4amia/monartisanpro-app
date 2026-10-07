@@ -64,7 +64,53 @@ class CacheStore<T> {
         // best-effort
       }
     }
+
+    // Le registre ne connaît que les caches utilisés depuis l'ouverture de
+    // l'application : ceux des écrans non visités restent sur le disque, et
+    // le cache des missions n'est pas un `CacheStore`. On passe donc aussi
+    // par la liste des boîtes connues.
+    try {
+      await Hive.initFlutter();
+    } catch (_) {
+      // Hive déjà initialisé, ou stockage indisponible : on tente la suite.
+    }
+    for (final name in knownBoxNames) {
+      try {
+        if (Hive.isBoxOpen(name)) {
+          await Hive.box<Map>(name).clear();
+        } else {
+          await Hive.deleteBoxFromDisk(name);
+        }
+      } catch (_) {
+        // best-effort
+      }
+    }
   }
+
+  /// Toutes les boîtes de cache de l'application, vidées à la fin de session.
+  ///
+  /// Toute nouvelle boîte s'ajoute ici : `cache_box_names_test.dart` relit les
+  /// sources et échoue sinon.
+  static const List<String> knownBoxNames = [
+    'addresses_cache',
+    'artisans_cache',
+    'communications_cache',
+    'devis_cache',
+    'faqs_cache',
+    'jalons_cache',
+    'jcodes_cache',
+    'micro_credit_cache',
+    'missions_cache',
+    'notifications_cache',
+    'orders_cache',
+    'parrainages_cache',
+    'parrainages_clients_cache',
+    'payouts_cache',
+    'supplier_cashouts_cache',
+    'supplier_catalog_cache',
+    'wallet_cache',
+    _metadataBoxName,
+  ];
 
   Box<Map>? _box;
   Box<Map>? _metaBox;

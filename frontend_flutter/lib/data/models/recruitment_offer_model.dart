@@ -62,9 +62,9 @@ class RecruitmentOfferModel {
       deadlineAt: readString(json['deadline_at']),
       status: readString(json['status']) ?? 'pending_review',
       tradeName:
-          trade is Map<String, dynamic> ? trade['name'] as String? : null,
+          trade is Map<String, dynamic> ? readString(trade['name']) : null,
       creatorName:
-          creator is Map<String, dynamic> ? creator['name'] as String? : null,
+          creator is Map<String, dynamic> ? readString(creator['name']) : null,
       creatorType: readString(json['creator_type']) ?? 'admin',
       applicationsCount: _asInt(json['applications_count']) ?? 0,
     );

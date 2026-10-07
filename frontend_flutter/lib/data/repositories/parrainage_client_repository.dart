@@ -2,6 +2,7 @@ import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/storage/storage_service.dart';
+import '../../core/utils/json_readers.dart';
 
 class ParrainageClientRepository {
   final ApiClient _client = ApiClient();
@@ -30,9 +31,9 @@ class ParrainageClientRepository {
         final res = await NetworkExecutor.run(
           () => _client.get('/parrainages-clients'),
         );
-        final data = (res.data as Map<String, dynamic>)['data'] as List?;
+        final data = readList(readMap(res.data)?['data']);
         return (data ?? const [])
-            .map((e) => Map<String, dynamic>.from(e as Map))
+            .map((e) => requireMap(e))
             .toList();
       },
     );

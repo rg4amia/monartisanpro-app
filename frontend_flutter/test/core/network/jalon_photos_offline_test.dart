@@ -69,7 +69,7 @@ void main() {
       );
 
       final json = original.toJson();
-      final restored = QueuedRequest.fromJson(json);
+      final restored = QueuedRequest.tryParse(json)!;
 
       expect(restored.id, original.id);
       expect(restored.method, 'POST');

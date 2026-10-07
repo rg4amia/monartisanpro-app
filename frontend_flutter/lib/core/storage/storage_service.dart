@@ -103,6 +103,31 @@ class StorageService {
       _box.read<bool>(_dataSaverKey) ??
       true; // Actif par défaut en Côte d'Ivoire
 
+  // ── Fin de session ──────────────────────────────────────────────────────────
+  /// Efface le jeton et tout ce qui décrit le compte. Les réglages de
+  /// l'appareil restent : accueil déjà vu, son, économie de données, et
+  /// l'empreinte de l'appareil, qui doit rester la même d'un compte à l'autre
+  /// pour que le serveur reconnaisse les comptes multiples (Règle d'or 71).
+  static Future<void> clearSession() async {
+    await clearToken();
+    for (final key in const [
+      _roleKey,
+      _userIdKey,
+      _phoneKey,
+      _nameKey,
+      _kycStatusKey,
+      _scoreProsArtisanKey,
+      'drv_veh',
+      'drv_plate',
+      'drv_base',
+      'drv_km',
+      'drv_gps',
+      'drv_addr',
+    ]) {
+      await _box.remove(key);
+    }
+  }
+
   // ── Clear all ───────────────────────────────────────────────────────────────
   static Future<void> clearAll() async {
     await clearToken();

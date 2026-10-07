@@ -3,6 +3,7 @@
 namespace App\Http\Requests\Mission;
 
 use App\Rules\NoContactInformation;
+use App\Rules\PlatformFileUrl;
 use Illuminate\Foundation\Http\FormRequest;
 
 class CreateMissionRequest extends FormRequest
@@ -30,7 +31,7 @@ class CreateMissionRequest extends FormRequest
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
             'location_address' => ['nullable', 'string', 'max:255', new NoContactInformation],
             'photos' => ['nullable', 'array', 'max:5'],
-            'photos.*' => ['string'],
+            'photos.*' => ['string', 'max:2048', new PlatformFileUrl],
             'address_id' => ['nullable', 'integer', 'exists:addresses,id'],
             'diagnostic_media_analysis' => ['nullable', 'array'],
         ];

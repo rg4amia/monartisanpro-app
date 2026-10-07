@@ -385,6 +385,7 @@ Route::prefix('v1')->group(function () {
             // Suivi GPS & Télémétrie Livreur (Lot 4)
             Route::post('/{order}/location', [DeliveryTrackingController::class, 'updateLocation']);
             Route::get('/{order}/tracking', [DeliveryTrackingController::class, 'getTracking']);
+            Route::get('/{order}/route', [DeliveryTrackingController::class, 'route']);
             Route::post('/{order}/pickup', [DeliveryTrackingController::class, 'verifyPickup']);
             Route::post('/{order}/deliver', [DeliveryTrackingController::class, 'verifyDelivery']);
             Route::post('/{order}/reassign', [DeliveryTrackingController::class, 'reassign'])->middleware('can:admin.missions.manage');

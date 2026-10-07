@@ -206,7 +206,7 @@ class FullMissionWorkflowTest extends TestCase
                 ->putJson("/api/v1/jalons/{$jalon->id}/submit", [
                     'photos' => [
                         [
-                            'url' => "https://example.test/jalon-{$jalon->id}.jpg",
+                            'url' => "/storage/jalons/jalon-{$jalon->id}.jpg",
                             'lat' => 5.351 + ($index / 1000),
                             'lng' => -4.021 - ($index / 1000),
                             'taken_at' => now()->toIso8601String(),

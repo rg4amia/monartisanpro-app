@@ -1,6 +1,7 @@
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
+import '../../core/utils/json_readers.dart';
 
 /// Tableau de bord et suivi des litiges de l'espace fournisseur.
 ///
@@ -14,15 +15,13 @@ class SupplierDashboardRepository {
     final res = await NetworkExecutor.run(
       () => _client.get(ApiEndpoints.supplierDashboard),
     );
-    return ((res.data as Map<String, dynamic>)['data'] as Map)
-        .cast<String, dynamic>();
+    return requireDataMap(res.data);
   }
 
   Future<Map<String, dynamic>> getLitiges() async {
     final res = await NetworkExecutor.run(
       () => _client.get(ApiEndpoints.supplierLitiges),
     );
-    return ((res.data as Map<String, dynamic>)['data'] as Map)
-        .cast<String, dynamic>();
+    return requireDataMap(res.data);
   }
 }

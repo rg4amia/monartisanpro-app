@@ -48,13 +48,15 @@
         <key>YMKMapKitApiKey</key>
         <string>$(YANDEX_MAPKIT_API_KEY)</string>
         <key>NSCameraUsageDescription</key>
-        <string>We need access to your camera to take profile photos</string>
+        <string>L'appareil photo sert à photographier vos pièces d'identité, vos chantiers et vos preuves de livraison</string>
         <key>NSLocationWhenInUseUsageDescription</key>
         <string>Nous avons besoin de votre position pour afficher les adresses et trouver les artisans proches</string>
         <key>NSLocationAlwaysAndWhenInUseUsageDescription</key>
         <string>Nous avons besoin de votre position pour afficher les adresses et trouver les artisans proches</string>
         <key>NSPhotoLibraryUsageDescription</key>
-        <string>We need access to your photo library to select profile photos</string>
+        <string>Vos photos servent à joindre des images à une demande, une étape de chantier ou un litige</string>
+        <key>NSMicrophoneUsageDescription</key>
+        <string>Le micro sert à dicter un devis et à enregistrer une note vocale de candidature ou de discussion</string>
         <key>NSContactsUsageDescription</key>
         <string>Nous avons besoin d'accéder à vos contacts pour vous permettre de sélectionner la personne à parrainer</string>
     </dict>

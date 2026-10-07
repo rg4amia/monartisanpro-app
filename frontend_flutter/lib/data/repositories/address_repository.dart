@@ -3,6 +3,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/storage/storage_service.dart';
+import '../../core/utils/json_readers.dart';
 import '../models/address_model.dart';
 
 class AddressRepository {
@@ -31,7 +32,7 @@ class AddressRepository {
         );
         final data = res.data;
         final rawList =
-            data is Map && data['data'] is List ? data['data'] as List : [];
+            readList(readMap(data)?['data']) ?? [];
         return rawList
             .whereType<Map>()
             .map((item) => Map<String, dynamic>.from(item))
@@ -49,7 +50,7 @@ class AddressRepository {
     await _store.invalidate(_key);
     final data = response.data;
     final payload =
-        data is Map && data['data'] is Map ? data['data'] as Map : {};
+        readMap(readMap(data)?['data']) ?? {};
     return AddressModel.fromJson(payload.cast<String, dynamic>());
   }
 
@@ -61,7 +62,7 @@ class AddressRepository {
     await _store.invalidate(_key);
     final data = response.data;
     final payload =
-        data is Map && data['data'] is Map ? data['data'] as Map : {};
+        readMap(readMap(data)?['data']) ?? {};
     return AddressModel.fromJson(payload.cast<String, dynamic>());
   }
 
@@ -75,7 +76,7 @@ class AddressRepository {
     await _store.invalidate(_key);
     final data = response.data;
     final payload =
-        data is Map && data['data'] is Map ? data['data'] as Map : {};
+        readMap(readMap(data)?['data']) ?? {};
     return AddressModel.fromJson(payload.cast<String, dynamic>());
   }
 

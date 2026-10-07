@@ -5,6 +5,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/storage/storage_service.dart';
+import '../../core/utils/json_readers.dart';
 import '../models/jcode_item_model.dart';
 import '../models/jcode_model.dart';
 import '../models/jcode_redemption_model.dart';
@@ -43,7 +44,7 @@ class JcodeRepository {
     await _store.init();
     await _store.invalidate('${_scope}_active');
     return JcodeModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
   }
 
@@ -54,9 +55,9 @@ class JcodeRepository {
       final res = await NetworkExecutor.run(
         () => _client.get(ApiEndpoints.jcodesActive),
       );
-      final data = (res.data as Map<String, dynamic>)['data'];
+      final data = readMap(res.data)?['data'];
       final json = data is List && data.isNotEmpty
-          ? data.first as Map<String, dynamic>
+          ? requireMap(data.first)
           : data is Map<String, dynamic>
               ? data
               : null;
@@ -98,8 +99,7 @@ class JcodeRepository {
         final res = await NetworkExecutor.run(
           () => _client.get(ApiEndpoints.jcode(identifier)),
         );
-        return (res.data as Map<String, dynamic>)['data']
-            as Map<String, dynamic>;
+        return requireDataMap(res.data);
       },
     );
 
@@ -110,7 +110,7 @@ class JcodeRepository {
     final res = await NetworkExecutor.run(
       () => _client.get(ApiEndpoints.jcodeRedemptions(identifier)),
     );
-    final data = (res.data as Map<String, dynamic>)['data'];
+    final data = readMap(res.data)?['data'];
     if (data is List) {
       return data
           .whereType<Map<String, dynamic>>()
@@ -154,7 +154,7 @@ class JcodeRepository {
         ApiEndpoints.scanJcode(identifier),
         FormData.fromMap(formDataMap),
       );
-      return res.data as Map<String, dynamic>;
+      return requireMap(res.data);
     }
 
     final res = await _client.post(
@@ -165,7 +165,7 @@ class JcodeRepository {
         if (servedItems != null) 'served_items': servedItems,
       },
     );
-    return res.data as Map<String, dynamic>;
+    return requireMap(res.data);
   }
 
   /// Artisan : upload de la photo géolocalisée des matériaux reçus sur
@@ -189,7 +189,7 @@ class JcodeRepository {
       ApiEndpoints.jcodePhotoMateriaux(identifier),
       formData,
     );
-    return res.data as Map<String, dynamic>;
+    return requireMap(res.data);
   }
 
   static Future<void> clearCache() async {

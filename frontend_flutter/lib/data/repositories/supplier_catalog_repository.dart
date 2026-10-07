@@ -95,7 +95,7 @@ class SupplierCatalogRepository {
     );
     await _invalidateProductCaches();
     return SupplierProductModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
   }
 
@@ -108,7 +108,7 @@ class SupplierCatalogRepository {
     );
     await _invalidateProductCaches();
     return SupplierProductModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
   }
 
@@ -120,6 +120,8 @@ class SupplierCatalogRepository {
   Future<String> uploadProductImage(String filePath) async {
     final formData = FormData.fromMap({
       'file': await MultipartFile.fromFile(filePath, filename: 'product.jpg'),
+      // Seule l'image de catalogue est publique.
+      'usage': 'catalogue',
     });
     final res = await _client.postMultipart('/upload', formData);
     final url = readString(readMap(res.data)?['url']);

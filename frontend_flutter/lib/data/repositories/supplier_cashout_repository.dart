@@ -3,6 +3,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/storage/storage_service.dart';
+import '../../core/utils/json_readers.dart';
 import '../models/supplier_cashout_model.dart';
 
 class SupplierCashoutRepository {
@@ -38,18 +39,17 @@ class SupplierCashoutRepository {
           ),
         );
 
-        final data = (res.data as Map<String, dynamic>)['data']
-            as Map<String, dynamic>;
+        final data = requireDataMap(res.data);
         return data;
       },
     );
 
-    final statsJson = raw['stats'] as Map<String, dynamic>? ?? {};
-    final cashoutsData = raw['cashouts'] as Map<String, dynamic>? ?? {};
-    final list = (cashoutsData['data'] as List<dynamic>? ?? [])
+    final statsJson = readMap(raw['stats']) ?? {};
+    final cashoutsData = readMap(raw['cashouts']) ?? {};
+    final list = (readList(cashoutsData['data']) ?? [])
         .map(
           (e) => SupplierCashoutModel.fromJson(
-            Map<String, dynamic>.from(e as Map),
+            requireMap(e),
           ),
         )
         .toList();
@@ -57,7 +57,7 @@ class SupplierCashoutRepository {
     return {
       'stats': SupplierCashoutStatsModel.fromJson(statsJson),
       'cashouts': list,
-      'total': (cashoutsData['total'] as num?)?.toInt() ?? list.length,
+      'total': readInt(cashoutsData['total']) ?? list.length,
     };
   }
 
@@ -93,7 +93,7 @@ class SupplierCashoutRepository {
     await _store.clear();
 
     final cashoutJson =
-        (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
+        requireDataMap(res.data);
     return SupplierCashoutModel.fromJson(cashoutJson);
   }
 

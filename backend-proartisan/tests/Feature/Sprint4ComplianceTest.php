@@ -48,7 +48,7 @@ class Sprint4ComplianceTest extends TestCase
             ->putJson("/api/v1/jalons/{$jalon->id}/submit", [
                 'photos' => [
                     [
-                        'url' => 'http://example.com/photo.jpg',
+                        'url' => '/storage/jalons/photo.jpg',
                         'lat' => 5.3,
                         'lng' => -4.0,
                     ],
@@ -70,7 +70,7 @@ class Sprint4ComplianceTest extends TestCase
             ->putJson("/api/v1/jalons/{$jalon2->id}/submit", [
                 'photos' => [
                     [
-                        'url' => 'http://example.com/fraud.jpg',
+                        'url' => '/storage/jalons/fraud.jpg',
                         'lat' => 5.3,
                         'lng' => -4.0,
                     ],
@@ -207,7 +207,7 @@ class Sprint4ComplianceTest extends TestCase
             ->putJson("/api/v1/jalons/{$jalon->id}/submit", [
                 'photos' => [
                     [
-                        'url' => 'http://example.com/photo1.jpg',
+                        'url' => '/storage/jalons/photo1.jpg',
                         'lat' => 5.3,
                         'lng' => -4.0,
                     ],

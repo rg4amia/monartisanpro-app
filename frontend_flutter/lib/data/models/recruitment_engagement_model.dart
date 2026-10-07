@@ -100,11 +100,11 @@ class RecruitmentEngagementModel {
       status: readString(json['status']) ?? 'pending_artisan_acceptance',
       acceptedAt: readString(json['accepted_at']),
       offerTitle:
-          offer is Map<String, dynamic> ? offer['title'] as String? : null,
+          offer is Map<String, dynamic> ? readString(offer['title']) : null,
       artisanName:
-          artisan is Map<String, dynamic> ? artisan['name'] as String? : null,
+          artisan is Map<String, dynamic> ? readString(artisan['name']) : null,
       artisanPhone:
-          artisan is Map<String, dynamic> ? artisan['phone'] as String? : null,
+          artisan is Map<String, dynamic> ? readString(artisan['phone']) : null,
       recruiterName: recruiter is Map<String, dynamic>
           ? readString(recruiter['name'])
           : null,

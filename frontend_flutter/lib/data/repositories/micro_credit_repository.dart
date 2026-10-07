@@ -3,6 +3,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/storage/storage_service.dart';
+import '../../core/utils/json_readers.dart';
 import '../models/micro_credit_model.dart';
 
 class MicroCreditRepository {
@@ -33,7 +34,7 @@ class MicroCreditRepository {
           () => _client.get(ApiEndpoints.microCreditEligibility),
         );
         return Map<String, dynamic>.from(
-          (res.data as Map<String, dynamic>)['data'] as Map,
+          requireDataMap(res.data),
         );
       },
     );
@@ -42,7 +43,7 @@ class MicroCreditRepository {
 
   Future<MicroCreditApplicationModel?> getCurrentCredit() async {
     final res = await _client.get(ApiEndpoints.microCreditCurrent);
-    final data = (res.data as Map<String, dynamic>)['data'];
+    final data = readMap(res.data)?['data'];
     if (data == null || data is! Map) return null;
     return MicroCreditApplicationModel.fromJson(Map<String, dynamic>.from(data));
   }
@@ -54,7 +55,7 @@ class MicroCreditRepository {
     );
     await _store.invalidate(_eligibilityKey);
     return MicroCreditApplicationModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
   }
 
@@ -67,7 +68,7 @@ class MicroCreditRepository {
       },
     );
     await _store.invalidate(_eligibilityKey);
-    final data = (res.data as Map<String, dynamic>)['data'];
+    final data = readMap(res.data)?['data'];
     return data is Map ? Map<String, dynamic>.from(data) : {};
   }
 }

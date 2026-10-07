@@ -32,6 +32,47 @@ Widget buildEmptyDeliveriesCard(String text) {
   );
 }
 
+/// Les courses n'ont pas pu être relues sur le serveur : on le dit, plutôt que
+/// d'afficher « aucune course » (Règle d'or 29).
+Widget buildDeliveriesLoadFailedCard(Future<void> Function() onRetry) {
+  return Container(
+    padding: const EdgeInsets.all(16),
+    decoration: BoxDecoration(
+      color: const Color(0xFFFEF2F2),
+      borderRadius: BorderRadius.circular(18),
+      border: Border.all(color: const Color(0xFFFCA5A5)),
+    ),
+    child: Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Impossible de charger vos courses',
+          style: TextStyle(
+            fontSize: 14,
+            fontWeight: FontWeight.w800,
+            color: AppColors.textPrimary,
+          ),
+        ),
+        const SizedBox(height: 4),
+        const Text(
+          'Vérifiez votre connexion. Les courses affichées ci-dessous, '
+          "s'il y en a, sont les dernières connues.",
+          style: TextStyle(fontSize: 13, color: AppColors.textSecondary),
+        ),
+        const SizedBox(height: 8),
+        Align(
+          alignment: Alignment.centerRight,
+          child: TextButton.icon(
+            onPressed: onRetry,
+            icon: const Icon(Icons.refresh, size: 18),
+            label: const Text('Réessayer'),
+          ),
+        ),
+      ],
+    ),
+  );
+}
+
 /// La déclaration d'un temps d'attente n'a de sens que tant que la
 /// livraison n'est pas terminée — au-delà, la commande quitte de toute
 /// façon la liste des courses actives, mais on se protège explicitement de

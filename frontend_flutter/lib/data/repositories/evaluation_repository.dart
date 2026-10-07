@@ -1,6 +1,7 @@
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
+import '../../core/utils/json_readers.dart';
 
 class EvaluationRepository {
   final ApiClient _client = ApiClient();
@@ -33,51 +34,33 @@ class EvaluationRepository {
       },
     );
 
-    return res.data as Map<String, dynamic>;
+    return requireMap(res.data);
   }
 
+  /// `null` quand la réponse ne porte rien ; une panne remonte.
   Future<Map<String, dynamic>?> getMissionActors(int missionId) async {
-    try {
-      final res = await NetworkExecutor.run(
-        () => _client.get(ApiEndpoints.missionEvaluationsStatus(missionId)),
-      );
-      if (res.data is Map &&
-          (res.data as Map<String, dynamic>)['data'] is Map) {
-        return Map<String, dynamic>.from(
-          (res.data as Map<String, dynamic>)['data'],
-        );
-      }
-    } catch (_) {}
-    return null;
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.missionEvaluationsStatus(missionId)),
+    );
+
+    return readMap(readMap(res.data)?['data']);
   }
 
+  /// `null` quand la réponse ne porte rien ; une panne remonte.
   Future<Map<String, dynamic>?> getOrderActors(int orderId) async {
-    try {
-      final res = await NetworkExecutor.run(
-        () => _client.get(ApiEndpoints.orderEvaluationsStatus(orderId)),
-      );
-      if (res.data is Map &&
-          (res.data as Map<String, dynamic>)['data'] is Map) {
-        return Map<String, dynamic>.from(
-          (res.data as Map<String, dynamic>)['data'],
-        );
-      }
-    } catch (_) {}
-    return null;
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.orderEvaluationsStatus(orderId)),
+    );
+
+    return readMap(readMap(res.data)?['data']);
   }
 
+  /// `null` quand la réponse ne porte rien ; une panne remonte.
   Future<Map<String, dynamic>?> getMyEvaluations() async {
-    try {
-      final res = await NetworkExecutor.run(
-        () => _client.get(ApiEndpoints.myEvaluations),
-      );
-      if (res.data is Map &&
-          (res.data as Map<String, dynamic>)['data'] is Map) {
-        return Map<String, dynamic>.from(
-          (res.data as Map<String, dynamic>)['data'],
-        );
-      }
-    } catch (_) {}
-    return null;
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.myEvaluations),
+    );
+
+    return readMap(readMap(res.data)?['data']);
   }
 }

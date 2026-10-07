@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/external_maps.dart';
 import '../../../../data/models/mission_model.dart';
 import 'section_container.dart';
 
@@ -139,14 +140,8 @@ class CounterpartyCard extends StatelessWidget {
                       onPressed: () {
                         final lat = mission.clientLatitude;
                         final lng = mission.clientLongitude;
-                        unawaited(
-                          launchUrl(
-                            Uri.parse(
-                              'https://www.google.com/maps/search/?api=1&query=$lat,$lng',
-                            ),
-                            mode: LaunchMode.externalApplication,
-                          ),
-                        );
+                        if (lat == null || lng == null) return;
+                        unawaited(openInMaps(lat, lng, label: 'Chantier'));
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppColors.primary,

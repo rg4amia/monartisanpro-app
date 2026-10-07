@@ -8,7 +8,10 @@ Statuts : `proposé` · `en cours` · `livré` · `partiel` · `abandonné`.
 
 | Date | Type | Document | Statut | Commits |
 | --- | --- | --- | --- | --- |
-| 2026-10-06 | Plan | [Chantier 41 — Fichiers des utilisateurs privés par défaut](plans/2026-10-06-chantier-41-fichiers-prives-par-defaut.md) | livré (contrôle sur le serveur et sur appareil à faire) | — |
+| 2026-10-07 | Plan | [Chantier 43 — Suites de l'audit de l'application mobile (anomalies 6 à 17 et 19 à 23)](plans/2026-10-07-chantier-43-suites-audit-application-mobile.md) | livré, sauf la mise à jour des paquets (nouvelle version de l'application à publier ; contrôle sur appareil à faire) | — |
+| 2026-10-07 | Plan | [Chantier 42 — Fin de session, file hors connexion, pannes annoncées, adresses de fichiers](plans/2026-10-07-chantier-42-fin-de-session-et-file-hors-connexion.md) | livré (nouvelle version de l'application à publier ; contrôle sur appareil à faire) | — |
+| 2026-10-07 | Audit | [Application mobile (Flutter)](audits/2026-10-07-audit-application-mobile.md) | — | audité : `da83928d` |
+| 2026-10-06 | Plan | [Chantier 41 — Fichiers des utilisateurs privés par défaut](plans/2026-10-06-chantier-41-fichiers-prives-par-defaut.md) | livré (contrôle sur appareil à faire) | `da83928d` |
 | 2026-10-06 | Plan | [Chantier 40 — Suites de l'audit de l'état du projet](plans/2026-10-06-chantier-40-suites-audit-etat-du-projet.md) | livré (anomalie 4 reprise par le Chantier 41) | `842b1649` (lot A), `cc75c295` (lots B et C) |
 | 2026-10-06 | Audit | [État du projet après le Chantier 39](audits/2026-10-06-audit-etat-du-projet-apres-chantier-39.md) | — | audité : `361c800f` |
 | 2026-10-06 | Plan | [Chantier 39 — Clôture des anomalies résiduelles de sécurité et d'API](plans/2026-10-06-chantier-39-cloture-anomalies-securite-et-api.md) | partiel (constats 8, 10 et 14 repris par le Chantier 40) | `b8aa8b91` (Lot A), `858129f5` (Lot B), `50350207` (Lot C) |

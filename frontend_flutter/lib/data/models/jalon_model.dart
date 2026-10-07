@@ -90,7 +90,7 @@ class JalonModel {
   static List<Map<String, dynamic>>? _parsePhotos(dynamic value) {
     if (value == null) return null;
     if (value is List) {
-      return value.map((e) => e as Map<String, dynamic>).toList();
+      return value.map((e) => requireMap(e)).toList();
     }
     return null;
   }

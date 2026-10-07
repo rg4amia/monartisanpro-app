@@ -8,6 +8,7 @@
 //   dart run tool/build_apk.dart --no-bump    régénère la version en place
 //   dart run tool/build_apk.dart --split-per-abi   un APK par architecture
 //   dart run tool/build_apk.dart --bundle     bundle (.aab) pour Google Play
+//   dart run tool/build_apk.dart --debug-signing   essai local sans clé de publication
 //
 // La version n'est conservée que si la génération réussit : un échec remet
 // `pubspec.yaml` dans son état d'origine, pour qu'aucun numéro ne soit
@@ -31,6 +32,7 @@ Future<void> main(List<String> args) async {
     '--no-bump',
     '--split-per-abi',
     '--bundle',
+    '--debug-signing',
   };
   final unknown = args.where((a) => !known.contains(a)).toList();
   if (unknown.isNotEmpty) {
@@ -75,6 +77,20 @@ Future<void> main(List<String> args) async {
     stderr.writeln(
       'android/key.properties introuvable : le bundle serait signé avec la '
       'clé de débogage, que Google Play refuse.',
+    );
+    exit(66);
+  }
+
+  // Sans android/key.properties, l'APK est signé avec la clé de débogage :
+  // installé, il ne pourra jamais être mis à jour par une version signée
+  // correctement. Un essai local le demande explicitement.
+  if (!bundle &&
+      !File('android/key.properties').existsSync() &&
+      !args.contains('--debug-signing')) {
+    stderr.writeln(
+      "android/key.properties introuvable : l'APK serait signé avec la clé "
+      'de débogage. Pour un essai local à ne pas distribuer, ajoutez '
+      '--debug-signing.',
     );
     exit(66);
   }

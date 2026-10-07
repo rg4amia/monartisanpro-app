@@ -3,6 +3,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/storage/storage_service.dart';
+import '../../core/utils/json_readers.dart';
 import '../models/communication_model.dart';
 
 class CommunicationRepository {
@@ -36,8 +37,7 @@ class CommunicationRepository {
         final res = await NetworkExecutor.run(
           () => _client.get(ApiEndpoints.communicationsActive),
         );
-        return (res.data as Map<String, dynamic>)['data']
-            as Map<String, dynamic>;
+        return requireDataMap(res.data);
       },
     );
 
@@ -63,7 +63,7 @@ class CommunicationRepository {
     return raw
         .map(
           (e) => CommunicationModel.fromJson(
-            Map<String, dynamic>.from(e as Map),
+            requireMap(e),
           ),
         )
         .toList();

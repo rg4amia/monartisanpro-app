@@ -28,7 +28,7 @@ class PaymentRepository {
     );
 
     return PaymentInitiationModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
   }
 
@@ -46,7 +46,7 @@ class PaymentRepository {
     );
 
     return PaymentInitiationModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
   }
 
@@ -66,7 +66,7 @@ class PaymentRepository {
     );
 
     return PaymentInitiationModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
   }
 
@@ -105,7 +105,7 @@ class PaymentRepository {
       () => _client.get(ApiEndpoints.paymentStatus(transactionId)),
     );
     return PaymentStatusModel.fromJson(
-      (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+      requireDataMap(res.data),
     );
   }
 }

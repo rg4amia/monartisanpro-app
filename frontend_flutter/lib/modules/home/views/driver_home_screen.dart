@@ -304,6 +304,10 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.stretch,
         children: [
+          if (controller.driverMissionsLoadFailed.value) ...[
+            buildDeliveriesLoadFailedCard(controller.retryDriverMissions),
+            const SizedBox(height: 16),
+          ],
           // Section 1: Active Deliveries
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -319,7 +323,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          if (active.isEmpty)
+          if (active.isEmpty && controller.driverMissionsLoadFailed.value)
+            const SizedBox.shrink()
+          else if (active.isEmpty)
             buildEmptyDeliveriesCard('Aucune course active en cours.')
           else
             Column(
@@ -345,7 +351,9 @@ class _DriverHomeScreenState extends State<DriverHomeScreen> {
             ],
           ),
           const SizedBox(height: 10),
-          if (available.isEmpty)
+          if (available.isEmpty && controller.driverMissionsLoadFailed.value)
+            const SizedBox.shrink()
+          else if (available.isEmpty)
             buildEmptyDeliveriesCard('Aucune course de livraison disponible.')
           else
             Column(

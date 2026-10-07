@@ -21,7 +21,7 @@ class SectorModel {
         icon: readString(json['icon']),
         color: readString(json['color']),
         trades: readList(json['trades'])
-                ?.map((e) => TradeModel.fromJson(e as Map<String, dynamic>))
+                ?.map((e) => TradeModel.fromJson(requireMap(e)))
                 .toList() ??
             [],
       );

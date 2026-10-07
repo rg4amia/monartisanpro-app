@@ -1,13 +1,12 @@
 import 'dart:async';
-import 'package:dio/dio.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import '../../../app/routes/app_routes.dart';
-import '../../../core/network/api_client.dart';
-import '../../../core/network/api_endpoints.dart';
 import '../../../core/payments/operator_payment_runner.dart';
 import '../../../core/theme/app_colors.dart';
+import '../../../core/utils/json_readers.dart';
 import '../../../data/models/address_model.dart';
+import '../../../data/repositories/order_repository.dart';
 import '../../addresses/controllers/address_controller.dart';
 import '../controllers/order_controller.dart';
 
@@ -22,6 +21,7 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
   final OrderController controller = Get.find<OrderController>();
   final AddressController addressController = Get.find<AddressController>();
   final TextEditingController _promoController = TextEditingController();
+  final OrderRepository _orderRepo = OrderRepository();
 
   String deliveryMode = 'delivery';
   String vehicleClass = 'moto';
@@ -66,40 +66,25 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
     final group = groups.single;
     setState(() => _isEstimatingFare = true);
     try {
-      final client = ApiClient();
-      final res = await client.post(
-        ApiEndpoints.deliveriesEstimate,
-        data: {
-          'supplier_id': group.supplierId,
-          'vehicle_class': vehicleClass,
-          'items': group.itemsPayload,
-          if (addressController.selectedAddressId.value != null)
-            'address_id': addressController.selectedAddressId.value,
-        },
+      final data = await _orderRepo.estimateDelivery(
+        supplierId: group.supplierId,
+        vehicleClass: vehicleClass,
+        items: group.itemsPayload,
+        addressId: addressController.selectedAddressId.value,
       );
+      if (data == null || !mounted) return;
 
-      if (res.statusCode == 200 && res.data is Map) {
-        final resMap = res.data as Map<String, dynamic>;
-        if (resMap['success'] == true && resMap['data'] is Map) {
-          final data = resMap['data'] as Map<String, dynamic>;
-          if (mounted) {
-            setState(() {
-              _serverDeliveryCost = (data['delivery_cost'] as num?)?.toInt();
-              if (_serverRecommendedVehicle == null &&
-                  data['recommended_vehicle_class'] != null) {
-                final rec = data['recommended_vehicle_class'].toString();
-                if (['moto', 'voiture', 'cargo'].contains(rec)) {
-                  vehicleClass = rec;
-                }
-              }
-              _serverRecommendedVehicle =
-                  data['recommended_vehicle_class']?.toString();
-              _serverDistanceKm = (data['distance_km'] as num?)?.toDouble();
-              _serverDurationMin = (data['duration_min'] as num?)?.toDouble();
-            });
-          }
+      setState(() {
+        _serverDeliveryCost = readInt(data['delivery_cost']);
+        final recommended = readString(data['recommended_vehicle_class']);
+        if (_serverRecommendedVehicle == null &&
+            const ['moto', 'voiture', 'cargo'].contains(recommended)) {
+          vehicleClass = recommended!;
         }
-      }
+        _serverRecommendedVehicle = recommended;
+        _serverDistanceKm = readDouble(data['distance_km']);
+        _serverDurationMin = readDouble(data['duration_min']);
+      });
     } catch (_) {
       // Estimation indisponible : le récapitulatif annonce une course calculée à la livraison.
     } finally {
@@ -202,34 +187,20 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
 
     setState(() => _isCheckingPromo = true);
     try {
-      final client = ApiClient();
-      final res = await client.post(
-        '/promo-codes/verify',
-        data: {
-          'code': code,
-          'amount': controller.subtotal,
-        },
+      final result = await _orderRepo.verifyPromoCode(
+        code: code,
+        amount: controller.subtotal,
       );
+      if (!mounted) return;
 
-      if (res.data != null &&
-          (res.data as Map<String, dynamic>)['success'] == true) {
-        final data =
-            (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>;
-        final discountAmount =
-            (data['discount_amount'] as num?)?.toDouble() ?? 0.0;
-        final discountType = data['discount_type'] as String? ?? 'percent';
-        final discountVal = data['discount_value'];
-
+      if (result.valid) {
         setState(() {
-          _promoDiscount = discountAmount;
+          _promoDiscount = result.discountAmount;
           _appliedPromoCode = code;
         });
-
-        final detail =
-            discountType == 'percent' ? '-$discountVal%' : '-$discountVal FCFA';
         Get.snackbar(
           'Code promo validé !',
-          '${(res.data as Map<String, dynamic>)['message']} ($detail)',
+          [result.message, '(${result.detail})'].whereType<String>().join(' '),
           backgroundColor: const Color(0xFF24734F),
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
@@ -242,34 +213,21 @@ class _OrderCheckoutScreenState extends State<OrderCheckoutScreen> {
         });
         Get.snackbar(
           'Code promo invalide',
-          (res.data as Map<String, dynamic>?)?['message'] ??
-              'Ce code promo n\'est pas applicable.',
+          result.message ?? 'Ce code promo n\'est pas applicable.',
           backgroundColor: const Color(0xFFC55E50),
           colorText: Colors.white,
           snackPosition: SnackPosition.TOP,
         );
       }
-    } on DioException catch (e) {
+    } catch (_) {
+      if (!mounted) return;
       setState(() {
         _promoDiscount = 0;
         _appliedPromoCode = null;
       });
-      String msg = 'Code promo invalide ou expiré.';
-      final errData = e.response?.data;
-      if (errData is Map && errData['message'] != null) {
-        msg = errData['message'].toString();
-      }
-      Get.snackbar(
-        'Code promo',
-        msg,
-        backgroundColor: const Color(0xFFC55E50),
-        colorText: Colors.white,
-        snackPosition: SnackPosition.TOP,
-      );
-    } catch (e) {
       Get.snackbar(
         'Erreur',
-        'Impossible de vérifier le code promo',
+        'Impossible de vérifier le code promo. Vérifiez votre connexion.',
         backgroundColor: const Color(0xFFC55E50),
         colorText: Colors.white,
         snackPosition: SnackPosition.TOP,

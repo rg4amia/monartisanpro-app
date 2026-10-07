@@ -4,6 +4,7 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:frontend_flutter/core/config/env_config.dart';
 import 'package:frontend_flutter/core/storage/storage_service.dart';
+import 'package:frontend_flutter/core/utils/platform_media.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:permission_handler/permission_handler.dart';
 import 'package:webview_flutter/webview_flutter.dart';
@@ -142,9 +143,8 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
 
   void _initWebView() {
     final assistantUrl = _buildAssistantUrl();
-    debugPrint(
-      '[IaAssistant] Chargement WebView → $assistantUrl (mode: ${EnvConfig.currentMode})',
-    );
+    // Ne jamais journaliser cette adresse : son fragment porte le jeton.
+    debugPrint('[IaAssistant] Chargement (mode: ${EnvConfig.currentMode})');
 
     setState(() {
       _isLoading = true;
@@ -165,6 +165,14 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
       // galerie, chat) inaccessibles.
       ..setNavigationDelegate(
         NavigationDelegate(
+          // La page reçoit le jeton de session : elle ne quitte pas le
+          // domaine de l'API, même si un contenu y glisse un lien externe.
+          onNavigationRequest: (NavigationRequest request) {
+            return isPlatformMediaUrl(request.url) ||
+                    request.url == 'about:blank'
+                ? NavigationDecision.navigate
+                : NavigationDecision.prevent;
+          },
           onPageStarted: (String url) {
             setState(() {
               _isLoading = true;
@@ -178,7 +186,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
           },
           onWebResourceError: (WebResourceError error) {
             debugPrint(
-              'WebView error (isForMainFrame: ${error.isForMainFrame}, url: ${error.url}): ${error.description}',
+              'WebView error (isForMainFrame: ${error.isForMainFrame}): ${error.description}',
             );
 
             // Ne bloquer la page entière QUE si l'erreur concerne le cadre principal (main frame)
@@ -199,7 +207,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
                 if (mounted) {
                   final assistantUrl = _buildAssistantUrl();
                   debugPrint(
-                    '[IaAssistant] Retry automatique $_retryCount/$_maxRetries → $assistantUrl',
+                    '[IaAssistant] Retry automatique $_retryCount/$_maxRetries',
                   );
                   _controller?.loadRequest(Uri.parse(assistantUrl));
                 }
@@ -274,7 +282,7 @@ class _IaAssistantScreenState extends State<IaAssistantScreen> {
     // Recharger avec la nouvelle URL
     final assistantUrl = _buildAssistantUrl();
     debugPrint(
-      '[IaAssistant] Retry → $assistantUrl (mode: ${EnvConfig.currentMode})',
+      '[IaAssistant] Retry (mode: ${EnvConfig.currentMode})',
     );
     final controller = _controller;
     if (controller != null) {

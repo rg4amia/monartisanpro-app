@@ -79,7 +79,7 @@ class ArtisanRepository {
           () => _client.get(ApiEndpoints.artisan(userId)),
         );
         return ArtisanModel.fromJson(
-          (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>,
+          requireDataMap(res.data),
         );
       },
     );
@@ -89,7 +89,7 @@ class ArtisanRepository {
     final res = await NetworkExecutor.run(
       () => _client.get(ApiEndpoints.artisanScore(userId)),
     );
-    return res.data as Map<String, dynamic>;
+    return requireMap(res.data);
   }
 
   /// Télécharge le rapport PDF de solvabilité de l'artisan et l'enregistre

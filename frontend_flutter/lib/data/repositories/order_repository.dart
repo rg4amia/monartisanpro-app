@@ -8,6 +8,7 @@ import '../../core/network/network_executor.dart';
 import '../../core/network/sync_service.dart';
 import '../../core/storage/storage_service.dart';
 import '../../core/utils/json_readers.dart';
+import '../models/driver_route_model.dart';
 import '../models/history_models.dart';
 
 class OrderRepository {
@@ -92,31 +93,24 @@ class OrderRepository {
 
   /// Missions livreur disponibles : donnée temps réel, jamais mise en cache
   /// (un créneau déjà pris ne doit pas rester affiché comme disponible).
+  ///
+  /// Une panne remonte : renvoyer une liste vide la faisait passer pour
+  /// « aucune course disponible » (Règles d'or 29 et 75).
   Future<List<Map<String, dynamic>>> getAvailableDeliveries() async {
-    try {
-      final res = await NetworkExecutor.run(
-        () => _client.get(ApiEndpoints.deliveriesAvailable),
-      );
-      final data = (res.data as Map<String, dynamic>)['data'];
-      if (data is List) {
-        return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      }
-    } catch (_) {}
-    return [];
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.deliveriesAvailable),
+    );
+
+    return readDataList(res.data);
   }
 
   /// Tournées groupées disponibles pour les livreurs (multi-drop).
   Future<List<Map<String, dynamic>>> getDeliveryBatches() async {
-    try {
-      final res = await NetworkExecutor.run(
-        () => _client.get(ApiEndpoints.deliveryBatches),
-      );
-      final data = (res.data as Map<String, dynamic>)['data'];
-      if (data is List) {
-        return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-      }
-    } catch (_) {}
-    return [];
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.deliveryBatches),
+    );
+
+    return readDataList(res.data);
   }
 
   /// Accepter une tournée groupée (lot multi-drop).
@@ -129,42 +123,35 @@ class OrderRepository {
     return res.data;
   }
 
-  /// Récupérer la tournée active du livreur.
+  /// Récupérer la tournée active du livreur : `null` quand le serveur dit
+  /// qu'il n'y en a pas, jamais quand il n'a pas répondu.
   Future<Map<String, dynamic>?> getActiveDeliveryTour() async {
-    try {
-      final res = await NetworkExecutor.run(
-        () => _client.get(ApiEndpoints.deliveryActiveTour),
-      );
-      final body = res.data as Map<String, dynamic>;
-      if (body['success'] == true && body['data'] is Map) {
-        return Map<String, dynamic>.from(body['data'] as Map);
-      }
-    } catch (_) {}
-    return null;
+    final res = await NetworkExecutor.run(
+      () => _client.get(ApiEndpoints.deliveryActiveTour),
+    );
+
+    return readMap(readMap(res.data)?['data']);
   }
 
+  /// Commandes de l'utilisateur. Hors connexion, la dernière liste connue ;
+  /// sans elle, l'erreur remonte — jamais une liste vide (Règle d'or 75).
   Future<List<Map<String, dynamic>>> getMyOrders({
     bool forceRefresh = false,
   }) async {
-    try {
-      await _store.init();
-      return await _store.readList(
-        key: _myOrdersKey,
-        ttl: _myOrdersTtl,
-        policy:
-            forceRefresh ? CachePolicy.networkFirst : CachePolicy.cacheFirst,
-        fetch: () async {
-          final res = await NetworkExecutor.run(
-            () => _client.get(ApiEndpoints.orders),
-          );
-          final data = (res.data as Map<String, dynamic>)['data'];
-          if (data is! List) return const [];
-          return data.map((e) => Map<String, dynamic>.from(e as Map)).toList();
-        },
-      );
-    } catch (_) {
-      return [];
-    }
+    await _store.init();
+
+    return _store.readList(
+      key: _myOrdersKey,
+      ttl: _myOrdersTtl,
+      policy: forceRefresh ? CachePolicy.networkFirst : CachePolicy.cacheFirst,
+      fetch: () async {
+        final res = await NetworkExecutor.run(
+          () => _client.get(ApiEndpoints.orders),
+        );
+
+        return readDataList(res.data);
+      },
+    );
   }
 
   Future<Map<String, dynamic>> acceptDelivery(int orderId) async {
@@ -196,7 +183,7 @@ class OrderRepository {
       await _invalidateMyOrders();
 
       return res.data is Map<String, dynamic>
-          ? res.data as Map<String, dynamic>
+          ? requireMap(res.data)
           : <String, dynamic>{'success': true};
     } on DioException catch (e) {
       final refusal = _serverRefusal(e);
@@ -264,7 +251,7 @@ class OrderRepository {
     await _invalidateMyOrders();
 
     return res.data is Map<String, dynamic>
-        ? res.data as Map<String, dynamic>
+        ? requireMap(res.data)
         : <String, dynamic>{};
   }
 
@@ -289,7 +276,7 @@ class OrderRepository {
         },
       );
       if (res.data is Map<String, dynamic>) {
-        return res.data as Map<String, dynamic>;
+        return requireMap(res.data);
       }
     } catch (_) {
       // Ignorer l'erreur réseau ponctuelle de télémétrie pour ne pas interrompre le trajet
@@ -311,21 +298,85 @@ class OrderRepository {
         },
       );
       if (res.data is Map<String, dynamic>) {
-        return res.data as Map<String, dynamic>;
+        return requireMap(res.data);
       }
     } catch (_) {}
     return <String, dynamic>{};
   }
 
-  /// Récupération de la position en temps réel et tracé pour suivi 360°
-  Future<Map<String, dynamic>> getOrderTracking(int orderId) async {
+  /// Estimation de la course d'un panier à un seul fournisseur. `null` quand
+  /// le serveur n'en donne pas ; une panne remonte.
+  Future<Map<String, dynamic>?> estimateDelivery({
+    required int supplierId,
+    required String vehicleClass,
+    required List<Map<String, dynamic>> items,
+    int? addressId,
+  }) async {
+    final res = await _client.post(
+      ApiEndpoints.deliveriesEstimate,
+      data: {
+        'supplier_id': supplierId,
+        'vehicle_class': vehicleClass,
+        'items': items,
+        if (addressId != null) 'address_id': addressId,
+      },
+    );
+    final body = readMap(res.data);
+
+    return readBool(body?['success']) == true ? readMap(body?['data']) : null;
+  }
+
+  /// Vérifie un code promo. Un code refusé (4xx) est une réponse, pas une
+  /// panne : il revient avec le message du serveur.
+  Future<PromoCheck> verifyPromoCode({
+    required String code,
+    required num amount,
+  }) async {
     try {
-      final res = await _client.get(ApiEndpoints.orderTracking(orderId));
-      if (res.data is Map<String, dynamic>) {
-        return res.data as Map<String, dynamic>;
-      }
-    } catch (_) {}
-    return <String, dynamic>{};
+      final res = await _client.post(
+        ApiEndpoints.promoCodeVerify,
+        data: {'code': code, 'amount': amount},
+      );
+
+      return PromoCheck.fromBody(res.data);
+    } on DioException catch (e) {
+      final status = e.response?.statusCode;
+      if (status == null || status == 401 || status >= 500) rethrow;
+
+      return PromoCheck(valid: false, message: readApiMessage(e.response?.data));
+    }
+  }
+
+  /// Itinéraire d'une étape de course (`pickup` vers la boutique, `delivery`
+  /// vers la destination), établi par le serveur. Une panne remonte.
+  Future<DriverRoute> getDriverRoute(
+    int orderId, {
+    required String leg,
+    double? fromLat,
+    double? fromLng,
+  }) async {
+    final res = await _client.get(
+      ApiEndpoints.orderRoute(orderId),
+      params: {
+        'leg': leg,
+        if (fromLat != null) 'from_lat': fromLat,
+        if (fromLng != null) 'from_lng': fromLng,
+      },
+    );
+
+    return DriverRoute.fromResponse(res.data);
+  }
+
+  /// Récupération de la position en temps réel et tracé pour suivi 360°.
+  /// Une panne remonte : l'écran de suivi l'annonce.
+  Future<Map<String, dynamic>> getOrderTracking(int orderId) async {
+    final res = await _client.get(ApiEndpoints.orderTracking(orderId));
+    final body = readMap(res.data);
+    if (body == null) {
+      throw const FormatException('Réponse inattendue du serveur.');
+    }
+
+    return body;
   }
 
   /// Commandes e-commerce du fournisseur connecté.
@@ -369,7 +420,7 @@ class OrderRepository {
     await _invalidateMyOrders();
 
     return res.data is Map<String, dynamic>
-        ? res.data as Map<String, dynamic>
+        ? requireMap(res.data)
         : <String, dynamic>{};
   }
 
@@ -391,7 +442,7 @@ class OrderRepository {
     await _invalidateMyOrders();
 
     return res.data is Map<String, dynamic>
-        ? res.data as Map<String, dynamic>
+        ? requireMap(res.data)
         : <String, dynamic>{};
   }
 
@@ -425,5 +476,40 @@ class OrderRepository {
   Future<void> _invalidateMyOrders() async {
     await _store.init();
     await _store.invalidate(_myOrdersKey);
+  }
+}
+
+/// Réponse du serveur à la vérification d'un code promo.
+class PromoCheck {
+  const PromoCheck({
+    required this.valid,
+    this.message,
+    this.discountAmount = 0,
+    this.discountType,
+    this.discountValue,
+  });
+
+  final bool valid;
+  final String? message;
+  final double discountAmount;
+  final String? discountType;
+  final num? discountValue;
+
+  /// « -10% » ou « -2000 FCFA ».
+  String get detail => discountType == 'percent'
+      ? '-${discountValue ?? 0}%'
+      : '-${discountValue ?? 0} FCFA';
+
+  factory PromoCheck.fromBody(dynamic body) {
+    final map = readMap(body);
+    final data = readMap(map?['data']);
+
+    return PromoCheck(
+      valid: readBool(map?['success']) == true && data != null,
+      message: readApiMessage(map),
+      discountAmount: readDouble(data?['discount_amount']) ?? 0,
+      discountType: readString(data?['discount_type']) ?? 'percent',
+      discountValue: readDouble(data?['discount_value']),
+    );
   }
 }

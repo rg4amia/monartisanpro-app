@@ -5,6 +5,7 @@ import 'package:get/get.dart';
 
 import '../../../../app/routes/app_routes.dart';
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/json_readers.dart';
 import '../../../../data/models/mission_model.dart';
 import '../../../../data/repositories/evaluation_repository.dart';
 import 'section_container.dart';
@@ -30,6 +31,7 @@ class MissionEvaluationsSection extends StatefulWidget {
 class _MissionEvaluationsSectionState extends State<MissionEvaluationsSection> {
   final EvaluationRepository _evaluationRepo = EvaluationRepository();
   bool _isLoading = true;
+  bool _loadFailed = false;
   List<Map<String, dynamic>> _actors = [];
 
   @override
@@ -39,15 +41,30 @@ class _MissionEvaluationsSectionState extends State<MissionEvaluationsSection> {
   }
 
   Future<void> _loadActors() async {
-    setState(() => _isLoading = true);
-    final data = await _evaluationRepo.getMissionActors(widget.mission.id);
+    setState(() {
+      _isLoading = true;
+      _loadFailed = false;
+    });
+
+    final Map<String, dynamic>? data;
+    try {
+      data = await _evaluationRepo.getMissionActors(widget.mission.id);
+    } catch (_) {
+      // Sans réponse du serveur, on ignore qui a déjà été évalué : proposer
+      // l'artisan « à évaluer » serait une supposition.
+      if (!mounted) return;
+      setState(() {
+        _isLoading = false;
+        _loadFailed = true;
+      });
+      return;
+    }
     if (!mounted) return;
 
-    if (data != null &&
-        data['actors'] is List &&
-        (data['actors'] as List).isNotEmpty) {
+    final actors = readMapList(data?['actors']);
+    if (actors.isNotEmpty) {
       setState(() {
-        _actors = List<Map<String, dynamic>>.from(data['actors'] as List);
+        _actors = actors;
         _isLoading = false;
       });
     } else {
@@ -121,6 +138,23 @@ class _MissionEvaluationsSectionState extends State<MissionEvaluationsSection> {
                 padding: EdgeInsets.all(20),
                 child: CircularProgressIndicator(),
               ),
+            )
+          else if (_loadFailed)
+            Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Impossible de charger les évaluations. '
+                  'Vérifiez votre connexion.',
+                  style:
+                      TextStyle(color: AppColors.textSecondary, fontSize: 13),
+                ),
+                TextButton.icon(
+                  onPressed: _loadActors,
+                  icon: const Icon(Icons.refresh, size: 18),
+                  label: const Text('Réessayer'),
+                ),
+              ],
             )
           else if (_actors.isEmpty)
             Container(

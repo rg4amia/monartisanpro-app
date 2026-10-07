@@ -31,7 +31,10 @@ class ServicesController extends GetxController {
             readDataList(response.data).map(SectorModel.fromJson).toList();
       }
     } catch (e) {
-      Get.snackbar('Erreur', 'Échec du chargement des services : $e');
+      Get.snackbar(
+        'Erreur',
+        'Impossible de charger les services. Vérifiez votre connexion.',
+      );
     } finally {
       isLoading.value = false;
     }
@@ -50,7 +53,10 @@ class ServicesController extends GetxController {
             readDataList(response.data).map(TradeModel.fromJson).toList();
       }
     } catch (e) {
-      Get.snackbar('Erreur', 'Échec du chargement des métiers : $e');
+      Get.snackbar(
+        'Erreur',
+        'Impossible de charger les métiers. Vérifiez votre connexion.',
+      );
     } finally {
       isLoadingTrades.value = false;
     }

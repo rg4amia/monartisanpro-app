@@ -2,6 +2,7 @@ import 'dart:convert';
 import 'package:get/get.dart';
 import 'package:http/http.dart' as http;
 import '../../core/config/env_config.dart';
+import '../../core/utils/json_readers.dart';
 
 class AppSettingsService extends GetxService {
   final RxString blockClient = 'none'.obs;
@@ -37,8 +38,8 @@ class AppSettingsService extends GetxService {
       final response = await http.get(url).timeout(const Duration(seconds: 10));
 
       if (response.statusCode == 200) {
-        final body = jsonDecode(response.body) as Map<String, dynamic>;
-        final data = body['data'] as Map<String, dynamic>?;
+        final body = requireMap(jsonDecode(response.body));
+        final data = readMap(body['data']);
         if (data != null) {
           blockClient.value = data['block_client'] ?? 'none';
           blockArtisan.value = data['block_artisan'] ?? 'none';

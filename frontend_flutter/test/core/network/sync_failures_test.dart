@@ -105,7 +105,7 @@ void main() {
 
   group('actions non abouties', () {
     test('une action refusée est consignée, puis retirée une fois lue', () async {
-      final service = SyncService();
+      final service = SyncService(currentUserId: () => null);
 
       await service.recordFailure(
         _queued('/orders/7/verify-delivery'),
@@ -142,7 +142,7 @@ void main() {
     tearDown(Get.reset);
 
     testWidgets('annonce l\'action non aboutie avec son motif, jusqu\'à « Compris »', (tester) async {
-      final service = Get.put(SyncService());
+      final service = Get.put(SyncService(currentUserId: () => null));
       await service.recordFailure(
         _queued('/orders/7/verify-delivery'),
         'Le code de réception de livraison est incorrect.',
@@ -176,7 +176,7 @@ void main() {
     });
 
     testWidgets('n\'affiche rien quand tout a abouti', (tester) async {
-      Get.put(SyncService());
+      Get.put(SyncService(currentUserId: () => null));
 
       await tester.pumpWidget(const MaterialApp(home: Scaffold(body: OfflineBanner())));
 

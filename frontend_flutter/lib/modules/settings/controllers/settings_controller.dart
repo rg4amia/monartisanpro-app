@@ -2,8 +2,9 @@ import 'dart:async';
 import 'package:get/get.dart';
 
 import '../../../app/routes/app_routes.dart';
-import '../../../core/services/push_identity.dart';
+import '../../../core/services/session_end.dart';
 import '../../../core/storage/storage_service.dart';
+import '../../../core/utils/error_handler.dart';
 import '../../../core/utils/phone_format.dart';
 import '../../../data/repositories/auth_repository.dart';
 import '../../../data/repositories/mission_repository.dart';
@@ -66,7 +67,7 @@ class SettingsController extends GetxController {
       paymentPhoneCodeSent.value = true;
       return true;
     } catch (e) {
-      paymentPhoneError.value = e.toString().replaceAll('Exception: ', '');
+      paymentPhoneError.value = ErrorHandler.getErrorMessage(e);
       return false;
     } finally {
       isSavingPaymentPhone.value = false;
@@ -94,7 +95,7 @@ class SettingsController extends GetxController {
       paymentPhoneCodeSent.value = false;
       return true;
     } catch (e) {
-      paymentPhoneError.value = e.toString().replaceAll('Exception: ', '');
+      paymentPhoneError.value = ErrorHandler.getErrorMessage(e);
       return false;
     } finally {
       isSavingPaymentPhone.value = false;
@@ -117,13 +118,12 @@ class SettingsController extends GetxController {
     isLoading.value = true;
     try {
       await _userRepo.deleteAccount(userId: userId);
-      await PushIdentity.unlink();
-      await StorageService.clearAll();
+      await SessionEnd.wipeLocalData(deletedUserId: userId);
       unawaited(Get.offAllNamed(Routes.login));
     } catch (_) {
-      // Ignorer silencieusement en cas d'erreur de réseau ou autre
-      await PushIdentity.unlink();
-      await StorageService.clearAll();
+      // La suppression n'a pas abouti : le compte existe peut-être encore,
+      // ses actions en file ne sont donc pas supprimées.
+      await SessionEnd.wipeLocalData();
       unawaited(Get.offAllNamed(Routes.login));
     } finally {
       isLoading.value = false;
@@ -180,7 +180,7 @@ class SettingsController extends GetxController {
       isChangePhoneOtpSent.value = true;
       return true;
     } catch (e) {
-      changePhoneError.value = e.toString().replaceAll('Exception: ', '');
+      changePhoneError.value = ErrorHandler.getErrorMessage(e);
       return false;
     } finally {
       isChangingPhone.value = false;
@@ -201,7 +201,7 @@ class SettingsController extends GetxController {
       }
       return false;
     } catch (e) {
-      changePhoneError.value = e.toString().replaceAll('Exception: ', '');
+      changePhoneError.value = ErrorHandler.getErrorMessage(e);
       return false;
     } finally {
       isChangingPhone.value = false;

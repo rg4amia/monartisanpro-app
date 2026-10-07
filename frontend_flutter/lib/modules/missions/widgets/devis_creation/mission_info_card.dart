@@ -3,9 +3,9 @@ import 'dart:async';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 import '../../../../core/theme/app_colors.dart';
+import '../../../../core/utils/platform_media.dart';
 import '../../../../data/models/mission_model.dart';
 
 /// En-tête rappelant la mission à chiffrer : description, client, lieu,
@@ -217,9 +217,7 @@ class MissionInfoCard extends StatelessWidget {
 
   void _openMedia(BuildContext context, String url, bool isVideo) {
     if (isVideo) {
-      unawaited(
-        launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication),
-      );
+      unawaited(openPlatformVideo(url));
       return;
     }
     unawaited(

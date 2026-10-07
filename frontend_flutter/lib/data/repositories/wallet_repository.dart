@@ -3,6 +3,7 @@ import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
 import '../../core/storage/storage_service.dart';
+import '../../core/utils/json_readers.dart';
 
 class WalletRepository {
   final ApiClient _client = ApiClient();
@@ -29,15 +30,14 @@ class WalletRepository {
         final res = await NetworkExecutor.run(
           () => _client.get(ApiEndpoints.walletBalance),
         );
-        return ((res.data as Map<String, dynamic>)['data'] as Map)
-            .cast<String, dynamic>();
+        return requireDataMap(res.data);
       },
     );
 
     return {
-      'walletMateriaux': (data['walletMateriaux'] as num?)?.toInt() ?? 0,
-      'walletMo': (data['walletMo'] as num?)?.toInt() ?? 0,
-      'total': (data['total'] as num?)?.toInt() ?? 0,
+      'walletMateriaux': readInt(data['walletMateriaux']) ?? 0,
+      'walletMo': readInt(data['walletMo']) ?? 0,
+      'total': readInt(data['total']) ?? 0,
     };
   }
 

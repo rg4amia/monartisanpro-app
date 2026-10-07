@@ -3,6 +3,7 @@ import 'package:dio/dio.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
 import '../../core/network/network_executor.dart';
+import '../../core/utils/json_readers.dart';
 import '../models/recruitment_application_model.dart';
 import '../models/recruitment_engagement_model.dart';
 import '../models/recruitment_offer_model.dart';
@@ -13,7 +14,7 @@ class RecruitmentRepository {
   List<Map<String, dynamic>> _asMapList(dynamic data) {
     final list =
         data is Map<String, dynamic> && data['data'] is Map<String, dynamic>
-            ? (data['data'] as Map<String, dynamic>)['data']
+            ? requireMap(data['data'])['data']
             : null;
     if (list is! List) return const [];
     return list.whereType<Map<String, dynamic>>().toList();
@@ -97,7 +98,7 @@ class RecruitmentRepository {
     final data = res.data;
     final offerJson =
         data is Map<String, dynamic> && data['data'] is Map<String, dynamic>
-            ? data['data'] as Map<String, dynamic>
+            ? requireMap(data['data'])
             : <String, dynamic>{};
     return RecruitmentOfferModel.fromJson(offerJson);
   }

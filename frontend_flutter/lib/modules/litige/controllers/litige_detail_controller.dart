@@ -31,7 +31,7 @@ class LitigeDetailController extends GetxController {
     if (arg is int) {
       litigeId = arg;
     } else if (arg is Map) {
-      litigeId = (arg['litigeId'] as int?) ?? 0;
+      litigeId = readInt(arg['litigeId']) ?? 0;
     } else {
       litigeId = 0;
     }
@@ -86,7 +86,7 @@ class LitigeDetailController extends GetxController {
     try {
       final res = await _client.get(ApiEndpoints.litige(litigeId));
       litige.value =
-          (res.data as Map<String, dynamic>)['data'] as Map<String, dynamic>?;
+          readMap(readMap(res.data)?['data']);
     } finally {
       isLoading.value = false;
     }

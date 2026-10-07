@@ -1,10 +1,9 @@
 import 'package:dio/dio.dart';
 import 'package:frontend_flutter/core/utils/json_readers.dart';
 
-import '../../core/cache/cache_store.dart';
 import '../../core/network/api_client.dart';
 import '../../core/network/api_endpoints.dart';
-import '../../core/services/push_identity.dart';
+import '../../core/services/session_end.dart';
 import '../../core/storage/storage_service.dart';
 import '../models/user_model.dart';
 
@@ -89,7 +88,7 @@ class AuthRepository {
       },
     );
 
-    final token = (res.data as Map<String, dynamic>)['token'] as String?;
+    final token = readString(readMap(res.data)?['token']);
     if (token != null) {
       await StorageService.saveToken(token);
     }
@@ -97,16 +96,16 @@ class AuthRepository {
     return {
       'token': token,
       'user': UserModel.fromJson(
-        (res.data as Map<String, dynamic>)['user'] as Map<String, dynamic>,
+        requireMap(readMap(res.data)?['user']),
       ),
     };
   }
 
   Future<UserModel> me() async {
     final res = await _client.get(ApiEndpoints.me);
-    final payload = ((res.data as Map<String, dynamic>)['data'] ??
-        (res.data as Map<String, dynamic>)['user']) as Map<String, dynamic>;
-    return UserModel.fromJson(payload);
+    final body = readMap(res.data);
+
+    return UserModel.fromJson(requireMap(body?['data'] ?? body?['user']));
   }
 
   Future<void> logout() async {
@@ -115,19 +114,15 @@ class AuthRepository {
     } on DioException {
       // ignore errors on logout
     } finally {
-      // Détacher l'appareil du compte : sinon les push du compte sortant
-      // continuent d'arriver sur ce téléphone.
-      await PushIdentity.unlink();
-      await StorageService.clearAll();
-      // Purge des caches locaux : ne jamais exposer les données d'un compte
-      // au compte suivant sur le même appareil.
-      await CacheStore.wipeAll();
+      // Ne jamais exposer les données d'un compte au compte suivant sur le
+      // même appareil, ni lui laisser ses notifications.
+      await SessionEnd.wipeLocalData();
     }
   }
 
   Future<Map<String, dynamic>> acceptCgu() async {
     final res = await _client.post('/auth/accept-cgu');
-    return res.data as Map<String, dynamic>;
+    return requireMap(res.data);
   }
 
   Future<String> kycStatus() async {
@@ -198,6 +193,6 @@ class AuthRepository {
       },
     );
 
-    return res.data as Map<String, dynamic>;
+    return requireMap(res.data);
   }
 }
