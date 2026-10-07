@@ -7,7 +7,7 @@
 | Mis à jour le | 2026-10-07 |
 | Auteur | Claude Code (Opus 5.5) |
 | Analyses liées | `../audits/2026-10-07-audit-application-mobile.md` |
-| Commits | — |
+| Commits | `edf9bd20` |
 
 ## Objectif
 
