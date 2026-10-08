@@ -21,7 +21,10 @@ use Illuminate\Support\Facades\Log;
 
 class DevisController extends Controller
 {
-    public function __construct(private DevisService $devisService) {}
+    public function __construct(
+        private DevisService $devisService,
+        private DeviceFingerprintService $fingerprintService = new DeviceFingerprintService,
+    ) {}
 
     public function index(Mission $mission, Request $request): JsonResponse
     {
@@ -70,9 +73,9 @@ class DevisController extends Controller
             $devis = $this->devisService->create($mission, $user, $request->validated());
 
             try {
-                $fingerprintService = app(DeviceFingerprintService::class);
-                $fingerprintService->recordFromRequest($request, $user);
-                $artisanFp = $fingerprintService->extractFingerprint($request);
+                $this->fingerprintService->record($user, $request);
+                $info = $this->fingerprintService->extractFromRequest($request);
+                $artisanFp = $info['device_fingerprint'] ?? null;
                 $mission->update([
                     'artisan_device_fingerprint' => $artisanFp,
                     'artisan_ip' => $request->ip(),
@@ -214,9 +217,9 @@ class DevisController extends Controller
         $this->devisService->accept($devis, $transaction);
 
         try {
-            $fingerprintService = app(DeviceFingerprintService::class);
-            $fingerprintService->recordFromRequest($request, $user);
-            $clientFp = $fingerprintService->extractFingerprint($request);
+            $this->fingerprintService->record($user, $request);
+            $info = $this->fingerprintService->extractFromRequest($request);
+            $clientFp = $info['device_fingerprint'] ?? null;
             $mission = $devis->mission;
             if ($mission) {
                 $mission->update([
