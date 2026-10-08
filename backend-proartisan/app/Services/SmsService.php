@@ -216,7 +216,14 @@ class SmsService
                 ];
             }
 
-            return $this->orangeSms->send($recipient, $message, $senderId);
+            $orangeRes = $this->orangeSms->send($recipient, $message, $senderId);
+            if (($orangeRes['status'] ?? '') === 'success' || $this->providerOverride === 'orange') {
+                return $orangeRes;
+            }
+
+            Log::warning('Échec envoi SMS via Orange. Repli automatique sur SMS Pro Africa.', [
+                'recipient' => $recipient,
+            ]);
         }
 
         // Prepare recipient string
@@ -388,7 +395,20 @@ class SmsService
     {
         $activeProvider = $this->getProvider();
         if ($activeProvider === 'orange') {
-            return $this->orangeSms->sendOtp($phone, $code);
+            $orangeResult = $this->orangeSms->sendOtp($phone, $code);
+            if (($orangeResult['status'] ?? '') === 'success') {
+                return $orangeResult;
+            }
+
+            // Si forçage explicite (tests), on ne replie pas
+            if ($this->providerOverride === 'orange') {
+                return $orangeResult;
+            }
+
+            Log::warning('Échec envoi OTP via Orange ('.($orangeResult['message'] ?? 'Erreur').'). Repli automatique sur SMS Pro Africa.', [
+                'phone' => $phone,
+            ]);
+            // Repli automatique sur SMS Pro ci-dessous
         }
 
         // La durée est lue dans la config : le message annonçait 10 minutes
@@ -406,7 +426,7 @@ class SmsService
         $initialType = (string) config('services.sms.otp_type', 'otp');
 
         // `type: otp` — route transactionnelle dédiée de SMSpro. Si le forfait de l'opérateur
-        // ne dispose pas de serveur OTP dédié (HTTP 403), on replie automatiquement sur 'plain'.
+        // ne dispose pas de serveur OTP dédié ou échoue, on replie automatiquement sur 'plain'.
         $result = $this->send(
             $phone,
             $message,
@@ -415,8 +435,11 @@ class SmsService
             $initialType
         );
 
-        if ($initialType === 'otp' && ($result['status'] ?? null) === 'error' && ($result['http_status'] ?? 0) === 403) {
-            Log::info("Route SMS 'otp' non incluse dans le forfait SMSpro. Repli automatique sur la route standard 'plain'.");
+        if ($initialType === 'otp' && ($result['status'] ?? null) === 'error') {
+            Log::info("Route SMS 'otp' non disponible chez SMS Pro. Repli automatique sur 'plain'.", [
+                'phone' => $phone,
+                'initial_error' => $result['message'] ?? 'Erreur',
+            ]);
 
             return $this->send(
                 $phone,
@@ -425,6 +448,24 @@ class SmsService
                 null,
                 'plain'
             );
+        }
+
+        if ($initialType === 'plain' && ($result['status'] ?? null) === 'error') {
+            Log::info("Route SMS 'plain' en échec. Tentative de repli sur la route 'otp'.", [
+                'phone' => $phone,
+            ]);
+
+            $retryResult = $this->send(
+                $phone,
+                $message,
+                config('services.sms.sender_id', 'ProsArtisan'),
+                null,
+                'otp'
+            );
+
+            if (($retryResult['status'] ?? null) === 'success') {
+                return $retryResult;
+            }
         }
 
         return $result;

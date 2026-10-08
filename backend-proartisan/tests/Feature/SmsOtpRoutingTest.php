@@ -87,4 +87,22 @@ class SmsOtpRoutingTest extends TestCase
 
         Http::assertSent(fn (Request $request) => $request['recipient'] === '2250700000001');
     }
+
+    public function test_otp_route_failure_falls_back_to_plain_route(): void
+    {
+        Http::fake([
+            'https://app.smspro.africa/api/v3/sms/send' => Http::sequence()
+                ->push(['status' => 'error', 'message' => 'No sending server available for your subscribed plan'], 403)
+                ->push(['status' => 'success', 'data' => ['uid' => '123']], 200),
+        ]);
+
+        $result = app(SmsService::class)->sendOtp('+2250700000001', '9999');
+
+        $this->assertEquals('success', $result['status'] ?? null);
+
+        Http::assertSentInOrder([
+            fn (Request $req) => $req['type'] === 'otp',
+            fn (Request $req) => $req['type'] === 'plain',
+        ]);
+    }
 }

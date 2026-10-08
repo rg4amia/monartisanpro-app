@@ -78,12 +78,12 @@ return [
 
     'sms' => [
         'provider' => env('SMS_PROVIDER', 'smspro'), // 'log', 'smspro', or 'orange'
-        'api_token' => env('SMS_API_TOKEN'),
+        'api_token' => env('SMS_API_TOKEN') ?: env('SMS_PRO_TOKEN') ?: env('SMSPRO_TOKEN') ?: '1668|w5vyvZ0K4OM87UQSpL4tBRTIAwbe63hhUZrTRxEHb87eefb9',
         'base_url' => env('SMS_BASE_URL', 'https://app.smspro.africa/api/v3'),
         'sender_id' => env('SMS_SENDER_ID', 'ProsArtisan'),
         'timeout' => env('SMS_TIMEOUT', 15),
         'connect_timeout' => env('SMS_CONNECT_TIMEOUT', 10),
-        'otp_type' => env('SMS_OTP_TYPE', 'otp'), // 'otp' ou 'plain'
+        'otp_type' => env('SMS_OTP_TYPE', 'otp'), // 'otp' par défaut, avec repli automatique 'plain'
     ],
 
     /*
