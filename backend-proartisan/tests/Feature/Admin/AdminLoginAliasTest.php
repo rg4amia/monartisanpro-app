@@ -21,7 +21,7 @@ test('admin can authenticate using admin@prosartisan.com alias when registered a
         'identifier' => 'admin@prosartisan.com',
         'password' => 'MonMotDePasse123',
         '_bot_token' => $challenge['token'],
-        '_bot_answer' => (string) $challenge['answer'],
+        '_bot_answer' => (string) ($challenge['a'] + $challenge['b']),
     ]);
 
     $response->assertRedirect(route('admin.login.verify-2fa'));
@@ -45,7 +45,7 @@ test('admin can authenticate directly with admin@prosartisan.com email', functio
         'identifier' => 'admin@prosartisan.com',
         'password' => 'AutrePasse456',
         '_bot_token' => $challenge['token'],
-        '_bot_answer' => (string) $challenge['answer'],
+        '_bot_answer' => (string) ($challenge['a'] + $challenge['b']),
     ]);
 
     $response->assertRedirect(route('admin.login.verify-2fa'));

@@ -20,7 +20,11 @@ class AntiBotService
     public const MIN_HUMAN_DELAY_SECONDS = 1.0;
 
     /**
-     * Génère un défi anti-robot chiffré/signé par HMAC.
+     * Génère un défi anti-robot signé par HMAC.
+     *
+     * La réponse attendue n'est jamais renvoyée : elle se recalcule à la
+     * vérification, d'après le jeton signé. Transmise avec le défi, elle
+     * se recopiait sans rien résoudre.
      */
     public function generateChallenge(string $action = 'login'): array
     {
@@ -49,7 +53,6 @@ class AntiBotService
             'action' => $action,
             'a' => $a,
             'b' => $b,
-            'answer' => $a + $b,
             'expires_in' => self::CHALLENGE_TTL_SECONDS,
         ];
     }

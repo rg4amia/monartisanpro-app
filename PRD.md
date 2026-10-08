@@ -858,6 +858,12 @@ Le backoffice (Laravel 12 + Inertia 2 + React 19 + TypeScript) a fait l'objet d'
     * **Envoi refusé** : quand le fournisseur de SMS refuse l'envoi, l'utilisateur lit « Le code n'a pas pu être envoyé… » au lieu d'attendre un SMS qui n'est jamais parti. Le motif reste dans le journal du serveur.
     * **Limite** : un SMS accepté par le fournisseur puis retardé par l'opérateur reste annoncé « envoyé ».
     * **Tests automatisés** : `OtpDeliveryFailureTest.php` (6 tests), `auth_controller_test.dart` (2 tests ajoutés).
+80. **Envoi du code par SMS — trois corrections de sécurité (08/10/2026) :** [CODE PRÊT — à déployer ; jeton SMS Pro à renouveler ; blocage réseau entre l'hébergeur et SMS Pro non résolu]
+    * **Défi anti-robot** : le serveur ne renvoie plus la réponse du petit calcul avec la question.
+    * **Jeton SMS Pro** : il n'est plus écrit dans le code ; il se renseigne uniquement dans le fichier `.env` du serveur. Sans jeton, aucun SMS ne part.
+    * **Diagnostic de connectivité SMS** : réservé aux administrateurs du backoffice (`/admin/observability/sms-diagnostics`) ; la route publique est supprimée.
+    * **Constat** : la production ne joint pas SMS Pro (délai dépassé) ; le même jeton envoie un SMS depuis un autre réseau. L'utilisateur lit « Le code n'a pas pu être envoyé… ».
+    * **Tests automatisés** : `SmsSecurityHardeningTest.php` (6 tests).
 
 ### 🔄 Gouvernance & Règle d'Or de Synchronisation Continue
 1. **Mise à Jour Obligatoire du PRD et des Fichiers de Règles Avant Chaque Commit et Push (Règle d'Or 90) :** [OBLIGATOIRE] Avant **chaque commit et push**, le PRD (`PRD.md`) ainsi que les fichiers de gestion des règles (`AGENTS.md` et `CLAUDE.md`) doivent être **obligatoirement et systématiquement mis à jour** afin de garantir une synchronisation parfaite et continue entre les spécifications produit, les règles d'or architecturales et le code source de production. Aucun commit (`git commit`) ni aucun push (`git push`) ne doit être effectué sans intégrer préalablement la mise à jour exacte de ces documents de référence.

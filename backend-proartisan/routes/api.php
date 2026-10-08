@@ -85,7 +85,6 @@ Route::prefix('v1')->group(function () {
     // l'énumération par force brute.
     Route::middleware('throttle:public')->group(function () {
         Route::get('/settings/app-access', [SettingController::class, 'getAppAccess']);
-        Route::get('/settings/sms-diagnostics', [SettingController::class, 'smsDiagnostics']);
         Route::post('/promo-codes/verify', [PromoCodeController::class, 'verify']);
 
         // ── Secteurs & Métiers (Taxonomie publique) ─────────────────────────

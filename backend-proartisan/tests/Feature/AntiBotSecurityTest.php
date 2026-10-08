@@ -26,7 +26,7 @@ class AntiBotSecurityTest extends TestCase
         $this->assertArrayHasKey('question', $challenge);
         $this->assertArrayHasKey('a', $challenge);
         $this->assertArrayHasKey('b', $challenge);
-        $this->assertEquals($challenge['a'] + $challenge['b'], $challenge['answer']);
+        $this->assertArrayNotHasKey('answer', $challenge);
     }
 
     public function test_service_blocks_honeypot_trap(): void
@@ -34,7 +34,7 @@ class AntiBotSecurityTest extends TestCase
         $challenge = $this->antiBotService->generateChallenge('test_action');
         $request = request()->merge([
             '_bot_token' => $challenge['token'],
-            '_bot_answer' => (string) $challenge['answer'],
+            '_bot_answer' => (string) ($challenge['a'] + $challenge['b']),
             'bot_trap' => 'I am a spambot',
         ]);
 
@@ -47,7 +47,7 @@ class AntiBotSecurityTest extends TestCase
         $tamperedToken = $challenge['token'].'bad';
         $request = request()->merge([
             '_bot_token' => $tamperedToken,
-            '_bot_answer' => (string) $challenge['answer'],
+            '_bot_answer' => (string) ($challenge['a'] + $challenge['b']),
         ]);
 
         $this->assertFalse($this->antiBotService->verify($request, 'test_action'));
@@ -58,7 +58,7 @@ class AntiBotSecurityTest extends TestCase
         $challenge = $this->antiBotService->generateChallenge('test_action');
         $request = request()->merge([
             '_bot_token' => $challenge['token'],
-            '_bot_answer' => (string) ($challenge['answer'] + 99),
+            '_bot_answer' => (string) (($challenge['a'] + $challenge['b']) + 99),
         ]);
 
         $this->assertFalse($this->antiBotService->verify($request, 'test_action'));
@@ -69,7 +69,7 @@ class AntiBotSecurityTest extends TestCase
         $challenge = $this->antiBotService->generateChallenge('test_action');
         $request = request()->merge([
             '_bot_token' => $challenge['token'],
-            '_bot_answer' => (string) $challenge['answer'],
+            '_bot_answer' => (string) ($challenge['a'] + $challenge['b']),
         ]);
 
         // Première vérification : doit réussir
@@ -104,7 +104,7 @@ class AntiBotSecurityTest extends TestCase
             'email' => 'unknown@prosartisan.ci',
             'password' => 'secret123',
             '_bot_token' => $challenge['token'],
-            '_bot_answer' => (string) $challenge['answer'],
+            '_bot_answer' => (string) ($challenge['a'] + $challenge['b']),
         ]);
 
         // La validation anti-bot est passée (pas d'erreur _bot_answer ni bot_trap),
@@ -143,7 +143,7 @@ class AntiBotSecurityTest extends TestCase
         $responseBadAnswer = $this->postJson('/api/v1/auth/send-otp', [
             'phone' => '0700000001',
             '_bot_token' => $challenge['token'],
-            '_bot_answer' => (string) ($challenge['answer'] + 10),
+            '_bot_answer' => (string) (($challenge['a'] + $challenge['b']) + 10),
         ]);
         $responseBadAnswer->assertStatus(422)
             ->assertJsonPath('error_code', 'BOT_CHALLENGE_FAILED');
@@ -153,7 +153,7 @@ class AntiBotSecurityTest extends TestCase
         $responseValid = $this->postJson('/api/v1/auth/send-otp', [
             'phone' => '0700000001',
             '_bot_token' => $challengeValid['token'],
-            '_bot_answer' => (string) $challengeValid['answer'],
+            '_bot_answer' => (string) ($challengeValid['a'] + $challengeValid['b']),
         ]);
         $responseValid->assertOk();
     }

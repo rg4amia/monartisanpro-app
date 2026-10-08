@@ -244,6 +244,7 @@ Route::prefix('admin')->name('admin.')->group(function () {
         Route::post('/admins/{user}/permissions', [BackofficeController::class, 'syncAdminPermissions'])->middleware('can:admin.roles.manage')->name('admins.permissions');
         Route::get('/audit-logs', [BackofficeController::class, 'auditLogs'])->middleware('can:admin.audit.view')->name('audit-logs');
         Route::get('/observability', [BackofficeController::class, 'observability'])->middleware('can:admin.observability.view')->name('observability');
+        Route::get('/observability/sms-diagnostics', [BackofficeController::class, 'smsDiagnostics'])->middleware('can:admin.observability.view')->name('observability.sms-diagnostics');
         Route::post('/observability/retry-failed-jobs', [BackofficeController::class, 'retryFailedJobs'])->middleware('can:admin.observability.manage')->name('observability.retry-jobs');
         Route::post('/observability/flush-failed-jobs', [BackofficeController::class, 'flushFailedJobs'])->middleware('can:admin.observability.manage')->name('observability.flush-jobs');
 

@@ -49,6 +49,7 @@ use App\Services\Admin\InactivityDecayAdminService;
 use App\Services\Admin\KycReviewService;
 use App\Services\Admin\NotificationCampaignAdminService;
 use App\Services\Admin\NotificationTemplateAdminService;
+use App\Services\Admin\SmsConnectivityService;
 use App\Services\Admin\UserManualService;
 use App\Services\AdminService;
 use App\Services\CommunicationService;
@@ -703,6 +704,14 @@ class BackofficeController extends Controller
     public function observability(): Response
     {
         return $this->page('admin/observability', $this->panelData->observability());
+    }
+
+    /**
+     * Diagnostic de connectivité du serveur vers SMS Pro Africa.
+     */
+    public function smsDiagnostics(SmsConnectivityService $connectivity): JsonResponse
+    {
+        return response()->json($connectivity->diagnose());
     }
 
     public function retryFailedJobs(Request $request, AdminActivityLogger $audit): RedirectResponse

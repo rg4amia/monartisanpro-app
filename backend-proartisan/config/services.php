@@ -78,7 +78,9 @@ return [
 
     'sms' => [
         'provider' => env('SMS_PROVIDER', 'smspro'), // 'log', 'smspro', or 'orange'
-        'api_token' => env('SMS_API_TOKEN') ?: env('SMS_PRO_TOKEN') ?: env('SMSPRO_TOKEN') ?: '1668|w5vyvZ0K4OM87UQSpL4tBRTIAwbe63hhUZrTRxEHb87eefb9',
+        // Jamais de jeton de secours écrit ici : sans jeton dans `.env`, l'envoi
+        // est refusé (SmsService), il ne part pas avec un jeton public.
+        'api_token' => env('SMS_API_TOKEN') ?: env('SMS_PRO_TOKEN') ?: env('SMSPRO_TOKEN'),
         'base_url' => env('SMS_BASE_URL', 'https://app.smspro.africa/api/v3'),
         'sender_id' => env('SMS_SENDER_ID', 'ProsArtisan'),
         'timeout' => env('SMS_TIMEOUT', 15),

@@ -162,7 +162,7 @@ test('l\'anti-rejeu réserve le jeton en une seule opération', function () {
     Cache::shouldReceive('add')->once()->andReturn(false);
     Cache::shouldReceive('has')->never();
 
-    $result = $service->check(request()->merge(['_bot_token' => $challenge['token'], '_bot_answer' => (string) $challenge['answer']]), 'login');
+    $result = $service->check(request()->merge(['_bot_token' => $challenge['token'], '_bot_answer' => (string) ($challenge['a'] + $challenge['b'])]), 'login');
 
     expect($result['success'])->toBeFalse()
         ->and($result['message'])->toContain('déjà');

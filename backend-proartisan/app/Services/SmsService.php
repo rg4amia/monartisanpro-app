@@ -241,6 +241,16 @@ class SmsService
             $payload['schedule_time'] = $scheduleTime;
         }
 
+        // Échec fermé : sans jeton configuré, aucun appel ne part.
+        if ($this->apiToken === '') {
+            Log::error('SMS non envoyé : jeton SMS Pro absent de la configuration (SMS_API_TOKEN).');
+
+            return [
+                'status' => 'error',
+                'message' => 'Jeton SMS Pro absent de la configuration.',
+            ];
+        }
+
         try {
             $response = $this->httpClient()->post($this->baseUrl.'/sms/send', $payload);
 

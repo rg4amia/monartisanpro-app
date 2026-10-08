@@ -910,6 +910,13 @@ SELECT ST_X(position) AS lng, ST_Y(position) AS lat FROM users WHERE id = :id;
 - **Hors périmètre** : `OtpService::sendOtp`, qui ne lève rien, reste employé par le code d'étape (`JalonService`), le changement de numéro et le numéro de paiement.
 - **Tests** : `OtpDeliveryFailureTest.php`, `auth_controller_test.dart`. Le dialogue du calcul au renvoi ne se vérifie que sur appareil.
 
+160. **Envoi du code par SMS : défi sans réponse, aucun jeton dans le code, diagnostic réservé (08/10/2026)** :
+- **Le défi anti-robot ne renvoie jamais sa réponse** (Règles d'or 58 et 108) : `AntiBotService::generateChallenge` ne transmet plus la clé `answer`, que `GET /auth/security-challenge` exposait en clair et qu'un robot recopiait. La réponse se recalcule à la vérification, d'après le jeton signé. Dans un test, elle s'écrit `$challenge['a'] + $challenge['b']`. Limite connue : l'addition reste lisible dans la question ; le défi écarte l'automate naïf, pas un robot écrit pour lui.
+- **Aucun jeton écrit dans `config/`** : `services.sms.api_token` se lit dans `.env` (`SMS_API_TOKEN`), sans valeur de secours. Un jeton de repli écrit dans le code est public dès qu'il est commité. Sans jeton, `SmsService::send` refuse l'envoi et le journalise, sans aucun appel (échec fermé, comme les Règles d'or 8 et 41).
+- **Diagnostic de connectivité SMS** : `GET /admin/observability/sms-diagnostics` (`Admin\SmsConnectivityService`, capacité `admin.observability.view`). L'ancienne route publique `GET /api/v1/settings/sms-diagnostics` est supprimée : elle révélait l'adresse IP de sortie du serveur et déclenchait deux appels sortants par requête. La réponse dit si un jeton est configuré (`token_configured`), jamais sa longueur.
+- **Constat du 08/10/2026** : la production (IP de sortie `145.79.14.250`) ne joint pas `app.smspro.africa` (délai dépassé, IPv4 et IPv6), alors que le même jeton envoie un SMS depuis un autre réseau. Le blocage est entre l'hébergeur et SMS Pro, pas dans le code.
+- **Tests** : `SmsSecurityHardeningTest.php`, `AntiBotSecurityTest.php`.
+
 ## 📎 Fichier de référence du flux
 
 Le diagramme Mermaid complet `docs/technique/prosartisan-flux.mmd` est joint à cette conversation.

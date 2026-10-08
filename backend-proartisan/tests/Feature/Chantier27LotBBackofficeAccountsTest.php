@@ -281,7 +281,7 @@ class Chantier27LotBBackofficeAccountsTest extends TestCase
             'identifier' => 'suspendu@example.test',
             'password' => 'MonMotDePasse123',
             '_bot_token' => $challenge['token'],
-            '_bot_answer' => (string) $challenge['answer'],
+            '_bot_answer' => (string) ($challenge['a'] + $challenge['b']),
         ])->assertSessionHasErrors('identifier');
 
         $this->assertNull(session('admin_2fa_user_id'));
