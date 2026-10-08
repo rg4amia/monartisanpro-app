@@ -47,6 +47,22 @@ class DeviceFingerprintService
     }
 
     /**
+     * Enregistre l'empreinte de l'utilisateur depuis la requête.
+     */
+    public function recordFromRequest(Request $request, User $user): ?DeviceFingerprint
+    {
+        return $this->record($user, $request);
+    }
+
+    /**
+     * Extrait uniquement l'identifiant d'empreinte (fingerprint) depuis la requête.
+     */
+    public function extractFingerprint(Request $request): ?string
+    {
+        return $this->extractFromRequest($request)['device_fingerprint'] ?? null;
+    }
+
+    /**
      * Enregistre ou met à jour l'empreinte de l'utilisateur.
      */
     public function record(User $user, Request $request): ?DeviceFingerprint
