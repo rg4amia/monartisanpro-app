@@ -57,12 +57,24 @@ class SmsService
     }
 
     /**
-     * Build HTTP client with auth headers (+ SSL bypass in local env)
+     * Build HTTP client with auth headers (+ SSL bypass in local env, IPv4 forced)
      */
     private function httpClient(): PendingRequest
     {
-        $client = Http::timeout(4)
-            ->connectTimeout(3)
+        $curlOptions = [];
+        if (defined('CURLOPT_IPRESOLVE') && defined('CURL_IPRESOLVE_V4')) {
+            $curlOptions[CURLOPT_IPRESOLVE] = CURL_IPRESOLVE_V4;
+        }
+
+        $timeout = (int) config('services.sms.timeout', 15);
+        $connectTimeout = (int) config('services.sms.connect_timeout', 10);
+
+        $client = Http::withOptions([
+            'force_ip_resolve' => 'v4',
+            'curl' => $curlOptions,
+        ])
+            ->timeout($timeout)
+            ->connectTimeout($connectTimeout)
             ->withHeaders([
                 'Authorization' => 'Bearer '.$this->apiToken,
                 'Accept' => 'application/json',
@@ -391,6 +403,8 @@ class SmsService
             return $this->send($phone, $message, config('services.sms.sender_id', 'ProsArtisan'), null, 'otp');
         }
 
+        $initialType = (string) config('services.sms.otp_type', 'otp');
+
         // `type: otp` — route transactionnelle dédiée de SMSpro. Si le forfait de l'opérateur
         // ne dispose pas de serveur OTP dédié (HTTP 403), on replie automatiquement sur 'plain'.
         $result = $this->send(
@@ -398,10 +412,10 @@ class SmsService
             $message,
             config('services.sms.sender_id', 'ProsArtisan'),
             null,
-            'otp'
+            $initialType
         );
 
-        if (($result['status'] ?? null) === 'error' && ($result['http_status'] ?? 0) === 403) {
+        if ($initialType === 'otp' && ($result['status'] ?? null) === 'error' && ($result['http_status'] ?? 0) === 403) {
             Log::info("Route SMS 'otp' non incluse dans le forfait SMSpro. Repli automatique sur la route standard 'plain'.");
 
             return $this->send(

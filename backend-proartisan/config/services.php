@@ -81,6 +81,9 @@ return [
         'api_token' => env('SMS_API_TOKEN'),
         'base_url' => env('SMS_BASE_URL', 'https://app.smspro.africa/api/v3'),
         'sender_id' => env('SMS_SENDER_ID', 'ProsArtisan'),
+        'timeout' => env('SMS_TIMEOUT', 15),
+        'connect_timeout' => env('SMS_CONNECT_TIMEOUT', 10),
+        'otp_type' => env('SMS_OTP_TYPE', 'otp'), // 'otp' ou 'plain'
     ],
 
     /*
