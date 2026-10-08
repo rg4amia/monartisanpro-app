@@ -31,8 +31,10 @@ class DeviceFingerprintService
         $subnet = $this->calculateSubnet($ip);
         $userAgent = $request->userAgent();
 
-        // Si aucun fingerprint explicite n'est envoyé, on le calcule à partir des attributs stables
-        if (! $fingerprint && $userAgent && $ip) {
+        $isLocalIp = in_array($ip, ['127.0.0.1', '::1', null], true);
+
+        // Si aucun fingerprint explicite n'est envoyé, on le calcule à partir des attributs stables (hors réseau local et hors tests)
+        if (! $fingerprint && $userAgent && $ip && ! $isLocalIp && ! app()->environment('testing')) {
             $fingerprint = hash('sha256', $userAgent.'|'.$ip.'|'.($model ?? 'unknown'));
         }
 
