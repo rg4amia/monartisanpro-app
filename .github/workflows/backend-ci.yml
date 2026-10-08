@@ -434,6 +434,20 @@ jobs:
             php artisan route:cache
             php artisan view:cache
 
+            # Diagnostic connectivité réseau sortant vers SMS Pro Africa
+            echo "🌐 =========================================="
+            echo "🌐 DIAGNOSTIC CONNECTIVITÉ SORTANTE HOSTINGER"
+            echo "🌐 =========================================="
+            SERVER_IP=$(curl -4 -s https://api.ipify.org || echo "Indéterminée")
+            echo "Adresse IP de sortie du serveur : $SERVER_IP"
+            echo ""
+            echo "--- Test curl -4 (IPv4) vers SMS Pro Africa ---"
+            curl -4 -m 10 -v https://app.smspro.africa/api/v3/sms/send 2>&1 || true
+            echo ""
+            echo "--- Test curl -6 (IPv6) vers SMS Pro Africa ---"
+            curl -6 -m 10 -v https://app.smspro.africa/api/v3/sms/send 2>&1 || true
+            echo "🌐 =========================================="
+
             # Configure root .htaccess to redirect to Laravel public folder
             echo "🔧 Configuring root .htaccess..."
             cat > "$PUBLIC_HTML/.htaccess" << 'EOF'
